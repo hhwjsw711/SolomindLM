@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { X, Search, Globe, Plus, Loader2, ExternalLink } from 'lucide-react';
-import { Source } from '../types';
+import { Source } from '@/shared/types/index';
 
 interface DiscoverSourcesModalProps {
   isOpen: boolean;

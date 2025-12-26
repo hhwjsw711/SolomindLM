@@ -1,12 +1,12 @@
 
 import React, { useState, useMemo } from 'react';
-import { 
-  Plus, Search, FileText, Globe, Book, CheckSquare, Square, ChevronLeft, 
+import {
+  Plus, Search, FileText, Globe, CheckSquare, Square, ChevronLeft,
   X, Upload, Link as LinkIcon, Youtube, Clipboard, HardDrive, LayoutGrid, File,
-  FileStack, Compass, Sparkles
+  FileStack
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import { Source } from '../types';
+import { Source } from '@/shared/types/index';
 import { DiscoverSourcesModal } from './DiscoverSourcesModal';
 
 interface SourcesPanelProps {

@@ -5,7 +5,7 @@ import {
   LayoutGrid, List, ChevronDown, CheckCircle2, ArrowUpAZ, Calendar, FileText,
   Pencil, Trash2, Settings2, X, GraduationCap, Lightbulb, Palette
 } from 'lucide-react';
-import { NotebookItem } from '../types';
+import { NotebookItem } from '@/shared/types/index';
 
 interface HomePageProps {
   featuredNotebooks: NotebookItem[];
@@ -268,7 +268,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                     >
                       <div className="flex items-center gap-4 min-w-0">
                          <div className={`w-10 h-10 rounded-lg ${nb.coverColor} bg-opacity-20 flex items-center justify-center shrink-0`}>
-                            <Book className={`w-5 h-5 ${nb.coverColor.replace('bg-', 'text-')}`} />
+                            <Book className={`w-5 h-5 ${(nb.coverColor || '').replace('bg-', 'text-')}`} />
                          </div>
                          <div className="flex flex-col min-w-0">
                              <span className="font-bold text-foreground font-serif truncate">{nb.title}</span>
@@ -336,7 +336,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                       >
                           {/* Top Decorative Half */}
                           <div onClick={() => !isEditing && onSelectNotebook(nb)} className={`h-[55%] ${nb.coverColor} bg-opacity-15 group-hover:bg-opacity-25 transition-colors p-5 relative flex items-start justify-between rounded-t-2xl`}>
-                              <Icon className={`w-10 h-10 ${nb.coverColor.replace('bg-', 'text-')} opacity-90 group-hover:scale-110 transition-transform duration-300 drop-shadow-sm`} />
+                              <Icon className={`w-10 h-10 ${(nb.coverColor || '').replace('bg-', 'text-')} opacity-90 group-hover:scale-110 transition-transform duration-300 drop-shadow-sm`} />
                               
                               <div className="relative kebab-menu z-20" onClick={(e) => e.stopPropagation()}>
                                   <button 
@@ -435,7 +435,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                         {/* Title Column */}
                         <div className="flex items-center gap-4 min-w-0 z-10 pointer-events-none">
                            <div className={`w-10 h-10 rounded-lg ${nb.coverColor} bg-opacity-20 flex items-center justify-center shrink-0`}>
-                              <Icon className={`w-5 h-5 ${nb.coverColor.replace('bg-', 'text-')}`} />
+                              <Icon className={`w-5 h-5 ${(nb.coverColor || '').replace('bg-', 'text-')}`} />
                            </div>
                            
                            {isEditing ? (

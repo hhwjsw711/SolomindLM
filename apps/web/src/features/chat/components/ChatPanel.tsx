@@ -1,6 +1,6 @@
 import React from 'react';
-import { Paperclip, ArrowUp, Sparkles, PanelLeftOpen, PanelRightOpen, GripVertical } from 'lucide-react';
-import { Message } from '../types';
+import { Paperclip, ArrowUp, Sparkles, PanelLeftOpen, PanelRightOpen } from 'lucide-react';
+import { Message } from '@/shared/types/index';
 
 interface ChatPanelProps {
   messages: Message[];

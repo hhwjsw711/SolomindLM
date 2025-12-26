@@ -25,7 +25,7 @@ import {
   Lightbulb,
   ChevronUp
 } from 'lucide-react';
-import { StudioTool, Note } from '../types';
+import { StudioTool, Note } from '@/shared/types/index';
 import { CreateReportModal } from './CreateReportModal';
 import { CustomizeFlashcardsModal, FlashcardConfig } from './CustomizeFlashcardsModal';
 import { CustomizeQuizModal, QuizConfig } from './CustomizeQuizModal';
@@ -437,7 +437,7 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
     }, 2500);
   };
 
-  const handleCreateReport = (formatId: string, customPrompt?: string) => {
+  const handleCreateReport = (formatId: string, _customPrompt?: string) => {
     setIsReportModalOpen(false);
     const titles: Record<string, string> = {
       'briefing': 'Briefing Document',

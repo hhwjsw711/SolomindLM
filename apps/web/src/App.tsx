@@ -1,12 +1,12 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { Header } from './components/Header';
-import { SourcesPanel } from './components/SourcesPanel';
-import { ChatPanel } from './components/ChatPanel';
-import { StudioPanel } from './components/StudioPanel';
-import { HomePage } from './components/HomePage';
-import { MOCK_SOURCES, MOCK_MESSAGES, STUDIO_TOOLS, SAVED_NOTES, MOCK_NOTEBOOKS } from './constants';
-import { Source, Note, NotebookItem } from './types';
+import { Header } from './shared/ui/Header';
+import { SourcesPanel } from './features/sources/components/SourcesPanel';
+import { ChatPanel } from './features/chat/components/ChatPanel';
+import { StudioPanel } from './features/studio/components/StudioPanel';
+import { HomePage } from './features/notebooks/components/HomePage';
+import { MOCK_SOURCES, MOCK_MESSAGES, STUDIO_TOOLS, SAVED_NOTES, MOCK_NOTEBOOKS } from './shared/utils/constants';
+import { Source, Note, NotebookItem } from '@/shared/types/index';
 
 const MIN_PANEL_WIDTH = 220;
 const MAX_PANEL_WIDTH = 600;

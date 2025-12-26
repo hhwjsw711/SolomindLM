@@ -1,6 +1,6 @@
 
 
-import { Source, Message, StudioTool, Note, NotebookItem } from './types';
+import { Source, Message, StudioTool, Note, NotebookItem } from '@/shared/types/index';
 
 export const MOCK_SOURCES: Source[] = [
   { 
