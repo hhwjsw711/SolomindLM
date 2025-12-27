@@ -10,6 +10,8 @@ import { Source } from '@/shared/types/index';
 import { DiscoverSourcesModal } from './DiscoverSourcesModal';
 import { documentsApi } from '../services/documentsApi';
 
+const MAX_SOURCES = 100;
+
 interface SourcesPanelProps {
   isOpen: boolean;
   onClose: () => void;
@@ -520,8 +522,10 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
 
                   {/* Upload Area */}
                   <div
-                    onClick={() => userId && fileInputRef.current?.click()}
-                    className={`border-2 border-dashed border-border rounded-xl p-12 flex flex-col items-center justify-center gap-4 bg-secondary/5 hover:bg-secondary/10 transition-colors cursor-pointer group ${!userId ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    onClick={() => userId && sources.length < MAX_SOURCES && fileInputRef.current?.click()}
+                    className={`border-2 border-dashed border-border rounded-xl p-12 flex flex-col items-center justify-center gap-4 bg-secondary/5 transition-colors group ${
+                      !userId || sources.length >= MAX_SOURCES ? 'opacity-50 cursor-not-allowed' : 'hover:bg-secondary/10 cursor-pointer'
+                    }`}
                   >
                       <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shrink-0">
                           <Upload className="w-6 h-6 text-primary shrink-0" />
@@ -544,7 +548,10 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
                               Google Workspace
                           </div>
                           <div className="space-y-2">
-                              <button className="w-full flex items-center gap-3 p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 border border-transparent hover:border-border transition-all text-left group">
+                              <button
+                                disabled={!userId || sources.length >= MAX_SOURCES}
+                                className="w-full flex items-center gap-3 p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 border border-transparent hover:border-border transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
                                   <div className="w-8 h-8 rounded-full bg-background flex items-center justify-center border border-border shadow-sm group-hover:scale-105 transition-transform shrink-0">
                                       <HardDrive className="w-4 h-4 text-emerald-600" />
                                   </div>
@@ -561,16 +568,16 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
                           </div>
                           <div className="grid grid-cols-2 gap-3">
                               <button
-                                onClick={() => userId ? setShowUrlInput(true) : null}
-                                disabled={!userId}
+                                onClick={() => userId && sources.length < MAX_SOURCES ? setShowUrlInput(true) : null}
+                                disabled={!userId || sources.length >= MAX_SOURCES}
                                 className="flex items-center justify-center gap-2 p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 border border-transparent hover:border-border transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
                               >
                                   <Globe className="w-4 h-4 text-sky-600 group-hover:scale-110 transition-transform shrink-0" />
                                   <span className="text-sm font-medium">Website</span>
                               </button>
                               <button
-                                onClick={() => userId ? setShowSocialMediaInput(true) : null}
-                                disabled={!userId}
+                                onClick={() => userId && sources.length < MAX_SOURCES ? setShowSocialMediaInput(true) : null}
+                                disabled={!userId || sources.length >= MAX_SOURCES}
                                 className="flex items-center justify-center gap-2 p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 border border-transparent hover:border-border transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
                               >
                                   <Youtube className="w-4 h-4 text-red-600 group-hover:scale-110 transition-transform shrink-0" />
@@ -587,8 +594,8 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
                           </div>
                           <div className="space-y-2">
                               <button
-                                onClick={() => userId ? setShowTextInput(true) : null}
-                                disabled={!userId}
+                                onClick={() => userId && sources.length < MAX_SOURCES ? setShowTextInput(true) : null}
+                                disabled={!userId || sources.length >= MAX_SOURCES}
                                 className="w-full flex items-center gap-3 p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 border border-transparent hover:border-border transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
                               >
                                   <div className="w-8 h-8 rounded-full bg-background flex items-center justify-center border border-border shadow-sm group-hover:scale-105 transition-transform shrink-0">
@@ -599,6 +606,19 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
                           </div>
                       </div>
                   </div>
+
+                  {/* Limit Warning */}
+                  {sources.length >= MAX_SOURCES && (
+                    <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 flex items-start gap-3">
+                      <XCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-destructive">Source limit reached</p>
+                        <p className="text-xs text-destructive/80 mt-1">
+                          You've reached the maximum of {MAX_SOURCES} sources. Remove some sources to add new ones.
+                        </p>
+                      </div>
+                    </div>
+                  )}
               </div>
 
               {/* Footer Limit */}
@@ -608,9 +628,18 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
                       <span>Source limit</span>
                   </div>
                   <div className="flex-1 h-2 bg-secondary/50 rounded-full overflow-hidden">
-                      <div className="h-full bg-primary w-[13%] rounded-full" />
+                      <div
+                        className={`h-full rounded-full transition-all ${
+                          sources.length >= MAX_SOURCES ? 'bg-destructive' : 'bg-primary'
+                        }`}
+                        style={{ width: `${Math.min((sources.length / MAX_SOURCES) * 100, 100)}%` }}
+                      />
                   </div>
-                  <span className="text-muted-foreground font-mono font-medium">{sources.length} / 300</span>
+                  <span className={`font-mono font-medium ${
+                    sources.length >= MAX_SOURCES ? 'text-destructive' : 'text-muted-foreground'
+                  }`}>
+                    {sources.length} / {MAX_SOURCES}
+                  </span>
               </div>
           </div>
         </div>
@@ -781,10 +810,11 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
       )}
 
       {/* Discover Modal */}
-      <DiscoverSourcesModal 
-        isOpen={isDiscoverOpen} 
-        onClose={() => setIsDiscoverOpen(false)} 
+      <DiscoverSourcesModal
+        isOpen={isDiscoverOpen}
+        onClose={() => setIsDiscoverOpen(false)}
         onAddSource={onAddSource}
+        isAtLimit={sources.length >= MAX_SOURCES}
       />
     </>
   );

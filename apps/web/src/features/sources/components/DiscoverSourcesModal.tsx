@@ -7,6 +7,7 @@ interface DiscoverSourcesModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAddSource: (source: Source) => void;
+  isAtLimit: boolean;
 }
 
 interface WebResult {
@@ -16,7 +17,7 @@ interface WebResult {
   isAdded?: boolean;
 }
 
-export const DiscoverSourcesModal: React.FC<DiscoverSourcesModalProps> = ({ isOpen, onClose, onAddSource }) => {
+export const DiscoverSourcesModal: React.FC<DiscoverSourcesModalProps> = ({ isOpen, onClose, onAddSource, isAtLimit }) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<WebResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -38,6 +39,8 @@ export const DiscoverSourcesModal: React.FC<DiscoverSourcesModalProps> = ({ isOp
   };
 
   const handleAddResult = (result: WebResult) => {
+    if (isAtLimit) return;
+
     const newSource: Source = {
       id: Math.random().toString(36).substr(2, 9),
       title: result.title,
@@ -133,18 +136,21 @@ export const DiscoverSourcesModal: React.FC<DiscoverSourcesModalProps> = ({ isOp
                          </div>
                          <div className="mt-6 pt-4 border-t border-border/30 flex justify-between items-center">
                             <span className="text-[10px] font-mono text-muted-foreground truncate max-w-[150px]">{new URL(result.uri).hostname}</span>
-                            <button 
+                            <button
                               onClick={() => handleAddResult(result)}
-                              disabled={result.isAdded}
+                              disabled={result.isAdded || isAtLimit}
                               className={`
                                 px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5
-                                ${result.isAdded 
-                                  ? 'bg-secondary text-muted-foreground cursor-default' 
+                                ${result.isAdded || isAtLimit
+                                  ? 'bg-secondary text-muted-foreground cursor-default'
                                   : 'bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground shadow-sm'}
                               `}
+                              title={isAtLimit ? 'Source limit reached' : undefined}
                             >
                                {result.isAdded ? (
                                  <>Added</>
+                               ) : isAtLimit ? (
+                                 <>Limit reached</>
                                ) : (
                                  <><Plus className="w-3 h-3" /> Add to Notebook</>
                                )}
