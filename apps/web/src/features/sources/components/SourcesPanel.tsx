@@ -3,7 +3,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   Plus, Search, FileText, Globe, CheckSquare, Square, ChevronLeft,
   X, Upload, Link as LinkIcon, Youtube, Clipboard, HardDrive, LayoutGrid, File,
-  FileStack, Loader2, CheckCircle, XCircle, Check, MoreVertical, Edit2, Trash2
+  FileStack, Loader2, CheckCircle, XCircle, Check, MoreVertical, Edit2, Trash2, AtSign
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { Source } from '@/shared/types/index';
@@ -47,8 +47,10 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
   const [isDiscoverOpen, setIsDiscoverOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [showUrlInput, setShowUrlInput] = useState(false);
-  const [showYouTubeInput, setShowYouTubeInput] = useState(false);
+  const [showSocialMediaInput, setShowSocialMediaInput] = useState(false);
+  const [showTextInput, setShowTextInput] = useState(false);
   const [urlInput, setUrlInput] = useState('');
+  const [textInput, setTextInput] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
@@ -126,19 +128,38 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
     }
   };
 
-  // YouTube upload handler
-  const handleYouTubeUpload = async () => {
+  // Social Media upload handler (YouTube, TikTok, Instagram, X)
+  const handleSocialMediaUpload = async () => {
     if (!urlInput || !userId || !noteId) return;
 
     setIsUploading(true);
     try {
       const response = await documentsApi.uploadUrl(userId, noteId, urlInput, 'youtube');
       onDocumentUploaded?.(response.documentId);
-      setShowYouTubeInput(false);
+      setShowSocialMediaInput(false);
       setUrlInput('');
       setIsModalOpen(false);
     } catch (err) {
-      console.error('YouTube upload failed:', err);
+      console.error('Social media upload failed:', err);
+      alert(err instanceof Error ? err.message : 'Upload failed');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // Text upload handler
+  const handleTextUpload = async () => {
+    if (!textInput || !userId || !noteId) return;
+
+    setIsUploading(true);
+    try {
+      const response = await documentsApi.uploadText(userId, noteId, textInput);
+      onDocumentUploaded?.(response.documentId);
+      setShowTextInput(false);
+      setTextInput('');
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error('Text upload failed:', err);
       alert(err instanceof Error ? err.message : 'Upload failed');
     } finally {
       setIsUploading(false);
@@ -262,8 +283,23 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
 
               {/* Content Display */}
               {loadingContentId !== viewingSourceId && (
-                <div className="prose prose-sm prose-stone dark:prose-invert max-w-none font-serif leading-relaxed text-foreground/90">
-                  <ReactMarkdown>{contentCache[viewingSourceId] || "No content available."}</ReactMarkdown>
+                <div className="prose prose-sm prose-stone dark:prose-invert max-w-none font-serif leading-relaxed text-foreground/90 select-text">
+                  <ReactMarkdown
+                    components={{
+                      // Remove all images
+                      img: () => null,
+                      // Make links non-clickable - render as plain text
+                      a: ({ node, children, ...props }) => <span className="text-foreground">{children}</span>,
+                      // Remove video elements
+                      video: () => null,
+                      // Remove audio elements
+                      audio: () => null,
+                      // Remove iframe elements
+                      iframe: () => null,
+                    }}
+                  >
+                    {contentCache[viewingSourceId] || "No content available."}
+                  </ReactMarkdown>
                 </div>
               )}
             </div>
@@ -534,12 +570,12 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
                                   <span className="text-sm font-medium">Website</span>
                               </button>
                               <button
-                                onClick={() => userId ? setShowYouTubeInput(true) : null}
+                                onClick={() => userId ? setShowSocialMediaInput(true) : null}
                                 disabled={!userId}
                                 className="flex items-center justify-center gap-2 p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 border border-transparent hover:border-border transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
                               >
                                   <Youtube className="w-4 h-4 text-red-600 group-hover:scale-110 transition-transform shrink-0" />
-                                  <span className="text-sm font-medium">YouTube</span>
+                                  <span className="text-sm font-medium">Transcripts</span>
                               </button>
                           </div>
                       </div>
@@ -551,7 +587,11 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
                               Paste text
                           </div>
                           <div className="space-y-2">
-                              <button className="w-full flex items-center gap-3 p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 border border-transparent hover:border-border transition-all text-left group">
+                              <button
+                                onClick={() => userId ? setShowTextInput(true) : null}
+                                disabled={!userId}
+                                className="w-full flex items-center gap-3 p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 border border-transparent hover:border-border transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
                                   <div className="w-8 h-8 rounded-full bg-background flex items-center justify-center border border-border shadow-sm group-hover:scale-105 transition-transform shrink-0">
                                       <FileText className="w-4 h-4 text-indigo-600" />
                                   </div>
@@ -631,42 +671,45 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
         </div>
       )}
 
-      {/* YouTube Input Modal */}
-      {showYouTubeInput && (
+      {/* Social Media Input Modal */}
+      {showSocialMediaInput && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowYouTubeInput(false)} />
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowSocialMediaInput(false)} />
           <div className="relative w-full max-w-md bg-card rounded-xl shadow-2xl border border-border">
             <div className="flex items-center justify-between p-6 border-b border-border/50">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-primary/10 rounded-lg flex items-center justify-center">
                   <Youtube className="w-5 h-5 text-primary" />
                 </div>
-                <h2 className="text-xl font-bold font-sans">Add YouTube Video</h2>
+                <h2 className="text-xl font-bold font-sans">Add Video URL</h2>
               </div>
-              <button onClick={() => setShowYouTubeInput(false)} className="p-2 hover:bg-secondary/50 rounded-full transition-colors">
+              <button onClick={() => setShowSocialMediaInput(false)} className="p-2 hover:bg-secondary/50 rounded-full transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-6 space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Paste a video URL to extract its transcript. Supports YouTube, TikTok, Instagram, and X (Twitter).
+              </p>
               <input
                 type="url"
                 value={urlInput}
                 onChange={(e) => setUrlInput(e.target.value)}
-                placeholder="https://youtube.com/watch?v=..."
+                placeholder="Paste URL from YouTube, TikTok, Instagram, or X..."
                 className="w-full px-4 py-3 bg-background border-2 border-border rounded-xl font-serif focus:border-primary focus:outline-none transition-colors"
                 disabled={isUploading}
                 autoFocus
               />
               <div className="flex gap-3">
                 <button
-                  onClick={() => setShowYouTubeInput(false)}
+                  onClick={() => setShowSocialMediaInput(false)}
                   disabled={isUploading}
                   className="flex-1 py-3 bg-secondary text-foreground rounded-lg hover:bg-secondary/80 font-bold font-sans transition-colors"
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={handleYouTubeUpload}
+                  onClick={handleSocialMediaUpload}
                   disabled={!urlInput || isUploading}
                   className="flex-1 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed font-bold font-sans transition-colors flex items-center justify-center gap-2"
                 >
@@ -676,7 +719,60 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
                       Adding...
                     </>
                   ) : (
-                    'Add Video'
+                    'Add Source'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Text Input Modal */}
+      {showTextInput && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowTextInput(false)} />
+          <div className="relative w-full max-w-2xl bg-card rounded-xl shadow-2xl border border-border">
+            <div className="flex items-center justify-between p-6 border-b border-border/50">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <FileText className="w-5 h-5 text-primary" />
+                </div>
+                <h2 className="text-xl font-bold font-sans">Paste Text</h2>
+              </div>
+              <button onClick={() => setShowTextInput(false)} className="p-2 hover:bg-secondary/50 rounded-full transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <textarea
+                value={textInput}
+                onChange={(e) => setTextInput(e.target.value)}
+                placeholder="Paste your text here..."
+                className="w-full h-48 px-4 py-3 bg-background border-2 border-border rounded-xl font-serif focus:border-primary focus:outline-none transition-colors resize-none"
+                disabled={isUploading}
+                autoFocus
+              />
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowTextInput(false)}
+                  disabled={isUploading}
+                  className="flex-1 py-3 bg-secondary text-foreground rounded-lg hover:bg-secondary/80 font-bold font-sans transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleTextUpload}
+                  disabled={!textInput || isUploading}
+                  className="flex-1 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed font-bold font-sans transition-colors flex items-center justify-center gap-2"
+                >
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                      Adding...
+                    </>
+                  ) : (
+                    'Add Source'
                   )}
                 </button>
               </div>

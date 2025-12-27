@@ -1,19 +1,40 @@
 import { supabase } from '../../config/database.js';
 import { MistralOCRService } from '../extraction/MistralOCRService.js';
-import { YouTubeLoaderService } from '../extraction/YouTubeLoaderService.js';
+import { SupadataLoaderService } from '../extraction/SupadataLoaderService.js';
 import { TextSplitterService } from '../processing/TextSplitterService.js';
 import { TitleGeneratorService } from '../processing/TitleGeneratorService.js';
 import { EmbeddingService } from '../processing/EmbeddingService.js';
 import { VectorStoreService } from '../storage/VectorStoreService.js';
+import { SupabaseStorageService } from '../storage/SupabaseStorageService.js';
 import { env } from '../../config/env.js';
 
 // Initialize services
 const mistralOCR = new MistralOCRService(env.MISTRAL_API_KEY);
-const youtubeLoader = new YouTubeLoaderService();
+const supadataLoader = new SupadataLoaderService();
 const textSplitter = new TextSplitterService();
 const titleGenerator = new TitleGeneratorService(env.TOGETHER_AI_API_KEY);
 const embeddingService = new EmbeddingService(env.COHERE_API_KEY);
 const vectorStore = new VectorStoreService();
+const storageService = new SupabaseStorageService();
+
+// File extensions that require OCR processing
+const OCR_FILE_EXTENSIONS = [
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.avif',
+  '.pdf',
+  '.pptx',
+  '.docx',
+];
+
+/**
+ * Check if a file requires OCR processing based on its extension
+ */
+function needsOCR(fileName: string): boolean {
+  const ext = fileName.toLowerCase().substring(fileName.lastIndexOf('.'));
+  return OCR_FILE_EXTENSIONS.includes(ext);
+}
 
 function extractStoragePath(fileUrlOrPath: string | null | undefined): string | null {
   if (!fileUrlOrPath) {
@@ -41,7 +62,7 @@ export interface DocEmbeddingJobPayload {
   documentId: string;
   userId: string;
   noteId: string;
-  type: 'file' | 'url' | 'youtube';
+  type: 'file' | 'url' | 'youtube' | 'text';
   source: string;
 }
 
@@ -79,7 +100,9 @@ export async function docEmbeddingJob(payload: DocEmbeddingJobPayload) {
     // Step 1: Extraction
     console.log(`[DocEmbedding] Step 1: Extracting content...`);
     if (type === 'youtube') {
-      extractedText = await youtubeLoader.loadTranscript(source);
+      extractedText = await supadataLoader.loadTranscript(source);
+    } else if (type === 'text') {
+      extractedText = source; // Text is already extracted
     } else if (type === 'file') {
       const { data: doc } = await supabase
         .from('documents')
@@ -88,15 +111,22 @@ export async function docEmbeddingJob(payload: DocEmbeddingJobPayload) {
         .single();
 
       const fileUrlToUse = doc?.file_url || source;
+      const fileName = doc?.file_name || '';
 
       if (!fileUrlToUse) {
         throw new Error('File URL not found for document: ' + documentId);
       }
 
       const filePath = extractStoragePath(fileUrlToUse);
-      let signedUrlTarget = fileUrlToUse;
 
-      if (filePath) {
+      if (!filePath) {
+        throw new Error('Could not extract storage path from file URL: ' + fileUrlToUse);
+      }
+
+      // Check if file needs OCR or can be read directly as text
+      if (needsOCR(fileName)) {
+        console.log(`[DocEmbedding] File '${fileName}' requires OCR processing`);
+
         const { data: signedData, error: signError } = await supabase.storage
           .from('documents')
           .createSignedUrl(filePath, 60);
@@ -106,35 +136,54 @@ export async function docEmbeddingJob(payload: DocEmbeddingJobPayload) {
           throw new Error('Could not generate signed URL for document: ' + documentId);
         }
 
-        signedUrlTarget = signedData.signedUrl;
-        console.log(`[DocEmbedding] Generated signed URL for path: ${filePath}`);
+        console.log(`[DocEmbedding] Generated signed URL for OCR processing: ${filePath}`);
+
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/8fe05cda-53a6-4f10-9366-95f9d6180c7f', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: 'debug-session',
+            runId: 'baseline',
+            hypothesisId: 'H5',
+            message: 'Submitting signed URL to OCR service',
+            data: {
+              documentId,
+              fileName,
+              filePath,
+            },
+            timestamp: Date.now(),
+          }),
+        }).catch(() => {});
+        // #endregion
+
+        extractedText = await mistralOCR.processDocument(signedData.signedUrl);
       } else {
-        console.warn(`[DocEmbedding] Unable to derive storage path from ${fileUrlToUse}; sending raw URL to OCR`);
+        console.log(`[DocEmbedding] File '${fileName}' is plaintext, reading directly (no OCR)`);
+
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/8fe05cda-53a6-4f10-9366-95f9d6180c7f', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: 'debug-session',
+            runId: 'baseline',
+            hypothesisId: 'H5',
+            message: 'Reading plaintext file directly (skipping OCR)',
+            data: {
+              documentId,
+              fileName,
+              filePath,
+            },
+            timestamp: Date.now(),
+          }),
+        }).catch(() => {});
+        // #endregion
+
+        extractedText = await storageService.downloadFileAsText(filePath);
       }
-
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/8fe05cda-53a6-4f10-9366-95f9d6180c7f', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionId: 'debug-session',
-          runId: 'baseline',
-          hypothesisId: 'H5',
-          location: 'apps/api/src/services/jobs/DocEmbeddingJob.ts:82',
-          message: 'Submitting signed URL to OCR service',
-          data: {
-            documentId,
-            signedUrlGenerated: signedUrlTarget !== fileUrlToUse,
-            filePath,
-          },
-          timestamp: Date.now(),
-        }),
-      }).catch(() => {});
-      // #endregion
-
-      extractedText = await mistralOCR.processDocument(signedUrlTarget);
     } else if (type === 'url') {
-      extractedText = await mistralOCR.processFromUrl(source);
+      extractedText = await supadataLoader.loadWebPage(source);
     }
 
     // #region agent log

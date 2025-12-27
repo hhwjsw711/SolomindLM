@@ -61,9 +61,24 @@ const ReportView: React.FC<{ note: Note }> = ({ note }) => {
         <div className="flex flex-col h-full bg-background animate-in fade-in slide-in-from-right-4 duration-300">
              <div className="flex-1 overflow-y-auto p-6 md:p-8">
                  <div className="max-w-3xl mx-auto bg-card border border-border shadow-sm p-8 rounded-sm min-h-[500px]">
-                     <div className="prose prose-stone dark:prose-invert max-w-none font-serif leading-relaxed">
+                     <div className="prose prose-stone dark:prose-invert max-w-none font-serif leading-relaxed select-text">
                         {note.content ? (
-                            <ReactMarkdown>{note.content}</ReactMarkdown>
+                            <ReactMarkdown
+                                components={{
+                                    // Remove all images
+                                    img: () => null,
+                                    // Make links non-clickable - render as plain text
+                                    a: ({ node, children, ...props }) => <span className="text-foreground">{children}</span>,
+                                    // Remove video elements
+                                    video: () => null,
+                                    // Remove audio elements
+                                    audio: () => null,
+                                    // Remove iframe elements
+                                    iframe: () => null,
+                                }}
+                            >
+                                {note.content}
+                            </ReactMarkdown>
                         ) : (
                             <div className="space-y-4 animate-pulse">
                                 <div className="h-8 bg-muted rounded w-3/4"></div>

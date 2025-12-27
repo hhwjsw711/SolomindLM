@@ -83,6 +83,33 @@ export const documentsApi = {
   },
 
   /**
+   * Upload text content to the ingestion pipeline
+   */
+  async uploadText(
+    userId: string,
+    noteId: string,
+    text: string
+  ): Promise<UploadResponse> {
+    const response = await fetch(`${API_BASE_URL}/api/documents/upload`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        userId,
+        noteId,
+        type: 'text',
+        source: text,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Upload failed');
+    }
+
+    return response.json();
+  },
+
+  /**
    * Get a specific document by ID
    */
   async getDocument(id: string): Promise<Document> {

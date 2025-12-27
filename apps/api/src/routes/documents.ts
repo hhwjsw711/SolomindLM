@@ -59,16 +59,16 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
       return res.status(400).json({ error: 'userId and noteId are required' });
     }
 
-    if (!type || !['file', 'url', 'youtube'].includes(type)) {
-      return res.status(400).json({ error: 'Invalid type. Must be file, url, or youtube' });
+    if (!type || !['file', 'url', 'youtube', 'text'].includes(type)) {
+      return res.status(400).json({ error: 'Invalid type. Must be file, url, youtube, or text' });
     }
 
     if (type === 'file' && !file) {
       return res.status(400).json({ error: 'File is required for type=file' });
     }
 
-    if ((type === 'url' || type === 'youtube') && !source) {
-      return res.status(400).json({ error: 'Source URL is required for url/youtube type' });
+    if ((type === 'url' || type === 'youtube' || type === 'text') && !source) {
+      return res.status(400).json({ error: 'Source is required for url/youtube/text type' });
     }
 
     let fileUrl = '';

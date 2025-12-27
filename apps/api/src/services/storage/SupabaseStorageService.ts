@@ -62,4 +62,25 @@ export class SupabaseStorageService {
       throw new Error('Failed to delete file');
     }
   }
+
+  async downloadFileAsText(storagePath: string): Promise<string> {
+    console.log('[Storage] Downloading file as text:', storagePath);
+
+    const { data, error } = await supabase.storage
+      .from('documents')
+      .download(storagePath);
+
+    if (error) {
+      console.error('[Storage] Download failed:', {
+        message: error.message,
+        statusCode: error.statusCode,
+      });
+      throw new Error(`Failed to download file: ${error.message}`);
+    }
+
+    // Convert Blob to text
+    const text = await data.text();
+    console.log('[Storage] Download successful, text length:', text.length);
+    return text;
+  }
 }
