@@ -5,10 +5,10 @@ export class TitleGeneratorService {
   private llm: ChatTogetherAI;
   private promptTemplate: PromptTemplate;
 
-  constructor(apiKey: string) {
+  constructor(apiKey: string, model: string = 'meta-llama/Llama-3.2-3B-Instruct-Turbo') {
     this.llm = new ChatTogetherAI({
       apiKey,
-      model: 'mistralai/Mixtral-8x7B-Instruct-v0.1',
+      model,
       temperature: 0.3,
     });
 
@@ -21,7 +21,10 @@ export class TitleGeneratorService {
     try {
       const prompt = await this.promptTemplate.format({ chunk: firstChunk });
       const response = await this.llm.invoke(prompt);
-      return response.content.toString().trim();
+      let title = response.content.toString().trim();
+      // Remove quotation marks from the start and end of the title
+      title = title.replace(/^["']|["']$/g, '');
+      return title;
     } catch (error) {
       console.error('Title generator error:', error);
       throw new Error('Failed to generate title');

@@ -296,7 +296,7 @@ router.put('/:id', async (req: Request, res: Response) => {
 router.delete('/:id', async (req: Request, res: Response) => {
   try {
     const userId = await getUserIdFromToken(req);
-    
+
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
@@ -331,6 +331,53 @@ router.delete('/:id', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Delete notebook error:', error);
     res.status(500).json({ error: 'Failed to delete notebook' });
+  }
+});
+
+/**
+ * GET /api/notebooks/:notebookId/notes - Get all notes (reports + user notes) for a notebook
+ */
+router.get('/:notebookId/notes', async (req: Request, res: Response) => {
+  try {
+    const { notebookId } = req.params;
+    const userId = await getUserIdFromToken(req);
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Verify user owns the notebook
+    const { data: notebook, error: notebookError } = await supabase
+      .from('notebooks')
+      .select('id')
+      .eq('id', notebookId)
+      .eq('user_id', userId)
+      .single();
+
+    if (notebookError || !notebook) {
+      return res.status(404).json({ error: 'Notebook not found' });
+    }
+
+    // Only fetch reports and text notes (other types like audio, quiz, flashcards will have their own tables)
+    const { data: notes, error } = await supabase
+      .from('notes')
+      .select('*')
+      .eq('notebook_id', notebookId)
+      .eq('user_id', userId)
+      .in('note_type', ['report', 'text'])
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('[Notes] Error fetching notes:', error);
+      return res.status(500).json({ error: 'Failed to fetch notes' });
+    }
+
+    return res.json(notes || []);
+  } catch (error) {
+    console.error('[Notes] Error fetching notes:', error);
+    return res.status(500).json({
+      error: error instanceof Error ? error.message : 'Failed to fetch notes',
+    });
   }
 });
 

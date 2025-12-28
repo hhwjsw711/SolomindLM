@@ -6,10 +6,11 @@ import { StudioPanel } from './features/studio/components/StudioPanel';
 import { HomePage } from './features/notebooks/components/HomePage';
 import { AuthProvider, useAuth } from './features/auth/AuthContext';
 import { LoginModal } from './features/auth/components/LoginModal';
-import { MOCK_MESSAGES, STUDIO_TOOLS, SAVED_NOTES } from './shared/utils/constants';
+import { MOCK_MESSAGES, STUDIO_TOOLS, SAVED_NOTES } from './shared/constants';
 import { Source, Note, NotebookItem, Document } from '@/shared/types/index';
 import { documentsApi } from './features/sources/services/documentsApi';
 import { notebooksApi } from './features/notebooks/services/notebooksApi';
+import { notesApi } from './features/notebooks/services/notesApi';
 
 const MIN_PANEL_WIDTH = 220;
 const MAX_PANEL_WIDTH = 600;
@@ -39,7 +40,7 @@ const AppContent: React.FC = () => {
   const [isSourcesOpen, setIsSourcesOpen] = useState(true);
   const [isStudioOpen, setIsStudioOpen] = useState(true);
   const [sources, setSources] = useState<Source[]>([]);
-  const [notes, setNotes] = useState<Note[]>(SAVED_NOTES);
+  const [notes, setNotes] = useState<Note[]>([]);
   const [notebookTitle, setNotebookTitle] = useState("CPSC 304");
 
   // Notebooks State
@@ -77,13 +78,45 @@ const AppContent: React.FC = () => {
   const handleAddSource = (source: Source) => {
     setSources(prev => [source, ...prev]);
   };
-  
-  const handleUpdateNote = (id: string, newTitle: string) => {
-    setNotes(prev => prev.map(n => n.id === id ? { ...n, title: newTitle } : n));
+
+  const handleUpdateNote = async (id: string, newTitle: string) => {
+    try {
+      // Optimistically update UI
+      setNotes(prev => prev.map(n => n.id === id ? { ...n, title: newTitle } : n));
+
+      // Sync with backend
+      await notesApi.renameNote(id, newTitle);
+    } catch (error) {
+      console.error('Failed to rename note:', error);
+      // Reload notes on error
+      if (activeNotebookId) {
+        notesApi.getNotes(activeNotebookId)
+          .then(loadedNotes => setNotes(loadedNotes))
+          .catch(err => console.error('Failed to reload notes:', err));
+      }
+    }
   };
 
-  const handleDeleteNote = (id: string) => {
-    setNotes(prev => prev.filter(n => n.id !== id));
+  const handleUpdateNoteFull = (id: string, note: Note) => {
+    setNotes(prev => prev.map(n => n.id === id ? { ...note } : n));
+  };
+
+  const handleDeleteNote = async (id: string) => {
+    try {
+      // Optimistically remove from UI
+      setNotes(prev => prev.filter(n => n.id !== id));
+
+      // Delete from backend
+      await notesApi.deleteNote(id);
+    } catch (error) {
+      console.error('Failed to delete note:', error);
+      // Reload notes on error
+      if (activeNotebookId) {
+        notesApi.getNotes(activeNotebookId)
+          .then(loadedNotes => setNotes(loadedNotes))
+          .catch(err => console.error('Failed to reload notes:', err));
+      }
+    }
   };
 
   const handleAddNote = (note: Note) => {
@@ -223,6 +256,18 @@ const AppContent: React.FC = () => {
       documentsApi.getDocuments(user.id, activeNotebookId)
         .then(docs => setSources(docs.map(documentToSource)))
         .catch(err => console.error('Failed to load documents:', err));
+    }
+  }, [isAuthenticated, user, activeNotebookId, currentView]);
+
+  // Load notes from API when authenticated and notebook is active
+  useEffect(() => {
+    if (isAuthenticated && user && activeNotebookId && activeNotebookId !== 'new' && currentView === 'notebook') {
+      notesApi.getNotes(activeNotebookId)
+        .then(loadedNotes => setNotes(loadedNotes))
+        .catch(err => console.error('Failed to load notes:', err));
+    } else if (currentView === 'home') {
+      // Clear notes when going to home
+      setNotes([]);
     }
   }, [isAuthenticated, user, activeNotebookId, currentView]);
 
@@ -438,16 +483,20 @@ const AppContent: React.FC = () => {
             />
           )}
 
-          <StudioPanel 
-            isOpen={isStudioOpen} 
-            onClose={toggleStudio} 
+          <StudioPanel
+            isOpen={isStudioOpen}
+            onClose={toggleStudio}
             tools={STUDIO_TOOLS}
             notes={notes}
             onUpdateNote={handleUpdateNote}
+            onUpdateNoteFull={handleUpdateNoteFull}
             onDeleteNote={handleDeleteNote}
             onAddNote={handleAddNote}
             width={rightWidth}
             isResizing={isResizingRight}
+            sources={sources}
+            userId={user?.id}
+            noteId={activeNotebookId}
           />
         </main>
       )}

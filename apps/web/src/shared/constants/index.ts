@@ -1,45 +1,44 @@
 
-
 import { Source, Message, StudioTool, Note, NotebookItem } from '@/shared/types/index';
 
 export const MOCK_SOURCES: Source[] = [
-  { 
-    id: '1', 
-    title: 'CPSC 304 - Lecture 1 Intro.pdf', 
-    type: 'PDF', 
-    date: 'Oct 12', 
+  {
+    id: '1',
+    title: 'CPSC 304 - Lecture 1 Intro.pdf',
+    type: 'PDF',
+    date: 'Oct 12',
     selected: true,
     content: "# Introduction to Database Systems\n\n## What is a Database System?\nA database system is basically a computerized record-keeping system.\n\n### Components\n- Database: collection of persistent data\n- DBMS: software that enables users to create and maintain a database\n\n## Data Independence\n- Physical Data Independence: Ability to modify physical schema without changing logical schema.\n- Logical Data Independence: Ability to modify logical schema without changing external views."
   },
-  { 
-    id: '2', 
-    title: 'Database_Systems_Complete.txt', 
-    type: 'TXT', 
-    date: 'Oct 12', 
+  {
+    id: '2',
+    title: 'Database_Systems_Complete.txt',
+    type: 'TXT',
+    date: 'Oct 12',
     selected: true,
     content: "CHAPTER 4: NORMALIZATION\n\nNormalization is the process of organizing data in a database. This includes creating tables and establishing relationships between those tables according to rules designed both to protect the data and to make the database more flexible by eliminating redundancy and inconsistent dependency.\n\n1NF: Atomic values.\n2NF: No partial dependencies.\n3NF: No transitive dependencies.\nBCNF: Every determinant is a candidate key."
   },
-  { 
-    id: '3', 
-    title: 'SQL-99 Standards Reference', 
-    type: 'WEB', 
-    date: 'Oct 10', 
+  {
+    id: '3',
+    title: 'SQL-99 Standards Reference',
+    type: 'WEB',
+    date: 'Oct 10',
     selected: false,
     content: "## SQL-99 Features\n\n1. Boolean data type\n2. Distinct types\n3. Triggers\n4. Recursive queries (WITH RECURSIVE)\n\n### Triggers\nCREATE TRIGGER name\nBEFORE | AFTER | INSTEAD OF\nINSERT | UPDATE | DELETE\nON table..."
   },
-  { 
-    id: '4', 
-    title: 'Midterm Review Notes v2.pdf', 
-    type: 'PDF', 
-    date: 'Oct 08', 
+  {
+    id: '4',
+    title: 'Midterm Review Notes v2.pdf',
+    type: 'PDF',
+    date: 'Oct 08',
     selected: false,
     content: "## Midterm Topics\n\n- ER Diagrams (Weak entities, ISA hierarchies)\n- Relational Algebra (Select, Project, Join, Division)\n- SQL Queries (Group By, Having, Nested Subqueries)\n- Normalization (1NF, 2NF, 3NF, BCNF)\n\n**Study Tip:** Practice decomposing relations into BCNF."
   },
-  { 
-    id: '5', 
-    title: 'Normalization Forms (1NF-3NF)', 
-    type: 'TXT', 
-    date: 'Sep 25', 
+  {
+    id: '5',
+    title: 'Normalization Forms (1NF-3NF)',
+    type: 'TXT',
+    date: 'Sep 25',
     selected: false,
     content: "## Summary of Normal Forms\n\nFirst Normal Form (1NF):\n- Eliminate Repeating Groups\n- Create a separate table for each set of related data\n\nSecond Normal Form (2NF):\n- Eliminate Redundant Data\n- If an attribute depends on only part of a multi-valued key, remove it to a separate table."
   },
@@ -72,60 +71,7 @@ export const STUDIO_TOOLS: StudioTool[] = [
   { id: 'slides', label: 'Slide Deck', iconName: 'Presentation', color: 'text-yellow-600' },
 ];
 
-export const SAVED_NOTES: Note[] = [
-  { 
-    id: '1', 
-    title: 'SQL Deep Dive', 
-    preview: 'Audio Overview • 12 min', 
-    type: 'audio' 
-  },
-  { 
-    id: '2', 
-    title: 'Normalization Quiz', 
-    preview: '3 Questions • Hard', 
-    type: 'quiz',
-    questions: [
-      {
-        question: "Which Normal Form strictly forbids transitive dependencies?",
-        options: ["1NF", "2NF", "3NF", "All of the above"],
-        answer: 2,
-        hint: "Think about dependencies that don't involve the primary key directly."
-      },
-      {
-        question: "A relation is in BCNF if...",
-        options: ["All attributes are atomic", "Every determinant is a candidate key", "It has no partial dependencies", "It is in 4NF"],
-        answer: 1,
-        hint: "BCNF is a stronger version of 3NF concerning determinants."
-      },
-      {
-        question: "What is a 'partial dependency'?",
-        options: ["Dependency on a non-prime attribute", "Dependency on part of a composite primary key", "Dependency on a foreign key", "None of the above"],
-        answer: 1,
-        hint: "It only happens when the primary key is made up of multiple columns."
-      }
-    ]
-  },
-  {
-    id: '3',
-    title: 'Relational Algebra Key Terms',
-    preview: '5 Cards',
-    type: 'flashcard',
-    flashcards: [
-        { front: "Selection (σ)", back: "Unary operation that selects tuples that satisfy a given predicate." },
-        { front: "Projection (π)", back: "Unary operation that returns its argument relation, with certain attributes left out." },
-        { front: "Cartesian Product (×)", back: "Combines information of two different relations into one." },
-        { front: "Natural Join (⋈)", back: "Join operation that creates an implicit join clause for equal attributes." },
-        { front: "Set Difference (-)", back: "Returns tuples that are in one relation but not in another." }
-    ]
-  },
-  {
-    id: '4',
-    title: 'Course Summary: Database Systems',
-    preview: 'Report • Markdown',
-    type: 'report',
-    content: "# Database Management Systems\n\n## 1. Introduction\nA database management system (DBMS) is system software for creating and managing databases. The DBMS provides users and programmers with a systematic way to create, retrieve, update and manage data.\n\n## 2. The Relational Model\nProposed by E.F. Codd in 1970, the relational model is based on predicate logic and set theory.\n\n### Key Concepts\n*   **Relation**: A table with columns and rows.\n*   **Attribute**: A named column of a relation.\n*   **Tuple**: A row of a relation.\n*   **Domain**: A set of allowable values for one or more attributes.\n\n## 3. SQL\nSQL (Structured Query Language) is the standard language for relational database management systems.\n\n> \"Data is the new oil.\" — Clive Humby\n\n## 4. Conclusion\nUnderstanding the theoretical underpinnings of databases ensures robust application design and efficient data retrieval."
-  }
-];
+export const SAVED_NOTES: Note[] = [];
 
 export const MOCK_NOTEBOOKS: NotebookItem[] = [
   {

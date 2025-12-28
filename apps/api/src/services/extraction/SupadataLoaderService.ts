@@ -125,13 +125,14 @@ export class SupadataLoaderService {
       const jobResult = await this.supadata.transcript.getJobStatus(jobId);
 
       if (jobResult.status === 'completed') {
-        const text = typeof jobResult.content === 'string'
-          ? jobResult.content
-          : JSON.stringify(jobResult.content);
+        const content = jobResult.result?.content;
+        const text = typeof content === 'string'
+          ? content
+          : JSON.stringify(content);
         console.log(`[Supadata] Job completed (${text.length} chars)`);
         return text; // stripMedia is called by the caller (loadTranscript)
       } else if (jobResult.status === 'failed') {
-        throw new Error(`Transcript job failed: ${jobResult.error || 'Unknown error'}`);
+        throw new Error(`Transcript job failed: ${jobResult.error?.message || 'Unknown error'}`);
       }
 
       // Job is still 'queued' or 'active', wait and retry
@@ -155,7 +156,7 @@ export class SupadataLoaderService {
       const scrapeResult = await this.supadata.web.scrape(url);
 
       // Extract text content from the scrape result
-      const text = scrapeResult.content || scrapeResult.text || '';
+      const text = scrapeResult.content || '';
       const cleanedText = this.stripMedia(text);
       console.log(`[Supadata] Successfully scraped page (${text.length} chars, ${cleanedText.length} after cleaning)`);
       return cleanedText;
@@ -180,7 +181,7 @@ export class SupadataLoaderService {
 
     try {
       const siteMap = await this.supadata.web.map(url);
-      console.log(`[Supadata] Found ${siteMap.pages?.length || 0} pages`);
+      console.log(`[Supadata] Found ${siteMap.urls?.length || 0} pages`);
       return siteMap;
     } catch (e) {
       if (e instanceof SupadataError) {
@@ -210,10 +211,10 @@ export class SupadataLoaderService {
         const crawlResults = await this.supadata.web.getCrawlResults(jobId);
 
         if (crawlResults.status === 'completed') {
-          console.log(`[Supadata] Crawl completed with ${crawlResults.results?.length || 0} pages`);
+          console.log(`[Supadata] Crawl completed with ${crawlResults.pages?.length || 0} pages`);
           return crawlResults;
         } else if (crawlResults.status === 'failed') {
-          throw new Error(`Crawl job failed: ${crawlResults.error || 'Unknown error'}`);
+          throw new Error('Crawl job failed');
         }
 
         console.log(`[Supadata] Crawl status: ${crawlResults.status} (attempt ${attempt}/30)`);

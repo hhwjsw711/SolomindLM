@@ -41,11 +41,23 @@ export interface Note {
   id: string;
   title: string;
   preview: string;
-  type: 'audio' | 'text' | 'quiz' | 'flashcard' | 'report';
-  // Content specific fields
+  type: 'text' | 'report' | 'flashcard' | 'quiz' | 'audio';
+  // Content
   content?: string;
-  questions?: QuizQuestion[];
+  // Report-specific fields
+  status?: 'generating' | 'mapping' | 'collapsing' | 'reducing' | 'completed' | 'failed';
+  metadata?: {
+    reportType?: string;
+    documentIds?: string[];
+    phase?: string;
+    error?: string;
+    chunksProcessed?: number;
+    [key: string]: any;
+  };
+  // Flashcard-specific fields
   flashcards?: Flashcard[];
+  // Quiz-specific fields
+  questions?: QuizQuestion[];
 }
 
 export interface NotebookItem {

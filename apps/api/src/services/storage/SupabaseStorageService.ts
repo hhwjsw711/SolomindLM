@@ -33,7 +33,6 @@ export class SupabaseStorageService {
     if (error) {
       console.error('[Storage] Upload failed:', {
         message: error.message,
-        statusCode: error.statusCode,
       });
       throw new Error(`Failed to upload file: ${error.message}`);
     }
@@ -73,7 +72,6 @@ export class SupabaseStorageService {
     if (error) {
       console.error('[Storage] Download failed:', {
         message: error.message,
-        statusCode: error.statusCode,
       });
       throw new Error(`Failed to download file: ${error.message}`);
     }

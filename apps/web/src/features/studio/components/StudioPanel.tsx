@@ -1,10 +1,10 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { 
-  ChevronRight, 
-  MoreVertical, 
-  Sparkles, 
+import {
+  ChevronRight,
+  MoreVertical,
+  Sparkles,
   AudioLines,
   Clapperboard,
   GitFork,
@@ -23,13 +23,16 @@ import {
   CheckCircle2,
   XCircle,
   Lightbulb,
-  ChevronUp
+  ChevronUp,
+  Loader2,
 } from 'lucide-react';
-import { StudioTool, Note } from '@/shared/types/index';
+import { StudioTool, Note, Source } from '@/shared/types/index';
 import { CreateReportModal } from './CreateReportModal';
 import { CustomizeFlashcardsModal, FlashcardConfig } from './CustomizeFlashcardsModal';
 import { CustomizeQuizModal, QuizConfig } from './CustomizeQuizModal';
 import { CustomizeAudioModal, AudioConfig } from './CustomizeAudioModal';
+import { reportsApi } from '../services/reportsApi';
+import { getReportSubtitle } from '@/shared/types/reportTypes';
 
 interface StudioPanelProps {
   isOpen: boolean;
@@ -37,10 +40,14 @@ interface StudioPanelProps {
   tools: StudioTool[];
   notes: Note[];
   onUpdateNote: (id: string, newTitle: string) => void;
+  onUpdateNoteFull?: (id: string, note: Note) => void;
   onDeleteNote: (id: string) => void;
   onAddNote: (note: Note) => void;
   width: number;
   isResizing: boolean;
+  sources?: Source[];
+  userId?: string | null;
+  noteId?: string | null;
 }
 
 const IconMap: Record<string, React.FC<any>> = {
@@ -57,35 +64,89 @@ const IconMap: Record<string, React.FC<any>> = {
 // --- Sub-Components for Views ---
 
 const ReportView: React.FC<{ note: Note }> = ({ note }) => {
+    // Map status to progress steps
+    const phases = [
+      { key: 'generating', label: 'Initializing' },
+      { key: 'mapping', label: 'Processing sources' },
+      { key: 'collapsing', label: 'Synthesizing content' },
+      { key: 'reducing', label: 'Formatting document' },
+    ];
+
+    const currentPhaseIndex = phases.findIndex(p => p.key === note.status);
+    const isFailed = note.status === 'failed';
+    const isCompleted = note.status === 'completed';
+    const isGenerating = note.status === 'generating' || note.status === 'mapping' ||
+                          note.status === 'collapsing' || note.status === 'reducing';
+
     return (
         <div className="flex flex-col h-full bg-background animate-in fade-in slide-in-from-right-4 duration-300">
+             {/* Progress Header */}
+             {isGenerating && (
+               <div className="p-4 border-b border-border bg-secondary/30">
+                 <div className="flex items-center justify-between mb-3">
+                   <span className="text-xs font-medium text-muted-foreground">Generating Report</span>
+                   <span className="text-xs text-primary">
+                     {phases[currentPhaseIndex]?.label || 'Processing'}
+                   </span>
+                 </div>
+                 <div className="flex gap-1">
+                   {phases.map((phase, i) => (
+                     <div
+                       key={phase.key}
+                       className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
+                         i < currentPhaseIndex ? 'bg-primary' : 'bg-muted'
+                       }`}
+                     />
+                   ))}
+                 </div>
+               </div>
+             )}
+
+             {/* Error State */}
+             {isFailed && (
+               <div className="p-4 border-b border-border bg-destructive/10">
+                 <div className="flex items-center gap-3">
+                   <XCircle className="w-5 h-5 text-destructive shrink-0" />
+                   <div className="flex-1">
+                     <p className="text-sm font-medium text-destructive">Report generation failed</p>
+                     <p className="text-xs text-destructive/70 mt-1">
+                       {note.metadata?.error || 'An unknown error occurred'}
+                     </p>
+                   </div>
+                 </div>
+               </div>
+             )}
+
              <div className="flex-1 overflow-y-auto p-6 md:p-8">
                  <div className="max-w-3xl mx-auto bg-card border border-border shadow-sm p-8 rounded-sm min-h-[500px]">
                      <div className="prose prose-stone dark:prose-invert max-w-none font-serif leading-relaxed select-text">
                         {note.content ? (
                             <ReactMarkdown
                                 components={{
-                                    // Remove all images
                                     img: () => null,
-                                    // Make links non-clickable - render as plain text
                                     a: ({ node, children, ...props }) => <span className="text-foreground">{children}</span>,
-                                    // Remove video elements
                                     video: () => null,
-                                    // Remove audio elements
                                     audio: () => null,
-                                    // Remove iframe elements
                                     iframe: () => null,
                                 }}
                             >
                                 {note.content}
                             </ReactMarkdown>
+                        ) : isFailed ? (
+                          <div className="flex flex-col items-center justify-center py-12">
+                            <XCircle className="w-12 h-12 text-destructive mb-4" />
+                            <p className="text-muted-foreground">Report generation failed</p>
+                          </div>
                         ) : (
-                            <div className="space-y-4 animate-pulse">
-                                <div className="h-8 bg-muted rounded w-3/4"></div>
-                                <div className="h-4 bg-muted rounded w-full"></div>
-                                <div className="h-4 bg-muted rounded w-full"></div>
-                                <div className="h-4 bg-muted rounded w-5/6"></div>
-                                <p className="text-muted-foreground italic text-sm mt-8">NotebookLM is generating your report...</p>
+                            <div className="space-y-4">
+                              <div className="h-8 bg-muted/50 rounded w-3/4 animate-pulse"></div>
+                              <div className="h-4 bg-muted/50 rounded w-full animate-pulse" style={{ animationDelay: '0.1s' }}></div>
+                              <div className="h-4 bg-muted/50 rounded w-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                              <div className="h-4 bg-muted/50 rounded w-5/6 animate-pulse" style={{ animationDelay: '0.3s' }}></div>
+                              <div className="flex items-center justify-center py-8">
+                                <Loader2 className="w-5 h-5 text-primary animate-spin mr-2" />
+                                <p className="text-muted-foreground italic text-sm">Generating your report...</p>
+                              </div>
                             </div>
                         )}
                      </div>
@@ -343,16 +404,20 @@ const QuizView: React.FC<{ note: Note }> = ({ note }) => {
 
 // --- Main Studio Panel ---
 
-export const StudioPanel: React.FC<StudioPanelProps> = ({ 
-  isOpen, 
-  onClose, 
-  tools, 
-  notes, 
+export const StudioPanel: React.FC<StudioPanelProps> = ({
+  isOpen,
+  onClose,
+  tools,
+  notes,
   onUpdateNote,
+  onUpdateNoteFull,
   onDeleteNote,
   onAddNote,
-  width, 
-  isResizing 
+  width,
+  isResizing,
+  sources = [],
+  userId,
+  noteId,
 }) => {
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -452,26 +517,104 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
     }, 2500);
   };
 
-  const handleCreateReport = (formatId: string, _customPrompt?: string) => {
+  const handleCreateReport = async (formatId: string, customPrompt?: string) => {
     setIsReportModalOpen(false);
+
+    // Get selected document IDs from sources
+    const selectedDocumentIds = sources.filter(s => s.selected).map(s => s.id);
+
+    if (selectedDocumentIds.length === 0) {
+      alert('Please select at least one source to generate a report');
+      return;
+    }
+
+    if (!userId || !noteId) {
+      alert('Authentication error. Please log in again.');
+      return;
+    }
+
     const titles: Record<string, string> = {
       'briefing': 'Briefing Document',
       'study_guide': 'Study Guide',
       'blog_post': 'Blog Post',
+      'summary': 'Summary',
+      'technical_report': 'Technical Report',
+      'concept_explainer': 'Concept Explainer',
+      'methodology_overview': 'Methodology Overview',
       'custom': 'Custom Report'
     };
+
+    // Create note with generating status (placeholder ID)
+    const placeholderId = Math.random().toString(36).substr(2, 9);
     const newNote: Note = {
-      id: Math.random().toString(36).substr(2, 9),
+      id: placeholderId,
       title: titles[formatId] || 'New Report',
-      preview: 'Report • Generating...',
+      preview: getReportSubtitle(formatId),
       type: 'report',
-      content: ''
+      content: '',
+      status: 'generating',
+      metadata: {
+        reportType: formatId,
+      }
     };
+
     onAddNote(newNote);
-    setActiveNoteId(newNote.id);
-    setTimeout(() => {
-      onUpdateNote(newNote.id, newNote.title);
-    }, 2000);
+    setActiveNoteId(placeholderId);
+
+    try {
+      // Call API to create and queue report
+      const { reportId, note } = await reportsApi.createReport({
+        userId,
+        noteId,
+        documentIds: selectedDocumentIds,
+        reportType: formatId,
+        customPrompt,
+      });
+
+      // Update note ID with real report ID
+      if (onUpdateNoteFull) {
+        onUpdateNoteFull(placeholderId, { ...note, type: 'report' as const });
+      }
+      setActiveNoteId(reportId);
+
+      // Start polling for status
+      reportsApi.pollReportStatus(
+        reportId,
+        (updatedNote) => {
+          // Update note during polling
+          if (onUpdateNoteFull) {
+            onUpdateNoteFull(reportId, { ...updatedNote, type: 'report' as const });
+          }
+        }
+      ).then(finalNote => {
+        // Final update when complete
+        if (onUpdateNoteFull) {
+          onUpdateNoteFull(reportId, { ...finalNote, type: 'report' as const });
+        }
+      }).catch(error => {
+        console.error('Report generation failed:', error);
+        // Update with failed status
+        if (onUpdateNoteFull) {
+          const failedNote = notes.find(n => n.id === reportId) || newNote;
+          const reportType = failedNote.metadata?.reportType || formatId;
+          onUpdateNoteFull(reportId, {
+            ...failedNote,
+            status: 'failed',
+            preview: `${getReportSubtitle(reportType)} • Failed`,
+            metadata: {
+              ...failedNote.metadata,
+              error: error instanceof Error ? error.message : 'Failed to generate report',
+            }
+          });
+        }
+      });
+
+    } catch (error) {
+      console.error('Failed to create report:', error);
+      alert(error instanceof Error ? error.message : 'Failed to create report');
+      // Remove the placeholder note
+      onDeleteNote(placeholderId);
+    }
   };
 
   const handleCreateAudio = (config: AudioConfig) => {
@@ -603,7 +746,7 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
                                     <h4 className="text-sm font-bold text-foreground font-serif truncate leading-tight mb-1 group-hover:text-primary transition-colors">{note.title}</h4>
                                 )}
                                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                  <span className="font-mono tracking-tight truncate">{note.preview}</span>
+                                  <span className="font-mono tracking-tight">{note.preview}</span>
                                 </div>
                             </div>
                           </div>

@@ -1,6 +1,7 @@
 import { run, makeWorkerUtils, runMigrations } from 'graphile-worker';
 import { pgPool } from '../config/worker.js';
-import { docEmbeddingJob } from '../services/jobs/DocEmbeddingJob.ts';
+import { docEmbeddingJob, DocEmbeddingJobPayload } from '../services/jobs/DocEmbeddingJob.js';
+import { reportGenerationJob, ReportGenerationJobPayload } from '../services/jobs/ReportGenerationJob.js';
 
 async function startWorker() {
   console.log('[Worker] Starting Graphile Worker...');
@@ -73,10 +74,20 @@ async function startWorker() {
         docEmbedding: async (payload, helpers) => {
           console.log(`[Worker] Received docEmbedding task with payload:`, JSON.stringify(payload).substring(0, 100));
           try {
-            await docEmbeddingJob(payload);
-            console.log(`[Worker] docEmbedding task completed successfully for doc ${payload.documentId}`);
+            await docEmbeddingJob(payload as DocEmbeddingJobPayload);
+            console.log(`[Worker] docEmbedding task completed successfully for doc ${(payload as DocEmbeddingJobPayload).documentId}`);
           } catch (error) {
             console.error(`[Worker] docEmbedding task failed:`, error);
+            throw error;
+          }
+        },
+        reportGeneration: async (payload, helpers) => {
+          console.log(`[Worker] Received reportGeneration task for report ${(payload as ReportGenerationJobPayload).reportId}`);
+          try {
+            await reportGenerationJob(payload as ReportGenerationJobPayload);
+            console.log(`[Worker] reportGeneration task completed successfully for report ${(payload as ReportGenerationJobPayload).reportId}`);
+          } catch (error) {
+            console.error(`[Worker] reportGeneration task failed:`, error);
             throw error;
           }
         },
