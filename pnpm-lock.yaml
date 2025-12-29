@@ -120,6 +120,9 @@ importers:
       lucide-react:
         specifier: ^0.460.0
         version: 0.460.0(react@19.2.3)
+      mind-elixir:
+        specifier: ^5.3.8
+        version: 5.3.8
       react:
         specifier: ^19.0.0
         version: 19.2.3
@@ -2685,6 +2688,9 @@ packages:
     resolution: {integrity: sha512-x0Vn8spI+wuJ1O6S7gnbaQg8Pxh4NNHb7KSINmEWKiPE4RKOplvijn+NkmYmmRgP68mc70j2EbeTFRsrswaQeg==}
     engines: {node: '>=4'}
     hasBin: true
+
+  mind-elixir@5.3.8:
+    resolution: {integrity: sha512-p5TuyTCgVZhaCjDi3JjH+Gpz4nL95/9C5nJqYyoxAIEqs3F5r92U7BdP6LPs9oii2kGJbcRBtIEQU6hefADqLQ==}
 
   minimatch@3.1.2:
     resolution: {integrity: sha512-J7p63hRiAjw1NDEww1W7i37+ByIrOWO5XQQAzZ3VOcL0PNybwpfmV/N05zFAzwQ9USyEcX6t3UO+K5aqBQOIHw==}
@@ -6318,6 +6324,8 @@ snapshots:
       mime-db: 1.52.0
 
   mime@1.6.0: {}
+
+  mind-elixir@5.3.8: {}
 
   minimatch@3.1.2:
     dependencies:

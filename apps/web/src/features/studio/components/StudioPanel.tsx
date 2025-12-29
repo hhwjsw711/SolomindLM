@@ -1,10 +1,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import ReactMarkdown from 'react-markdown';
 import {
   ChevronRight,
   MoreVertical,
-  Sparkles,
   AudioLines,
   Clapperboard,
   GitFork,
@@ -18,21 +16,18 @@ import {
   Trash2,
   Play,
   ArrowLeft,
-  ChevronLeft,
-  RotateCw,
-  CheckCircle2,
-  XCircle,
-  Lightbulb,
-  ChevronUp,
-  Loader2,
 } from 'lucide-react';
-import { StudioTool, Note, Source } from '@/shared/types/index';
+import { StudioTool, Note } from '@/shared/types/index';
 import { CreateReportModal } from './CreateReportModal';
-import { CustomizeFlashcardsModal, FlashcardConfig } from './CustomizeFlashcardsModal';
-import { CustomizeQuizModal, QuizConfig } from './CustomizeQuizModal';
-import { CustomizeAudioModal, AudioConfig } from './CustomizeAudioModal';
-import { reportsApi } from '../services/reportsApi';
-import { getReportSubtitle } from '@/shared/types/reportTypes';
+import { CustomizeFlashcardsModal } from './CustomizeFlashcardsModal';
+import { CustomizeQuizModal } from './CustomizeQuizModal';
+import { CustomizeAudioModal } from './CustomizeAudioModal';
+import { ReportView } from './views/ReportView';
+import { FlashcardView } from './views/FlashcardView';
+import { QuizView } from './views/QuizView';
+import { MindMapView } from './views/MindMapView';
+import { useStudioHandlers } from '../hooks/useStudioHandlers';
+import './MindMapStyles.css';
 
 interface StudioPanelProps {
   isOpen: boolean;
@@ -45,7 +40,7 @@ interface StudioPanelProps {
   onAddNote: (note: Note) => void;
   width: number;
   isResizing: boolean;
-  sources?: Source[];
+  sources?: any[];
   userId?: string | null;
   noteId?: string | null;
 }
@@ -60,349 +55,6 @@ const IconMap: Record<string, React.FC<any>> = {
   BarChart3,
   Presentation
 };
-
-// --- Sub-Components for Views ---
-
-const ReportView: React.FC<{ note: Note }> = ({ note }) => {
-    // Map status to progress steps
-    const phases = [
-      { key: 'generating', label: 'Initializing' },
-      { key: 'mapping', label: 'Processing sources' },
-      { key: 'collapsing', label: 'Synthesizing content' },
-      { key: 'reducing', label: 'Formatting document' },
-    ];
-
-    const currentPhaseIndex = phases.findIndex(p => p.key === note.status);
-    const isFailed = note.status === 'failed';
-    const isCompleted = note.status === 'completed';
-    const isGenerating = note.status === 'generating' || note.status === 'mapping' ||
-                          note.status === 'collapsing' || note.status === 'reducing';
-
-    return (
-        <div className="flex flex-col h-full bg-background animate-in fade-in slide-in-from-right-4 duration-300">
-             {/* Progress Header */}
-             {isGenerating && (
-               <div className="p-4 border-b border-border bg-secondary/30">
-                 <div className="flex items-center justify-between mb-3">
-                   <span className="text-xs font-medium text-muted-foreground">Generating Report</span>
-                   <span className="text-xs text-primary">
-                     {phases[currentPhaseIndex]?.label || 'Processing'}
-                   </span>
-                 </div>
-                 <div className="flex gap-1">
-                   {phases.map((phase, i) => (
-                     <div
-                       key={phase.key}
-                       className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
-                         i < currentPhaseIndex ? 'bg-primary' : 'bg-muted'
-                       }`}
-                     />
-                   ))}
-                 </div>
-               </div>
-             )}
-
-             {/* Error State */}
-             {isFailed && (
-               <div className="p-4 border-b border-border bg-destructive/10">
-                 <div className="flex items-center gap-3">
-                   <XCircle className="w-5 h-5 text-destructive shrink-0" />
-                   <div className="flex-1">
-                     <p className="text-sm font-medium text-destructive">Report generation failed</p>
-                     <p className="text-xs text-destructive/70 mt-1">
-                       {note.metadata?.error || 'An unknown error occurred'}
-                     </p>
-                   </div>
-                 </div>
-               </div>
-             )}
-
-             <div className="flex-1 overflow-y-auto p-6 md:p-8">
-                 <div className="max-w-3xl mx-auto bg-card border border-border shadow-sm p-8 rounded-sm min-h-[500px]">
-                     <div className="prose prose-stone dark:prose-invert max-w-none font-serif leading-relaxed select-text">
-                        {note.content ? (
-                            <ReactMarkdown
-                                components={{
-                                    img: () => null,
-                                    a: ({ node, children, ...props }) => <span className="text-foreground">{children}</span>,
-                                    video: () => null,
-                                    audio: () => null,
-                                    iframe: () => null,
-                                }}
-                            >
-                                {note.content}
-                            </ReactMarkdown>
-                        ) : isFailed ? (
-                          <div className="flex flex-col items-center justify-center py-12">
-                            <XCircle className="w-12 h-12 text-destructive mb-4" />
-                            <p className="text-muted-foreground">Report generation failed</p>
-                          </div>
-                        ) : (
-                            <div className="space-y-4">
-                              <div className="h-8 bg-muted/50 rounded w-3/4 animate-pulse"></div>
-                              <div className="h-4 bg-muted/50 rounded w-full animate-pulse" style={{ animationDelay: '0.1s' }}></div>
-                              <div className="h-4 bg-muted/50 rounded w-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                              <div className="h-4 bg-muted/50 rounded w-5/6 animate-pulse" style={{ animationDelay: '0.3s' }}></div>
-                              <div className="flex items-center justify-center py-8">
-                                <Loader2 className="w-5 h-5 text-primary animate-spin mr-2" />
-                                <p className="text-muted-foreground italic text-sm">Generating your report...</p>
-                              </div>
-                            </div>
-                        )}
-                     </div>
-                 </div>
-             </div>
-        </div>
-    );
-};
-
-const FlashcardView: React.FC<{ note: Note }> = ({ note }) => {
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const [isFlipped, setIsFlipped] = useState(false);
-    const cards = note.flashcards || [];
-
-    const handleNext = () => {
-        setIsFlipped(false);
-        setTimeout(() => setCurrentIndex((prev) => (prev + 1) % cards.length), 200);
-    };
-
-    const handlePrev = () => {
-        setIsFlipped(false);
-        setTimeout(() => setCurrentIndex((prev) => (prev - 1 + cards.length) % cards.length), 200);
-    };
-
-    if (cards.length === 0) return (
-      <div className="flex flex-col items-center justify-center h-full p-8 text-center space-y-4">
-        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center animate-spin">
-          <Sparkles className="w-6 h-6 text-primary" />
-        </div>
-        <p className="text-muted-foreground font-serif italic">Generating flashcards from your sources...</p>
-      </div>
-    );
-
-    const currentCard = cards[currentIndex];
-
-    return (
-        <div className="flex flex-col h-full items-center justify-center p-6 bg-secondary/10 animate-in fade-in slide-in-from-right-4 duration-300">
-            <div className="w-full max-w-lg aspect-[3/2] perspective-1000 group cursor-pointer" onClick={() => setIsFlipped(!isFlipped)}>
-                <div className={`relative w-full h-full transition-transform duration-500 transform-style-3d shadow-xl rounded-xl border border-border ${isFlipped ? 'rotate-y-180' : ''}`}>
-                    
-                    {/* Front */}
-                    <div className="absolute inset-0 backface-hidden bg-card rounded-xl flex flex-col items-center justify-center p-8 text-center">
-                         <span className="text-xs uppercase tracking-widest text-muted-foreground absolute top-6">Front</span>
-                         <p className="text-xl md:text-2xl font-bold font-serif text-foreground">{currentCard.front}</p>
-                         <div className="absolute bottom-6 text-xs text-muted-foreground/50 flex items-center gap-2">
-                             <RotateCw className="w-3 h-3" /> Click to flip
-                         </div>
-                    </div>
-
-                    {/* Back */}
-                    <div className="absolute inset-0 backface-hidden rotate-y-180 bg-primary/5 rounded-xl flex flex-col items-center justify-center p-8 text-center border-2 border-primary/20">
-                         <span className="text-xs uppercase tracking-widest text-primary/70 absolute top-6">Back</span>
-                         <p className="text-xl md:text-2xl font-medium font-serif text-foreground">{currentCard.back}</p>
-                    </div>
-
-                </div>
-            </div>
-
-            <div className="flex items-center gap-6 mt-8">
-                <button onClick={handlePrev} className="p-3 rounded-full hover:bg-card border border-transparent hover:border-border transition-all">
-                    <ChevronLeft className="w-6 h-6" />
-                </button>
-                <span className="font-mono text-sm font-medium">
-                    {currentIndex + 1} / {cards.length}
-                </span>
-                <button onClick={handleNext} className="p-3 rounded-full hover:bg-card border border-transparent hover:border-border transition-all">
-                    <ChevronRight className="w-6 h-6" />
-                </button>
-            </div>
-            
-             <style>{`
-                .perspective-1000 { perspective: 1000px; }
-                .transform-style-3d { transform-style: preserve-3d; }
-                .backface-hidden { backface-visibility: hidden; }
-                .rotate-y-180 { transform: rotateY(180deg); }
-            `}</style>
-        </div>
-    );
-};
-
-const QuizView: React.FC<{ note: Note }> = ({ note }) => {
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const [userAnswers, setUserAnswers] = useState<Record<number, number>>({});
-    const [showResults, setShowResults] = useState(false);
-    const [showHint, setShowHint] = useState(false);
-
-    const questions = note.questions || [];
-    const currentQuestion = questions[currentIndex];
-    
-    // Derived state
-    const isAnswered = userAnswers[currentIndex] !== undefined;
-    const selectedOption = userAnswers[currentIndex] ?? null;
-
-    const handleSelect = (index: number) => {
-        if (isAnswered) return;
-        setUserAnswers(prev => ({...prev, [currentIndex]: index}));
-    };
-
-    const handleNext = () => {
-        setShowHint(false);
-        if (currentIndex < questions.length - 1) {
-            setCurrentIndex(prev => prev + 1);
-        } else {
-            setShowResults(true);
-        }
-    };
-
-    const handlePrev = () => {
-        setShowHint(false);
-        if (currentIndex > 0) {
-            setCurrentIndex(prev => prev - 1);
-        }
-    };
-
-    const resetQuiz = () => {
-        setCurrentIndex(0);
-        setUserAnswers({});
-        setShowResults(false);
-        setShowHint(false);
-    };
-
-    if (questions.length === 0) return (
-      <div className="flex flex-col items-center justify-center h-full p-8 text-center space-y-4">
-        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center animate-spin">
-          <Sparkles className="w-6 h-6 text-primary" />
-        </div>
-        <p className="text-muted-foreground font-serif italic">Generating quiz from your sources...</p>
-      </div>
-    );
-
-    if (showResults) {
-        const score = Object.entries(userAnswers).reduce((acc, [qIdx, aIdx]) => {
-            return acc + (questions[parseInt(qIdx)].answer === aIdx ? 1 : 0);
-        }, 0);
-
-        return (
-            <div className="flex flex-col h-full items-center justify-center p-8 animate-in fade-in zoom-in-95 duration-300">
-                <div className="text-center space-y-6 max-w-md w-full bg-card p-10 rounded-2xl border border-border shadow-lg">
-                    <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto text-primary">
-                        <Sparkles className="w-10 h-10" />
-                    </div>
-                    <div>
-                        <h3 className="text-2xl font-bold font-serif mb-2">Quiz Complete!</h3>
-                        <p className="text-muted-foreground">You scored {score} out of {questions.length}</p>
-                    </div>
-                    <div className="w-full bg-secondary rounded-full h-3 overflow-hidden">
-                        <div 
-                            className="bg-primary h-full transition-all duration-1000 ease-out" 
-                            style={{ width: `${((score / questions.length) * 100)}%` }}
-                        />
-                    </div>
-                    <button 
-                        onClick={resetQuiz}
-                        className="w-full py-3 bg-primary text-primary-foreground font-bold rounded-lg hover:bg-primary/90 transition-colors"
-                    >
-                        Try Again
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
-    return (
-        <div className="flex flex-col h-full bg-background animate-in fade-in slide-in-from-right-4 duration-300 relative">
-            <div className="flex-1 overflow-y-auto">
-                <div className="max-w-2xl mx-auto w-full p-8 md:p-12 min-h-full flex flex-col">
-                    <div className="mb-8">
-                        <div className="flex justify-between text-[10px] md:text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3 font-sans">
-                            <span>Question {currentIndex + 1}</span>
-                            <span>{questions.length} Total</span>
-                        </div>
-                        <div className="w-full bg-secondary/50 rounded-full h-1.5 overflow-hidden">
-                            <div 
-                                className="bg-primary h-full rounded-full transition-all duration-500 ease-out" 
-                                style={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
-                            />
-                        </div>
-                    </div>
-
-                    <h3 className="text-xl md:text-3xl font-bold font-serif mb-10 leading-snug text-foreground">
-                        {currentQuestion.question}
-                    </h3>
-
-                    <div className="space-y-4 flex-1 pb-10">
-                        {currentQuestion.options.map((option, idx) => {
-                            let stateStyles = "border-border hover:bg-secondary/50 hover:border-primary/50";
-                            
-                            if (isAnswered) {
-                                if (idx === currentQuestion.answer) {
-                                    stateStyles = "bg-green-500/10 border-green-500 text-green-700 dark:text-green-400";
-                                } else if (idx === selectedOption) {
-                                    stateStyles = "bg-red-500/10 border-red-500 text-red-700 dark:text-red-400";
-                                } else {
-                                    stateStyles = "opacity-50 border-border";
-                                }
-                            } else if (selectedOption === idx) {
-                                stateStyles = "border-primary bg-primary/5";
-                            }
-
-                            return (
-                                <button
-                                    key={idx}
-                                    onClick={() => handleSelect(idx)}
-                                    disabled={isAnswered}
-                                    className={`w-full text-left p-5 md:p-6 rounded-xl border-2 transition-all flex items-center justify-between group ${stateStyles}`}
-                                >
-                                    <span className="font-medium text-base md:text-lg">{option}</span>
-                                    {isAnswered && idx === currentQuestion.answer && <CheckCircle2 className="w-5 h-5 text-green-600" />}
-                                    {isAnswered && idx === selectedOption && idx !== currentQuestion.answer && <XCircle className="w-5 h-5 text-red-600" />}
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
-            </div>
-
-            <div className="shrink-0 p-4 md:px-12 md:py-6 border-t border-border bg-background/80 backdrop-blur-md z-10">
-                <div className="max-w-2xl mx-auto w-full flex items-center justify-between">
-                    <div className="relative">
-                        <button 
-                            onClick={() => setShowHint(!showHint)}
-                            className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/50 hover:bg-secondary text-sm font-medium transition-colors text-muted-foreground hover:text-foreground"
-                        >
-                           <Lightbulb className="w-4 h-4" />
-                           <span>Hint</span>
-                           <ChevronUp className={`w-3 h-3 transition-transform ${showHint ? 'rotate-180' : ''}`} />
-                        </button>
-                        {showHint && (
-                             <div className="absolute bottom-full left-0 mb-3 w-72 p-4 bg-popover border border-border rounded-xl shadow-xl text-sm leading-relaxed animate-in fade-in slide-in-from-bottom-2 z-20">
-                                 <span className="font-bold block mb-1 text-xs uppercase tracking-wide text-primary">Hint</span>
-                                 {currentQuestion.hint || "Try to recall the definition from your notes."}
-                             </div>
-                        )}
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <button 
-                            onClick={handlePrev}
-                            disabled={currentIndex === 0}
-                            className="px-4 py-2 text-sm font-bold text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:hover:text-muted-foreground transition-colors"
-                        >
-                            Previous
-                        </button>
-                        <button 
-                            onClick={handleNext}
-                            className="px-6 py-2 bg-primary text-primary-foreground text-sm font-bold rounded-full hover:bg-primary/90 transition-all shadow-md active:translate-y-0.5 min-w-[100px]"
-                        >
-                             {currentIndex === questions.length - 1 ? "Finish" : "Next"}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-// --- Main Studio Panel ---
 
 export const StudioPanel: React.FC<StudioPanelProps> = ({
   isOpen,
@@ -423,15 +75,37 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
-  
-  // Modal states
-  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [isFlashcardModalOpen, setIsFlashcardModalOpen] = useState(false);
-  const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
-  const [isAudioModalOpen, setIsAudioModalOpen] = useState(false);
+  const [isMindMapExpanded, setIsMindMapExpanded] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const activeNote = notes.find(n => n.id === activeNoteId);
+
+  // Use custom hook for business logic handlers
+  const {
+    isReportModalOpen,
+    isFlashcardModalOpen,
+    isQuizModalOpen,
+    isAudioModalOpen,
+    setIsReportModalOpen,
+    setIsFlashcardModalOpen,
+    setIsQuizModalOpen,
+    setIsAudioModalOpen,
+    handleToolClick,
+    handleCreateReport,
+    handleCreateFlashcards,
+    handleCreateQuiz,
+    handleCreateAudio,
+  } = useStudioHandlers({
+    notes,
+    sources,
+    userId,
+    noteId,
+    onAddNote,
+    onUpdateNote,
+    onUpdateNoteFull,
+    onDeleteNote,
+    onSetActiveNoteId: setActiveNoteId,
+  });
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -468,164 +142,9 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
   };
 
   const handleNoteClick = (note: Note) => {
-      if (note.type === 'quiz' || note.type === 'flashcard' || note.type === 'report') {
-          setActiveNoteId(note.id);
-      }
-  };
-
-  const handleToolClick = (toolId: string) => {
-    if (toolId === 'reports') {
-      setIsReportModalOpen(true);
-    } else if (toolId === 'flashcards') {
-      setIsFlashcardModalOpen(true);
-    } else if (toolId === 'quiz') {
-      setIsQuizModalOpen(true);
-    } else if (toolId === 'audio') {
-      setIsAudioModalOpen(true);
+    if (note.type === 'quiz' || note.type === 'flashcard' || note.type === 'report' || note.type === 'mindmap') {
+        setActiveNoteId(note.id);
     }
-  };
-
-  const handleCreateFlashcards = (config: FlashcardConfig) => {
-    setIsFlashcardModalOpen(false);
-    const newNote: Note = {
-      id: Math.random().toString(36).substr(2, 9),
-      title: config.topic ? `Flashcards: ${config.topic}` : 'Study Flashcards',
-      preview: `${config.count === 'standard' ? '10' : config.count === 'fewer' ? '5' : '20'} Cards • ${config.difficulty}`,
-      type: 'flashcard',
-      flashcards: [] // Initial empty state triggers generating view
-    };
-    onAddNote(newNote);
-    setActiveNoteId(newNote.id);
-    setTimeout(() => {
-        onUpdateNote(newNote.id, newNote.title); // Trigger content fill
-    }, 2500);
-  };
-
-  const handleCreateQuiz = (config: QuizConfig) => {
-    setIsQuizModalOpen(false);
-    const newNote: Note = {
-      id: Math.random().toString(36).substr(2, 9),
-      title: config.focus ? `Quiz: ${config.focus}` : 'Concept Quiz',
-      preview: `${config.count === 'standard' ? '5' : config.count === 'fewer' ? '3' : '10'} Questions • ${config.difficulty}`,
-      type: 'quiz',
-      questions: [] // Initial empty state triggers generating view
-    };
-    onAddNote(newNote);
-    setActiveNoteId(newNote.id);
-    setTimeout(() => {
-        onUpdateNote(newNote.id, newNote.title);
-    }, 2500);
-  };
-
-  const handleCreateReport = async (formatId: string, customPrompt?: string) => {
-    setIsReportModalOpen(false);
-
-    // Get selected document IDs from sources
-    const selectedDocumentIds = sources.filter(s => s.selected).map(s => s.id);
-
-    if (selectedDocumentIds.length === 0) {
-      alert('Please select at least one source to generate a report');
-      return;
-    }
-
-    if (!userId || !noteId) {
-      alert('Authentication error. Please log in again.');
-      return;
-    }
-
-    const titles: Record<string, string> = {
-      'briefing': 'Briefing Document',
-      'study_guide': 'Study Guide',
-      'blog_post': 'Blog Post',
-      'summary': 'Summary',
-      'technical_report': 'Technical Report',
-      'concept_explainer': 'Concept Explainer',
-      'methodology_overview': 'Methodology Overview',
-      'custom': 'Custom Report'
-    };
-
-    // Create note with generating status (placeholder ID)
-    const placeholderId = Math.random().toString(36).substr(2, 9);
-    const newNote: Note = {
-      id: placeholderId,
-      title: titles[formatId] || 'New Report',
-      preview: getReportSubtitle(formatId),
-      type: 'report',
-      content: '',
-      status: 'generating',
-      metadata: {
-        reportType: formatId,
-      }
-    };
-
-    onAddNote(newNote);
-    setActiveNoteId(placeholderId);
-
-    try {
-      // Call API to create and queue report
-      const { reportId, note } = await reportsApi.createReport({
-        userId,
-        noteId,
-        documentIds: selectedDocumentIds,
-        reportType: formatId,
-        customPrompt,
-      });
-
-      // Update note ID with real report ID
-      if (onUpdateNoteFull) {
-        onUpdateNoteFull(placeholderId, { ...note, type: 'report' as const });
-      }
-      setActiveNoteId(reportId);
-
-      // Start polling for status
-      reportsApi.pollReportStatus(
-        reportId,
-        (updatedNote) => {
-          // Update note during polling
-          if (onUpdateNoteFull) {
-            onUpdateNoteFull(reportId, { ...updatedNote, type: 'report' as const });
-          }
-        }
-      ).then(finalNote => {
-        // Final update when complete
-        if (onUpdateNoteFull) {
-          onUpdateNoteFull(reportId, { ...finalNote, type: 'report' as const });
-        }
-      }).catch(error => {
-        console.error('Report generation failed:', error);
-        // Update with failed status
-        if (onUpdateNoteFull) {
-          const failedNote = notes.find(n => n.id === reportId) || newNote;
-          const reportType = failedNote.metadata?.reportType || formatId;
-          onUpdateNoteFull(reportId, {
-            ...failedNote,
-            status: 'failed',
-            preview: `${getReportSubtitle(reportType)} • Failed`,
-            metadata: {
-              ...failedNote.metadata,
-              error: error instanceof Error ? error.message : 'Failed to generate report',
-            }
-          });
-        }
-      });
-
-    } catch (error) {
-      console.error('Failed to create report:', error);
-      alert(error instanceof Error ? error.message : 'Failed to create report');
-      // Remove the placeholder note
-      onDeleteNote(placeholderId);
-    }
-  };
-
-  const handleCreateAudio = (config: AudioConfig) => {
-    setIsAudioModalOpen(false);
-    const newNote: Note = {
-      id: Math.random().toString(36).substr(2, 9),
-      title: `Audio: ${config.formatId.replace('_', ' ')}`,
-      preview: `Audio Overview • ${config.length}`,
-      type: 'audio'
-    };
-    onAddNote(newNote);
   };
 
   return (
@@ -641,7 +160,7 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
       <div className="flex items-center justify-between p-4 border-b border-border bg-sidebar/50 backdrop-blur-sm sticky top-0 z-10 h-14">
         {activeNote ? (
             <div className="flex items-center gap-2 text-sidebar-foreground w-full">
-                <button 
+                <button
                   onClick={() => setActiveNoteId(null)}
                   className="p-1 -ml-1 hover:bg-sidebar-accent rounded-sm transition-colors text-sidebar-foreground/70 hover:text-sidebar-foreground flex items-center justify-center shrink-0"
                 >
@@ -653,7 +172,7 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
             </div>
         ) : (
             <>
-                <button 
+                <button
                   onClick={onClose}
                   className="p-1 hover:bg-sidebar-accent rounded-sm transition-colors text-sidebar-foreground/70 hover:text-sidebar-foreground flex items-center justify-center shrink-0"
                 >
@@ -673,6 +192,13 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
                 {activeNote.type === 'report' && <ReportView note={activeNote} />}
                 {activeNote.type === 'flashcard' && <FlashcardView note={activeNote} />}
                 {activeNote.type === 'quiz' && <QuizView note={activeNote} />}
+                {activeNote.type === 'mindmap' && (
+                  <MindMapView 
+                    note={activeNote} 
+                    isExpanded={isMindMapExpanded}
+                    onToggleExpanded={() => setIsMindMapExpanded(!isMindMapExpanded)}
+                  />
+                )}
             </div>
         ) : (
             <div className="p-4 space-y-8">
@@ -682,8 +208,8 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
                     {tools.map((tool) => {
                       const Icon = IconMap[tool.iconName] || FileText;
                       return (
-                        <div 
-                          key={tool.id} 
+                        <div
+                          key={tool.id}
                           onClick={() => handleToolClick(tool.id)}
                           className="group flex flex-col justify-between p-3 h-24 bg-card border border-border rounded-lg hover:shadow-md hover:border-primary/50 transition-all cursor-pointer relative overflow-hidden"
                         >
@@ -704,8 +230,8 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
                   </div>
                   <div className="space-y-3">
                     {notes.map((note) => (
-                      <div 
-                        key={note.id} 
+                      <div
+                        key={note.id}
                         onClick={() => handleNoteClick(note)}
                         className="relative bg-card border-l-4 border-l-primary border-y border-r border-border p-3 pl-4 shadow-sm hover:shadow-md transition-shadow group rounded-r-sm cursor-pointer"
                       >
@@ -731,6 +257,11 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
                                     <HelpCircle className="w-4 h-4 shrink-0" />
                                 </div>
                             )}
+                            {note.type === 'mindmap' && (
+                                <div className="shrink-0 w-8 h-8 rounded-lg bg-fuchsia-500/10 text-fuchsia-600 flex items-center justify-center">
+                                    <GitFork className="w-4 h-4 shrink-0" />
+                                </div>
+                            )}
                             <div className="flex-1 min-w-0">
                                 {editingId === note.id ? (
                                     <input
@@ -751,7 +282,7 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
                             </div>
                           </div>
                           <div className="relative kebab-menu shrink-0">
-                            <button 
+                            <button
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     setActiveMenuId(activeMenuId === note.id ? null : note.id);
@@ -762,13 +293,13 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
                             </button>
                             {activeMenuId === note.id && (
                                 <div className="absolute right-0 top-6 w-36 bg-popover border border-border shadow-lg rounded-md z-50 py-1 animate-in fade-in zoom-in-95 duration-100">
-                                    <button 
+                                    <button
                                         onClick={(e) => { e.stopPropagation(); handleStartEdit(note); }}
                                         className="w-full text-left px-3 py-2 text-xs hover:bg-accent text-popover-foreground flex items-center gap-2"
                                     >
                                         <Pencil className="w-3.5 h-3.5 shrink-0" /> Rename
                                     </button>
-                                    <button 
+                                    <button
                                         onClick={(e) => { e.stopPropagation(); onDeleteNote(note.id); setActiveMenuId(null); }}
                                         className="w-full text-left px-3 py-2 text-xs hover:bg-destructive/10 text-destructive flex items-center gap-2"
                                     >
@@ -785,7 +316,7 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
             </div>
         )}
       </div>
-      
+
       {!activeNote && (
           <div className="p-4 border-t border-border bg-sidebar/30 mt-auto">
             <button className="w-full py-2 bg-sidebar-accent border border-sidebar-border text-sidebar-foreground text-xs font-bold uppercase tracking-wide rounded-sm hover:bg-sidebar-accent/80 transition-colors shadow-sm">
@@ -795,12 +326,12 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
       )}
 
       {/* Modals */}
-      <CreateReportModal 
+      <CreateReportModal
         isOpen={isReportModalOpen}
         onClose={() => setIsReportModalOpen(false)}
         onSelectFormat={handleCreateReport}
       />
-      
+
       <CustomizeFlashcardsModal
         isOpen={isFlashcardModalOpen}
         onClose={() => setIsFlashcardModalOpen(false)}

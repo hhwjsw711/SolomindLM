@@ -4,9 +4,23 @@ import dotenv from 'dotenv';
 import routes from './routes/index.js';
 import { errorHandler } from './middleware/error.js';
 import { env } from './config/env.js';
+import { runMigrations } from 'graphile-worker';
+import { pgPool } from './config/worker.js';
 
 // Load environment variables
 dotenv.config();
+
+// Ensure Graphile Worker schema is migrated before starting server
+async function ensureGraphileWorkerSchema() {
+  try {
+    console.log('[API] Running Graphile Worker schema migration...');
+    await runMigrations({ pgPool });
+    console.log('[API] Graphile Worker schema migration completed');
+  } catch (error) {
+    console.error('[API] Graphile Worker schema migration failed:', error);
+    // Don't throw - let server start anyway, worker may handle migrations
+  }
+}
 
 const app = express();
 const PORT = env.PORT || 3001;
@@ -41,8 +55,12 @@ app.get('/', (req, res) => {
 app.use(errorHandler);
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`
+async function startServer() {
+  // Ensure Graphile Worker schema exists
+  await ensureGraphileWorkerSchema();
+
+  app.listen(PORT, () => {
+    console.log(`
 ╔═════════════════════════════════════════════════════════╗
 ║                                                         ║
 ║        SolomindLM Ingestion Pipeline API               ║
@@ -53,6 +71,12 @@ app.listen(PORT, () => {
 ║                                                         ║
 ╚═════════════════════════════════════════════════════════╝
   `);
+  });
+}
+
+startServer().catch((error) => {
+  console.error('[API] Failed to start server:', error);
+  process.exit(1);
 });
 
 // Graceful shutdown

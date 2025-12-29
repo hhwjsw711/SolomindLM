@@ -11,6 +11,8 @@ import { Source, Note, NotebookItem, Document } from '@/shared/types/index';
 import { documentsApi } from './features/sources/services/documentsApi';
 import { notebooksApi } from './features/notebooks/services/notebooksApi';
 import { notesApi } from './features/notebooks/services/notesApi';
+import { mindMapApi } from './features/studio/services/mindMapApi';
+import 'mind-elixir/style.css';
 
 const MIN_PANEL_WIDTH = 220;
 const MAX_PANEL_WIDTH = 600;
@@ -24,7 +26,7 @@ function documentToSource(doc: Document): Source {
     title: doc.title || doc.file_name,
     type: doc.file_type === 'youtube' ? 'WEB' : (doc.file_type === 'file' ? 'PDF' : 'WEB'),
     date: new Date(doc.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    selected: false,
+    selected: true,
     content: '',
     status: doc.status,
   };
@@ -54,7 +56,7 @@ const AppContent: React.FC = () => {
 
   // Resize State
   const [leftWidth, setLeftWidth] = useState(360);
-  const [rightWidth, setRightWidth] = useState(320);
+  const [rightWidth, setRightWidth] = useState(420);
   const [isResizingLeft, setIsResizingLeft] = useState(false);
   const [isResizingRight, setIsResizingRight] = useState(false);
 
@@ -103,11 +105,18 @@ const AppContent: React.FC = () => {
 
   const handleDeleteNote = async (id: string) => {
     try {
+      // Find the note to check its type
+      const noteToDelete = notes.find(n => n.id === id);
+
       // Optimistically remove from UI
       setNotes(prev => prev.filter(n => n.id !== id));
 
-      // Delete from backend
-      await notesApi.deleteNote(id);
+      // Delete from backend - route to correct API based on type
+      if (noteToDelete?.type === 'mindmap') {
+        await mindMapApi.deleteMindMap(id);
+      } else {
+        await notesApi.deleteNote(id);
+      }
     } catch (error) {
       console.error('Failed to delete note:', error);
       // Reload notes on error
@@ -259,11 +268,29 @@ const AppContent: React.FC = () => {
     }
   }, [isAuthenticated, user, activeNotebookId, currentView]);
 
-  // Load notes from API when authenticated and notebook is active
+  // Load notes and mind maps from API when authenticated and notebook is active
   useEffect(() => {
     if (isAuthenticated && user && activeNotebookId && activeNotebookId !== 'new' && currentView === 'notebook') {
-      notesApi.getNotes(activeNotebookId)
-        .then(loadedNotes => setNotes(loadedNotes))
+      // Fetch both notes (reports, flashcards, quizzes) and mind maps in parallel
+      Promise.all([
+        notesApi.getNotes(activeNotebookId).catch(err => {
+          console.error('Failed to load notes:', err);
+          return [];
+        }),
+        mindMapApi.getMindMaps(activeNotebookId).catch(err => {
+          console.error('Failed to load mind maps:', err);
+          return [];
+        }),
+      ])
+        .then(([loadedNotes, loadedMindMaps]) => {
+          // Merge notes and mind maps, sort by created_at descending
+          const allNotes = [...loadedNotes, ...loadedMindMaps].sort((a, b) => {
+            const aDate = a.metadata?.generatedAt || a.metadata?.createdAt || '';
+            const bDate = b.metadata?.generatedAt || b.metadata?.createdAt || '';
+            return bDate.localeCompare(aDate);
+          });
+          setNotes(allNotes);
+        })
         .catch(err => console.error('Failed to load notes:', err));
     } else if (currentView === 'home') {
       // Clear notes when going to home

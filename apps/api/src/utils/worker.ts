@@ -2,6 +2,7 @@ import { run, makeWorkerUtils, runMigrations } from 'graphile-worker';
 import { pgPool } from '../config/worker.js';
 import { docEmbeddingJob, DocEmbeddingJobPayload } from '../services/jobs/DocEmbeddingJob.js';
 import { reportGenerationJob, ReportGenerationJobPayload } from '../services/jobs/ReportGenerationJob.js';
+import { mindMapGenerationJob, MindMapGenerationJobPayload } from '../services/jobs/MindMapGenerationJob.js';
 
 async function startWorker() {
   console.log('[Worker] Starting Graphile Worker...');
@@ -88,6 +89,16 @@ async function startWorker() {
             console.log(`[Worker] reportGeneration task completed successfully for report ${(payload as ReportGenerationJobPayload).reportId}`);
           } catch (error) {
             console.error(`[Worker] reportGeneration task failed:`, error);
+            throw error;
+          }
+        },
+        mindmapGeneration: async (payload, helpers) => {
+          console.log(`[Worker] Received mindmapGeneration task for mindmap ${(payload as MindMapGenerationJobPayload).mindMapId}`);
+          try {
+            await mindMapGenerationJob(payload as MindMapGenerationJobPayload);
+            console.log(`[Worker] mindmapGeneration task completed successfully for mindmap ${(payload as MindMapGenerationJobPayload).mindMapId}`);
+          } catch (error) {
+            console.error(`[Worker] mindmapGeneration task failed:`, error);
             throw error;
           }
         },

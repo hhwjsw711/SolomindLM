@@ -37,11 +37,21 @@ export interface Flashcard {
   back: string;
 }
 
+export interface MindMapNode {
+  id: string;
+  topic: string;
+  children?: MindMapNode[];
+}
+
+export interface MindMapNodeData {
+  nodeData: MindMapNode;
+}
+
 export interface Note {
   id: string;
   title: string;
   preview: string;
-  type: 'text' | 'report' | 'flashcard' | 'quiz' | 'audio';
+  type: 'text' | 'report' | 'flashcard' | 'quiz' | 'audio' | 'mindmap';
   // Content
   content?: string;
   // Report-specific fields
@@ -58,6 +68,8 @@ export interface Note {
   flashcards?: Flashcard[];
   // Quiz-specific fields
   questions?: QuizQuestion[];
+  // Mind Map-specific fields
+  mindMapData?: MindMapNodeData;
 }
 
 export interface NotebookItem {
