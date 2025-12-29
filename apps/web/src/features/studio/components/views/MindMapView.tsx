@@ -215,17 +215,15 @@ export const MindMapView: React.FC<MindMapViewProps> = ({ note, isExpanded = fal
     return (
       <div className="flex flex-col h-full bg-background animate-in fade-in slide-in-from-right-4 duration-300">
         <div className="p-4 border-b border-border bg-secondary/30">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium text-muted-foreground">Generating Mind Map</span>
-            <span className="text-xs text-primary">
-              {note.status === 'mapping' ? 'Processing sources' :
-               note.status === 'collapsing' ? 'Synthesizing content' :
-               note.status === 'reducing' ? 'Creating structure' : 'Initializing'}
+          <div className="flex items-center justify-center gap-3">
+            <Loader2 className="w-5 h-5 text-primary animate-spin" />
+            <span className="text-sm font-medium text-muted-foreground">
+              Creating mind map...
             </span>
           </div>
-          <div className="h-1 bg-secondary rounded-full overflow-hidden">
-            <div className="h-full bg-primary animate-pulse w-full" />
-          </div>
+          <p className="text-xs text-center text-muted-foreground/60 mt-2">
+            This may take a moment
+          </p>
         </div>
         <div className="flex-1 flex items-center justify-center p-8">
           <div className="text-center space-y-4">

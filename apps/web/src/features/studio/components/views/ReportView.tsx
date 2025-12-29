@@ -8,15 +8,6 @@ export interface ReportViewProps {
 }
 
 export const ReportView: React.FC<ReportViewProps> = ({ note }) => {
-  // Map status to progress steps
-  const phases = [
-    { key: 'generating', label: 'Initializing' },
-    { key: 'mapping', label: 'Processing sources' },
-    { key: 'collapsing', label: 'Synthesizing content' },
-    { key: 'reducing', label: 'Formatting document' },
-  ];
-
-  const currentPhaseIndex = phases.findIndex(p => p.key === note.status);
   const isFailed = note.status === 'failed';
   const isCompleted = note.status === 'completed';
   const isGenerating = note.status === 'generating' || note.status === 'mapping' ||
@@ -27,22 +18,15 @@ export const ReportView: React.FC<ReportViewProps> = ({ note }) => {
            {/* Progress Header */}
            {isGenerating && (
              <div className="p-4 border-b border-border bg-secondary/30">
-               <div className="flex items-center justify-between mb-3">
-                 <span className="text-xs font-medium text-muted-foreground">Generating Report</span>
-                 <span className="text-xs text-primary">
-                   {phases[currentPhaseIndex]?.label || 'Processing'}
+               <div className="flex items-center justify-center gap-3">
+                 <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                 <span className="text-sm font-medium text-muted-foreground">
+                   Generating report...
                  </span>
                </div>
-               <div className="flex gap-1">
-                 {phases.map((phase, i) => (
-                   <div
-                     key={phase.key}
-                     className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
-                       i < currentPhaseIndex ? 'bg-primary' : 'bg-muted'
-                     }`}
-                   />
-                 ))}
-               </div>
+               <p className="text-xs text-center text-muted-foreground/60 mt-2">
+                 This may take a moment
+               </p>
              </div>
            )}
 
