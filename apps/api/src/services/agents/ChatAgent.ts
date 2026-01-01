@@ -483,7 +483,6 @@ Do NOT make up information. Do NOT use external knowledge. Only use what's in th
           console.log(`[ChatAgent] Auto-search collected ${chunks.length} references`);
         }
         // Add the tool result to messages
-        messages.push(new AIMessage('', [searchTool.name]));
         messages.push(new ToolMessage(searchResult, searchTool.name));
       } catch (error) {
         console.error('[ChatAgent] Auto-search failed:', error);
