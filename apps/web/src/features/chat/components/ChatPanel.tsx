@@ -215,58 +215,55 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
           <MessageCircle className="w-4 h-4" />
           <span className="font-sans font-bold text-sm tracking-wide uppercase">Chat</span>
         </div>
-        <div className="relative">
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="p-1 hover:bg-secondary rounded-sm transition-colors text-foreground/70 hover:text-foreground flex items-center justify-center shrink-0"
-            title="Options"
-          >
-            <MoreVertical className="w-5 h-5" />
-          </button>
-          {isMenuOpen && (
-            <>
-              <div className="fixed inset-0 z-40" onClick={() => setIsMenuOpen(false)} />
-              <div className="absolute right-0 top-full mt-1 w-40 bg-card border border-border rounded-lg shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
-                <button
-                  onClick={handleDeleteHistory}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors"
-                >
-                  <Trash2 className="w-4 h-4 shrink-0" />
-                  Delete history
-                </button>
-              </div>
-            </>
+        
+        {/* Right Side Controls */}
+        <div className="flex items-center gap-2">
+          {/* Panel Toggle Buttons - shown when panels are closed */}
+          {!isLeftOpen && (
+            <button 
+              onClick={toggleLeft}
+              className="p-2 bg-card border border-border rounded-lg shadow-sm hover:bg-accent text-foreground transition-colors shrink-0"
+              title="Open Sources"
+            >
+              <PanelLeftOpen className="w-4 h-4" />
+            </button>
           )}
+          {!isRightOpen && (
+            <button 
+              onClick={toggleRight}
+              className="p-2 bg-card border border-border rounded-lg shadow-sm hover:bg-accent text-foreground transition-colors shrink-0"
+              title="Open Studio"
+            >
+              <PanelRightOpen className="w-4 h-4" />
+            </button>
+          )}
+
+          {/* Options Menu */}
+          <div className="relative">
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="p-1 hover:bg-secondary rounded-lg transition-colors text-foreground/70 hover:text-foreground flex items-center justify-center shrink-0"
+              title="Options"
+            >
+              <MoreVertical className="w-5 h-5" />
+            </button>
+            {isMenuOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setIsMenuOpen(false)} />
+                <div className="absolute right-0 top-full mt-1 w-40 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                  <button
+                    onClick={handleDeleteHistory}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4 shrink-0" />
+                    Delete history
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
-
-      {/* Dynamic Header for Toggles when panels are closed */}
-      {(!isLeftOpen || !isRightOpen) && (
-        <div className="absolute top-4 left-4 right-4 z-20 flex justify-between pointer-events-none">
-          <div className="pointer-events-auto">
-            {!isLeftOpen && (
-              <button 
-                onClick={toggleLeft}
-                className="p-2 bg-card border border-border rounded-sm shadow-sm hover:bg-accent text-foreground transition-colors"
-                title="Open Sources"
-              >
-                <PanelLeftOpen className="w-5 h-5" />
-              </button>
-            )}
-          </div>
-          <div className="pointer-events-auto">
-            {!isRightOpen && (
-              <button 
-                onClick={toggleRight}
-                className="p-2 bg-card border border-border rounded-sm shadow-sm hover:bg-accent text-foreground transition-colors"
-                title="Open Studio"
-              >
-                <PanelRightOpen className="w-5 h-5" />
-              </button>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Messages Area */}
       <div 
@@ -275,9 +272,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       >
         {messages.map((msg) => (
           <div key={msg.id} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`} data-message-id={msg.id}>
-            <div 
+            <div
               className={`
-                max-w-[85%] relative p-6 rounded-sm text-base leading-relaxed
+                max-w-[85%] relative p-6 rounded-2xl text-base leading-relaxed
                 ${msg.role === 'user' 
                   ? 'bg-transparent text-foreground border-b-2 border-primary/20 font-handwriting italic' 
                   : 'bg-card border border-border shadow-sm text-card-foreground'}
@@ -292,7 +289,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
           </div>
         ))}
         {/* Spacer for bottom input */}
-        <div className="h-32" />
+        <div className="h-56" />
 
         {/* Floating Tooltip */}
         {hoveredRefId !== null && hoveredMessageId !== null && messagesContainerRef.current && (() => {
@@ -345,7 +342,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                 setHoveredRefId(null);
               }}
             >
-              <div className="bg-popover border border-border rounded-lg shadow-xl p-5 w-96 max-h-64 overflow-y-auto text-sm animate-in fade-in zoom-in-95 duration-200 flex flex-col">
+              <div className="bg-popover border border-border rounded-2xl shadow-xl p-5 w-96 max-h-64 overflow-y-auto text-sm animate-in fade-in zoom-in-95 duration-200 flex flex-col">
                 <p className="text-[10px] uppercase tracking-widest font-mono text-muted-foreground mb-3 font-bold shrink-0">
                   Reference {hoveredRefId} • {ref.sourceTitle}
                 </p>
@@ -360,7 +357,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
 
       {/* Input Area */}
       <div className="absolute bottom-8 left-0 right-0 px-4 flex justify-center z-20">
-        <div className="w-full max-w-3xl bg-card border-2 border-border shadow-lg rounded-sm p-2 flex flex-col gap-2 relative">
+        <div className="w-full max-w-3xl bg-card border-2 border-border shadow-lg rounded-2xl p-2 flex flex-col gap-2 relative">
 
            <textarea
              ref={textareaRef}
@@ -377,7 +374,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
              <button
                onClick={handleSendMessage}
                disabled={!inputMessage.trim() || isSending || isLoading || !notebookId}
-               className="p-2 bg-primary text-primary-foreground rounded-sm hover:bg-primary/90 transition-all shadow-md active:translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+               className="p-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all shadow-md active:translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
                title={inputMessage.trim() ? 'Send message (Enter)' : 'Type a message to send'}
              >
                {isSending || isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowUp className="w-5 h-5" />}

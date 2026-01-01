@@ -411,7 +411,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                             <div className="flex items-center justify-between text-[11px] text-muted-foreground font-medium uppercase tracking-wider">
                                 <span className="font-mono">{nb.date}</span>
                                 <div className="flex items-center gap-1.5 bg-secondary/50 px-2 py-0.5 rounded-full">
-                                  <Lock className="w-3 h-3" />
+                                  <FileText className="w-3 h-3" />
                                   <span>{nb.sourceCount}</span>
                                 </div>
                             </div>
@@ -480,7 +480,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                         {/* Sources Column */}
                         <div className="w-20 flex justify-end z-10 pointer-events-none">
                            <div className="flex items-center gap-1.5 bg-secondary/50 px-2 py-1 rounded-md text-xs font-medium text-muted-foreground">
-                              <Lock className="w-3 h-3 shrink-0" />
+                              <FileText className="w-3 h-3 shrink-0" />
                               <span>{nb.sourceCount}</span>
                            </div>
                         </div>

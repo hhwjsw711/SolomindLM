@@ -78,12 +78,10 @@ export const MOCK_MESSAGES: Message[] = [
 
 export const STUDIO_TOOLS: StudioTool[] = [
   { id: 'audio', label: 'Audio Overview', iconName: 'AudioLines', color: 'text-indigo-600' },
-  { id: 'video', label: 'Video Overview', iconName: 'Clapperboard', color: 'text-emerald-600' },
   { id: 'mindmap', label: 'Mind Map', iconName: 'GitFork', color: 'text-fuchsia-600' },
   { id: 'reports', label: 'Reports', iconName: 'FileText', color: 'text-amber-600' },
   { id: 'flashcards', label: 'Flashcards', iconName: 'Layers', color: 'text-orange-600' },
   { id: 'quiz', label: 'Quiz', iconName: 'HelpCircle', color: 'text-sky-600' },
-  { id: 'infographic', label: 'Infographic', iconName: 'BarChart3', color: 'text-pink-600' },
   { id: 'slides', label: 'Slide Deck', iconName: 'Presentation', color: 'text-yellow-600' },
 ];
 

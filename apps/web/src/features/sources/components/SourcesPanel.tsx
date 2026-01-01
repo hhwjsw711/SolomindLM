@@ -3,7 +3,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   Plus, Search, FileText, Globe, CheckSquare, Square, ChevronLeft,
   X, Upload, Link as LinkIcon, Youtube, Clipboard, HardDrive, LayoutGrid, File,
-  FileStack, Loader2, CheckCircle, XCircle, Check, MoreVertical, Edit2, Trash2, AtSign
+  FileStack, Loader2, XCircle, MoreVertical, Edit2, Trash2
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { Source } from '@/shared/types/index';
@@ -380,12 +380,6 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
                                 <div className="flex items-center gap-1 text-[10px] font-medium text-warning font-sans shrink-0">
                                   <Loader2 className="w-3 h-3 animate-spin shrink-0" />
                                   <span>Processing</span>
-                                </div>
-                              )}
-                              {status === 'completed' && (
-                                <div className="flex items-center gap-1 text-[10px] font-medium text-success font-sans shrink-0">
-                                  <CheckCircle className="w-3 h-3 shrink-0" />
-                                  <span>Ready</span>
                                 </div>
                               )}
                               {status === 'failed' && (

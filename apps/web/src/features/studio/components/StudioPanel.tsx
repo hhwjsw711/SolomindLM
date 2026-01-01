@@ -4,12 +4,10 @@ import {
   ChevronRight,
   MoreVertical,
   AudioLines,
-  Clapperboard,
   GitFork,
   FileText,
   Layers,
   HelpCircle,
-  BarChart3,
   Presentation,
   Pencil,
   PenTool,
@@ -47,12 +45,10 @@ interface StudioPanelProps {
 
 const IconMap: Record<string, React.FC<any>> = {
   AudioLines,
-  Clapperboard,
   GitFork,
   FileText,
   Layers,
   HelpCircle,
-  BarChart3,
   Presentation
 };
 
