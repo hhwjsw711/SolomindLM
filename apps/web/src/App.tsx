@@ -15,6 +15,7 @@ import { notesApi } from './features/notebooks/services/notesApi';
 import { mindMapApi } from './features/studio/services/mindMapApi';
 import { flashcardsApi } from './features/studio/services/flashcardsApi';
 import { quizzesApi } from './features/studio/services/quizzesApi';
+import { audioApi } from './features/audio/api/audioApi';
 import { chatApi } from './features/chat/services/chatApi';
 import 'mind-elixir/style.css';
 
@@ -236,6 +237,8 @@ const AppContent: React.FC = () => {
         await flashcardsApi.renameFlashcard(id, newTitle);
       } else if (noteToUpdate?.type === 'quiz') {
         await quizzesApi.renameQuiz(id, newTitle);
+      } else if (noteToUpdate?.type === 'audio') {
+        await audioApi.renameAudioOverview(id, newTitle);
       } else {
         await notesApi.renameNote(id, newTitle);
       }
@@ -260,9 +263,13 @@ const AppContent: React.FC = () => {
             console.error('Failed to load quizzes:', err);
             return [];
           }),
+          audioApi.getAudioOverviewsByNotebook(activeNotebookId).catch(err => {
+            console.error('Failed to load audio overviews:', err);
+            return [];
+          }),
         ])
-          .then(([loadedNotes, loadedMindMaps, loadedFlashcards, loadedQuizzes]) => {
-            const allNotes = [...loadedNotes, ...loadedMindMaps, ...loadedFlashcards, ...loadedQuizzes].sort((a, b) => {
+          .then(([loadedNotes, loadedMindMaps, loadedFlashcards, loadedQuizzes, loadedAudio]) => {
+            const allNotes = [...loadedNotes, ...loadedMindMaps, ...loadedFlashcards, ...loadedQuizzes, ...loadedAudio].sort((a, b) => {
               const aDate = a.metadata?.generatedAt || a.metadata?.createdAt || '';
               const bDate = b.metadata?.generatedAt || b.metadata?.createdAt || '';
               return bDate.localeCompare(aDate);
@@ -293,6 +300,8 @@ const AppContent: React.FC = () => {
         await flashcardsApi.deleteFlashcard(id);
       } else if (noteToDelete?.type === 'quiz') {
         await quizzesApi.deleteQuiz(id);
+      } else if (noteToDelete?.type === 'audio') {
+        await audioApi.deleteAudioOverview(id);
       } else {
         await notesApi.deleteNote(id);
       }
@@ -447,10 +456,10 @@ const AppContent: React.FC = () => {
     }
   }, [isAuthenticated, user, activeNotebookId, currentView]);
 
-  // Load notes, mind maps, flashcards, and quizzes from API when authenticated and notebook is active
+  // Load notes, mind maps, flashcards, quizzes, and audio overviews from API when authenticated and notebook is active
   useEffect(() => {
     if (isAuthenticated && user && activeNotebookId && activeNotebookId !== 'new' && currentView === 'notebook') {
-      // Fetch notes, mind maps, flashcards, and quizzes in parallel
+      // Fetch notes, mind maps, flashcards, quizzes, and audio overviews in parallel
       Promise.all([
         notesApi.getNotes(activeNotebookId).catch(err => {
           console.error('Failed to load notes:', err);
@@ -468,10 +477,14 @@ const AppContent: React.FC = () => {
           console.error('Failed to load quizzes:', err);
           return [];
         }),
+        audioApi.getAudioOverviewsByNotebook(activeNotebookId).catch(err => {
+          console.error('Failed to load audio overviews:', err);
+          return [];
+        }),
       ])
-        .then(([loadedNotes, loadedMindMaps, loadedFlashcards, loadedQuizzes]) => {
-          // Merge notes, mind maps, flashcards, and quizzes, sort by created_at descending
-          const allNotes = [...loadedNotes, ...loadedMindMaps, ...loadedFlashcards, ...loadedQuizzes].sort((a, b) => {
+        .then(([loadedNotes, loadedMindMaps, loadedFlashcards, loadedQuizzes, loadedAudio]) => {
+          // Merge notes, mind maps, flashcards, quizzes, and audio overviews, sort by created_at descending
+          const allNotes = [...loadedNotes, ...loadedMindMaps, ...loadedFlashcards, ...loadedQuizzes, ...loadedAudio].sort((a, b) => {
             const aDate = a.metadata?.generatedAt || a.metadata?.createdAt || '';
             const bDate = b.metadata?.generatedAt || b.metadata?.createdAt || '';
             return bDate.localeCompare(aDate);

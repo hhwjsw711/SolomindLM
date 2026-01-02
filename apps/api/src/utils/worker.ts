@@ -7,6 +7,7 @@ type ReportGenerationJobPayload = import('../services/jobs/ReportGenerationJob.j
 type MindMapGenerationJobPayload = import('../services/jobs/MindMapGenerationJob.js').MindMapGenerationJobPayload;
 type FlashcardGenerationJobPayload = import('../services/jobs/FlashcardGenerationJob.js').FlashcardGenerationJobPayload;
 type QuizGenerationJobPayload = import('../services/jobs/QuizGenerationJob.js').QuizGenerationJobPayload;
+type AudioOverviewGenerationJobPayload = import('../services/jobs/AudioOverviewGenerationJob.js').AudioOverviewGenerationJobPayload;
 
 // Lazy import tasks to catch import errors early
 async function loadTasks() {
@@ -15,7 +16,8 @@ async function loadTasks() {
   const { mindMapGenerationJob } = await import('../services/jobs/MindMapGenerationJob.js');
   const { flashcardGenerationJob } = await import('../services/jobs/FlashcardGenerationJob.js');
   const { quizGenerationJob } = await import('../services/jobs/QuizGenerationJob.js');
-  return { docEmbeddingJob, reportGenerationJob, mindMapGenerationJob, flashcardGenerationJob, quizGenerationJob };
+  const { audioOverviewGenerationJob } = await import('../services/jobs/AudioOverviewGenerationJob.js');
+  return { docEmbeddingJob, reportGenerationJob, mindMapGenerationJob, flashcardGenerationJob, quizGenerationJob, audioOverviewGenerationJob };
 }
 
 // ============================================================
@@ -76,7 +78,7 @@ async function startWorker() {
   }
 
   console.log('[Worker] Starting Graphile Worker with concurrency=5, pollInterval=1000ms');
-  console.log('[Worker] Registered tasks: docEmbedding, reportGeneration, mindmapGeneration, flashcardGeneration, quizGeneration');
+  console.log('[Worker] Registered tasks: docEmbedding, reportGeneration, mindmapGeneration, flashcardGeneration, quizGeneration, audioOverviewGeneration');
 
   // Start worker - let graphile-worker handle signals (remove noHandleSignals)
   await run({
@@ -138,6 +140,17 @@ async function startWorker() {
           console.log(`[Worker] [${new Date().toISOString()}] quizGeneration task (Job ID: ${jobId}) completed successfully`);
         } catch (error) {
           console.error(`[Worker] [${new Date().toISOString()}] quizGeneration task (Job ID: ${jobId}) failed:`, error);
+          throw error;
+        }
+      },
+      audioOverviewGeneration: async (payload, helpers) => {
+        const jobId = helpers?.job?.id || 'unknown';
+        console.log(`[Worker] [${new Date().toISOString()}] Received audioOverviewGeneration task (Job ID: ${jobId})`);
+        try {
+          await tasks.audioOverviewGenerationJob(payload as AudioOverviewGenerationJobPayload);
+          console.log(`[Worker] [${new Date().toISOString()}] audioOverviewGeneration task (Job ID: ${jobId}) completed successfully`);
+        } catch (error) {
+          console.error(`[Worker] [${new Date().toISOString()}] audioOverviewGeneration task (Job ID: ${jobId}) failed:`, error);
           throw error;
         }
       },

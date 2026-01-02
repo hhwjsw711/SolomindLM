@@ -81,4 +81,67 @@ export class SupabaseStorageService {
     console.log('[Storage] Download successful, text length:', text.length);
     return text;
   }
+
+  async uploadAudioBuffer(buffer: Buffer, audioOverviewId: string): Promise<string> {
+    console.log('[Storage] Starting audio upload:', {
+      audioOverviewId,
+      fileSize: buffer.length,
+    });
+
+    if (buffer.length === 0) {
+      throw new Error('Audio buffer is empty');
+    }
+
+    const filePath = `${audioOverviewId}/${Date.now()}.mp3`;
+    console.log('[Storage] Uploading to audio-overviews bucket:', filePath);
+
+    const { data, error } = await supabase.storage
+      .from('audio-overviews')
+      .upload(filePath, buffer, {
+        contentType: 'audio/mpeg',
+        upsert: false,
+      });
+
+    if (error) {
+      console.error('[Storage] Audio upload failed:', {
+        message: error.message,
+      });
+      throw new Error(`Failed to upload audio: ${error.message}`);
+    }
+
+    console.log('[Storage] Audio upload successful:', data.path);
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from('audio-overviews').getPublicUrl(filePath);
+
+    console.log('[Storage] Audio public URL generated:', publicUrl);
+    return publicUrl;
+  }
+
+  async deleteAudioFile(audioUrl: string): Promise<void> {
+    try {
+      // Extract path from URL
+      // URL format: https://xxx.supabase.co/storage/v1/object/public/audio-overviews/{path}
+      const path = audioUrl.split('/audio-overviews/')[1];
+      if (!path) {
+        console.warn('[Storage] No path found in audio URL:', audioUrl);
+        return;
+      }
+
+      const { error } = await supabase.storage
+        .from('audio-overviews')
+        .remove([path]);
+
+      if (error) {
+        console.error('[Storage] Audio delete error:', error);
+        throw new Error(`Failed to delete audio file: ${error.message}`);
+      }
+
+      console.log('[Storage] Audio file deleted successfully:', path);
+    } catch (error) {
+      console.error('[Storage] Delete audio file error:', error);
+      throw new Error('Failed to delete audio file');
+    }
+  }
 }

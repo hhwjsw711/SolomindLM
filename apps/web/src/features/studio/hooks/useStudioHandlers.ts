@@ -4,6 +4,7 @@ import { reportsApi } from '../services/reportsApi';
 import { mindMapApi } from '../services/mindMapApi';
 import { flashcardsApi } from '../services/flashcardsApi';
 import { quizzesApi } from '../services/quizzesApi';
+import { audioApi } from '@/features/audio/api/audioApi';
 import { getReportSubtitle } from '@/shared/types/reportTypes';
 import { FlashcardConfig } from '../components/CustomizeFlashcardsModal';
 import { QuizConfig } from '../components/CustomizeQuizModal';
@@ -457,16 +458,100 @@ export function useStudioHandlers({
     }
   }, [handleCreateMindMap]);
 
-  const handleCreateAudio = useCallback((config: AudioConfig) => {
+  const handleCreateAudio = useCallback(async (config: AudioConfig) => {
     setIsAudioModalOpen(false);
+
+    // Get selected document IDs from sources
+    const selectedDocumentIds = sources.filter(s => s.selected).map(s => s.id);
+
+    if (selectedDocumentIds.length === 0) {
+      alert('Please select at least one source to generate an audio overview');
+      return;
+    }
+
+    if (!userId || !noteId) {
+      alert('Authentication error. Please log in again.');
+      return;
+    }
+
+    // Create placeholder note with simple title - AI will generate descriptive title
+    const placeholderId = Math.random().toString(36).substr(2, 9);
     const newNote: Note = {
-      id: Math.random().toString(36).substr(2, 9),
-      title: `Audio: ${config.formatId.replace('_', ' ')}`,
-      preview: `Audio Overview • ${config.length}`,
-      type: 'audio'
+      id: placeholderId,
+      title: 'Audio Overview', // Initial placeholder - AI will generate descriptive title
+      preview: `Audio Overview • ${config.length} • Generating...`,
+      type: 'audio',
+      status: 'generating',
+      metadata: {
+        audioType: config.formatId,
+        length: config.length,
+        focus: config.focus,
+      }
     };
+
     onAddNote(newNote);
-  }, [onAddNote]);
+    onSetActiveNoteId(placeholderId);
+
+    try {
+      // Call API to create and queue audio overview generation
+      const { audioOverviewId } = await audioApi.createAudioOverview({
+        userId,
+        notebookId: noteId,
+        documentIds: selectedDocumentIds,
+        audioType: config.formatId,
+        length: config.length,
+        focus: config.focus || undefined,
+      });
+
+      // Update note ID with real audio overview ID
+      if (onUpdateNoteFull) {
+        onUpdateNoteFull(placeholderId, {
+          ...newNote,
+          id: audioOverviewId,
+          metadata: { ...newNote.metadata, audioOverviewId }
+        });
+      }
+      onSetActiveNoteId(audioOverviewId);
+
+      // Start polling for status
+      audioApi.pollAudioOverview(
+        audioOverviewId,
+        (updatedNote) => {
+          // Update note during polling
+          if (onUpdateNoteFull) {
+            onUpdateNoteFull(audioOverviewId, { ...updatedNote, type: 'audio' as const });
+          }
+        }
+      ).then(finalNote => {
+        // Final update when complete
+        if (onUpdateNoteFull) {
+          onUpdateNoteFull(audioOverviewId, { ...finalNote, type: 'audio' as const });
+        }
+      }).catch(error => {
+        console.error('Audio overview generation failed:', error);
+        // Update with failed status
+        if (onUpdateNoteFull) {
+          const failedNote = notes.find(n => n.id === audioOverviewId) || newNote;
+          onUpdateNoteFull(audioOverviewId, {
+            ...failedNote,
+            id: audioOverviewId,
+            status: 'failed',
+            preview: `Audio Overview • ${config.formatId.replace('_', ' ')} • Failed`,
+            metadata: {
+              ...failedNote.metadata,
+              error: error instanceof Error ? error.message : 'Failed to generate audio overview',
+            }
+          });
+        }
+      });
+
+    } catch (error) {
+      console.error('Failed to create audio overview:', error);
+      alert(error instanceof Error ? error.message : 'Failed to create audio overview');
+      // Remove the placeholder note
+      onDeleteNote(placeholderId);
+    }
+  }, [sources, userId, noteId, notes, onAddNote, onSetActiveNoteId, onUpdateNoteFull, onDeleteNote]);
 
   return {
     isReportModalOpen,

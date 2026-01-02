@@ -12,6 +12,7 @@
     "clear-jobs": "tsx src/utils/clearJobs.ts"
   },
   "dependencies": {
+    "@deepgram/sdk": "^4.11.3",
     "@langchain/cohere": "^1.0.1",
     "@langchain/community": "^1.1.1",
     "@langchain/core": "^1.1.8",

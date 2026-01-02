@@ -10,8 +10,10 @@ export interface ReportViewProps {
 export const ReportView: React.FC<ReportViewProps> = ({ note }) => {
   const isFailed = note.status === 'failed';
   const isCompleted = note.status === 'completed';
-  const isGenerating = note.status === 'generating' || note.status === 'mapping' ||
-                        note.status === 'collapsing' || note.status === 'reducing';
+  const isGenerating = note.status === 'generating' ||
+                        note.metadata?.phase === 'mapping' ||
+                        note.metadata?.phase === 'collapsing' ||
+                        note.metadata?.phase === 'reducing';
 
   return (
       <div className="flex flex-col h-full bg-background animate-in fade-in slide-in-from-right-4 duration-300">

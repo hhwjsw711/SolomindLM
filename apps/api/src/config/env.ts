@@ -43,6 +43,13 @@ const envSchema = z.object({
   // Reduce phase: 40K chars ≈ 10K tokens (~4% of 261K context)
   QUIZ_REDUCE_CHUNK_SIZE: z.string().default('40000'),
   QUIZ_MAX_TOKENS: z.string().default('16000'),
+  // Audio Overview Generation
+  DEEPGRAM_API_KEY: z.string(),
+  AUDIO_MAP_CHUNK_SIZE: z.string().default('15000'),
+  AUDIO_REDUCE_CHUNK_SIZE: z.string().default('40000'),
+  AUDIO_MAP_TIMEOUT_MS: z.string().default('180000'),
+  AUDIO_REDUCE_TIMEOUT_MS: z.string().default('300000'),
+  AUDIO_TTS_TIMEOUT_MS: z.string().default('300000'),
   // Chat/RAG Configuration
   CHAT_LLM_TEMPERATURE: z.string().default('0.7'),
   CHAT_MAX_HISTORY_MESSAGES: z.string().default('20'),

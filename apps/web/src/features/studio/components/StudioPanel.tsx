@@ -14,6 +14,7 @@ import {
   Trash2,
   Play,
   ArrowLeft,
+  X,
 } from 'lucide-react';
 import { StudioTool, Note } from '@/shared/types/index';
 import { CreateReportModal } from './CreateReportModal';
@@ -24,6 +25,7 @@ import { ReportView } from './views/ReportView';
 import { FlashcardView } from './views/FlashcardView';
 import { QuizView } from './views/QuizView';
 import { MindMapView } from './views/MindMapView';
+import { AudioPlayer } from '@/features/audio/components/AudioPlayer';
 import { useStudioHandlers } from '../hooks/useStudioHandlers';
 import './MindMapStyles.css';
 
@@ -138,7 +140,7 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
   };
 
   const handleNoteClick = (note: Note) => {
-    if (note.type === 'quiz' || note.type === 'flashcard' || note.type === 'report' || note.type === 'mindmap') {
+    if (note.type === 'quiz' || note.type === 'flashcard' || note.type === 'report' || note.type === 'mindmap' || note.type === 'audio') {
         setActiveNoteId(note.id);
     }
   };
@@ -184,16 +186,46 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
 
       <div className="flex-1 overflow-y-auto w-full relative">
         {activeNote ? (
-            <div className="h-full">
+            <div className="h-full p-4">
                 {activeNote.type === 'report' && <ReportView note={activeNote} />}
                 {activeNote.type === 'flashcard' && <FlashcardView note={activeNote} />}
                 {activeNote.type === 'quiz' && <QuizView note={activeNote} />}
                 {activeNote.type === 'mindmap' && (
-                  <MindMapView 
-                    note={activeNote} 
+                  <MindMapView
+                    note={activeNote}
                     isExpanded={isMindMapExpanded}
                     onToggleExpanded={() => setIsMindMapExpanded(!isMindMapExpanded)}
                   />
+                )}
+                {activeNote.type === 'audio' && activeNote.status === 'completed' && activeNote.metadata?.audioUrl && (
+                  <AudioPlayer
+                    audioUrl={activeNote.metadata.audioUrl}
+                    transcript={activeNote.metadata.transcript}
+                    title={activeNote.title}
+                  />
+                )}
+                {activeNote.type === 'audio' && activeNote.status === 'generating' && (
+                  <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
+                    <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+                    <div>
+                      <h3 className="text-lg font-semibold">Generating Audio Overview...</h3>
+                      <p className="text-sm text-muted-foreground mt-1">This may take a few minutes</p>
+                      {activeNote.metadata?.phase && (
+                        <p className="text-xs text-muted-foreground mt-2">Phase: {activeNote.metadata.phase}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {activeNote.type === 'audio' && activeNote.status === 'failed' && (
+                  <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
+                    <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
+                      <X className="w-6 h-6 text-destructive" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-destructive">Generation Failed</h3>
+                      <p className="text-sm text-muted-foreground mt-1">{activeNote.metadata?.error || 'An error occurred while generating the audio overview'}</p>
+                    </div>
+                  </div>
                 )}
             </div>
         ) : (

@@ -65,12 +65,12 @@ export interface Note {
   type: 'text' | 'report' | 'flashcard' | 'quiz' | 'audio' | 'mindmap';
   // Content
   content?: string;
-  // Report-specific fields
-  status?: 'generating' | 'mapping' | 'collapsing' | 'reducing' | 'completed' | 'failed';
+  // Core status for UI - intermediate phases stored in metadata.phase
+  status?: 'draft' | 'generating' | 'completed' | 'failed';
   metadata?: {
     reportType?: string;
     documentIds?: string[];
-    phase?: string;
+    phase?: string; // For internal intermediate statuses: mapping, collapsing, reducing, synthesizing, etc.
     error?: string;
     chunksProcessed?: number;
     [key: string]: any;

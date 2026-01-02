@@ -229,8 +229,10 @@ export const MindMapView: React.FC<MindMapViewProps> = ({ note, isExpanded = fal
   };
 
   // Generating/loading state
-  const isGenerating = note.status === 'generating' || note.status === 'mapping' ||
-                       note.status === 'collapsing' || note.status === 'reducing';
+  const isGenerating = note.status === 'generating' ||
+                       note.metadata?.phase === 'mapping' ||
+                       note.metadata?.phase === 'collapsing' ||
+                       note.metadata?.phase === 'reducing';
   const isFailed = note.status === 'failed';
 
   if (isGenerating) {
