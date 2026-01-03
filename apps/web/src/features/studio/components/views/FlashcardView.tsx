@@ -47,8 +47,8 @@ export const FlashcardView: React.FC<FlashcardViewProps> = ({ note }) => {
                     </div>
 
                     {/* Back */}
-                    <div className="absolute inset-0 backface-hidden rotate-y-180 bg-primary/5 rounded-xl flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 text-center border-2 border-primary/20 overflow-hidden">
-                         <span className="text-xs uppercase tracking-widest text-primary/70 absolute top-4 sm:top-6 flex-shrink-0">Back</span>
+                    <div className="absolute inset-0 backface-hidden rotate-y-180 bg-secondary rounded-xl flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 text-center overflow-hidden">
+                         <span className="text-xs uppercase tracking-widest text-secondary-foreground/60 absolute top-4 sm:top-6 flex-shrink-0">Back</span>
                          <p className="text-base sm:text-lg lg:text-2xl font-medium font-serif text-foreground line-clamp-6 overflow-y-auto max-h-[calc(100%-3rem)]">{currentCard.back}</p>
                     </div>
 
