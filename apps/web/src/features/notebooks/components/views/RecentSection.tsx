@@ -1,0 +1,230 @@
+import React from 'react';
+import { Plus, FolderInput } from 'lucide-react';
+import { NotebookItem, FolderItem } from '@/shared/types/index';
+import { NotebookCard } from '../cards/NotebookCard';
+import { FolderCard } from '../cards/FolderCard';
+import { FolderExpandedView } from './FolderExpandedView';
+import { ListHeader } from '../ListHeader';
+
+interface RecentSectionProps {
+  recentNotebooks: NotebookItem[];
+  folders: FolderItem[];
+  viewMode: 'grid' | 'list';
+  onCreateNotebook: () => void;
+  onCreateFolder?: () => void;
+  onSelectNotebook: (notebook: NotebookItem) => void;
+  // Notebook handlers
+  activeMenuId: string | null;
+  onOpenCustomize: (id: string) => void;
+  onOpenMoveToFolder: (id: string) => void;
+  onDeleteNotebook: (id: string) => void;
+  setActiveMenuId: (id: string | null) => void;
+  // Folder handlers
+  folderActiveMenuId: string | null;
+  onOpenFolderCustomize: (id: string) => void;
+  onDeleteFolder: (id: string) => void;
+  setFolderActiveMenuId: (id: string | null) => void;
+  // Folder expansion
+  expandedFolderId: string | null;
+  folderNotebooks: Record<string, NotebookItem[]>;
+  loadingFolderNotebooks: Set<string>;
+  toggleFolderExpansion: (folderId: string) => Promise<void>;
+}
+
+export const RecentSection: React.FC<RecentSectionProps> = ({
+  recentNotebooks,
+  folders,
+  viewMode,
+  onCreateNotebook,
+  onCreateFolder,
+  onSelectNotebook,
+  // Notebook handlers
+  activeMenuId,
+  onOpenCustomize,
+  onOpenMoveToFolder,
+  onDeleteNotebook,
+  setActiveMenuId,
+  // Folder handlers
+  folderActiveMenuId,
+  onOpenFolderCustomize,
+  onDeleteFolder,
+  setFolderActiveMenuId,
+  // Folder expansion
+  expandedFolderId,
+  folderNotebooks,
+  loadingFolderNotebooks,
+  toggleFolderExpansion,
+}) => {
+  // Filter notebooks without folders for main display
+  const notebooksWithoutFolder = recentNotebooks.filter(nb => !nb.folderId);
+
+  return (
+    <section className="animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100 pb-20">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-sans font-bold text-foreground">My Notebooks</h2>
+      </div>
+
+      {viewMode === 'grid' ? (
+        /* RECENT GRID */
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Create Buttons */}
+          {onCreateFolder && (
+            <div
+              onClick={onCreateFolder}
+              className="group aspect-16/10 rounded-2xl border-2 border-dashed border-border hover:border-blue-500 hover:bg-blue-500/5 flex flex-col items-center justify-center gap-3 cursor-pointer transition-all duration-300"
+            >
+              <div className="w-14 h-14 rounded-full bg-secondary text-blue-500 flex items-center justify-center group-hover:scale-110 group-hover:bg-blue-500 group-hover:text-white transition-all duration-300 shadow-sm">
+                <FolderInput className="w-7 h-7" />
+              </div>
+              <span className="text-base font-bold text-muted-foreground group-hover:text-blue-500 transition-colors font-sans">Create new folder</span>
+            </div>
+          )}
+          <div
+            onClick={onCreateNotebook}
+            className="group aspect-16/10 rounded-2xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 flex flex-col items-center justify-center gap-3 cursor-pointer transition-all duration-300"
+          >
+            <div className="w-14 h-14 rounded-full bg-secondary text-primary flex items-center justify-center group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300 shadow-sm">
+              <Plus className="w-7 h-7" />
+            </div>
+            <span className="text-base font-bold text-muted-foreground group-hover:text-primary transition-colors font-sans">Create new notebook</span>
+          </div>
+
+          {/* Folder Cards */}
+          {folders.map((folder) => {
+            const isExpanded = expandedFolderId === folder.id;
+            const isLoading = loadingFolderNotebooks.has(folder.id);
+
+            return (
+              <div key={folder.id} className="relative">
+                <FolderCard
+                  folder={folder}
+                  viewMode={viewMode}
+                  isMenuOpen={folderActiveMenuId === folder.id}
+                  isExpanded={isExpanded}
+                  onToggleExpansion={() => toggleFolderExpansion(folder.id)}
+                  onOpenFolderCustomize={() => onOpenFolderCustomize(folder.id)}
+                  onDeleteFolder={onDeleteFolder}
+                  onToggleMenu={() => setFolderActiveMenuId(folderActiveMenuId === folder.id ? null : folder.id)}
+                  onCloseMenu={() => setFolderActiveMenuId(null)}
+                />
+
+                {/* Expanded Notebooks */}
+                {isExpanded && (
+                  <FolderExpandedView
+                    folder={folder}
+                    notebooks={folderNotebooks[folder.id] || []}
+                    isLoading={isLoading}
+                    onSelectNotebook={onSelectNotebook}
+                    activeMenuId={activeMenuId}
+                    onOpenCustomize={onOpenCustomize}
+                    onOpenMoveToFolder={onOpenMoveToFolder}
+                    onDeleteNotebook={onDeleteNotebook}
+                    setActiveMenuId={setActiveMenuId}
+                  />
+                )}
+              </div>
+            );
+          })}
+
+          {/* Notebook Cards */}
+          {notebooksWithoutFolder.map((nb) => (
+            <NotebookCard
+              key={nb.id}
+              notebook={nb}
+              viewMode={viewMode}
+              isMenuOpen={activeMenuId === nb.id}
+              onSelectNotebook={onSelectNotebook}
+              onOpenCustomize={() => onOpenCustomize(nb.id)}
+              onOpenMoveToFolder={() => onOpenMoveToFolder(nb.id)}
+              onDeleteNotebook={onDeleteNotebook}
+              onToggleMenu={() => setActiveMenuId(activeMenuId === nb.id ? null : nb.id)}
+              onCloseMenu={() => setActiveMenuId(null)}
+            />
+          ))}
+        </div>
+      ) : (
+        /* RECENT LIST */
+        <div className="flex flex-col gap-3">
+          <ListHeader />
+
+          {/* Create New Folder Row */}
+          {onCreateFolder && (
+            <div
+              onClick={onCreateFolder}
+              className="grid grid-cols-[auto_1fr] items-center gap-4 p-4 rounded-xl border border-dashed border-border hover:bg-blue-500/10 hover:border-blue-500/50 cursor-pointer group transition-all"
+            >
+              <div className="w-10 h-10 rounded-full bg-secondary text-blue-500 flex items-center justify-center group-hover:bg-blue-500 group-hover:text-white transition-colors">
+                <FolderInput className="w-5 h-5" />
+              </div>
+              <span className="font-bold text-muted-foreground group-hover:text-blue-500 transition-colors font-sans">Create new folder</span>
+            </div>
+          )}
+
+          {/* Create New Notebook Row */}
+          <div
+            onClick={onCreateNotebook}
+            className="grid grid-cols-[auto_1fr] items-center gap-4 p-4 rounded-xl border border-dashed border-border hover:bg-secondary/20 hover:border-primary/50 cursor-pointer group transition-all"
+          >
+            <div className="w-10 h-10 rounded-full bg-secondary text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+              <Plus className="w-5 h-5" />
+            </div>
+            <span className="font-bold text-muted-foreground group-hover:text-foreground transition-colors font-sans">Create new notebook</span>
+          </div>
+
+          {/* Folder Rows */}
+          {folders.map((folder) => {
+            const isExpanded = expandedFolderId === folder.id;
+            const isLoading = loadingFolderNotebooks.has(folder.id);
+
+            return (
+              <div key={folder.id} className="relative">
+                <FolderCard
+                  folder={folder}
+                  viewMode={viewMode}
+                  isMenuOpen={folderActiveMenuId === folder.id}
+                  isExpanded={isExpanded}
+                  onToggleExpansion={() => toggleFolderExpansion(folder.id)}
+                  onOpenFolderCustomize={() => onOpenFolderCustomize(folder.id)}
+                  onDeleteFolder={onDeleteFolder}
+                  onToggleMenu={() => setFolderActiveMenuId(folderActiveMenuId === folder.id ? null : folder.id)}
+                  onCloseMenu={() => setFolderActiveMenuId(null)}
+                />
+
+                {/* Expanded Notebooks */}
+                {isExpanded && (
+                  <FolderExpandedView
+                    folder={folder}
+                    notebooks={folderNotebooks[folder.id] || []}
+                    isLoading={isLoading}
+                    onSelectNotebook={onSelectNotebook}
+                    activeMenuId={activeMenuId}
+                    onOpenCustomize={onOpenCustomize}
+                    onOpenMoveToFolder={onOpenMoveToFolder}
+                    onDeleteNotebook={onDeleteNotebook}
+                    setActiveMenuId={setActiveMenuId}
+                  />
+                )}
+              </div>
+            );
+          })}
+
+          {/* Notebook Rows */}
+          {notebooksWithoutFolder.map((nb) => (
+            <NotebookCard
+              key={nb.id}
+              notebook={nb}
+              viewMode={viewMode}
+              isMenuOpen={activeMenuId === nb.id}
+              onSelectNotebook={onSelectNotebook}
+              onOpenCustomize={() => onOpenCustomize(nb.id)}
+              onOpenMoveToFolder={() => onOpenMoveToFolder(nb.id)}
+              onDeleteNotebook={onDeleteNotebook}
+              onToggleMenu={() => setActiveMenuId(activeMenuId === nb.id ? null : nb.id)}
+              onCloseMenu={() => setActiveMenuId(null)}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+};

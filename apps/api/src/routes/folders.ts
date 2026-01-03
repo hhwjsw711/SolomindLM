@@ -55,7 +55,6 @@ router.get('/', async (req: Request, res: Response) => {
         return {
           id: folder.id,
           name: folder.name,
-          description: folder.description,
           color: folder.color || 'bg-blue-500',
           icon: folder.icon || 'Folder',
           notebookCount: count || 0,
@@ -109,7 +108,6 @@ router.get('/:id', async (req: Request, res: Response) => {
     res.json({
       id: folder.id,
       name: folder.name,
-      description: folder.description,
       color: folder.color || 'bg-blue-500',
       icon: folder.icon || 'Folder',
       notebookCount: count || 0,
@@ -209,7 +207,7 @@ router.post('/', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const { name, description, color, icon } = req.body;
+    const { name, color, icon } = req.body;
 
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
       return res.status(400).json({ error: 'Name is required' });
@@ -220,7 +218,6 @@ router.post('/', async (req: Request, res: Response) => {
       .insert({
         user_id: userId,
         name: name.trim(),
-        description: description?.trim() || null,
         color: color || 'bg-blue-500',
         icon: icon || 'Folder',
       })
@@ -238,7 +235,6 @@ router.post('/', async (req: Request, res: Response) => {
     res.status(201).json({
       id: folder.id,
       name: folder.name,
-      description: folder.description,
       color: folder.color || 'bg-blue-500',
       icon: folder.icon || 'Folder',
       notebookCount: 0,
@@ -264,7 +260,7 @@ router.put('/:id', async (req: Request, res: Response) => {
     }
 
     const { id } = req.params;
-    const { name, description, color, icon } = req.body;
+    const { name, color, icon } = req.body;
 
     // First, get the existing folder to verify ownership
     const { data: existingFolder, error: fetchError } = await supabase
@@ -290,9 +286,7 @@ router.put('/:id', async (req: Request, res: Response) => {
       updateData.name = name.trim();
     }
 
-    if (description !== undefined) {
-      updateData.description = description?.trim() || null;
-    }
+    // No description field to update
 
     if (color !== undefined) updateData.color = color;
     if (icon !== undefined) updateData.icon = icon;
@@ -322,7 +316,6 @@ router.put('/:id', async (req: Request, res: Response) => {
     res.json({
       id: folder.id,
       name: folder.name,
-      description: folder.description,
       color: folder.color || 'bg-blue-500',
       icon: folder.icon || 'Folder',
       notebookCount: count || 0,

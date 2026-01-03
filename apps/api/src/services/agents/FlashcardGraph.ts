@@ -188,7 +188,9 @@ RULES FOR CONTEXT INCLUSION:
 
 BALANCE: Questions should be complete but concise. Include only what's necessary to answer correctly.
 
-**EXAMPLES OF SELF-CONTAINED FLASHCARDS:**
+*** IMPORTANT: THE EXAMPLES BELOW ARE FOR REFERENCE ONLY. DO NOT INCLUDE THEM IN YOUR OUTPUT. ***
+
+EXAMPLES OF SELF-CONTAINED FLASHCARDS (DO NOT COPY):
 
 EXAMPLE 1 - Formula Reference:
 Q: Using the formula F = ma, if a force of 100N is applied to a 10kg object, what is the acceleration?
@@ -202,9 +204,13 @@ EXAMPLE 3 - Context-Heavy Reference:
 Q: A chemical reaction produces 50g of product from 100g of reactant. If the theoretical maximum yield is 80g, what is the percent yield?
 A: 62.5% (Percent yield = (actual / theoretical) × 100 = (50g / 80g) × 100 = 62.5%)
 
+*** END OF EXAMPLES - NOW GENERATE ORIGINAL FLASHCARDS FROM THE CONTENT BELOW ***
+
 **Format each pair as:**
 Q: [your question text - COMPLETE AND SELF-CONTAINED with all necessary context]
 A: [your answer]
+
+REMEMBER: Generate ORIGINAL questions from the content below. Do NOT copy the examples above.
 
 Content:
 ${chunk}

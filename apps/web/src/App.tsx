@@ -375,6 +375,7 @@ const AppContent: React.FC = () => {
       
       // Update with server response to ensure consistency
       setNotebooks(prev => prev.map(nb => nb.id === id ? updatedNotebook : nb));
+      
       if (activeNotebookId === id) {
         setNotebookTitle(updatedNotebook.title);
       }

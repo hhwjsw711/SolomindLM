@@ -136,5 +136,27 @@ export const notebooksApi = {
       throw new Error(errorData.error || 'Failed to delete notebook');
     }
   },
+
+  /**
+   * Get notebooks for a specific folder
+   */
+  async getFolderNotebooks(folderId: string): Promise<NotebookItem[]> {
+    const response = await fetch(`${API_BASE_URL}/api/folders/${folderId}/notebooks`, {
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch folder notebooks: ${response.statusText}`);
+    }
+
+    return response.json();
+  },
 };
+
+/**
+ * Helper function to fetch notebooks for a folder
+ */
+export async function fetchFolderNotebooks(folderId: string): Promise<NotebookItem[]> {
+  return notebooksApi.getFolderNotebooks(folderId);
+}
 
