@@ -485,7 +485,7 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
 
       {/* Add Source Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="w-full max-w-5xl bg-card text-card-foreground border border-border rounded-xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden font-sans">
               {/* Header */}
               <div className="flex items-center justify-between p-6 border-b border-border/50 bg-card">
@@ -655,7 +655,7 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
 
       {/* URL Input Modal */}
       {showUrlInput && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-110 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowUrlInput(false)} />
           <div className="relative w-full max-w-md bg-card rounded-xl shadow-2xl border border-border">
             <div className="flex items-center justify-between p-6 border-b border-border/50">
@@ -709,7 +709,7 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
 
       {/* Social Media Input Modal */}
       {showSocialMediaInput && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-110 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowSocialMediaInput(false)} />
           <div className="relative w-full max-w-md bg-card rounded-xl shadow-2xl border border-border">
             <div className="flex items-center justify-between p-6 border-b border-border/50">
@@ -766,7 +766,7 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
 
       {/* Text Input Modal */}
       {showTextInput && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-110 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowTextInput(false)} />
           <div className="relative w-full max-w-2xl bg-card rounded-xl shadow-2xl border border-border">
             <div className="flex items-center justify-between p-6 border-b border-border/50">

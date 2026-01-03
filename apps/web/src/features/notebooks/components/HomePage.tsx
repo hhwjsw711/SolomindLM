@@ -295,7 +295,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                 >
                   <LayoutGrid className="w-4 h-4" />
                 </button>
-                <div className="w-[1px] h-4 bg-border mx-1" />
+                <div className="w-px h-4 bg-border mx-1" />
                 <button 
                   onClick={() => setViewMode('list')}
                   className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-secondary text-foreground shadow-sm' : 'text-muted-foreground hover:bg-secondary/50'}`}
@@ -363,14 +363,14 @@ export const HomePage: React.FC<HomePageProps> = ({
                     <div 
                       key={nb.id}
                       onClick={() => onSelectNotebook(nb)}
-                      className="group relative aspect-[16/10] rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 ring-1 ring-border/50"
+                      className="group relative aspect-16/10 rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 ring-1 ring-border/50"
                     >
                       {/* Background Image/Color */}
                       <div className={`absolute inset-0 ${nb.coverColor} transition-opacity`}>
                         <div className="absolute inset-0 opacity-30 mix-blend-multiply" 
                               style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.6' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }} 
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                        <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
                       </div>
                       
                       <div className="absolute inset-0 p-6 flex flex-col justify-end text-white z-10">
@@ -453,7 +453,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                   {onCreateFolder && (
                     <div
                       onClick={onCreateFolder}
-                      className="group aspect-[16/10] rounded-2xl border-2 border-dashed border-border hover:border-blue-500 hover:bg-blue-500/5 flex flex-col items-center justify-center gap-3 cursor-pointer transition-all duration-300"
+                      className="group aspect-16/10 rounded-2xl border-2 border-dashed border-border hover:border-blue-500 hover:bg-blue-500/5 flex flex-col items-center justify-center gap-3 cursor-pointer transition-all duration-300"
                     >
                       <div className="w-14 h-14 rounded-full bg-secondary text-blue-500 flex items-center justify-center group-hover:scale-110 group-hover:bg-blue-500 group-hover:text-white transition-all duration-300 shadow-sm">
                         <FolderInput className="w-7 h-7" />
@@ -463,7 +463,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                   )}
                   <div
                     onClick={onCreateNotebook}
-                    className="group aspect-[16/10] rounded-2xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 flex flex-col items-center justify-center gap-3 cursor-pointer transition-all duration-300"
+                    className="group aspect-16/10 rounded-2xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 flex flex-col items-center justify-center gap-3 cursor-pointer transition-all duration-300"
                   >
                     <div className="w-14 h-14 rounded-full bg-secondary text-primary flex items-center justify-center group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300 shadow-sm">
                       <Plus className="w-7 h-7" />
@@ -484,7 +484,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                       <div key={folder.id} className="relative">
                         {/* Folder Card */}
                         <div
-                          className={`group relative aspect-[16/10] rounded-2xl bg-card border border-border shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col ring-1 ring-border/50 ${isExpanded ? 'ring-2 ring-primary/50' : ''}`}
+                          className={`group relative aspect-16/10 rounded-2xl bg-card border border-border shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col ring-1 ring-border/50 ${isExpanded ? 'ring-2 ring-primary/50' : ''}`}
                         >
                           {/* Top Decorative Half */}
                           <div
@@ -531,7 +531,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                             onClick={() => !isEditing && toggleFolderExpansion(folder.id)}
                             className="h-[45%] p-5 flex flex-col justify-between bg-card relative rounded-b-2xl"
                           >
-                            <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-border to-transparent opacity-50" />
+                            <div className="absolute top-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-border to-transparent opacity-50" />
 
                             {isEditing ? (
                               <div onClick={(e) => e.stopPropagation()}>
@@ -663,7 +663,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                     return (
                       <div 
                         key={nb.id}
-                        className="group relative aspect-[16/10] rounded-2xl bg-card border border-border shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col ring-1 ring-border/50"
+                        className="group relative aspect-16/10 rounded-2xl bg-card border border-border shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col ring-1 ring-border/50"
                       >
                           {/* Top Decorative Half */}
                           <div onClick={() => !isEditing && onSelectNotebook(nb)} className={`h-[55%] ${nb.coverColor} bg-opacity-15 group-hover:bg-opacity-25 transition-colors p-5 relative flex items-start justify-between rounded-t-2xl`}>
@@ -710,7 +710,7 @@ export const HomePage: React.FC<HomePageProps> = ({
 
                           {/* Bottom Info Half */}
                           <div onClick={() => !isEditing && onSelectNotebook(nb)} className="h-[45%] p-5 flex flex-col justify-between bg-card relative rounded-b-2xl">
-                            <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-border to-transparent opacity-50" />
+                            <div className="absolute top-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-border to-transparent opacity-50" />
                             
                             {isEditing ? (
                                 <div onClick={(e) => e.stopPropagation()}>
@@ -894,7 +894,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                                       )}
                                     </div>
 
-                                    <div className="w-32 text-sm text-muted-foreground font-mono z-10 pointer-events-none text-sm">
+                                    <div className="w-32 text-sm text-muted-foreground font-mono z-10 pointer-events-none">
                                       {nb.date}
                                     </div>
 
@@ -1112,7 +1112,7 @@ const CustomizeModal: React.FC<{
 
                 {/* Preview */}
                 <div className="p-6 flex justify-center bg-secondary/10">
-                    <div className="w-48 aspect-[16/10] rounded-xl bg-card border border-border shadow-md flex flex-col ring-1 ring-border/50 overflow-hidden">
+                    <div className="w-48 aspect-16/10 rounded-xl bg-card border border-border shadow-md flex flex-col ring-1 ring-border/50 overflow-hidden">
                         <div className={`h-[55%] ${selectedColor} bg-opacity-25 flex items-center justify-center`}>
                             <CurrentIcon className={`w-10 h-10 ${selectedColor.replace('bg-', 'text-')}`} />
                         </div>
@@ -1272,7 +1272,7 @@ const FolderCustomizeModal: React.FC<{
 
                 {/* Preview */}
                 <div className="p-6 flex justify-center bg-secondary/10">
-                    <div className="w-48 aspect-[16/10] rounded-xl bg-card border border-border shadow-md flex flex-col ring-1 ring-border/50 overflow-hidden">
+                    <div className="w-48 aspect-16/10 rounded-xl bg-card border border-border shadow-md flex flex-col ring-1 ring-border/50 overflow-hidden">
                         <div className={`h-[55%] ${selectedColor} bg-opacity-25 flex items-center justify-center`}>
                             <CurrentIcon className={`w-10 h-10 ${selectedColor.replace('bg-', 'text-')}`} />
                         </div>

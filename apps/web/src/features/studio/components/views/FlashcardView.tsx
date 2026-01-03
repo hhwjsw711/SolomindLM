@@ -38,7 +38,7 @@ export const FlashcardView: React.FC<FlashcardViewProps> = ({ note }) => {
 
     return (
         <div className="flex flex-col h-full items-center justify-center p-4 sm:p-6 bg-secondary/10 animate-in fade-in slide-in-from-right-4 duration-300 gap-4 sm:gap-6 overflow-y-auto">
-            <div className="w-full max-w-lg min-h-0 flex-shrink-0 perspective-1000 group cursor-pointer" style={{ aspectRatio: '3 / 2' }} onClick={() => setIsFlipped(!isFlipped)}>
+            <div className="w-full max-w-lg min-h-0 shrink-0 perspective-1000 group cursor-pointer" style={{ aspectRatio: '3 / 2' }} onClick={() => setIsFlipped(!isFlipped)}>
                 <div className={`relative w-full h-full transition-transform duration-500 transform-style-3d shadow-xl rounded-xl border border-border ${isFlipped ? 'rotate-y-180' : ''}`}>
 
                     {/* Front */}
@@ -99,14 +99,14 @@ export const FlashcardView: React.FC<FlashcardViewProps> = ({ note }) => {
                 </div>
             </div>
 
-            <div className="flex items-center gap-4 sm:gap-6 flex-shrink-0">
-                <button onClick={handlePrev} className="p-2 sm:p-3 rounded-full hover:bg-card border border-transparent hover:border-border transition-all flex-shrink-0">
+            <div className="flex items-center gap-4 sm:gap-6 shrink-0">
+                <button onClick={handlePrev} className="p-2 sm:p-3 rounded-full hover:bg-card border border-transparent hover:border-border transition-all shrink-0">
                     <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
                 </button>
                 <span className="font-mono text-xs sm:text-sm font-medium whitespace-nowrap">
                     {currentIndex + 1} / {cards.length}
                 </span>
-                <button onClick={handleNext} className="p-2 sm:p-3 rounded-full hover:bg-card border border-transparent hover:border-border transition-all flex-shrink-0">
+                <button onClick={handleNext} className="p-2 sm:p-3 rounded-full hover:bg-card border border-transparent hover:border-border transition-all shrink-0">
                     <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
                 </button>
             </div>

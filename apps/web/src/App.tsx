@@ -878,7 +878,7 @@ const AppContent: React.FC = () => {
           {/* Left Drag Handle */}
           {isSourcesOpen && (
             <div
-              className="w-1 hover:w-1.5 -ml-0.5 z-50 cursor-col-resize flex-shrink-0 hover:bg-primary/50 transition-colors select-none"
+              className="w-1 hover:w-1.5 -ml-0.5 z-50 cursor-col-resize shrink-0 hover:bg-primary/50 transition-colors select-none"
               onMouseDown={startResizingLeft}
             />
           )}
@@ -898,7 +898,7 @@ const AppContent: React.FC = () => {
           {/* Right Drag Handle */}
           {isStudioOpen && (
             <div
-              className="w-1 hover:w-1.5 -mr-0.5 z-50 cursor-col-resize flex-shrink-0 hover:bg-primary/50 transition-colors select-none"
+              className="w-1 hover:w-1.5 -mr-0.5 z-50 cursor-col-resize shrink-0 hover:bg-primary/50 transition-colors select-none"
               onMouseDown={startResizingRight}
             />
           )}

@@ -163,7 +163,7 @@ export const MiniAudioPlayer: React.FC<MiniAudioPlayerProps> = ({
           {/* Play/Pause Button */}
           <button
             onClick={togglePlay}
-            className="p-2 bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-colors flex-shrink-0"
+            className="p-2 bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-colors shrink-0"
             aria-label={isPlaying ? 'Pause' : 'Play'}
           >
             {isPlaying ? (
@@ -176,7 +176,7 @@ export const MiniAudioPlayer: React.FC<MiniAudioPlayerProps> = ({
           {/* Playback Rate Button */}
           <button
             onClick={changePlaybackRate}
-            className="px-2.5 py-1 text-xs font-medium bg-secondary hover:bg-secondary/80 rounded-lg transition-colors text-muted-foreground hover:text-foreground flex-shrink-0"
+            className="px-2.5 py-1 text-xs font-medium bg-secondary hover:bg-secondary/80 rounded-lg transition-colors text-muted-foreground hover:text-foreground shrink-0"
             title="Change playback speed"
           >
             {playbackRate}x
