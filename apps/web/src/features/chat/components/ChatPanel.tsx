@@ -179,78 +179,56 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       console.log(`[ChatPanel] Message ${messageId}: has citations, refsArray.length=${refsArray.length}`, refsArray);
     }
 
-    if (refsArray.length === 0) {
-      return (
-        <div className="prose prose-sm prose-stone dark:prose-invert max-w-none">
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm, remarkMath]}
-            rehypePlugins={[rehypeKatex]}
-            components={{
-              img: () => null,
-              a: ({ node, children, ...props }) => <span className="text-foreground">{children}</span>,
-              video: () => null,
-              audio: () => null,
-              iframe: () => null,
-              table: ({ children }) => <table className="w-full border-collapse border border-border rounded-lg overflow-hidden">{children}</table>,
-              thead: ({ children }) => <thead className="bg-secondary/50">{children}</thead>,
-              tbody: ({ children }) => <tbody>{children}</tbody>,
-              tr: ({ children }) => <tr className="border-b border-border">{children}</tr>,
-              th: ({ children }) => <th className="px-4 py-2 text-left font-semibold text-foreground border-r border-border last:border-r-0">{children}</th>,
-              td: ({ children }) => <td className="px-4 py-2 text-foreground border-r border-border last:border-r-0">{children}</td>,
-            }}
-          >
-            {cleanContent}
-          </ReactMarkdown>
-        </div>
-      );
-    }
-
-    const refMap = Object.fromEntries(refsArray.map(ref => [ref.id, ref]));
-    const parts = cleanContent.split(/(\[\d+\])/g);
+    // Convert citation markers [1] to inline code markers `CITE:1` for ReactMarkdown to process
+    const processedContent = cleanContent.replace(/\[(\d+)\]/g, '`CITE:$1`');
 
     return (
-      <div className="relative">
-        <div className="prose prose-sm prose-stone dark:prose-invert max-w-none">
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm, remarkMath]}
-            rehypePlugins={[rehypeKatex]}
-            components={{
-              img: () => null,
-              a: ({ node, children, ...props }) => <span className="text-foreground">{children}</span>,
-              video: () => null,
-              audio: () => null,
-              iframe: () => null,
-              table: ({ children }) => <table className="w-full border-collapse border border-border rounded-lg overflow-hidden">{children}</table>,
-              thead: ({ children }) => <thead className="bg-secondary/50">{children}</thead>,
-              tbody: ({ children }) => <tbody>{children}</tbody>,
-              tr: ({ children }) => <tr className="border-b border-border">{children}</tr>,
-              th: ({ children }) => <th className="px-4 py-2 text-left font-semibold text-foreground border-r border-border last:border-r-0">{children}</th>,
-              td: ({ children }) => <td className="px-4 py-2 text-foreground border-r border-border last:border-r-0">{children}</td>,
-            }}
-          >
-            {cleanContent}
-          </ReactMarkdown>
-        </div>
-        {/* Reference badges */}
-        {parts.map((part, idx) => {
-          const match = part.match(/\[(\d+)\]/);
-          if (match) {
-            const refId = parseInt(match[1]);
-            return (
-              <span key={idx} className="relative inline-group">
-                <span
-                  onMouseEnter={(e) => handleRefHover(refId, messageId, e)}
-                  onMouseLeave={handleRefLeave}
-                  className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold cursor-pointer hover:bg-primary/90 transition-colors mx-1"
-                  title={`Reference ${refId}`}
-                >
-                  {refId}
-                </span>
-              </span>
-            );
-          }
-          return null;
-        })}
+      <div className="font-serif text-base leading-relaxed space-y-2">
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm, remarkMath]}
+          rehypePlugins={[rehypeKatex]}
+          components={{
+            img: () => null,
+            a: ({ node, children, ...props }) => <span className="text-foreground">{children}</span>,
+            video: () => null,
+            audio: () => null,
+            iframe: () => null,
+            table: ({ children }) => <table className="w-full border-collapse border border-border rounded-lg overflow-hidden">{children}</table>,
+            thead: ({ children }) => <thead className="bg-secondary/50">{children}</thead>,
+            tbody: ({ children }) => <tbody>{children}</tbody>,
+            tr: ({ children }) => <tr className="border-b border-border">{children}</tr>,
+            th: ({ children }) => <th className="px-4 py-2 text-left font-semibold text-foreground border-r border-border last:border-r-0">{children}</th>,
+            td: ({ children }) => <td className="px-4 py-2 text-foreground border-r border-border last:border-r-0">{children}</td>,
+            p: ({ children }) => {
+              return <p className="text-base leading-relaxed">{children}</p>;
+            },
+            code: ({ children, node, ...props }: any) => {
+              // Check if this is a citation marker
+              const text = String(children);
+              // Code blocks are wrapped in pre, inline code is not
+              const isInline = !node?.position || (node as any).data?.meta === undefined;
+              
+              if (isInline && text.startsWith('CITE:')) {
+                const refId = parseInt(text.slice(5));
+                return (
+                  <span
+                    onMouseEnter={(e) => handleRefHover(refId, messageId, e)}
+                    onMouseLeave={handleRefLeave}
+                    className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold cursor-pointer hover:bg-primary/90 transition-colors mx-1 align-middle relative"
+                    title={`Reference ${refId}`}
+                    style={{ verticalAlign: 'middle' }}
+                  >
+                    {refId}
+                  </span>
+                );
+              }
+              // Regular inline code
+              return <code className="bg-secondary/50 px-1.5 py-0.5 rounded text-sm">{children}</code>;
+            },
+          }}
+        >
+          {processedContent}
+        </ReactMarkdown>
       </div>
     );
   };
@@ -322,7 +300,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
           <div key={msg.id} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} gap-1`} data-message-id={msg.id}>
             {msg.role === 'user' ? (
               <>
-                <div className="max-w-[75%] relative p-4 rounded-xl text-base leading-relaxed bg-primary/10 text-foreground shadow-sm">
+                <div className="max-w-[75%] relative p-4 rounded-xl font-serif text-lg leading-relaxed bg-primary/10 text-foreground shadow-sm">
                   {renderMessageWithReferences(msg.id, msg.content, msg.references)}
                 </div>
                 <span className="text-[10px] text-muted-foreground font-mono uppercase tracking-widest px-1">
@@ -331,7 +309,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
               </>
             ) : (
               <>
-                <div className="max-w-[90%] text-base leading-relaxed text-foreground">
+                <div className="max-w-[90%] font-serif text-lg leading-relaxed text-foreground">
                   {renderMessageWithReferences(msg.id, msg.content, msg.references)}
                 </div>
                 <span className="text-[10px] text-muted-foreground font-mono uppercase tracking-widest px-1">
