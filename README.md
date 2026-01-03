@@ -102,7 +102,7 @@ DATABASE_URL=
 COHERE_API_KEY=                          # Embeddings & generation
 MISTRAL_API_KEY=                         # OCR for images
 TOGETHER_AI_API_KEY=                     # LLM & title generation
-TOGETHER_AI_MODEL=meta-llama/Llama-3.2-3B-Instruct-Turbo
+TOGETHER_AI_MODEL=
 
 # Content Discovery & Extraction
 TAVILY_API_KEY=                          # Web source discovery

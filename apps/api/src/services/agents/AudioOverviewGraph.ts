@@ -32,8 +32,8 @@ const GRAPH_CONFIG = {
 
 // Voice Configuration (Deepgram Aura Models)
 const VOICES = {
-  host_a: 'aura-asteria-en', // Female, articulate (The "Expert")
-  host_b: 'aura-orion-en',   // Male, deep voice (The "Interviewer")
+  host_a: 'aura-2-thalia-en', // Female, articulate (The "Expert")
+  host_b: 'aura-2-hermes-en',   // Male, deep voice (The "Interviewer")
 } as const;
 
 // Dialogue line interface
@@ -107,6 +107,15 @@ export interface ChunkProcessState {
 const MAP_PROMPTS: Record<string, string> = {
   deep_dive: `Analyze this text and extract "dialogue beats" for an engaging podcast conversation.
 
+For EACH major point, extract:
+- The core fact/concept (what it is)
+- Why it matters (significance)
+- A concrete example or analogy
+- A potential debate angle or counterpoint
+- Follow-up questions a curious listener would ask
+
+Extract at least 8-12 dialogue beats from this chunk to ensure rich conversation material.
+
 Focus on:
 - Surprising facts or data points that would make listeners say "Wow!"
 - Controversial statements or counterintuitive ideas that could spark debate
@@ -115,10 +124,11 @@ Focus on:
 - Discussion points that would make great conversation starters
 
 Format as a bulleted list with clear categories:
-• Surprising Facts: [bulleted list]
-• Controversial Points: [bulleted list]
-• Complex Concepts: [with brief explanations]
-• Discussion Starters: [conversation topics]
+• Surprising Facts: [bulleted list with details]
+• Controversial Points: [bulleted list with debate angles]
+• Complex Concepts: [with brief explanations and analogies]
+• Discussion Starters: [conversation topics with follow-up questions]
+• Examples & Stories: [concrete illustrations]
 
 TEXT TO ANALYZE:
 {chunk}`,
@@ -131,10 +141,12 @@ Focus on:
 - Quick facts that capture the essence
 - Actionable insights or conclusions
 
+Extract at least 6-8 key points to ensure adequate coverage.
+
 Format as a concise bulleted list:
-• Main Ideas: [bulleted list]
+• Main Ideas: [bulleted list with brief explanations]
 • Quick Facts: [essential information]
-• Key Takeaways: [2-3 bullet points max]
+• Key Takeaways: [actionable insights]
 
 TEXT TO ANALYZE:
 {chunk}`,
@@ -147,9 +159,11 @@ Focus on:
 - Notable techniques: Interesting methods, approaches
 - Constructive feedback: Specific suggestions
 
+Extract at least 6-8 critique points.
+
 Format as a structured critique:
-• Strengths: [what works]
-• Weaknesses: [what needs improvement]
+• Strengths: [what works with specific examples]
+• Weaknesses: [what needs improvement with details]
 • Techniques: [interesting approaches]
 • Suggestions: [constructive feedback]
 
@@ -164,9 +178,11 @@ Focus on:
 - Gray areas: Nuanced positions, middle ground
 - Evidence: What data supports each side
 
+Extract at least 6-8 debate points with supporting evidence.
+
 Format as debate material:
-• Position A: [one viewpoint]
-• Position B: [opposing viewpoint]
+• Position A: [one viewpoint with reasoning]
+• Position B: [opposing viewpoint with reasoning]
 • Gray Areas: [nuanced aspects]
 • Key Evidence: [supporting data for each side]
 
@@ -179,10 +195,13 @@ TEXT TO ANALYZE:
 // ============================================================
 
 const TARGET_LINE_COUNTS: Record<string, number> = {
-  short: 15,
-  default: 25,
-  long: 50,
+  short: 40,     // ~4-7 minutes (600-1000 words)
+  default: 100,  // ~10-15 minutes (1500-2250 words)
+  long: 200,     // ~20-30 minutes (3000-4500 words)
 };
+
+const ESTIMATED_WORDS_PER_LINE = 20; // Average words per dialogue turn
+const DIALOGUE_CHUNK_SIZE = 30; // Generate dialogue in chunks to avoid token limits
 
 const REDUCE_PROMPT = `You are an expert podcast scriptwriter. Convert the following "dialogue beats" into a lively, natural conversation script between two hosts.
 
@@ -193,21 +212,58 @@ Output ONLY a valid JSON array of dialogue lines with this exact format:
   {"speaker": "host_b", "text": "..."}
 ]
 
+CRITICAL LENGTH REQUIREMENTS:
+- Generate EXACTLY {targetLines} dialogue exchanges (speaker turns, not sentences)
+- Each speaker turn should be 2-4 sentences (15-40 words per turn)
+- Total target: approximately {estimatedWords} words
+- DO NOT summarize - explore topics in depth with examples, elaboration, and follow-up questions
+- Include natural tangents and deeper dives into interesting points
+- Add "thinking out loud" moments where hosts process information
+
+ANTI-REPETITION RULES:
+- Build on previous discussion rather than repeating it
+- If a concept was explained before, refer to it briefly and move to NEW aspects
+- You MAY discuss different concepts, rules, or aspects of the same topic
+  - Example: If "A*" was covered, you can still discuss "admissibility", "consistency", or "complexity"
+  - Example: If "BFS" was covered, you can still discuss "DFS comparison" or "optimality proofs"
+- Use DIFFERENT examples and analogies - don't reuse them from earlier parts
+- Each chunk should feel like a progression forward, not a restatement
+
+{coveredTopicsPrompt}
+
 HOST PERSONALITIES:
-- host_a (Asteria - Expert): Knowledgeable, explains concepts clearly, provides specific details, cites evidence, sounds authoritative but accessible
-- host_b (Orion - Interviewer): Curious, asks the "dumb" questions, plays devil's advocate, reacts with surprise ("Wait, really?", "No way!"), adds natural fillers ("Hmm", "Interesting")
+- host_a (Asteria - Expert): Knowledgeable, explains concepts clearly, provides specific details, cites evidence, sounds authoritative but accessible. Shows enthusiasm with "Right!", "Exactly!", "Here's the thing..."
+- host_b (Orion - Interviewer): HIGHLY ENERGETIC and genuinely curious! Uses exclamations, emphasis words ("really", "actually", "literally", "seriously"), and reacts with surprise ("Wait, really?!", "No way!", "That's wild!", "Hold on..."). Plays devil's advocate, asks follow-up questions, adds natural fillers ("Hmm", "Interesting", "I mean", "you know")
+
+NATURALNESS REQUIREMENTS FOR PODCAST DIALOGUE:
+- host_b should sound excited and energetic - this is a PODCAST, not a lecture
+- Include natural speech patterns: "Wait, what?", "Hold on...", "That's wild!", "Are you serious?"
+- Add hesitation markers naturally: "um", "uh", "you know", "I mean" (but not excessive)
+- Use emphasis words: "really", "actually", "literally", "seriously", "honestly"
+- host_b should interrupt with reactions: "No way!", "Wait, really?!", "That's insane!", "You're kidding!"
+- Add breathing room with "..." for dramatic pauses before reveals
+- Both hosts should show genuine enthusiasm and engagement
 
 GUIDELINES FOR NATURAL CONVERSATION:
-1. Use natural fillers and reactions sparingly: "Wait, really?", "Hmm", "That's fascinating", "Hold on"
-2. Alternate speakers naturally (not rigid A-B-A-B pattern - sometimes one speaks twice)
-3. Keep dialogue segments 2-4 sentences each
-4. host_a provides explanations and depth, host_b reacts and asks follow-ups
-5. Start with a hook that grabs attention
-6. End with a summary reflection or takeaway
-7. Make it sound like two real people talking, not reading a script
+1. Alternate speakers naturally (not rigid A-B-A-B pattern - sometimes one speaks twice for depth)
+2. Keep dialogue segments 2-4 sentences each (15-40 words)
+3. host_a provides explanations and depth, host_b reacts and asks follow-ups
+4. Start with a hook that grabs attention ("So, here's something wild...")
+5. End with a summary reflection or takeaway
+6. Make it sound like two real people talking, not reading a script
+7. When something is surprising, host_b SHOULD react: "Wait, hold on... that's actually fascinating!"
+8. Use "..." for dramatic pauses before reveals or after questions
+9. host_b should ask "dumb questions" that listeners are thinking
+
+EXAMPLES OF ENERGETIC DIALOGUE:
+host_b: "Wait, hold on... you're telling me that [surprising fact]? That's absolutely wild!"
+host_a: "I know, right? And here's what's even crazier..."
+host_b: "No way! So what happened next?"
+host_a: "So basically... [explanation with details]"
+host_b: "That's actually fascinating. I mean, I never thought about it that way."
 
 AUDIO TYPE: {audioType}
-TARGET LENGTH: Approximately {targetLines} dialogue lines
+TARGET LENGTH: {targetLines} dialogue turns (~{estimatedWords} words)
 FOCUS AREA: {focus}
 
 SOURCE MATERIAL (dialogue beats):
@@ -454,80 +510,190 @@ export class AudioOverviewGraph {
 
     const combined = collapsedOutputs.join('\n\n---\n\n');
     const targetLines = TARGET_LINE_COUNTS[length] || TARGET_LINE_COUNTS.default;
+    const estimatedWords = targetLines * ESTIMATED_WORDS_PER_LINE;
 
-    const prompt = REDUCE_PROMPT
-      .replace('{content}', combined)
-      .replace('{audioType}', audioType)
-      .replace('{targetLines}', targetLines.toString())
-      .replace('{focus}', sanitizedFocus || 'general overview');
+    // Calculate number of chunks needed
+    const numChunks = Math.ceil(targetLines / DIALOGUE_CHUNK_SIZE);
 
     logInfo({
       agent: 'AudioOverviewGraph',
       phase: 'write_script',
-      promptLength: prompt.length,
+      promptLength: combined.length,
       targetLines,
-    }, `Generating dialogue script (~${targetLines} lines)`);
+      numChunks,
+    }, `Generating dialogue script (~${targetLines} lines in ${numChunks} chunks)`);
 
-    let dialogueScript: DialogueLine[] = [];
+    let fullDialogueScript: DialogueLine[] = [];
+
+    // Track only examples to prevent repetition (concepts can have multiple aspects)
+    const coveredExamples = new Set<string>();
 
     try {
-      // Timeout + Retry wrapper for resilient LLM calls
-      const response = await invokeWithRetry(
-        () => invokeWithTimeout(
-          () => this.smartLlm.invoke([
-            new SystemMessage('You are an expert podcast scriptwriter. Output ONLY valid JSON arrays of dialogue lines.'),
-            new HumanMessage(prompt),
-          ]),
-          GRAPH_CONFIG.REDUCE_TIMEOUT_MS,
-          'AudioReduce'
-        ),
-        {
-          maxAttempts: 3,
-          baseDelayMs: 1000,
-          onRetry: (attempt, error) => {
-            logWarn({
-              agent: 'AudioOverviewGraph',
-              phase: 'write_script',
-              attempt,
-              error: error.message,
-            }, `Retry attempt ${attempt}/3`);
+      // Generate dialogue in chunks to avoid token limits
+      for (let chunkIndex = 0; chunkIndex < numChunks; chunkIndex++) {
+        const linesThisChunk = Math.min(DIALOGUE_CHUNK_SIZE, targetLines - (chunkIndex * DIALOGUE_CHUNK_SIZE));
+        const estimatedWordsThisChunk = linesThisChunk * ESTIMATED_WORDS_PER_LINE;
+
+        // Build covered examples prompt for anti-repetition
+        let coveredTopicsPrompt = '';
+        if (chunkIndex > 0 && coveredExamples.size > 0) {
+          const examples = Array.from(coveredExamples).slice(0, 8);
+          if (examples.length > 0) {
+            coveredTopicsPrompt = `\nEXAMPLES ALREADY USED (please use different ones):\n${examples.join(', ')}\n`;
           }
-        },
-        'AudioReduce'
-      );
+        }
 
-      const responseText = response.content.toString();
+        // Build context from previous chunks for continuity (just recent dialogue, not for content repetition)
+        const previousDialogue = chunkIndex > 0
+          ? `\n\nRECENT DIALOGUE (for continuity only - continue naturally from here):\n${fullDialogueScript.slice(-4).map(l => `${l.speaker}: ${l.text}`).join('\n')}\n`
+          : '';
 
-      // Robust JSON extraction: find the first '[' and last ']'
-      const jsonStart = responseText.indexOf('[');
-      const jsonEnd = responseText.lastIndexOf(']');
+        const chunkPrompt = REDUCE_PROMPT
+          .replace('{coveredTopicsPrompt}', coveredTopicsPrompt)
+          .replace('{content}', combined + previousDialogue)
+          .replace('{audioType}', audioType)
+          .replace('{targetLines}', linesThisChunk.toString())
+          .replace('{estimatedWords}', estimatedWordsThisChunk.toString())
+          .replace('{focus}', sanitizedFocus || 'general overview');
 
-      if (jsonStart !== -1 && jsonEnd !== -1) {
+        logInfo({
+          agent: 'AudioOverviewGraph',
+          phase: 'write_script_chunk',
+          chunkIndex: chunkIndex + 1,
+          totalChunks: numChunks,
+          targetLines: linesThisChunk,
+        }, `Generating chunk ${chunkIndex + 1}/${numChunks}`);
+
+        // Timeout + Retry wrapper for resilient LLM calls
+        const response = await invokeWithRetry(
+          () => invokeWithTimeout(
+            () => this.smartLlm.invoke([
+              new SystemMessage('You are an expert podcast scriptwriter. Output ONLY valid JSON arrays of dialogue lines.'),
+              new HumanMessage(chunkPrompt),
+            ]),
+            GRAPH_CONFIG.REDUCE_TIMEOUT_MS,
+            'AudioReduce'
+          ),
+          {
+            maxAttempts: 3,
+            baseDelayMs: 1000,
+            onRetry: (attempt, error) => {
+              logWarn({
+                agent: 'AudioOverviewGraph',
+                phase: 'write_script_chunk',
+                chunkIndex: chunkIndex + 1,
+                attempt,
+                error: error.message,
+              }, `Retry attempt ${attempt}/3`);
+            }
+          },
+          'AudioReduce'
+        );
+
+        const responseText = response.content.toString();
+
+        logInfo({
+          agent: 'AudioOverviewGraph',
+          phase: 'write_script_chunk',
+          chunkIndex: chunkIndex + 1,
+          responseLength: responseText.length,
+        }, `Received response (${responseText.length} chars)`);
+
+        // Robust JSON extraction: find the first '[' and last ']'
+        const jsonStart = responseText.indexOf('[');
+        const jsonEnd = responseText.lastIndexOf(']');
+
+        if (jsonStart === -1 || jsonEnd === -1) {
+          logWarn({
+            agent: 'AudioOverviewGraph',
+            phase: 'write_script_chunk',
+            chunkIndex: chunkIndex + 1,
+            responsePreview: responseText.slice(0, 500),
+          }, 'No JSON array found in response');
+          continue;
+        }
+
         const jsonStr = responseText.substring(jsonStart, jsonEnd + 1);
+
         try {
-          dialogueScript = JSON.parse(jsonStr) as DialogueLine[];
+          const chunkDialogue = JSON.parse(jsonStr) as DialogueLine[];
+
           // Validate structure
-          if (!Array.isArray(dialogueScript) || dialogueScript.length === 0 ||
-              !dialogueScript.every(line => 'speaker' in line && 'text' in line)) {
+          if (!Array.isArray(chunkDialogue) || chunkDialogue.length === 0 ||
+              !chunkDialogue.every(line => 'speaker' in line && 'text' in line)) {
             throw new Error('Invalid dialogue script structure');
           }
+
+          logInfo({
+            agent: 'AudioOverviewGraph',
+            phase: 'write_script_chunk',
+            chunkIndex: chunkIndex + 1,
+            linesGenerated: chunkDialogue.length,
+          }, `Successfully parsed ${chunkDialogue.length} lines`);
+
+          fullDialogueScript = fullDialogueScript.concat(chunkDialogue);
+
+          // Extract examples from this chunk using LLM (concepts can have multiple aspects, examples shouldn't repeat)
+          try {
+            const extractionPrompt = `Analyze this dialogue excerpt and extract ONLY concrete examples, analogies, or real-world applications mentioned.
+
+Return a JSON array:
+["example 1", "example 2", "example 3"]
+
+Rules:
+- Only extract UNIQUE examples/analogies (not common phrases like "the idea")
+- Maximum 5 examples
+- Examples are things like: "GPS navigation", "8-puzzle", "robot vacuum", "protein folding"
+- Ignore general concepts and filler words
+
+DIALOGUE:
+${chunkDialogue.map(d => `${d.speaker}: ${d.text}`).join('\n')}`;
+
+            const extractionResponse = await this.smartLlm.invoke([
+              new SystemMessage('You are a text analyzer. Extract concrete examples as a JSON array only.'),
+              new HumanMessage(extractionPrompt),
+            ]);
+
+            const extractionText = extractionResponse.content.toString();
+            const jsonStart = extractionText.indexOf('[');
+            const jsonEnd = extractionText.lastIndexOf(']');
+
+            if (jsonStart !== -1 && jsonEnd !== -1) {
+              const extracted = JSON.parse(extractionText.substring(jsonStart, jsonEnd + 1));
+              (extracted || []).forEach((e: string) => coveredExamples.add(e.trim()));
+            }
+          } catch (extractionError) {
+            // Silently fail - example extraction is optional, don't let it break the flow
+          }
+
         } catch (parseError) {
           logWarn({
             agent: 'AudioOverviewGraph',
-            phase: 'write_script',
+            phase: 'write_script_chunk',
+            chunkIndex: chunkIndex + 1,
             error: parseError instanceof Error ? parseError.message : String(parseError),
-          }, 'JSON parsing failed, using fallback');
-          dialogueScript = [];
+            jsonPreview: jsonStr.slice(0, 500),
+          }, 'JSON parsing failed for chunk');
         }
       }
 
-      // If extraction failed, generate fallback
-      if (dialogueScript.length === 0) {
+      // If we got some dialogue but not enough, log a warning
+      if (fullDialogueScript.length > 0 && fullDialogueScript.length < targetLines * 0.5) {
         logWarn({
           agent: 'AudioOverviewGraph',
           phase: 'write_script',
-        }, 'JSON extraction failed, using fallback script');
-        dialogueScript = [
+          targetLines,
+          actualLines: fullDialogueScript.length,
+        }, `Generated fewer lines than target (${fullDialogueScript.length}/${targetLines})`);
+      }
+
+      // If extraction completely failed, generate fallback
+      if (fullDialogueScript.length === 0) {
+        logWarn({
+          agent: 'AudioOverviewGraph',
+          phase: 'write_script',
+        }, 'All chunks failed, using fallback script');
+        fullDialogueScript = [
           { speaker: 'host_a', text: "I've analyzed the content you provided." },
           { speaker: 'host_b', text: 'What did you find most interesting?' },
           { speaker: 'host_a', text: 'There were several key points worth discussing.' },
@@ -540,7 +706,7 @@ export class AudioOverviewGraph {
       logPhaseComplete({
         agent: 'AudioOverviewGraph',
         phase: 'write_script',
-        dialogueLines: dialogueScript.length,
+        dialogueLines: fullDialogueScript.length,
         processingTimeMs: elapsed,
       });
     } catch (error) {
@@ -554,7 +720,7 @@ export class AudioOverviewGraph {
         } : String(error),
       }, 'Error writing dialogue script');
 
-      dialogueScript = [
+      fullDialogueScript = [
         { speaker: 'host_a', text: 'I apologize, but I had trouble processing this content.' },
         { speaker: 'host_b', text: 'That sounds frustrating. What went wrong?' },
         { speaker: 'host_a', text: 'The system encountered an error. Please try again with different content.' },
@@ -563,7 +729,7 @@ export class AudioOverviewGraph {
 
     return {
       ...state,
-      dialogueScript,
+      dialogueScript: fullDialogueScript,
       status: 'synthesizing',
     };
   }
