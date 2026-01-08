@@ -148,26 +148,39 @@ app.use(errorHandler);
 
 // Start server
 async function startServer() {
-  // Ensure Graphile Worker schema exists
-  await ensureGraphileWorkerSchema();
+  try {
+    console.log('[API] 🚀 Starting SolomindLM API...');
+    console.log('[API] Environment:', env.NODE_ENV);
+    console.log('[API] Port:', PORT);
+    console.log('[API] Database URL:', env.DATABASE_URL ? 'Set' : 'MISSING');
+    console.log('[API] Supabase URL:', env.SUPABASE_URL ? 'Set' : 'MISSING');
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`
+    // Ensure Graphile Worker schema exists
+    await ensureGraphileWorkerSchema();
+
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`
 ╔═════════════════════════════════════════════════════════╗
 ║                                                         ║
 ║        SolomindLM Ingestion Pipeline API               ║
 ║                                                         ║
-║        Server running on port ${PORT}                     ║
+║        Server running on 0.0.0.0:${PORT}                  ║
 ║        Environment: ${env.NODE_ENV}                       ║
 ║        Background: Graphile Worker (PostgreSQL)        ║
 ║                                                         ║
 ╚═════════════════════════════════════════════════════════╝
-  `);
-  });
+      `);
+    });
+  } catch (error) {
+    console.error('[API] ❌ Failed to start server:');
+    console.error(error);
+    process.exit(1);
+  }
 }
 
 startServer().catch((error) => {
-  console.error('[API] Failed to start server:', error);
+  console.error('[API] ❌ Fatal error during startup:');
+  console.error(error);
   process.exit(1);
 });
 
