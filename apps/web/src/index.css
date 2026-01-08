@@ -9,36 +9,84 @@
     --card-foreground: oklch(0.3760 0.0225 64.3434);
     --popover: oklch(0.9914 0.0098 87.4695);
     --popover-foreground: oklch(0.3760 0.0225 64.3434);
-    --primary: oklch(0.6180 0.0778 65.5444);
+    --primary: oklch(0.6180 0.05 65.5444);
     --primary-foreground: oklch(1.0000 0 0);
-    --secondary: oklch(0.8846 0.0302 85.5655);
-    --secondary-foreground: oklch(0.4313 0.0300 64.9288);
+    --secondary: oklch(0.8846 0.02 85.5655);
+    --secondary-foreground: oklch(0.4313 0.03 64.9288);
     --muted: oklch(0.9239 0.0190 83.0636);
     --muted-foreground: oklch(0.5391 0.0387 71.1655);
-    --accent: oklch(0.8348 0.0426 88.8064);
+    --accent: oklch(0.8348 0.025 88.8064);
     --accent-foreground: oklch(0.3760 0.0225 64.3434);
-    --destructive: oklch(0.5471 0.1438 32.9149);
+    --destructive: oklch(0.5471 0.08 32.9149);
     --destructive-foreground: oklch(1.0000 0 0);
     --border: oklch(0.8606 0.0321 84.5881);
     --input: oklch(0.8606 0.0321 84.5881);
-    --ring: oklch(0.6180 0.0778 65.5444);
-    --success: oklch(0.5471 0.1438 142.9149);
+    --ring: oklch(0.6180 0.05 65.5444);
+    --success: oklch(0.5471 0.08 142.9149);
     --success-foreground: oklch(1.0000 0 0);
-    --warning: oklch(0.75 0.15 85);
+    --warning: oklch(0.75 0.08 85);
     --warning-foreground: oklch(0.3760 0.0225 64.3434);
-    --chart-1: oklch(0.6180 0.0778 65.5444);
-    --chart-2: oklch(0.5604 0.0624 68.5805);
-    --chart-3: oklch(0.4851 0.0570 72.6827);
-    --chart-4: oklch(0.6777 0.0624 64.7755);
-    --chart-5: oklch(0.7264 0.0581 66.6967);
+    --chart-1: oklch(0.6180 0.05 65.5444);
+    --chart-2: oklch(0.5604 0.05 68.5805);
+    --chart-3: oklch(0.4851 0.045 72.6827);
+    --chart-4: oklch(0.6777 0.05 64.7755);
+    --chart-5: oklch(0.7264 0.048 66.6967);
     --sidebar: oklch(0.9239 0.0190 83.0636);
     --sidebar-foreground: oklch(0.3760 0.0225 64.3434);
-    --sidebar-primary: oklch(0.6180 0.0778 65.5444);
+    --sidebar-primary: oklch(0.6180 0.05 65.5444);
     --sidebar-primary-foreground: oklch(1.0000 0 0);
-    --sidebar-accent: oklch(0.8348 0.0426 88.8064);
+    --sidebar-accent: oklch(0.8348 0.025 88.8064);
     --sidebar-accent-foreground: oklch(0.3760 0.0225 64.3434);
     --sidebar-border: oklch(0.8606 0.0321 84.5881);
-    --sidebar-ring: oklch(0.6180 0.0778 65.5444);
+    --sidebar-ring: oklch(0.6180 0.05 65.5444);
+    
+    /* Vintage muted colors - LIGHT MODE */
+    --vintage-green-50: hsl(142, 50%, 94%);     /* Visible light green background */
+    --vintage-green-100: hsl(142, 45%, 92%);
+    --vintage-green-200: hsl(142, 30%, 85%);    /* Subtle border */
+    --vintage-green-300: hsl(142, 30%, 75%);
+    --vintage-green-600: hsl(142, 40%, 45%);    /* Medium green */
+    --vintage-green-700: hsl(142, 60%, 18%);    /* Dark text - readable */
+    --vintage-green-800: hsl(142, 60%, 15%);    /* Very dark text */
+    
+    --vintage-red-50: hsl(0, 50%, 94%);         /* Visible light red background */
+    --vintage-red-100: hsl(0, 45%, 92%);
+    --vintage-red-200: hsl(0, 30%, 85%);        /* Subtle border */
+    --vintage-red-300: hsl(0, 30%, 75%);
+    --vintage-red-600: hsl(0, 45%, 45%);        /* Medium red */
+    --vintage-red-700: hsl(0, 70%, 18%);        /* Dark text - readable */
+    --vintage-red-800: hsl(0, 70%, 15%);        /* Very dark text */
+    
+    --vintage-blue-50: hsl(210, 55%, 94%);      /* Visible light blue background */
+    --vintage-blue-100: hsl(210, 50%, 92%);
+    --vintage-blue-200: hsl(210, 35%, 85%);     /* Subtle border */
+    --vintage-blue-300: hsl(210, 35%, 75%);
+    --vintage-blue-400: hsl(210, 35%, 62%);
+    --vintage-blue-500: hsl(210, 40%, 48%);
+    --vintage-blue-600: hsl(210, 40%, 48%);     /* Medium blue */
+    --vintage-blue-700: hsl(210, 60%, 20%);     /* Dark text - readable */
+    --vintage-blue-800: hsl(210, 55%, 45%);     /* Medium blue for borders */
+    
+    --vintage-amber-50: hsl(40, 60%, 94%);      /* Visible light amber background */
+    --vintage-amber-100: hsl(40, 55%, 92%);
+    --vintage-amber-200: hsl(40, 35%, 85%);     /* Subtle border */
+    --vintage-amber-300: hsl(40, 35%, 75%);
+    --vintage-amber-500: hsl(40, 45%, 50%);
+    --vintage-amber-600: hsl(40, 45%, 48%);     /* Medium amber */
+    --vintage-amber-700: hsl(40, 65%, 20%);     /* Dark text - readable */
+    --vintage-amber-800: hsl(40, 65%, 18%);     /* Very dark text */
+    
+    --vintage-orange-50: hsl(25, 55%, 94%);     /* Visible light orange background */
+    --vintage-orange-100: hsl(25, 50%, 92%);
+    --vintage-orange-200: hsl(25, 35%, 85%);    /* Subtle border */
+    --vintage-orange-300: hsl(25, 35%, 75%);
+    --vintage-orange-600: hsl(25, 50%, 48%);    /* Medium orange */
+    --vintage-orange-700: hsl(25, 70%, 20%);    /* Dark text - readable */
+    --vintage-orange-800: hsl(25, 70%, 18%);    /* Very dark text */
+    
+    --vintage-brown-400: hsl(28, 25%, 52%);
+    --vintage-brown-600: hsl(28, 30%, 35%);
+
     --font-sans: 'Libre Baskerville', serif;
     --font-serif: 'Lora', serif;
     --font-mono: 'IBM Plex Mono', monospace;
@@ -130,6 +178,54 @@
     --sidebar-accent-foreground: oklch(0.85 0.01 80.00);
     --sidebar-border: oklch(0.24 0.008 65.00);
     --sidebar-ring: oklch(0.60 0.06 70.00);
+    
+    /* Vintage colors - DARK MODE (muted, not bright) */
+    --vintage-green-50: hsl(142, 25%, 18%);     /* Dark muted green background */
+    --vintage-green-100: hsl(142, 22%, 20%);
+    --vintage-green-200: hsl(142, 20%, 25%);    /* Dark border */
+    --vintage-green-300: hsl(142, 25%, 45%);
+    --vintage-green-600: hsl(142, 28%, 55%);    /* Muted medium green */
+    --vintage-green-700: hsl(142, 30%, 75%);    /* Light text - readable on dark */
+    --vintage-green-800: hsl(142, 32%, 65%);    /* Medium border */
+    
+    --vintage-red-50: hsl(0, 25%, 18%);         /* Dark muted red background */
+    --vintage-red-100: hsl(0, 22%, 20%);
+    --vintage-red-200: hsl(0, 20%, 25%);        /* Dark border */
+    --vintage-red-300: hsl(0, 25%, 45%);
+    --vintage-red-600: hsl(0, 35%, 55%);        /* Muted medium red */
+    --vintage-red-700: hsl(0, 38%, 75%);        /* Light text - readable on dark */
+    --vintage-red-800: hsl(0, 35%, 65%);        /* Medium border */
+    
+    --vintage-blue-50: hsl(210, 28%, 18%);      /* Dark muted blue background */
+    --vintage-blue-100: hsl(210, 25%, 20%);
+    --vintage-blue-200: hsl(210, 22%, 25%);     /* Dark border */
+    --vintage-blue-300: hsl(210, 28%, 45%);
+    --vintage-blue-400: hsl(210, 30%, 55%);
+    --vintage-blue-500: hsl(210, 32%, 58%);
+    --vintage-blue-600: hsl(210, 32%, 58%);     /* Muted medium blue */
+    --vintage-blue-700: hsl(210, 35%, 75%);     /* Light text - readable on dark */
+    --vintage-blue-800: hsl(210, 32%, 58%);     /* Medium border */
+    
+    --vintage-amber-50: hsl(40, 28%, 18%);      /* Dark muted amber background */
+    --vintage-amber-100: hsl(40, 25%, 20%);
+    --vintage-amber-200: hsl(40, 22%, 25%);     /* Dark border */
+    --vintage-amber-300: hsl(40, 28%, 45%);
+    --vintage-amber-500: hsl(40, 32%, 55%);
+    --vintage-amber-600: hsl(40, 32%, 58%);     /* Muted medium amber */
+    --vintage-amber-700: hsl(40, 35%, 75%);     /* Light text - readable on dark */
+    --vintage-amber-800: hsl(40, 32%, 65%);     /* Medium border */
+    
+    --vintage-orange-50: hsl(25, 28%, 18%);     /* Dark muted orange background */
+    --vintage-orange-100: hsl(25, 25%, 20%);
+    --vintage-orange-200: hsl(25, 22%, 25%);    /* Dark border */
+    --vintage-orange-300: hsl(25, 28%, 45%);
+    --vintage-orange-600: hsl(25, 35%, 58%);    /* Muted medium orange */
+    --vintage-orange-700: hsl(25, 38%, 75%);    /* Light text - readable on dark */
+    --vintage-orange-800: hsl(25, 35%, 65%);    /* Medium border */
+    
+    --vintage-brown-400: hsl(28, 22%, 55%);
+    --vintage-brown-600: hsl(28, 25%, 58%);
+
     --font-sans: 'Libre Baskerville', serif;
     --font-serif: 'Lora', serif;
     --font-mono: 'IBM Plex Mono', monospace;
@@ -194,6 +290,53 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  
+  /* Vintage colors */
+  --color-vintage-green-50: var(--vintage-green-50);
+  --color-vintage-green-100: var(--vintage-green-100);
+  --color-vintage-green-200: var(--vintage-green-200);
+  --color-vintage-green-300: var(--vintage-green-300);
+  --color-vintage-green-600: var(--vintage-green-600);
+  --color-vintage-green-700: var(--vintage-green-700);   /* DARK text in light mode, LIGHT text in dark mode */
+  --color-vintage-green-800: var(--vintage-green-800);
+  
+  --color-vintage-red-50: var(--vintage-red-50);
+  --color-vintage-red-100: var(--vintage-red-100);
+  --color-vintage-red-200: var(--vintage-red-200);
+  --color-vintage-red-300: var(--vintage-red-300);
+  --color-vintage-red-600: var(--vintage-red-600);
+  --color-vintage-red-700: var(--vintage-red-700);       /* DARK text in light mode, LIGHT text in dark mode */
+  --color-vintage-red-800: var(--vintage-red-800);
+  
+  --color-vintage-blue-50: var(--vintage-blue-50);
+  --color-vintage-blue-100: var(--vintage-blue-100);
+  --color-vintage-blue-200: var(--vintage-blue-200);
+  --color-vintage-blue-300: var(--vintage-blue-300);
+  --color-vintage-blue-400: var(--vintage-blue-400);
+  --color-vintage-blue-500: var(--vintage-blue-500);
+  --color-vintage-blue-600: var(--vintage-blue-600);
+  --color-vintage-blue-700: var(--vintage-blue-700);     /* DARK text in light mode, LIGHT text in dark mode */
+  --color-vintage-blue-800: var(--vintage-blue-800);
+  
+  --color-vintage-amber-50: var(--vintage-amber-50);
+  --color-vintage-amber-100: var(--vintage-amber-100);
+  --color-vintage-amber-200: var(--vintage-amber-200);
+  --color-vintage-amber-300: var(--vintage-amber-300);
+  --color-vintage-amber-500: var(--vintage-amber-500);
+  --color-vintage-amber-600: var(--vintage-amber-600);
+  --color-vintage-amber-700: var(--vintage-amber-700);   /* DARK text in light mode, LIGHT text in dark mode */
+  --color-vintage-amber-800: var(--vintage-amber-800);
+  
+  --color-vintage-orange-50: var(--vintage-orange-50);
+  --color-vintage-orange-100: var(--vintage-orange-100);
+  --color-vintage-orange-200: var(--vintage-orange-200);
+  --color-vintage-orange-300: var(--vintage-orange-300);
+  --color-vintage-orange-600: var(--vintage-orange-600);
+  --color-vintage-orange-700: var(--vintage-orange-700);  /* DARK text in light mode, LIGHT text in dark mode */
+  --color-vintage-orange-800: var(--vintage-orange-800);
+  
+  --color-vintage-brown-400: var(--vintage-brown-400);
+  --color-vintage-brown-600: var(--vintage-brown-600);
 
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);

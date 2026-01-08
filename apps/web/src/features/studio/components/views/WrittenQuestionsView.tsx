@@ -226,13 +226,13 @@ export const WrittenQuestionsView: React.FC<WrittenQuestionsViewProps> = ({ note
         <div className="max-w-3xl mx-auto w-full p-8 md:p-12 min-h-full flex flex-col">
           {/* Review Mode Banner */}
           {reviewMode && (
-            <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl flex items-center gap-3">
-              <Eye className="w-5 h-5 text-amber-700 dark:text-amber-300 shrink-0" />
+            <div className="mb-6 p-4 bg-vintage-amber-50 dark:bg-vintage-amber-900/20 border border-vintage-amber-200 dark:border-vintage-amber-800 rounded-xl flex items-center gap-3">
+              <Eye className="w-5 h-5 text-vintage-amber-700 dark:text-vintage-amber-300 shrink-0" />
               <div>
-                <span className="text-sm font-semibold text-amber-800 dark:text-amber-200">
+                <span className="text-sm font-semibold text-vintage-amber-800 dark:text-vintage-amber-200">
                   Review Mode
                 </span>
-                <p className="text-xs text-amber-700 dark:text-amber-300">
+                <p className="text-xs text-vintage-amber-700 dark:text-vintage-amber-300">
                   You are viewing your previous answers. Editing is disabled.
                 </p>
               </div>
@@ -260,8 +260,8 @@ export const WrittenQuestionsView: React.FC<WrittenQuestionsViewProps> = ({ note
             <span
               className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${
                 currentQuestion.questionType === 'short'
-                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-                  : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+                  ? 'bg-vintage-blue-100 text-vintage-blue-800 dark:bg-vintage-blue-900/30 dark:text-vintage-blue-300'
+                  : 'bg-vintage-brown-200 text-vintage-brown-800 dark:bg-vintage-brown-900/30 dark:text-vintage-brown-300'
               }`}
             >
               <MessageSquareText className="w-3 h-3" />
@@ -358,25 +358,25 @@ export const WrittenQuestionsView: React.FC<WrittenQuestionsViewProps> = ({ note
               </div>
 
               {/* Feedback */}
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
-                <span className="text-xs font-bold uppercase tracking-wide text-blue-800 dark:text-blue-200">
+              <div className="p-4 bg-vintage-blue-50 dark:bg-vintage-blue-50 rounded-xl border border-vintage-blue-200 dark:border-vintage-blue-200">
+                <span className="text-sm font-bold uppercase tracking-wide text-vintage-blue-700 dark:text-vintage-blue-700">
                   Feedback
                 </span>
-                <div className="mt-2 text-sm leading-relaxed text-blue-700 dark:text-blue-300">
+                <div className="mt-2 text-base leading-relaxed text-vintage-blue-700 dark:text-vintage-blue-700">
                   {currentGradedResult.feedback}
                 </div>
               </div>
 
               {/* Strengths */}
               {currentGradedResult.strengths && currentGradedResult.strengths.length > 0 && (
-                <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800">
-                  <span className="text-xs font-bold uppercase tracking-wide text-green-800 dark:text-green-200">
+                <div className="p-4 bg-vintage-green-50 dark:bg-vintage-green-50 rounded-xl border border-vintage-green-200 dark:border-vintage-green-200">
+                  <span className="text-sm font-bold uppercase tracking-wide text-vintage-green-700 dark:text-vintage-green-700">
                     Strengths
                   </span>
-                  <ul className="mt-2 space-y-1">
+                  <ul className="mt-2 space-y-2">
                     {currentGradedResult.strengths.map((strength, idx) => (
-                      <li key={idx} className="text-sm text-green-700 dark:text-green-300 flex items-start gap-2">
-                        <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                      <li key={idx} className="text-base text-vintage-green-700 dark:text-vintage-green-700 flex items-start gap-2">
+                        <CheckCircle2 className="w-4 h-4 shrink-0 mt-1" />
                         <span>{strength}</span>
                       </li>
                     ))}
@@ -386,14 +386,14 @@ export const WrittenQuestionsView: React.FC<WrittenQuestionsViewProps> = ({ note
 
               {/* Improvements */}
               {currentGradedResult.improvements && currentGradedResult.improvements.length > 0 && (
-                <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-xl border border-orange-200 dark:border-orange-800">
-                  <span className="text-xs font-bold uppercase tracking-wide text-orange-800 dark:text-orange-200">
+                <div className="p-4 bg-vintage-orange-50 dark:bg-vintage-orange-50 rounded-xl border border-vintage-orange-200 dark:border-vintage-orange-200">
+                  <span className="text-sm font-bold uppercase tracking-wide text-vintage-orange-700 dark:text-vintage-orange-700">
                     Areas for Improvement
                   </span>
-                  <ul className="mt-2 space-y-1">
+                  <ul className="mt-2 space-y-2">
                     {currentGradedResult.improvements.map((improvement, idx) => (
-                      <li key={idx} className="text-sm text-orange-700 dark:text-orange-300 flex items-start gap-2">
-                        <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                      <li key={idx} className="text-base text-vintage-orange-700 dark:text-vintage-orange-700 flex items-start gap-2">
+                        <AlertCircle className="w-4 h-4 shrink-0 mt-1" />
                         <span>{improvement}</span>
                       </li>
                     ))}
@@ -428,7 +428,7 @@ export const WrittenQuestionsView: React.FC<WrittenQuestionsViewProps> = ({ note
             <button
               onClick={handleSubmitAnswer}
               disabled={!isAnswered || isSubmitting}
-              className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-full transition-all shadow-md active:translate-y-0.5 min-w-[140px] disabled:opacity-50 disabled:hover:bg-emerald-600 flex items-center justify-center gap-2"
+              className="px-6 py-2 bg-vintage-green-600 hover:bg-vintage-green-700 text-white text-sm font-bold rounded-full transition-all shadow-md active:translate-y-0.5 min-w-[140px] disabled:opacity-50 disabled:hover:bg-vintage-green-600 flex items-center justify-center gap-2"
             >
               {isSubmitting ? (
                 <>

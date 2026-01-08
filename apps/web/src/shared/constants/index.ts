@@ -95,7 +95,7 @@ export const MOCK_NOTEBOOKS: NotebookItem[] = [
     date: 'Apr 22, 2025',
     sourceCount: 46,
     author: 'The Atlantic',
-    coverColor: 'bg-orange-600',
+    coverColor: 'bg-vintage-orange-600',
     isFeatured: true
   },
   {
@@ -104,7 +104,7 @@ export const MOCK_NOTEBOOKS: NotebookItem[] = [
     date: 'May 5, 2025',
     sourceCount: 17,
     author: 'Eric Topol',
-    coverColor: 'bg-emerald-700',
+    coverColor: 'bg-vintage-green-600',
     isFeatured: true
   },
   {
@@ -113,7 +113,7 @@ export const MOCK_NOTEBOOKS: NotebookItem[] = [
     date: 'May 12, 2025',
     sourceCount: 17,
     author: 'Travel',
-    coverColor: 'bg-blue-700',
+    coverColor: 'bg-vintage-blue-600',
     isFeatured: true
   },
   {
@@ -122,7 +122,7 @@ export const MOCK_NOTEBOOKS: NotebookItem[] = [
     date: 'May 5, 2025',
     sourceCount: 21,
     author: 'Techno Sapiens',
-    coverColor: 'bg-amber-600',
+    coverColor: 'bg-vintage-amber-600',
     isFeatured: true
   },
   {
@@ -130,7 +130,7 @@ export const MOCK_NOTEBOOKS: NotebookItem[] = [
     title: 'CPSC 304',
     date: 'Sep 16, 2025',
     sourceCount: 39,
-    coverColor: 'bg-yellow-500', // Folder-like
+    coverColor: 'bg-vintage-amber-500', // Folder-like
     icon: 'Folder'
   },
   {
@@ -138,7 +138,7 @@ export const MOCK_NOTEBOOKS: NotebookItem[] = [
     title: 'The Holy Quran: Chapters and...',
     date: 'Sep 24, 2025',
     sourceCount: 1,
-    coverColor: 'bg-sky-500',
+    coverColor: 'bg-vintage-blue-500',
     icon: 'Book'
   },
   {
@@ -146,7 +146,7 @@ export const MOCK_NOTEBOOKS: NotebookItem[] = [
     title: 'STAT 404',
     date: 'Oct 6, 2025',
     sourceCount: 34,
-    coverColor: 'bg-purple-400',
+    coverColor: 'bg-vintage-brown-400',
     icon: 'BarChart'
   },
   {
@@ -154,7 +154,7 @@ export const MOCK_NOTEBOOKS: NotebookItem[] = [
     title: 'Google Data Analytics',
     date: 'Oct 21, 2025',
     sourceCount: 23,
-    coverColor: 'bg-indigo-600',
+    coverColor: 'bg-vintage-blue-700',
     icon: 'Search'
   },
   {
@@ -162,7 +162,7 @@ export const MOCK_NOTEBOOKS: NotebookItem[] = [
     title: 'CPSC 322',
     date: 'Sep 16, 2025',
     sourceCount: 33,
-    coverColor: 'bg-slate-600',
+    coverColor: 'bg-vintage-brown-600',
     icon: 'Monitor'
   },
   {
@@ -170,7 +170,7 @@ export const MOCK_NOTEBOOKS: NotebookItem[] = [
     title: 'Principles of Learning, Retrieval, Spacing...',
     date: 'Oct 15, 2025',
     sourceCount: 9,
-    coverColor: 'bg-rose-500',
+    coverColor: 'bg-vintage-red-500',
     icon: 'Brain'
   },
 ];

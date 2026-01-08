@@ -196,4 +196,69 @@ router.post('/refresh', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/auth/google
+ * Initiate Google OAuth flow
+ */
+router.get('/google', async (req, res) => {
+  try {
+    const redirectUrl = req.query.redirect as string || `${req.protocol}://${req.get('host')}/auth/callback`;
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: redirectUrl,
+      },
+    });
+
+    if (error) {
+      console.error('Google OAuth initiation error:', error);
+      return res.status(400).json({ error: error.message });
+    }
+
+    // Redirect user to Google OAuth consent screen
+    res.redirect(data.url);
+  } catch (error) {
+    console.error('Google OAuth error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /api/auth/google/callback
+ * Handle Google OAuth callback and exchange code for session
+ */
+router.post('/google/callback', async (req, res) => {
+  try {
+    const { code } = req.body;
+
+    if (!code) {
+      return res.status(400).json({ error: 'Authorization code is required' });
+    }
+
+    // Exchange the code for a session
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+
+    if (error) {
+      console.error('Code exchange error:', error);
+      return res.status(400).json({ error: error.message });
+    }
+
+    if (!data.session) {
+      return res.status(400).json({ error: 'Failed to create session' });
+    }
+
+    res.json({
+      message: 'Signed in with Google successfully',
+      userId: data.user.id,
+      email: data.user.email,
+      accessToken: data.session.access_token,
+      refreshToken: data.session.refresh_token,
+    });
+  } catch (error) {
+    console.error('Google callback error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 export default router;

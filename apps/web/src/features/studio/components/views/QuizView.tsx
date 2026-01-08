@@ -172,19 +172,19 @@ export const QuizView: React.FC<QuizViewProps> = ({ note, onNoteUpdate }) => {
             <div className="flex-1 overflow-y-auto">
                 <div className="max-w-2xl mx-auto w-full p-8 md:p-12 min-h-full flex flex-col">
                     {/* Review Mode Banner */}
-                    {reviewMode && (
-                        <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl flex items-center gap-3">
-                            <Eye className="w-5 h-5 text-amber-700 dark:text-amber-300 shrink-0" />
-                            <div>
-                                <span className="text-sm font-semibold text-amber-800 dark:text-amber-200">
-                                    Review Mode
-                                </span>
-                                <p className="text-xs text-amber-700 dark:text-amber-300">
-                                    You are viewing your previous answers. Selection is disabled.
-                                </p>
+                        {reviewMode && (
+                            <div className="mb-6 p-4 bg-vintage-amber-50 dark:bg-vintage-amber-900/20 border border-vintage-amber-200 dark:border-vintage-amber-800 rounded-xl flex items-center gap-3">
+                                <Eye className="w-5 h-5 text-vintage-amber-700 dark:text-vintage-amber-300 shrink-0" />
+                                <div>
+                                    <span className="text-sm font-semibold text-vintage-amber-800 dark:text-vintage-amber-200">
+                                        Review Mode
+                                    </span>
+                                    <p className="text-xs text-vintage-amber-700 dark:text-vintage-amber-300">
+                                        You are viewing your previous answers. Selection is disabled.
+                                    </p>
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        )}
 
                     <div className="mb-8">
                         <div className="flex justify-between text-[10px] md:text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3 font-sans">
@@ -227,9 +227,9 @@ export const QuizView: React.FC<QuizViewProps> = ({ note, onNoteUpdate }) => {
 
                             if (isAnswered || reviewMode) {
                                 if (idx === currentQuestion.answer) {
-                                    stateStyles = "bg-green-500/25 border-green-600 text-green-700 dark:text-green-400";
+                                    stateStyles = "bg-vintage-green-50 dark:bg-vintage-green-50 border-vintage-green-600 dark:border-vintage-green-200 text-vintage-green-700 dark:text-vintage-green-700";
                                 } else if (idx === selectedOption) {
-                                    stateStyles = "bg-destructive/25 border-destructive text-destructive";
+                                    stateStyles = "bg-vintage-red-50 dark:bg-vintage-red-50 border-vintage-red-600 dark:border-vintage-red-200 text-vintage-red-700 dark:text-vintage-red-700";
                                 } else {
                                     stateStyles = "opacity-50 border-border";
                                 }
@@ -275,28 +275,28 @@ export const QuizView: React.FC<QuizViewProps> = ({ note, onNoteUpdate }) => {
 
                     {/* Explanation shown after answering */}
                     {isAnswered && (
-                        <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 animate-in fade-in slide-in-from-bottom-2">
+                        <div className="mt-6 p-5 bg-vintage-blue-50 dark:bg-vintage-blue-50 rounded-xl border border-vintage-blue-200 dark:border-vintage-blue-200 animate-in fade-in slide-in-from-bottom-2">
                             <div className="flex items-start gap-3">
-                                <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                                <Info className="w-6 h-6 shrink-0 mt-1 text-vintage-blue-700 dark:text-vintage-blue-700" />
                                 <div className="flex-1">
-                                    <span className="font-semibold text-sm text-blue-800 dark:text-blue-200">Explanation</span>
-                                    <div className="text-sm text-blue-700 dark:text-blue-300 mt-1.5 leading-relaxed prose prose-sm prose-stone dark:prose-invert max-w-none">
+                                    <span className="font-semibold text-base text-vintage-blue-700 dark:text-vintage-blue-700">Explanation</span>
+                                    <div className="text-base mt-2 leading-relaxed prose prose-base prose-stone dark:prose-invert max-w-none text-vintage-blue-700 dark:text-vintage-blue-700">
                                         <ReactMarkdown
                                             remarkPlugins={[remarkGfm, remarkMath]}
                                             rehypePlugins={[rehypeKatex]}
                                             components={{
                                                 img: () => null,
-                                                a: ({ node, children, ...props }) => <span className="text-blue-700 dark:text-blue-300">{children}</span>,
+                                                a: ({ node, children, ...props }) => <span className="text-vintage-blue-700 dark:text-vintage-blue-700">{children}</span>,
                                                 video: () => null,
                                                 audio: () => null,
                                                 iframe: () => null,
-                                                table: ({ children }) => <table className="w-full border-collapse border border-blue-300 dark:border-blue-600 rounded-lg overflow-hidden">{children}</table>,
-                                                thead: ({ children }) => <thead className="bg-blue-200/50 dark:bg-blue-800/50">{children}</thead>,
+                                                table: ({ children }) => <table className="w-full border-collapse border border-vintage-blue-300 dark:border-vintage-blue-300 rounded-lg overflow-hidden">{children}</table>,
+                                                thead: ({ children }) => <thead className="bg-vintage-blue-200/50 dark:bg-vintage-blue-200/50">{children}</thead>,
                                                 tbody: ({ children }) => <tbody>{children}</tbody>,
-                                                tr: ({ children }) => <tr className="border-b border-blue-300 dark:border-blue-600">{children}</tr>,
-                                                th: ({ children }) => <th className="px-4 py-2 text-left font-semibold text-blue-800 dark:text-blue-200 border-r border-blue-300 dark:border-blue-600 last:border-r-0">{children}</th>,
-                                                td: ({ children }) => <td className="px-4 py-2 text-blue-700 dark:text-blue-300 border-r border-blue-300 dark:border-blue-600 last:border-r-0">{children}</td>,
-                                                p: ({ children }) => <p className="text-sm text-blue-700 dark:text-blue-300">{children}</p>,
+                                                tr: ({ children }) => <tr className="border-b border-vintage-blue-300 dark:border-vintage-blue-300">{children}</tr>,
+                                                th: ({ children }) => <th className="px-4 py-2 text-left font-semibold border-r border-vintage-blue-300 dark:border-vintage-blue-300 last:border-r-0 text-vintage-blue-700 dark:text-vintage-blue-700">{children}</th>,
+                                                td: ({ children }) => <td className="px-4 py-2 border-r border-vintage-blue-300 dark:border-vintage-blue-300 last:border-r-0 text-vintage-blue-700 dark:text-vintage-blue-700">{children}</td>,
+                                                p: ({ children }) => <p className="text-base text-vintage-blue-700 dark:text-vintage-blue-700">{children}</p>,
                                             }}
                                         >
                                             {currentQuestion.explanation}

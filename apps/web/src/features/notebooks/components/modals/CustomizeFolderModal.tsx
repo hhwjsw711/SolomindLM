@@ -7,10 +7,10 @@ const IconMap: Record<string, React.FC<any>> = {
 };
 
 const COVER_COLORS = [
-  'bg-slate-600', 'bg-red-500', 'bg-orange-600', 'bg-amber-500', 'bg-yellow-500',
-  'bg-lime-600', 'bg-green-600', 'bg-emerald-700', 'bg-teal-600', 'bg-cyan-600',
-  'bg-sky-500', 'bg-blue-700', 'bg-indigo-600', 'bg-violet-600', 'bg-purple-400',
-  'bg-fuchsia-600', 'bg-pink-600', 'bg-rose-500'
+  'bg-vintage-brown-600', 'bg-vintage-red-600', 'bg-vintage-orange-600', 'bg-vintage-amber-600', 'bg-vintage-amber-500',
+  'bg-vintage-green-600', 'bg-vintage-green-700', 'bg-vintage-blue-500', 'bg-vintage-blue-600', 'bg-vintage-blue-700',
+  'bg-vintage-brown-400', 'bg-vintage-red-700', 'bg-vintage-orange-700', 'bg-vintage-amber-700', 'bg-vintage-green-800',
+  'bg-vintage-blue-800', 'bg-vintage-red-800', 'bg-vintage-orange-800'
 ];
 
 const AVAILABLE_ICONS = [

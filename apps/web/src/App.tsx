@@ -9,6 +9,7 @@ import { BillingPage } from './features/billing/components/BillingPage';
 import { LandingPage } from './features/landing/LandingPage';
 import { AuthProvider, useAuth } from './features/auth/AuthContext';
 import { LoginModal } from './features/auth/components/LoginModal';
+import { AuthCallback } from './features/auth/components/AuthCallback';
 import { ThemeProvider } from './shared/contexts/ThemeContext';
 import { ProtectedRoute } from './shared/components/ProtectedRoute';
 import { STUDIO_TOOLS } from './shared/constants';
@@ -1024,6 +1025,7 @@ const AppContent: React.FC = () => {
 
       <Routes>
         <Route path="/" element={<LandingPage onGetStarted={handleGetStarted} />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
 
         <Route
           path="/home"

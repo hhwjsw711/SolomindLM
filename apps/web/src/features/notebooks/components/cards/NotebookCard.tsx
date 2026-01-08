@@ -168,22 +168,22 @@ export const NotebookCard: React.FC<NotebookCardProps> = ({
             </button>
 
             {isMenuOpen && (
-              <div className="absolute right-0 top-full mt-1 w-40 bg-white dark:bg-slate-800 border border-border shadow-xl rounded-lg z-50 py-1 animate-in fade-in zoom-in-95 duration-150">
+              <div className="absolute right-0 top-full mt-1 w-40 bg-popover border border-border shadow-xl rounded-lg z-50 py-1 animate-in fade-in zoom-in-95 duration-150">
                 <button
                   onClick={(e) => { e.stopPropagation(); onOpenCustomize(); }}
-                  className="w-full text-left px-3 py-2 text-xs font-medium hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center gap-2 text-foreground transition-colors"
+                  className="w-full text-left px-3 py-2 text-xs font-medium hover:bg-accent flex items-center gap-2 text-popover-foreground transition-colors"
                 >
                   <Settings2 className="w-3.5 h-3.5 shrink-0" /> Customize
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); onOpenMoveToFolder(); }}
-                  className="w-full text-left px-3 py-2 text-xs font-medium hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center gap-2 text-foreground transition-colors"
+                  className="w-full text-left px-3 py-2 text-xs font-medium hover:bg-accent flex items-center gap-2 text-popover-foreground transition-colors"
                 >
                   <FolderOpen className="w-3.5 h-3.5 shrink-0" /> Move to folder
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); handleDeleteWithConfirmation(); onCloseMenu(); }}
-                  className="w-full text-left px-3 py-2 text-xs font-medium hover:bg-red-50 dark:hover:bg-red-950/20 text-destructive flex items-center gap-2 transition-colors"
+                  className="w-full text-left px-3 py-2 text-xs font-medium hover:bg-destructive/10 text-destructive flex items-center gap-2 transition-colors"
                 >
                   <Trash2 className="w-3.5 h-3.5 shrink-0" /> Delete
                 </button>

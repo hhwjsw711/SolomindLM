@@ -15,6 +15,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   signIn: (email: string, password: string) => Promise<User>;
   signUp: (email: string, password: string) => Promise<User>;
+  signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   refreshSession: () => Promise<void>;
 }
@@ -156,6 +157,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
+  const signInWithGoogle = useCallback(async () => {
+    // Redirect to backend OAuth endpoint which will handle Supabase OAuth
+    const redirectUrl = `${window.location.origin}/auth/callback`;
+    window.location.href = `${API_BASE_URL}/api/auth/google?redirect=${encodeURIComponent(redirectUrl)}`;
+  }, []);
+
   const refreshSession = useCallback(async () => {
     if (!user?.refreshToken) {
       throw new Error('No refresh token available');
@@ -191,6 +198,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated: !!user,
         signIn,
         signUp,
+        signInWithGoogle,
         signOut,
         refreshSession,
       }}
