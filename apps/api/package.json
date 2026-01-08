@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "nodemon --exec tsx src/index.ts",
-    "build": "tsc",
+    "build": "tsup src/index.ts --format esm --clean --outDir dist --minify",
     "type-check": "tsc --noEmit",
     "start": "node dist/index.js",
     "worker": "tsx src/utils/worker.ts",
@@ -44,6 +44,7 @@
     "@types/multer": "^1.4.11",
     "@types/pg": "^8.16.0",
     "nodemon": "^3.0.2",
+    "tsup": "^8.5.1",
     "tsx": "^4.7.0",
     "typescript": "^5.3.3"
   }
