@@ -77,7 +77,6 @@ export const MOCK_MESSAGES: Message[] = [
 ];
 
 export const STUDIO_TOOLS: StudioTool[] = [
-  { id: 'rag', label: 'Grounded RAG System', iconName: 'Brain', color: 'text-violet-600' },
   { id: 'audio', label: 'Audio Overview', iconName: 'AudioLines', color: 'text-indigo-600' },
   { id: 'mindmap', label: 'Mind Map', iconName: 'GitFork', color: 'text-fuchsia-600' },
   { id: 'reports', label: 'Reports', iconName: 'FileText', color: 'text-amber-600' },

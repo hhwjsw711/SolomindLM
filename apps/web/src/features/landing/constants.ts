@@ -1,5 +1,10 @@
 import { STUDIO_TOOLS } from '@/shared/constants';
 
+const LANDING_TOOLS = [
+  { id: 'rag', label: 'Grounded RAG System', iconName: 'Brain', color: 'text-violet-600' },
+  ...STUDIO_TOOLS,
+];
+
 export const LANDING_CONTENT = {
   hero: {
     headline: "Transform How You Learn with AI",
@@ -7,7 +12,7 @@ export const LANDING_CONTENT = {
     primaryCTA: "Try SolomindLM",
     secondaryCTA: "See Features"
   },
-  features: STUDIO_TOOLS.map(tool => ({
+  features: LANDING_TOOLS.map(tool => ({
     id: tool.id,
     title: tool.label,
     description: getFeatureDescription(tool.id)
