@@ -103,4 +103,19 @@ const envSchema = z.object({
   STRIPE_PRO_YEARLY_PRICE_ID: z.string(),
 });
 
-export const env = envSchema.parse(process.env);
+// Parse and validate environment variables
+export const env = (() => {
+  try {
+    return envSchema.parse(process.env);
+  } catch (error) {
+    console.error('❌ Environment variable validation failed:');
+    if (error instanceof z.ZodError) {
+      console.error('Missing or invalid variables:');
+      error.errors.forEach((err) => {
+        console.error(`  - ${err.path.join('.')}: ${err.message}`);
+      });
+    }
+    console.error('\nPlease check your Railway environment variables.');
+    throw error;
+  }
+})();
