@@ -43,7 +43,7 @@ async function ensureGraphileWorkerSchema() {
 }
 
 const app = express();
-const PORT = env.PORT || 3001;
+const PORT = Number(env.PORT) || 3001;
 
 // Parse allowed origins from environment variable
 const allowedOrigins = env.CORS_ORIGIN ? env.CORS_ORIGIN.split(',').map(o => o.trim()) : [];
