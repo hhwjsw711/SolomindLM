@@ -329,7 +329,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     <><div className="flex-1 flex flex-col h-full bg-background relative overflow-hidden">
       
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-10 h-14">
+      <div className="hidden md:flex items-center justify-between p-4 border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-10 h-14">
         <div className="flex items-center gap-2 text-foreground">
           <MessageCircle className="w-4 h-4" />
           <span className="font-sans font-bold text-sm tracking-wide uppercase">Chat</span>

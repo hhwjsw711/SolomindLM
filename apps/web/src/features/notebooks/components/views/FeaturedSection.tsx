@@ -48,8 +48,6 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({
                 </div>
                 <h3 className="text-lg font-bold leading-tight mb-3 drop-shadow-md line-clamp-2 font-sans tracking-tight">{nb.title}</h3>
                 <div className="flex items-center gap-3 text-[11px] font-medium text-white/80 uppercase tracking-wide">
-                  <span>{nb.date}</span>
-                  <span className="w-0.5 h-0.5 bg-white/50 rounded-full" />
                   <div className="flex items-center gap-1.5">
                     <Globe className="w-3 h-3 shrink-0" />
                     <span>{nb.sourceCount} sources</span>
@@ -67,18 +65,17 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({
             <div
               key={nb.id}
               onClick={() => onSelectNotebook(nb)}
-              className="group grid grid-cols-[1fr_auto_auto_40px] items-center gap-6 p-4 rounded-xl bg-card border border-border shadow-sm hover:shadow-md hover:border-primary/20 cursor-pointer transition-all"
+              className="group grid grid-cols-[1fr_auto_40px] items-center gap-6 p-4 rounded-xl bg-card border border-border shadow-sm hover:shadow-md hover:border-primary/20 cursor-pointer transition-all"
             >
               <div className="flex items-center gap-4 min-w-0">
-                <div className={`w-10 h-10 rounded-lg ${nb.coverColor} bg-opacity-20 flex items-center justify-center shrink-0`}>
-                  <Globe className={`w-5 h-5 ${(nb.coverColor || '').replace('bg-', 'text-')} shrink-0`} />
+                <div className={`w-10 h-10 rounded-lg ${nb.coverColor} bg-opacity-[3%] flex items-center justify-center shrink-0`}>
+                  <Globe className={`w-5 h-5 ${(nb.coverColor || '').replace('bg-', 'text-')} opacity-50 shrink-0`} />
                 </div>
                 <div className="flex flex-col min-w-0">
                   <span className="font-bold text-foreground font-serif truncate">{nb.title}</span>
                   <span className="text-xs text-muted-foreground uppercase tracking-wide truncate">{nb.author}</span>
                 </div>
               </div>
-              <div className="w-32 text-sm text-muted-foreground font-mono">{nb.date}</div>
               <div className="w-20 flex justify-end">
                 <div className="flex items-center gap-1.5 bg-secondary/50 px-2 py-1 rounded-md text-xs font-medium text-muted-foreground">
                   <Globe className="w-3 h-3 shrink-0" />

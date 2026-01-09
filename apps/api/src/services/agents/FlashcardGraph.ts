@@ -289,6 +289,7 @@ export class FlashcardGraph {
       apiKey,
       model: mapModel,
       temperature: 0.3, // Lower temperature for factual extraction
+      maxTokens: Math.floor(maxTokens / 2), // Use half for map phase
     });
 
     // Smart model for reduce/collapse phases (selection and refinement)
@@ -296,6 +297,7 @@ export class FlashcardGraph {
       apiKey,
       model: reduceModel,
       temperature: 0.3, // Lower temperature for consistent selection
+      maxTokens: maxTokens, // Full tokens for reduce phase
     });
 
     this.maxTokens = maxTokens;

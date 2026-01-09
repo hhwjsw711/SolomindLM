@@ -47,16 +47,6 @@ export const NotebookCard: React.FC<NotebookCardProps> = ({
       onDeleteNotebook(notebook.id);
     }
   };
-  
-  // Format date to remove the year (e.g., "JAN 2, 2026" -> "JAN 2")
-  const formatDate = (dateString: string) => {
-    try {
-      const parts = dateString.split(',');
-      return parts[0].trim(); // Returns "JAN 2" from "JAN 2, 2026"
-    } catch {
-      return dateString;
-    }
-  };
 
   if (viewMode === 'grid') {
     return (
@@ -67,9 +57,9 @@ export const NotebookCard: React.FC<NotebookCardProps> = ({
         {/* Top Decorative Half */}
         <div
           onClick={() => onSelectNotebook(notebook)}
-          className={`h-[55%] ${notebook.coverColor} bg-opacity-15 group-hover:bg-opacity-25 transition-colors p-5 relative flex items-start justify-between rounded-t-2xl`}
+          className={`h-[55%] ${notebook.coverColor} bg-opacity-[4%] group-hover:bg-opacity-[6%] transition-colors p-5 relative flex items-start justify-between rounded-t-2xl`}
         >
-          <Icon className={`w-10 h-10 ${(notebook.coverColor || '').replace('bg-', 'text-')} opacity-90 group-hover:scale-110 transition-transform duration-300 drop-shadow-sm`} />
+          <Icon className={`w-10 h-10 ${(notebook.coverColor || '').replace('bg-', 'text-')} opacity-55 group-hover:scale-110 transition-transform duration-300 drop-shadow-sm`} />
 
           <div className="relative kebab-menu z-20" onClick={(e) => e.stopPropagation()}>
             <button
@@ -107,15 +97,13 @@ export const NotebookCard: React.FC<NotebookCardProps> = ({
         {/* Bottom Info Half */}
         <div
           onClick={() => onSelectNotebook(notebook)}
-          className="h-[45%] p-5 flex flex-col justify-between bg-card relative rounded-b-2xl"
+          className="h-[45%] p-5 flex flex-col justify-end bg-card relative rounded-b-2xl"
         >
           <div className="absolute top-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-border to-transparent opacity-50" />
 
-          <h3 className="text-base font-bold text-foreground leading-snug line-clamp-2 font-sans">{notebook.title}</h3>
-
-          <div className="flex items-center justify-between text-[11px] text-muted-foreground font-medium uppercase tracking-wider">
-            <span className="font-mono">{formatDate(notebook.date)}</span>
-            <div className="flex items-center gap-1.5 bg-secondary/50 px-2 py-0.5 rounded-full">
+          <div className="flex items-end justify-between gap-2">
+            <h3 className="text-base font-bold text-foreground leading-snug line-clamp-2 font-sans flex-1 min-w-0">{notebook.title}</h3>
+            <div className="flex items-center gap-1.5 bg-secondary/50 px-2 py-0.5 rounded-full text-[11px] text-muted-foreground font-medium uppercase tracking-wider shrink-0">
               <FileText className="w-3 h-3" />
               <span>{notebook.sourceCount}</span>
             </div>
@@ -139,19 +127,14 @@ export const NotebookCard: React.FC<NotebookCardProps> = ({
 
         {/* Left: Icon + Title */}
         <div className="flex items-center gap-2 min-w-0 flex-1 z-10 pointer-events-none">
-          <div className={`rounded ${notebook.coverColor} bg-opacity-15 flex items-center justify-center shrink-0 w-7 h-7`}>
-            <Icon className={`${(notebook.coverColor || '').replace('bg-', 'text-')} w-3.5 h-3.5`} />
+          <div className={`rounded ${notebook.coverColor} bg-opacity-[3%] flex items-center justify-center shrink-0 w-7 h-7`}>
+            <Icon className={`${(notebook.coverColor || '').replace('bg-', 'text-')} opacity-50 w-3.5 h-3.5`} />
           </div>
           <span className="font-medium text-foreground font-serif truncate group-hover:text-primary transition-colors text-sm">{notebook.title}</span>
         </div>
 
-        {/* Right: Date + Sources + Menu */}
+        {/* Right: Sources + Menu */}
         <div className="flex items-center gap-2 shrink-0 z-10">
-          {/* Date */}
-          <span className="text-[10px] text-muted-foreground font-mono uppercase tracking-wide pointer-events-none hidden sm:block">
-            {formatDate(notebook.date)}
-          </span>
-          
           {/* Sources */}
           <div className="inline-flex items-center gap-1 bg-secondary/40 px-1.5 py-0.5 rounded text-[10px] font-medium text-muted-foreground pointer-events-none">
             <FileText className="w-3 h-3 shrink-0" />
@@ -207,8 +190,8 @@ export const NotebookCard: React.FC<NotebookCardProps> = ({
 
       {/* Title Column */}
       <div className="flex items-center gap-3 min-w-0 z-10 pointer-events-none">
-        <div className={`rounded-md ${notebook.coverColor} bg-opacity-15 flex items-center justify-center shrink-0 w-9 h-9`}>
-          <Icon className={`${(notebook.coverColor || '').replace('bg-', 'text-')} w-4 h-4`} />
+        <div className={`rounded-md ${notebook.coverColor} bg-opacity-[3%] flex items-center justify-center shrink-0 w-9 h-9`}>
+          <Icon className={`${(notebook.coverColor || '').replace('bg-', 'text-')} opacity-50 w-4 h-4`} />
         </div>
 
         <span className="font-medium text-foreground font-serif truncate group-hover:text-primary transition-colors text-base">{notebook.title}</span>

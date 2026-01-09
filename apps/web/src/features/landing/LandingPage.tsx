@@ -6,6 +6,7 @@ import { UseCasesSection } from './components/UseCasesSection';
 import { ContentShowcase } from './components/ContentShowcase';
 import { PricingSection } from './components/PricingSection';
 import { FAQSection } from './components/FAQSection';
+import { Footer } from './components/Footer';
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -21,6 +22,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
       <ContentShowcase />
       <PricingSection onGetStarted={onGetStarted} />
       <FAQSection />
+      <Footer />
     </div>
   );
 };

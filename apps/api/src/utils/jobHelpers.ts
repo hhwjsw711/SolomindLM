@@ -183,6 +183,9 @@ export async function scheduleWrittenQuestionsGeneration(
     notebookId: string;
     documentIds: string[];
     questionCount: number;
+    difficulty: string;
+    questionType: string;
+    focus?: string;
   },
   options?: JobScheduleOptions
 ) {

@@ -31,16 +31,30 @@ export class RateLimitService {
     );
 
     const data = result.rows[0];
-    
+
+    if (!data) {
+      // If no data returned, fail open by allowing the request
+      console.warn('[RateLimit] No data returned from rate limit check, allowing request');
+      const resetAt = new Date();
+      resetAt.setDate(resetAt.getDate() + 1);
+      resetAt.setHours(0, 0, 0, 0);
+      return {
+        allowed: true,
+        limit: 0,
+        remaining: 0,
+        reset_at: resetAt,
+      };
+    }
+
     // Calculate reset_at (next day at midnight)
     const resetAt = new Date();
     resetAt.setDate(resetAt.getDate() + 1);
     resetAt.setHours(0, 0, 0, 0);
 
     return {
-      allowed: data.allowed,
-      limit: data.limit,
-      remaining: data.remaining,
+      allowed: data.allowed ?? true, // Default to allowed if null
+      limit: data.limit ?? 0,
+      remaining: data.remaining ?? 0,
       reset_at: resetAt,
     };
   }
@@ -63,16 +77,30 @@ export class RateLimitService {
     );
 
     const data = result.rows[0];
-    
+
+    if (!data) {
+      // If no data returned, return default values
+      console.warn('[RateLimit] No data returned from rate limit status check');
+      const resetAt = new Date();
+      resetAt.setDate(resetAt.getDate() + 1);
+      resetAt.setHours(0, 0, 0, 0);
+      return {
+        limit: 0,
+        remaining: 0,
+        used: 0,
+        reset_at: resetAt,
+      };
+    }
+
     // Calculate reset_at (next day at midnight)
     const resetAt = new Date();
     resetAt.setDate(resetAt.getDate() + 1);
     resetAt.setHours(0, 0, 0, 0);
 
     return {
-      limit: data.limit,
-      remaining: data.remaining,
-      used: data.used,
+      limit: data.limit ?? 0,
+      remaining: data.remaining ?? 0,
+      used: data.used ?? 0,
       reset_at: resetAt,
     };
   }

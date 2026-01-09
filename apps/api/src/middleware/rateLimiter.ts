@@ -34,9 +34,13 @@ export function rateLimiter(serviceType: ServiceType) {
       // Check and increment rate limit atomically
       const result = await rateLimitService.checkAndIncrement(userId, serviceType);
 
-      // Add rate limit headers to all responses
-      res.setHeader('X-RateLimit-Limit', result.limit.toString());
-      res.setHeader('X-RateLimit-Remaining', result.remaining.toString());
+      // Add rate limit headers to all responses (with null checks)
+      if (result.limit != null) {
+        res.setHeader('X-RateLimit-Limit', result.limit.toString());
+      }
+      if (result.remaining != null) {
+        res.setHeader('X-RateLimit-Remaining', result.remaining.toString());
+      }
       res.setHeader('X-RateLimit-Reset', result.reset_at.toISOString());
       res.setHeader('X-RateLimit-Service', serviceType);
 

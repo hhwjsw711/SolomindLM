@@ -127,6 +127,9 @@ async function addWrittenQuestionsJob(
     notebookId: string;
     documentIds: string[];
     questionCount: number;
+    difficulty: string;
+    questionType: string;
+    focus?: string;
   },
   options?: {
     priority?: number;
@@ -267,6 +270,9 @@ router.post('/', rateLimiter('written_questions'), async (req: Request, res: Res
       notebookId,
       documentIds,
       questionCount: actualQuestionCount,
+      difficulty,
+      questionType,
+      focus,
     });
 
     // Format response to match GET endpoints (include 'questions' field)

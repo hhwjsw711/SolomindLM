@@ -21,40 +21,18 @@ import {
 // CONFIGURATION
 // ============================================================
 
-// Helper to validate and parse configuration values
-function validateConfigRange(value: number, min: number, max: number, name: string): number {
-  if (isNaN(value) || value < min || value > max) {
-    throw new Error(`Invalid ${name}: ${value}. Must be between ${min} and ${max}`);
-  }
-  return value;
-}
-
 // Validate once at initialization to avoid repeated validation
 const GRAPH_CONFIG = (() => {
-  const optimalChunkSize = validateConfigRange(
-    parseInt(env.MINDMAP_MAP_CHUNK_SIZE || '15000', 10),
-    1000, 50000, 'MINDMAP_MAP_CHUNK_SIZE'
-  );
-
   return {
     // 15k chars (~3.75k tokens) for map phase - configurable via env
-    OPTIMAL_CHUNK_SIZE: optimalChunkSize,
+    OPTIMAL_CHUNK_SIZE: parseInt(env.MINDMAP_MAP_CHUNK_SIZE || '15000', 10),
     // 30k chars for reduce phase aggregation
-    REDUCE_CHUNK_SIZE: validateConfigRange(
-      parseInt(env.MINDMAP_REDUCE_CHUNK_SIZE || '30000', 10),
-      1000, 100000, 'MINDMAP_REDUCE_CHUNK_SIZE'
-    ),
+    REDUCE_CHUNK_SIZE: parseInt(env.MINDMAP_REDUCE_CHUNK_SIZE || '30000', 10),
     // High concurrency is fine with smaller chunks
     MAX_CONCURRENT_CHUNKS: 10,
     // Give ample time for slow provider responses to avoid wasteful retries
-    MAP_TIMEOUT_MS: validateConfigRange(
-      parseInt(env.MINDMAP_MAP_TIMEOUT_MS || '300000', 10),
-      30000, 600000, 'MINDMAP_MAP_TIMEOUT_MS'
-    ),
-    REDUCE_TIMEOUT_MS: validateConfigRange(
-      parseInt(env.MINDMAP_REDUCE_TIMEOUT_MS || '300000', 10),
-      30000, 600000, 'MINDMAP_REDUCE_TIMEOUT_MS'
-    ),
+    MAP_TIMEOUT_MS: parseInt(env.MINDMAP_MAP_TIMEOUT_MS || '300000', 10),
+    REDUCE_TIMEOUT_MS: parseInt(env.MINDMAP_REDUCE_TIMEOUT_MS || '300000', 10),
   } as const;
 })();
 

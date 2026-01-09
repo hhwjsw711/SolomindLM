@@ -93,6 +93,16 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
   const [isMindMapExpanded, setIsMindMapExpanded] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -218,11 +228,14 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
 
   return (
     <><div
-      style={{ width: isOpen ? width : 0 }}
+      style={{ 
+        width: isOpen ? (isMobile ? '100%' : width) : 0 
+      }}
       className={`
         relative shrink-0 bg-sidebar border-l-2 border-border h-full flex flex-col
         overflow-hidden
         ${isOpen ? 'opacity-100' : 'opacity-0'}
+        md:w-auto w-full max-w-full
       `}
     >
       {/* Resize Handle */}
@@ -269,7 +282,7 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
         />
       )}
       
-      <div className="flex items-center justify-between p-4 border-b border-border bg-sidebar/50 backdrop-blur-sm sticky top-0 z-10 h-14">
+      <div className="hidden md:flex items-center justify-between p-4 border-b border-border bg-sidebar/50 backdrop-blur-sm sticky top-0 z-10 h-14">
         {activeNote ? (
             <div className="flex items-center gap-2 text-sidebar-foreground w-full">
                 <button

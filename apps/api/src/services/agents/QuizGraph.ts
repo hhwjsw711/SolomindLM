@@ -223,12 +223,14 @@ export class QuizGraph {
       apiKey,
       model: mapModel,
       temperature: 0.4, // Moderate temp for question variety
+      maxTokens: 16000, // Enough for quiz questions with options
     });
 
     this.smartLlm = new ChatTogetherAI({
       apiKey,
       model: reduceModel,
       temperature: 0.3, // Lower temp for consistent selection
+      maxTokens: 24000, // Enough for final quiz selection
     });
   }
 

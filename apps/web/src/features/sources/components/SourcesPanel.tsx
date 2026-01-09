@@ -64,6 +64,16 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
   const [contentCache, setContentCache] = useState<Record<string, string>>({});
   const [searchQuery, setSearchQuery] = useState('');
   const { confirm, ConfirmDialogComponent } = useConfirmDialog();
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const viewingSource = useMemo(() =>
     sources.find(s => s.id === viewingSourceId),
@@ -217,11 +227,14 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
   return (
     <>
       <div
-        style={{ width: isOpen ? width : 0 }}
+        style={{ 
+          width: isOpen ? (isMobile ? '100%' : width) : 0 
+        }}
         className={`
           relative shrink-0 bg-sidebar border-r-2 border-border h-full flex flex-col
           overflow-hidden
           ${isOpen ? 'opacity-100' : 'opacity-0'}
+          md:w-auto w-full max-w-full
         `}
       >
         {/* Resize Handle */}
@@ -268,7 +281,7 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
         )}
         
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border bg-sidebar/50 backdrop-blur-sm sticky top-0 z-10 h-14">
+        <div className="hidden md:flex items-center justify-between p-4 border-b border-border bg-sidebar/50 backdrop-blur-sm sticky top-0 z-10 h-14">
           {viewingSource ? (
             <div className="flex items-center gap-2 text-sidebar-foreground overflow-hidden">
               <button 

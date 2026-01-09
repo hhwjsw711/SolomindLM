@@ -55,9 +55,9 @@ export const FolderCard: React.FC<FolderCardProps> = ({
           {/* Top Decorative Half */}
           <div
             onClick={() => onToggleExpansion()}
-            className={`h-[55%] ${folder.color || 'bg-blue-500'} bg-opacity-15 group-hover:bg-opacity-25 transition-colors p-5 relative flex items-start justify-between rounded-t-2xl`}
+            className={`h-[55%] ${folder.color || 'bg-blue-500'} bg-opacity-[4%] group-hover:bg-opacity-[6%] transition-colors p-5 relative flex items-start justify-between rounded-t-2xl`}
           >
-            <FolderIcon className={`w-10 h-10 ${(folder.color || '').replace('bg-', 'text-')} opacity-90 group-hover:scale-110 transition-transform duration-300 drop-shadow-sm`} />
+            <FolderIcon className={`w-10 h-10 ${(folder.color || '').replace('bg-', 'text-')} opacity-55 group-hover:scale-110 transition-transform duration-300 drop-shadow-sm`} />
 
             <div className="relative folder-kebab-menu z-20" onClick={(e) => e.stopPropagation()}>
               <button
@@ -89,18 +89,20 @@ export const FolderCard: React.FC<FolderCardProps> = ({
           {/* Bottom Info Half */}
           <div
             onClick={() => onToggleExpansion()}
-            className="h-[45%] p-5 flex flex-col justify-between bg-card relative rounded-b-2xl"
+            className="h-[45%] p-5 flex flex-col justify-end bg-card relative rounded-b-2xl"
           >
             <div className="absolute top-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-border to-transparent opacity-50" />
 
-            <h3 className="text-base font-bold text-foreground leading-snug line-clamp-2 font-sans">{folder.name}</h3>
-
-            <div className="flex items-center justify-between text-[11px] text-muted-foreground font-medium uppercase tracking-wider">
-              <div className="flex items-center gap-1.5 bg-secondary/50 px-2 py-0.5 rounded-full">
-                <Folder className="w-3 h-3" />
-                <span>{folder.notebookCount}</span>
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="text-base font-bold text-foreground leading-snug line-clamp-2 font-sans">{folder.name}</h3>
+              
+              <div className="flex items-center gap-2 text-[11px] text-muted-foreground font-medium uppercase tracking-wider shrink-0">
+                <div className="flex items-center gap-1.5 bg-secondary/50 px-2 py-0.5 rounded-full">
+                  <Folder className="w-3 h-3" />
+                  <span>{folder.notebookCount}</span>
+                </div>
+                <ChevronDown className="w-4 h-4 transition-transform duration-200" style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }} />
               </div>
-              <ChevronDown className="w-4 h-4 transition-transform duration-200" style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }} />
             </div>
           </div>
         </div>
@@ -115,14 +117,14 @@ export const FolderCard: React.FC<FolderCardProps> = ({
     <>
     <div className="relative">
       <div
-        className={`group grid grid-cols-[minmax(200px,1fr)_100px_48px] items-center gap-4 p-4 rounded-xl bg-linear-to-r ${folder.color || 'bg-blue-500'} bg-opacity-5 border border-border/50 hover:border-primary/30 hover:shadow-md cursor-pointer transition-all relative`}
+        className={`group grid grid-cols-[minmax(200px,1fr)_100px_48px] items-center gap-4 p-4 rounded-xl bg-card border border-border/50 hover:border-primary/30 hover:shadow-md cursor-pointer transition-all relative`}
       >
         <div onClick={() => onToggleExpansion()} className="absolute inset-0 z-0 rounded-xl" />
 
         {/* Title Column */}
         <div className="flex items-center gap-3 min-w-0 z-10 pointer-events-none">
-          <div className={`w-9 h-9 rounded-md ${folder.color || 'bg-blue-500'} bg-opacity-20 flex items-center justify-center shrink-0 ring-1 ring-${(folder.color || 'bg-blue-500').replace('bg-', '')} ring-opacity-20`}>
-            <FolderIcon className={`w-4 h-4 ${(folder.color || '').replace('bg-', 'text-')}`} />
+          <div className={`w-9 h-9 rounded-md ${folder.color || 'bg-blue-500'} bg-opacity-[3%] flex items-center justify-center shrink-0`}>
+            <FolderIcon className={`w-4 h-4 ${(folder.color || '').replace('bg-', 'text-')} opacity-50`} />
           </div>
 
           <div className="min-w-0">

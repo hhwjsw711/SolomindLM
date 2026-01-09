@@ -89,6 +89,7 @@ const AppContent: React.FC = () => {
   // Notebook specific state
   const [isSourcesOpen, setIsSourcesOpen] = useState(true);
   const [isStudioOpen, setIsStudioOpen] = useState(true);
+  const [mobileActiveTab, setMobileActiveTab] = useState<'sources' | 'chat' | 'studio'>('sources');
   const [sources, setSources] = useState<Source[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
   const [notebookTitle, setNotebookTitle] = useState("CPSC 304");
@@ -1072,71 +1073,172 @@ const AppContent: React.FC = () => {
           path="/notebook/:id"
           element={
             <ProtectedRoute requireNotebookAccess={true}>
-              <main className="flex-1 flex overflow-hidden relative animate-in fade-in duration-300">
-                <SourcesPanel
-                  isOpen={isSourcesOpen}
-                  onClose={toggleSources}
-                  sources={sources}
-                  onToggleSource={handleToggleSource}
-                  onToggleAll={handleToggleAll}
-                  onAddSource={handleAddSource}
-                  onDeleteSource={handleDeleteSource}
-                  onRenameSource={handleRenameSource}
-                  width={leftWidth}
-                  isResizing={isResizingLeft}
-                  userId={user?.id}
-                  noteId={activeNotebookId}
-                  onDocumentUploaded={handleDocumentUploaded}
-                />
+              <main className="flex-1 flex flex-col overflow-hidden relative animate-in fade-in duration-300">
+                {/* Mobile Navigation Bar */}
+                <div className="md:hidden flex items-center justify-around border-b border-border bg-background sticky top-0 z-[60] h-12">
+                  <button
+                    onClick={() => setMobileActiveTab('sources')}
+                    className={`flex-1 py-3 px-4 text-sm font-semibold transition-colors ${
+                      mobileActiveTab === 'sources'
+                        ? 'text-primary border-b-2 border-primary bg-primary/5'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    Sources
+                  </button>
+                  <div className="w-px h-6 bg-border"></div>
+                  <button
+                    onClick={() => setMobileActiveTab('chat')}
+                    className={`flex-1 py-3 px-4 text-sm font-semibold transition-colors ${
+                      mobileActiveTab === 'chat'
+                        ? 'text-primary border-b-2 border-primary bg-primary/5'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    Chat
+                  </button>
+                  <div className="w-px h-6 bg-border"></div>
+                  <button
+                    onClick={() => setMobileActiveTab('studio')}
+                    className={`flex-1 py-3 px-4 text-sm font-semibold transition-colors ${
+                      mobileActiveTab === 'studio'
+                        ? 'text-primary border-b-2 border-primary bg-primary/5'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    Studio
+                  </button>
+                </div>
 
-                {/* Left Drag Handle */}
-                {isSourcesOpen && (
-                  <div
-                    className="w-1 hover:w-1.5 -ml-0.5 z-50 cursor-col-resize shrink-0 hover:bg-primary/50 transition-colors select-none"
-                    onMouseDown={startResizingLeft}
+                {/* Desktop Layout */}
+                <div className="hidden md:flex flex-1 overflow-hidden w-full">
+                  <SourcesPanel
+                    isOpen={isSourcesOpen}
+                    onClose={toggleSources}
+                    sources={sources}
+                    onToggleSource={handleToggleSource}
+                    onToggleAll={handleToggleAll}
+                    onAddSource={handleAddSource}
+                    onDeleteSource={handleDeleteSource}
+                    onRenameSource={handleRenameSource}
+                    width={leftWidth}
+                    isResizing={isResizingLeft}
+                    userId={user?.id}
+                    noteId={activeNotebookId}
+                    onDocumentUploaded={handleDocumentUploaded}
                   />
-                )}
 
-                <ChatPanel
-                  messages={messages}
-                  isLeftOpen={isSourcesOpen}
-                  isRightOpen={isStudioOpen}
-                  toggleLeft={toggleSources}
-                  toggleRight={toggleStudio}
-                  onClearHistory={handleClearChatHistory}
-                  onSendMessage={handleSendMessage}
-                  isLoading={isChatStreaming}
-                  notebookId={activeNotebookId}
-                />
+                  {/* Left Drag Handle */}
+                  {isSourcesOpen && (
+                    <div
+                      className="w-1 hover:w-1.5 -ml-0.5 z-50 cursor-col-resize shrink-0 hover:bg-primary/50 transition-colors select-none"
+                      onMouseDown={startResizingLeft}
+                    />
+                  )}
 
-                {/* Right Drag Handle */}
-                {isStudioOpen && (
-                  <div
-                    className="w-1 hover:w-1.5 -mr-0.5 z-50 cursor-col-resize shrink-0 hover:bg-primary/50 transition-colors select-none"
-                    onMouseDown={startResizingRight}
+                  <ChatPanel
+                    messages={messages}
+                    isLeftOpen={isSourcesOpen}
+                    isRightOpen={isStudioOpen}
+                    toggleLeft={toggleSources}
+                    toggleRight={toggleStudio}
+                    onClearHistory={handleClearChatHistory}
+                    onSendMessage={handleSendMessage}
+                    isLoading={isChatStreaming}
+                    notebookId={activeNotebookId}
                   />
-                )}
 
-                <StudioPanel
-                  isOpen={isStudioOpen}
-                  onClose={toggleStudio}
-                  tools={STUDIO_TOOLS}
-                  notes={notes}
-                  onUpdateNote={handleUpdateNote}
-                  onUpdateNoteFull={handleUpdateNoteFull}
-                  onDeleteNote={handleDeleteNote}
-                  onAddNote={handleAddNote}
-                  width={rightWidth}
-                  isResizing={isResizingRight}
-                  sources={sources}
-                  userId={user?.id}
-                  noteId={activeNotebookId}
-                  onPlayAudio={handlePlayAudio}
-                  miniPlayerVisible={miniPlayerVisible}
-                  miniPlayerData={miniPlayerData}
-                  onCloseMiniPlayer={handleCloseMiniPlayer}
-                  onExpandAudioPlayer={handleExpandAudioPlayer}
-                />
+                  {/* Right Drag Handle */}
+                  {isStudioOpen && (
+                    <div
+                      className="w-1 hover:w-1.5 -mr-0.5 z-50 cursor-col-resize shrink-0 hover:bg-primary/50 transition-colors select-none"
+                      onMouseDown={startResizingRight}
+                    />
+                  )}
+
+                  <StudioPanel
+                    isOpen={isStudioOpen}
+                    onClose={toggleStudio}
+                    tools={STUDIO_TOOLS}
+                    notes={notes}
+                    onUpdateNote={handleUpdateNote}
+                    onUpdateNoteFull={handleUpdateNoteFull}
+                    onDeleteNote={handleDeleteNote}
+                    onAddNote={handleAddNote}
+                    width={rightWidth}
+                    isResizing={isResizingRight}
+                    sources={sources}
+                    userId={user?.id}
+                    noteId={activeNotebookId}
+                    onPlayAudio={handlePlayAudio}
+                    miniPlayerVisible={miniPlayerVisible}
+                    miniPlayerData={miniPlayerData}
+                    onCloseMiniPlayer={handleCloseMiniPlayer}
+                    onExpandAudioPlayer={handleExpandAudioPlayer}
+                  />
+                </div>
+
+                {/* Mobile Layout */}
+                <div className="md:hidden flex-1 overflow-hidden w-full flex flex-col">
+                  {mobileActiveTab === 'sources' && (
+                    <div className="flex-1 w-full overflow-hidden">
+                      <SourcesPanel
+                        isOpen={true}
+                        onClose={() => {}}
+                        sources={sources}
+                        onToggleSource={handleToggleSource}
+                        onToggleAll={handleToggleAll}
+                        onAddSource={handleAddSource}
+                        onDeleteSource={handleDeleteSource}
+                        onRenameSource={handleRenameSource}
+                        width={390}
+                        isResizing={false}
+                        userId={user?.id}
+                        noteId={activeNotebookId}
+                        onDocumentUploaded={handleDocumentUploaded}
+                      />
+                    </div>
+                  )}
+                  {mobileActiveTab === 'chat' && (
+                    <div className="flex-1 w-full overflow-hidden">
+                      <ChatPanel
+                        messages={messages}
+                        isLeftOpen={false}
+                        isRightOpen={false}
+                        toggleLeft={() => {}}
+                        toggleRight={() => {}}
+                        onClearHistory={handleClearChatHistory}
+                        onSendMessage={handleSendMessage}
+                        isLoading={isChatStreaming}
+                        notebookId={activeNotebookId}
+                      />
+                    </div>
+                  )}
+                  {mobileActiveTab === 'studio' && (
+                    <div className="flex-1 w-full overflow-hidden">
+                      <StudioPanel
+                        isOpen={true}
+                        onClose={() => {}}
+                        tools={STUDIO_TOOLS}
+                        notes={notes}
+                        onUpdateNote={handleUpdateNote}
+                        onUpdateNoteFull={handleUpdateNoteFull}
+                        onDeleteNote={handleDeleteNote}
+                        onAddNote={handleAddNote}
+                        width={390}
+                        isResizing={false}
+                        sources={sources}
+                        userId={user?.id}
+                        noteId={activeNotebookId}
+                        onPlayAudio={handlePlayAudio}
+                        miniPlayerVisible={miniPlayerVisible}
+                        miniPlayerData={miniPlayerData}
+                        onCloseMiniPlayer={handleCloseMiniPlayer}
+                        onExpandAudioPlayer={handleExpandAudioPlayer}
+                      />
+                    </div>
+                  )}
+                </div>
               </main>
             </ProtectedRoute>
           }

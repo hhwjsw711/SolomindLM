@@ -95,7 +95,7 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({ onGetStarted
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-border">
+          <div className="md:hidden py-4 border-t border-border bg-background">
             <nav className="flex flex-col gap-4">
               {navItems.map((item) => (
                 <button
