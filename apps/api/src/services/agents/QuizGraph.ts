@@ -66,9 +66,6 @@ const GRAPH_CONFIG = {
   REDUCE_TIMEOUT_MS: parseInt(env.QUIZ_REDUCE_TIMEOUT_MS || '240000', 10), // 4 minutes
   // Collapse recursion limit to prevent infinite loops
   MAX_COLLAPSE_DEPTH: 5,
-  // Topic allocation multiplier for question refinement
-  // Allows topics to take up to 2x their proportional share to ensure diversity
-  TOPIC_ALLOCATION_MULTIPLIER: 2.0,
 } as const;
 
 // ============================================================
@@ -385,6 +382,8 @@ export class QuizGraph {
     }, `Sending prompt to LLM (${prompt.length} chars)...`);
 
     let output: string;
+    let questionsGenerated = 0;  // Track count without re-parsing
+
     try {
       // Use structured output for reliable question generation
       const structuredLlm = this.fastLlm.withStructuredOutput<QuizQuestionResponse>(
@@ -418,6 +417,9 @@ export class QuizGraph {
         'QuizMap'
       );
 
+      // Store count before serialization (avoid unnecessary parse later)
+      questionsGenerated = response.questions.length;
+
       // Serialize questions as JSON for downstream processing
       output = JSON.stringify(response.questions);
     } catch (error) {
@@ -438,14 +440,6 @@ export class QuizGraph {
       logError(errorContext, 'Map process failed');
 
       output = '[]'; // Return empty array on failure
-    }
-
-    // Parse to count questions
-    let questionsGenerated = 0;
-    try {
-      const parsed = JSON.parse(output) as QuizQuestion[];
-      questionsGenerated = parsed.length;
-    } catch {
       questionsGenerated = 0;
     }
 
@@ -678,22 +672,17 @@ export class QuizGraph {
     }
 
     // Determine if we should use LLM for intelligent selection
-    // Skip LLM if we're close to target count (within 10%) OR if we have fewer questions than target
-    const shouldSkipLLM = (totalQuestionsBefore >= state.questionCount * 0.9 &&
-                          totalQuestionsBefore <= state.questionCount * 1.1) ||
-                          totalQuestionsBefore < state.questionCount;
+    // Skip LLM only if we have fewer questions than target (LLM would hallucinate)
+    // Always use LLM when we have more questions than target (no 10% tolerance)
+    const shouldSkipLLM = totalQuestionsBefore < state.questionCount;
 
     if (shouldSkipLLM) {
-      const skipReason = totalQuestionsBefore < state.questionCount
-        ? 'Fewer questions than target (LLM would hallucinate)'
-        : 'Question count within acceptable range';
-
       logInfo({
         agent: 'QuizGraph',
         phase: 'reduce_skip_llm',
         totalQuestionsExtracted: totalQuestionsBefore,
         targetQuestionCount: state.questionCount,
-        reason: skipReason,
+        reason: 'Fewer questions than target (LLM would hallucinate)',
       }, `Skipping LLM reduce, using ${totalQuestionsBefore} questions directly...`);
 
       return this.finalizeQuestions(allQuestions, state);
@@ -708,7 +697,7 @@ export class QuizGraph {
       totalQuestionsBefore,
       targetQuestionCount: state.questionCount,
       retryAttempt: retryCount + 1,
-      reason: 'Question count outside acceptable range, using LLM for selection',
+      reason: 'Question count exceeds target, using LLM for selection',
     }, `Using smart LLM for intelligent question selection from ${totalQuestionsBefore} questions [Attempt ${retryCount + 1}/2]...`);
 
     try {
@@ -762,7 +751,7 @@ export class QuizGraph {
 
       return this.finalizeQuestions(response.questions, state);
     } catch (error) {
-      // Fallback to direct selection if LLM fails
+      // Fallback to simple slice if LLM fails
       logError({
         agent: 'QuizGraph',
         phase: 'reduce_llm_failed',
@@ -770,12 +759,11 @@ export class QuizGraph {
           name: error.name,
           message: error.message,
         } : String(error),
-      }, `LLM reduce failed, falling back to direct selection`);
+      }, `LLM reduce failed, falling back to simple slice`);
 
-      // Use topic-based refinement to select from all questions
-      const refined = this.refineQuestionSelectionFast(allQuestions, state.questionCount);
+      const fallback = allQuestions.slice(0, state.questionCount);
 
-      if (refined.length === 0 && retryCount < 1) {
+      if (fallback.length === 0 && retryCount < 1) {
         // Retry if we got nothing
         return new Send('reduce', {
           ...state,
@@ -783,7 +771,7 @@ export class QuizGraph {
         } as any);
       }
 
-      return this.finalizeQuestions(refined, state);
+      return this.finalizeQuestions(fallback, state);
     }
   }
 
@@ -809,60 +797,14 @@ export class QuizGraph {
       targetQuestionCount: state.questionCount,
     }, `Generated ${questions.length} questions (target: ${state.questionCount})`);
 
-    // Post-processing: enforce exact question count
-    if (questions.length > state.questionCount) {
-      logInfo({
-        agent: 'QuizGraph',
-        phase: 'reduce_refinement',
-        currentCount: questions.length,
-        targetCount: state.questionCount,
-      }, `Have ${questions.length} questions, need exactly ${state.questionCount}. Running fast topic-based refinement.`);
-
-      const refined = this.refineQuestionSelectionFast(questions, state.questionCount);
-
-      // Log final refined questions
-      logInfo({
-        agent: 'QuizGraph',
-        phase: 'reduce_final',
-        finalQuestionCount: refined.length,
-        finalQuestions: refined.map((q, idx) => ({
-          index: idx + 1,
-          question: q.question,
-          optionsCount: q.options.length,
-          answer: q.answer,
-        })),
-      });
-
-      logBanner(
-        {
-          agent: 'QuizGraph',
-          phase: 'generation_complete',
-          finalQuestionCount: refined.length,
-          targetQuestionCount: state.questionCount,
-        },
-        'GENERATION COMPLETE'
-      );
-
-      return {
-        ...state,
-        finalOutput: refined,
-        status: 'completed',
-        progress: {
-          phase: 'reduce',
-          percentage: 100,
-          message: `Completed: ${refined.length} quiz questions generated`,
-          questionsGenerated: refined.length,
-        },
-      };
-    }
-
-    if (questions.length < state.questionCount) {
+    // Log if count doesn't match target (LLM should handle exact count in reduce phase)
+    if (questions.length !== state.questionCount) {
       logWarn({
         agent: 'QuizGraph',
-        phase: 'reduce',
+        phase: 'reduce_count_mismatch',
         generatedCount: questions.length,
         targetCount: state.questionCount,
-      }, `Generated ${questions.length} questions, target was ${state.questionCount}. Accepting fewer.`);
+      }, `LLM returned ${questions.length} questions, target was ${state.questionCount}. Accepting LLM result.`);
     }
 
     // Log final questions
@@ -930,98 +872,6 @@ AVAILABLE QUESTIONS (${questions.length} total):
 ${questionsList}
 
 Return the complete selected questions as a JSON array.`;
-  }
-
-  // Fast refinement: topic-based sampling
-  private refineQuestionSelectionFast(questions: QuizQuestion[], targetCount: number): QuizQuestion[] {
-    logInfo({
-      agent: 'QuizGraph',
-      phase: 'refine_fast',
-      totalQuestions: questions.length,
-      targetCount,
-    }, `Selecting ${targetCount} questions from ${questions.length} using topic-based sampling`);
-
-    // Group questions by topic (simple keyword extraction)
-    const topicGroups: Record<string, QuizQuestion[]> = {};
-    for (const q of questions) {
-      const topic = this.extractTopic(q);
-      if (!topicGroups[topic]) topicGroups[topic] = [];
-      topicGroups[topic].push(q);
-    }
-
-    const topics = Object.keys(topicGroups);
-    logInfo({
-      agent: 'QuizGraph',
-      phase: 'refine_fast_topics',
-      topicCount: topics.length,
-      topics: topics.map(t => `${t}(${topicGroups[t].length})`),
-    }, `Found ${topics.length} topics`);
-
-    // Allocate questions proportionally
-    const allocations: Record<string, number> = {};
-    let allocated = 0;
-    const maxPerTopic = Math.max(
-      2,
-      Math.ceil(targetCount / topics.length * GRAPH_CONFIG.TOPIC_ALLOCATION_MULTIPLIER)
-    );
-
-    for (const topic of topics) {
-      const topicSize = topicGroups[topic].length;
-      const proportional = Math.round((topicSize / questions.length) * targetCount);
-      allocations[topic] = Math.max(1, Math.min(maxPerTopic, proportional));
-      allocated += allocations[topic];
-    }
-
-    // Adjust allocation
-    if (allocated < targetCount) {
-      let deficit = targetCount - allocated;
-      const sortedTopics = [...topics].sort((a, b) => topicGroups[b].length - topicGroups[a].length);
-      for (const topic of sortedTopics) {
-        if (deficit <= 0) break;
-        const canAdd = Math.min(topicGroups[topic].length - allocations[topic], deficit);
-        allocations[topic] += canAdd;
-        deficit -= canAdd;
-      }
-    }
-
-    // Sample from each topic
-    const selected: QuizQuestion[] = [];
-    for (const topic of topics) {
-      const qs = topicGroups[topic];
-      const count = Math.min(allocations[topic], qs.length);
-      const step = Math.floor(qs.length / count);
-      for (let i = 0; i < count; i++) {
-        selected.push(qs[i * step]);
-      }
-    }
-
-    // Trim or fill as needed
-    const finalSelected = selected.length > targetCount ? selected.slice(0, targetCount) : selected;
-
-    logInfo({
-      agent: 'QuizGraph',
-      phase: 'refine_fast_selected',
-      selectedCount: finalSelected.length,
-      allocations,
-    }, `Selected ${finalSelected.length} questions`);
-
-    return finalSelected;
-  }
-
-  private extractTopic(question: QuizQuestion): string {
-    const text = question.question.toLowerCase();
-
-    // Simple keyword-based topic extraction
-    if (text.includes('what is') || text.includes('define') || text.includes('definition')) return 'Definitions';
-    if (text.includes('when') || text.includes('year') || text.includes('century')) return 'Timeline/Dates';
-    if (text.includes('who') || text.includes('person') || text.includes('people')) return 'People';
-    if (text.includes('where') || text.includes('place') || text.includes('location')) return 'Places';
-    if (text.includes('why') || text.includes('because') || text.includes('reason')) return 'Causes/Reasons';
-    if (text.includes('how') || text.includes('process') || text.includes('method')) return 'Processes';
-    if (text.includes('which') || text.includes('select') || text.includes('choose')) return 'Classification';
-    if (text.includes('true') || text.includes('false') || text.includes('correct')) return 'Facts';
-
-    return 'General';
   }
 
   // Build the graph

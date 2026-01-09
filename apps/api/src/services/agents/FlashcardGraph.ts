@@ -793,104 +793,7 @@ Select exactly ${targetCount} diverse flashcards:`;
     return selected;
   }
 
-  // Fast refinement: no LLM call, just topic-based sampling
-  private refineFlashcardSelectionFast(flashcards: Flashcard[], targetCount: number): Flashcard[] {
-    logInfo({
-      agent: 'FlashcardGraph',
-      phase: 'refine_fast',
-      totalFlashcards: flashcards.length,
-      targetCount,
-    }, `Selecting ${targetCount} cards from ${flashcards.length} using topic-based sampling`);
-
-    // Group cards by topic
-    const topicGroups: Record<string, Flashcard[]> = {};
-    for (const card of flashcards) {
-      const topic = this.extractTopic(card);
-      if (!topicGroups[topic]) topicGroups[topic] = [];
-      topicGroups[topic].push(card);
-    }
-
-    const topics = Object.keys(topicGroups);
-    logInfo({
-      agent: 'FlashcardGraph',
-      phase: 'refine_fast_topics',
-      topicCount: topics.length,
-      topics: topics.map(t => `${t}(${topicGroups[t].length})`),
-    }, `Found ${topics.length} topics`);
-
-    // Allocate cards proportionally to topic sizes (min 1 per topic, max based on target/topics ratio)
-    const totalCards = flashcards.length;
-    const allocations: Record<string, number> = {};
-    let allocated = 0;
-
-    // Dynamic max: ensure we can reach target with all topics
-    const maxPerTopic = Math.max(3, Math.ceil(targetCount / topics.length * 2));
-
-    for (const topic of topics) {
-      const topicSize = topicGroups[topic].length;
-      const proportional = Math.round((topicSize / totalCards) * targetCount);
-      // Min 1 for small topics, max to prevent domination, but allow enough to reach target
-      allocations[topic] = Math.max(1, Math.min(maxPerTopic, proportional));
-      allocated += allocations[topic];
-    }
-
-    // Adjust if we're off from target
-    if (allocated < targetCount) {
-      // Add more to larger topics first
-      let deficit = targetCount - allocated;
-      const sortedTopics = [...topics].sort((a, b) => topicGroups[b].length - topicGroups[a].length);
-      for (const topic of sortedTopics) {
-        if (deficit <= 0) break;
-        if (allocations[topic] < topicGroups[topic].length) {
-          const canAdd = Math.min(topicGroups[topic].length - allocations[topic], deficit);
-          allocations[topic] += canAdd;
-          deficit -= canAdd;
-        }
-      }
-    } else if (allocated > targetCount) {
-      // Reduce from larger topics first, but keep min 1
-      let excess = allocated - targetCount;
-      const sortedTopics = [...topics].sort((a, b) => topicGroups[b].length - topicGroups[a].length);
-      for (const topic of sortedTopics) {
-        if (excess <= 0) break;
-        if (allocations[topic] > 1) {
-          const canRemove = Math.min(allocations[topic] - 1, excess);
-          allocations[topic] -= canRemove;
-          excess -= canRemove;
-        }
-      }
-    }
-
-    // Sample from each topic according to allocation
-    const selected: Flashcard[] = [];
-    for (const topic of topics) {
-      const cards = topicGroups[topic];
-      const count = Math.min(allocations[topic], cards.length);
-      const step = Math.floor(cards.length / count);
-      for (let i = 0; i < count; i++) {
-        selected.push(cards[i * step]);
-      }
-    }
-
-    logInfo({
-      agent: 'FlashcardGraph',
-      phase: 'refine_fast_selected',
-      selectedCount: selected.length,
-      allocations,
-    }, `Selected ${selected.length} cards`);
-
-    // Log distribution
-    const finalDistribution = this.groupFlashcardsByTopic(selected);
-    logInfo({
-      agent: 'FlashcardGraph',
-      phase: 'refine_fast_distribution',
-      finalDistribution,
-    });
-
-    return selected;
-  }
-
-  // Extract topic from a flashcard (copied from groupFlashcardsByTopic logic)
+  // Extract topic from a flashcard for topic distribution logging
   private extractTopic(card: Flashcard): string {
     const question = card.front.toLowerCase();
 
@@ -1051,60 +954,14 @@ Select exactly ${targetCount} diverse flashcards:`;
       };
     }
 
-    // Post-processing: enforce exact card count
-    if (flashcards.length > state.cardCount) {
-      logInfo({
-        agent: 'FlashcardGraph',
-        phase: 'reduce_refinement',
-        currentCount: flashcards.length,
-        targetCount: state.cardCount,
-      }, `Have ${flashcards.length} cards, need exactly ${state.cardCount}. Running fast topic-based refinement.`);
-
-      const refined = this.refineFlashcardSelectionFast(flashcards, state.cardCount);
-
-      // Log final refined cards
-      logInfo({
-        agent: 'FlashcardGraph',
-        phase: 'reduce_final',
-        finalFlashcardCount: refined.length,
-        finalFlashcards: refined.map((card, idx) => ({
-          index: idx + 1,
-          front: card.front,
-          backLength: card.back.length,
-          backPreview: card.back.substring(0, 100),
-        })),
-      });
-
-      logBanner(
-        {
-          agent: 'FlashcardGraph',
-          phase: 'generation_complete',
-          finalFlashcardCount: refined.length,
-          targetCardCount: state.cardCount,
-        },
-        'GENERATION COMPLETE'
-      );
-
-      return {
-        ...state,
-        finalOutput: refined,
-        status: 'completed',
-        progress: {
-          phase: 'reduce',
-          percentage: 100,
-          message: `Completed: ${refined.length} flashcards generated`,
-          cardsGenerated: refined.length,
-        },
-      };
-    }
-
-    if (flashcards.length < state.cardCount) {
+    // Log if count doesn't match target (LLM should handle exact count in reduce phase)
+    if (flashcards.length !== state.cardCount) {
       logWarn({
         agent: 'FlashcardGraph',
-        phase: 'reduce',
+        phase: 'reduce_count_mismatch',
         generatedCount: flashcards.length,
         targetCount: state.cardCount,
-      }, `Generated ${flashcards.length} cards, target was ${state.cardCount}. Accepting fewer.`);
+      }, `LLM returned ${flashcards.length} cards, target was ${state.cardCount}. Accepting LLM result.`);
     }
 
     // Log final cards

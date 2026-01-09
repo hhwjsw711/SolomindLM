@@ -69,7 +69,7 @@ const GRAPH_CONFIG = {
   REDUCE_TIMEOUT_MS: parseInt(env.WRITTEN_QUESTIONS_REDUCE_TIMEOUT_MS || '240000', 10),
   MAX_COLLAPSE_DEPTH: 3,
   DYNAMIC_BUFFER_MULTIPLIER: 1.5,       // Buffer for LLM under-generation
-  MAX_QUESTIONS_PER_CHUNK: 10,          // Prevent overloading single chunk
+  MAX_QUESTIONS_PER_CHUNK: 30,         // Max questions per chunk (reduce phase will trim excess)
   CHUNK_COVERAGE_THRESHOLD: 0.7,        // Min % of chunks that must succeed
 } as const;
 
@@ -423,6 +423,8 @@ export class WrittenQuestionsGraph {
     }, `Sending prompt to LLM (${prompt.length} chars)...`);
 
     let output: string;
+    let questionsGenerated = 0;  // Track count without re-parsing
+
     try {
       // Use structured output for reliable parsing
       const structuredLlm = this.fastLlm.withStructuredOutput<WrittenQuestionsResponse>(
@@ -481,6 +483,9 @@ export class WrittenQuestionsGraph {
         rejectedCount: response.questions.length - validQuestions.length,
       }, `Validated ${validQuestions.length}/${response.questions.length} questions`);
 
+      // Store count before serialization (avoid unnecessary parse later)
+      questionsGenerated = validQuestions.length;
+
       // Serialize questions as JSON for downstream processing
       output = JSON.stringify(validQuestions);
 
@@ -528,8 +533,10 @@ export class WrittenQuestionsGraph {
       throw error;
     }
 
-    const questionsGenerated = JSON.parse(output).length;
     const elapsed = Date.now() - startTime;
+
+    // Parse for preview only (questionsGenerated was already set above)
+    const previewQuestions = questionsGenerated > 0 ? JSON.parse(output) as WrittenQuestion[] : [];
 
     logPhaseComplete({
       agent: 'WrittenQuestionsGraph',
@@ -538,9 +545,7 @@ export class WrittenQuestionsGraph {
       outputLength: output.length,
       questionsGenerated,
       processingTimeMs: elapsed,
-      outputPreview: questionsGenerated > 0
-        ? JSON.parse(output).map((q: WrittenQuestion) => q.question.substring(0, 50)).join('; ')
-        : '',
+      outputPreview: previewQuestions.map((q: WrittenQuestion) => q.question.substring(0, 50)).join('; '),
     });
 
     return {
@@ -848,7 +853,7 @@ export class WrittenQuestionsGraph {
       logError({
         agent: 'WrittenQuestionsGraph',
         phase: 'reduce_final_fallback',
-      }, 'LLM reduce failed after retries, using direct selection fallback');
+      }, 'LLM reduce failed after retries, using simple slice fallback');
 
       const fallback = allQuestions.slice(0, state.questionCount);
       const result = this.finalizeQuestions(fallback, state);
