@@ -768,6 +768,22 @@ export class WrittenQuestionsGraph {
       reason: 'Question count outside acceptable range, using LLM for selection',
     }, `Using smart LLM for intelligent question selection from ${totalQuestionsBefore} questions [Attempt ${retryCount + 1}/2]...`);
 
+    // Detect similar questions for logging visibility
+    const similarQuestions = this.detectSimilarQuestions(allQuestions);
+
+    if (similarQuestions.length > 0) {
+      logInfo({
+        agent: 'WrittenQuestionsGraph',
+        phase: 'reduce_similarity_detection',
+        duplicateGroups: similarQuestions.length,
+        duplicates: similarQuestions.slice(0, 5).map(d => ({
+          type: d.similarity,
+          reason: d.reason,
+          questions: d.questions.map(q => q.question.substring(0, 80)),
+        })),
+      }, `Detected ${similarQuestions.length} potential duplicate groups - LLM will handle merging`);
+    }
+
     try {
       // Use structured output for reliable question selection
       const structuredLlm = this.smartLlm.withStructuredOutput<WrittenQuestionsResponse>(
@@ -824,7 +840,7 @@ export class WrittenQuestionsGraph {
         progress: {
           phase: 'reduce',
           percentage: 100,
-          message: `Completed: ${response.questions.length} questions selected`,
+          message: `Completed: ${response.questions.length} unique questions (target: ${state.questionCount})`,
           questionsGenerated: response.questions.length,
         },
       };
@@ -862,7 +878,7 @@ export class WrittenQuestionsGraph {
         progress: {
           phase: 'reduce',
           percentage: 100,
-          message: `Completed: ${fallback.length} questions (fallback mode)`,
+          message: `Completed: ${fallback.length} questions (target: ${state.questionCount}, fallback mode)`,
           questionsGenerated: fallback.length,
         },
       };
@@ -948,13 +964,27 @@ Select questions that test analysis and synthesis.`;
 
     const pointsInstruction = questionType === 'short' ? '5 points' : '12 points';
 
-    return `You are an expert educator selecting written questions for an assessment.
+    return `You are an expert educator selecting and refining written questions for an assessment.
 
 CRITICAL REQUIREMENTS:
-- Select EXACTLY ${targetCount} questions - no more, no less
-- Select questions from DIFFERENT topics. Maximum 2 questions per topic
-- Your goal is MAXIMUM TOPIC DIVERSITY
-- Prioritize self-contained questions with clear rubrics
+- Select approximately ${targetCount} questions (flexible: ±${Math.ceil(targetCount * 0.2)} is acceptable)
+- IDENTIFY AND MERGE similar or duplicate questions before selecting
+- Quality over quantity: Better to have ${Math.ceil(targetCount * 0.8)} unique questions than ${targetCount} with duplicates
+- Your goal is MAXIMUM SEMANTIC DIVERSITY - each question should test a distinct concept
+
+SIMILARITY DETECTION GUIDELINES:
+Questions are considered similar if they:
+- Ask about the same concept using different wording (e.g., "What is X?" vs "Define X")
+- Test the same comparison/contrast (e.g., "Difference between A and B" vs "Compare A and B")
+- Have the same core answer despite surface-level differences
+- Cover overlapping content that could be combined
+
+MERGING STRATEGY:
+When you find similar questions:
+- Combine the best elements from each version
+- Create a single, clearer question
+- Ensure the merged question is self-contained
+- Keep the most comprehensive rubric
 
 ${questionTypeGuidance}
 
@@ -1077,6 +1107,52 @@ Return the complete selected questions as a JSON array.`;
     }
 
     return 'General';
+  }
+
+  /**
+   * Detect semantically similar questions using simple heuristics.
+   * Provides visibility into potential duplicates for logging.
+   *
+   * @param questions - Array of questions to analyze
+   * @returns Array of duplicate groups for logging/analysis
+   */
+  private detectSimilarQuestions(questions: WrittenQuestion[]): Array<{
+    similarity: string;
+    questions: Array<{index: number; question: string}>;
+    reason: string;
+  }> {
+    const duplicates: Array<{
+      similarity: string;
+      questions: Array<{index: number; question: string}>;
+      reason: string;
+    }> = [];
+
+    for (let i = 0; i < questions.length; i++) {
+      for (let j = i + 1; j < questions.length; j++) {
+        const q1 = questions[i].question.toLowerCase();
+        const q2 = questions[j].question.toLowerCase();
+
+        // Check for word overlap (> 70% shared words)
+        const words1 = new Set(q1.match(/\b\w+\b/g) || []);
+        const words2 = new Set(q2.match(/\b\w+\b/g) || []);
+        const intersection = [...words1].filter(w => words2.has(w));
+        const union = new Set([...words1, ...words2]);
+        const overlap = intersection.length / union.size;
+
+        if (overlap > 0.7) {
+          duplicates.push({
+            similarity: 'high_word_overlap',
+            questions: [
+              { index: i, question: questions[i].question },
+              { index: j, question: questions[j].question },
+            ],
+            reason: `High word overlap: ${(overlap * 100).toFixed(0)}%`,
+          });
+        }
+      }
+    }
+
+    return duplicates;
   }
 
   // Build the graph

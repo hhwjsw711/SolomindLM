@@ -696,30 +696,60 @@ export class FlashcardGraph {
       targetCount,
     }, `Selecting ${targetCount} best cards from ${flashcards.length}`);
 
+    // Detect similar flashcards for logging visibility
+    const similarFlashcards = this.detectSimilarFlashcards(flashcards);
+
+    if (similarFlashcards.length > 0) {
+      logInfo({
+        agent: 'FlashcardGraph',
+        phase: 'refine_similarity_detection',
+        duplicateGroups: similarFlashcards.length,
+        duplicates: similarFlashcards.slice(0, 5).map(d => ({
+          type: d.similarity,
+          reason: d.reason,
+          flashcards: d.flashcards.map(f => ({ front: f.front.substring(0, 60), back: f.back.substring(0, 60) })),
+        })),
+      }, `Detected ${similarFlashcards.length} potential duplicate groups - LLM will handle merging`);
+    }
+
     // Format flashcards for the prompt
     const flashcardsText = flashcards
       .map((card, index) => `${index + 1}. Q: ${card.front}\n   A: ${card.back}`)
       .join('\n\n');
 
-    const prompt = `You are selecting flashcards for a study set. Your goal is MAXIMUM TOPIC DIVERSITY.
+    const prompt = `You are an expert educator selecting and refining flashcards for a study set.
 
-CRITICAL REQUIREMENT - READ CAREFULLY:
-You MUST select flashcards from DIFFERENT topics. Do NOT select more than 3 cards from any single topic.
+CRITICAL REQUIREMENTS:
+- Select approximately ${targetCount} flashcards (flexible: ±${Math.ceil(targetCount * 0.2)} is acceptable)
+- IDENTIFY AND MERGE similar or duplicate flashcards before selecting
+- Quality over quantity: Better to have ${Math.ceil(targetCount * 0.8)} unique cards than ${targetCount} with duplicates
+- Your goal is MAXIMUM SEMANTIC DIVERSITY - each card should cover a distinct concept
+
+SIMILARITY DETECTION GUIDELINES:
+Flashcards are considered similar if they:
+- Test the same definition or concept (e.g., "Define X" on front, "What is X" on front)
+- Have the same answer despite different question phrasing
+- Cover overlapping content that could be combined into one card
+
+MERGING STRATEGY:
+When you find similar flashcards:
+- Combine the best elements from each version (clearest question, most complete answer)
+- Create a single, clearer flashcard
+- Ensure the merged card is self-contained
+- Keep the most comprehensive explanation or examples
+
+TOPIC DIVERSITY:
+Additionally, select flashcards from DIFFERENT topics. Do NOT select more than 3 cards from any single topic.
 If there are 6+ topics available, select 1-3 cards from each topic.
-Your goal is MAXIMUM TOPIC DIVERSITY, not maximum cards on one topic.
+Example: If you need 20 cards and have 5 topics, select 4 from each topic
 
-TASK:
-1. First, mentally identify 5-7 distinct topics in the flashcards below
-2. Then select ${targetCount} cards distributed EVENLY across those topics
-3. Example: If you need 20 cards and have 5 topics, select 4 from each topic
-
-From the ${flashcards.length} flashcards below, select exactly ${targetCount}.
+From the ${flashcards.length} flashcards below, select approximately ${targetCount}.
 ${topic ? `User preference: ${topic} (but still maintain diversity)` : ''}
 
 Available flashcards:
 ${flashcardsText}
 
-Select exactly ${targetCount} diverse flashcards:`;
+Return the complete selected flashcards as a JSON array.`;
 
     // Use structured output for reliable parsing
     // @ts-ignore - LangGraph structured output has complex types
@@ -742,7 +772,14 @@ Select exactly ${targetCount} diverse flashcards:`;
       'FlashcardRefineSelection'
     );
 
-    const selected = (response as FlashcardResponse).flashcards;
+    let selected = (response as FlashcardResponse).flashcards;
+    
+    // Clean up any trailing enumeration numbers from structured output (defensive)
+    selected = selected.map(card => ({
+      front: card.front,
+      back: this.cleanBackText(card.back),
+    }));
+    
     logInfo({
       agent: 'FlashcardGraph',
       phase: 'refine_selection_complete',
@@ -858,6 +895,49 @@ Select exactly ${targetCount} diverse flashcards:`;
     }
 
     return !shouldReject;
+  }
+
+  /**
+   * Detect semantically similar flashcards using simple heuristics.
+   * Provides visibility into potential duplicates for logging.
+   */
+  private detectSimilarFlashcards(flashcards: Flashcard[]): Array<{
+    similarity: string;
+    flashcards: Array<{index: number; front: string; back: string}>;
+    reason: string;
+  }> {
+    const duplicates: Array<{
+      similarity: string;
+      flashcards: Array<{index: number; front: string; back: string}>;
+      reason: string;
+    }> = [];
+
+    for (let i = 0; i < flashcards.length; i++) {
+      for (let j = i + 1; j < flashcards.length; j++) {
+        const f1 = flashcards[i];
+        const f2 = flashcards[j];
+
+        // Check for word overlap in front text (> 70% shared words)
+        const words1 = new Set(f1.front.toLowerCase().match(/\b\w+\b/g) || []);
+        const words2 = new Set(f2.front.toLowerCase().match(/\b\w+\b/g) || []);
+        const intersection = [...words1].filter(w => words2.has(w));
+        const union = new Set([...words1, ...words2]);
+        const overlap = intersection.length / union.size;
+
+        if (overlap > 0.7) {
+          duplicates.push({
+            similarity: 'high_word_overlap',
+            flashcards: [
+              { index: i, front: f1.front, back: f1.back },
+              { index: j, front: f2.front, back: f2.back },
+            ],
+            reason: `High word overlap: ${(overlap * 100).toFixed(0)}%`,
+          });
+        }
+      }
+    }
+
+    return duplicates;
   }
 
   // Node: Reduce phase
@@ -1000,6 +1080,16 @@ Select exactly ${targetCount} diverse flashcards:`;
     };
   }
 
+  /**
+   * Cleans up the back text by removing trailing enumeration numbers
+   * (e.g., "2.", "3.") that the LLM sometimes adds
+   */
+  private cleanBackText(back: string): string {
+    // Remove trailing enumeration numbers like "2.", "3.", "10." etc.
+    // Pattern matches: optional whitespace, followed by digits, followed by a period, at end of string
+    return back.replace(/\s*\d+\.\s*$/, '').trim();
+  }
+
   // Fallback parser for when structured output fails
   private fallbackParseFlashcards(content: string): Flashcard[] {
     logInfo({
@@ -1017,7 +1107,10 @@ Select exactly ${targetCount} diverse flashcards:`;
 
     while ((match = qaPattern.exec(content)) !== null) {
       const front = match[1].trim();
-      const back = match[2].trim();
+      let back = match[2].trim();
+      
+      // Clean up trailing enumeration numbers
+      back = this.cleanBackText(back);
 
       if (front.length > 0 && back.length > 0) {
         const card: Flashcard = { front, back };
@@ -1052,7 +1145,8 @@ Select exactly ${targetCount} diverse flashcards:`;
 
         if (qMatch) {
           if (currentFront && currentBack) {
-            const card: Flashcard = { front: currentFront, back: currentBack.trim() };
+            let cleanedBack = this.cleanBackText(currentBack.trim());
+            const card: Flashcard = { front: currentFront, back: cleanedBack };
             // Validate that flashcard is self-contained
             if (this.validateSelfContained(card)) {
               flashcards.push(card);
@@ -1072,7 +1166,8 @@ Select exactly ${targetCount} diverse flashcards:`;
 
       // Add the last card
       if (currentFront && currentBack) {
-        const card: Flashcard = { front: currentFront, back: currentBack.trim() };
+        let cleanedBack = this.cleanBackText(currentBack.trim());
+        const card: Flashcard = { front: currentFront, back: cleanedBack };
         // Validate that flashcard is self-contained
         if (this.validateSelfContained(card)) {
           flashcards.push(card);

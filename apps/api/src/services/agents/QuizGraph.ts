@@ -700,6 +700,22 @@ export class QuizGraph {
       reason: 'Question count exceeds target, using LLM for selection',
     }, `Using smart LLM for intelligent question selection from ${totalQuestionsBefore} questions [Attempt ${retryCount + 1}/2]...`);
 
+    // Detect similar questions for logging visibility
+    const similarQuestions = this.detectSimilarQuestions(allQuestions);
+
+    if (similarQuestions.length > 0) {
+      logInfo({
+        agent: 'QuizGraph',
+        phase: 'reduce_similarity_detection',
+        duplicateGroups: similarQuestions.length,
+        duplicates: similarQuestions.slice(0, 5).map(d => ({
+          type: d.similarity,
+          reason: d.reason,
+          questions: d.questions.map(q => q.question.substring(0, 80)),
+        })),
+      }, `Detected ${similarQuestions.length} potential duplicate groups - LLM will handle merging`);
+    }
+
     try {
       // Use structured output for reliable question selection
       const structuredLlm = this.smartLlm.withStructuredOutput<QuizQuestionResponse>(
@@ -857,13 +873,29 @@ export class QuizGraph {
       `Q${idx + 1}: ${q.question.substring(0, 100)}...`
     ).join('\n');
 
-    return `Select exactly ${targetCount} diverse questions from the available pool.
+    return `You are an expert educator selecting and refining quiz questions for an assessment.
 
 CRITICAL REQUIREMENTS:
-- Select EXACTLY ${targetCount} questions - no more, no less
-- Select from DIFFERENT topics (max 2 questions per topic)
-- Prioritize self-contained questions
-- Return the FULL, COMPLETE question objects for your selections
+- Select approximately ${targetCount} questions (flexible: ±${Math.ceil(targetCount * 0.2)} is acceptable)
+- IDENTIFY AND MERGE similar or duplicate questions before selecting
+- Quality over quantity: Better to have ${Math.ceil(targetCount * 0.8)} unique questions than ${targetCount} with duplicates
+- Your goal is MAXIMUM SEMANTIC DIVERSITY - each question should test a distinct concept
+
+SIMILARITY DETECTION GUIDELINES:
+Questions are considered similar if they:
+- Ask about the same concept using different wording (e.g., "What is X?" vs "Define X")
+- Test the same comparison/contrast (e.g., "Difference between A and B" vs "Compare A and B")
+- Have the same core answer despite surface-level differences
+- Cover overlapping content that could be combined
+
+MERGING STRATEGY:
+When you find similar questions:
+- Combine the best elements from each version (best question text, options, explanations)
+- Create a single, clearer question with proper distractors
+- Ensure the merged question is self-contained
+- Keep the most comprehensive explanation
+
+Return the FULL, COMPLETE question objects for your selections.
 
 Difficulty: ${difficulty}
 ${focus ? `Focus: ${focus} (but maintain diversity)` : ''}
@@ -872,6 +904,49 @@ AVAILABLE QUESTIONS (${questions.length} total):
 ${questionsList}
 
 Return the complete selected questions as a JSON array.`;
+  }
+
+  /**
+   * Detect semantically similar questions using simple heuristics.
+   * Provides visibility into potential duplicates for logging.
+   */
+  private detectSimilarQuestions(questions: QuizQuestion[]): Array<{
+    similarity: string;
+    questions: Array<{index: number; question: string}>;
+    reason: string;
+  }> {
+    const duplicates: Array<{
+      similarity: string;
+      questions: Array<{index: number; question: string}>;
+      reason: string;
+    }> = [];
+
+    for (let i = 0; i < questions.length; i++) {
+      for (let j = i + 1; j < questions.length; j++) {
+        const q1 = questions[i].question.toLowerCase();
+        const q2 = questions[j].question.toLowerCase();
+
+        // Check for word overlap (> 70% shared words)
+        const words1 = new Set(q1.match(/\b\w+\b/g) || []);
+        const words2 = new Set(q2.match(/\b\w+\b/g) || []);
+        const intersection = [...words1].filter(w => words2.has(w));
+        const union = new Set([...words1, ...words2]);
+        const overlap = intersection.length / union.size;
+
+        if (overlap > 0.7) {
+          duplicates.push({
+            similarity: 'high_word_overlap',
+            questions: [
+              { index: i, question: questions[i].question },
+              { index: j, question: questions[j].question },
+            ],
+            reason: `High word overlap: ${(overlap * 100).toFixed(0)}%`,
+          });
+        }
+      }
+    }
+
+    return duplicates;
   }
 
   // Build the graph
