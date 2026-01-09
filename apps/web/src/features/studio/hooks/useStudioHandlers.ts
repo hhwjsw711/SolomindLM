@@ -373,16 +373,8 @@ export function useStudioHandlers({
   }, [sources, userId, noteId, notes, onAddNote, onSetActiveNoteId, onUpdateNote, onUpdateNoteFull, onDeleteNote]);
 
   const handleCreateMindMap = useCallback(async () => {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/8fe05cda-53a6-4f10-9366-95f9d6180c7f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useStudioHandlers.ts:385',message:'handleCreateMindMap entry',data:{sourcesCount:sources.length,sourcesWithSelected:sources.filter(s=>s.selected).length,userId,noteId},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1',runId:'post-fix'})}).catch(()=>{});
-    // #endregion
-    
     // Get selected document IDs from sources
     let selectedDocumentIds = sources.filter(s => s.selected).map(s => s.id);
-
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/8fe05cda-53a6-4f10-9366-95f9d6180c7f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useStudioHandlers.ts:392',message:'selectedDocumentIds after filtering',data:{selectedDocumentIds,selectedDocumentIdsLength:selectedDocumentIds.length,sources:sources.map(s=>({id:s.id,selected:s.selected,title:s.title}))},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1,H2',runId:'post-fix'})}).catch(()=>{});
-    // #endregion
 
     if (selectedDocumentIds.length === 0) {
       if (confirm) {
@@ -413,20 +405,12 @@ export function useStudioHandlers({
     onAddNote(newNote);
 
     try {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/8fe05cda-53a6-4f10-9366-95f9d6180c7f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useStudioHandlers.ts:415',message:'Before mindMapApi.generateMindMap call',data:{userId,notebookId:noteId,documentIds:selectedDocumentIds,placeholderId},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H3'})}).catch(()=>{});
-      // #endregion
-      
       // Call API to create and queue mind map
       const { mindMapId, mindmap } = await mindMapApi.generateMindMap({
         userId,
         notebookId: noteId,
         documentIds: selectedDocumentIds,
       });
-
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/8fe05cda-53a6-4f10-9366-95f9d6180c7f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useStudioHandlers.ts:425',message:'After mindMapApi.generateMindMap success',data:{mindMapId,mindmapId:mindmap.id,mindmapTitle:mindmap.title,mindmapStatus:mindmap.status,placeholderId},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H4,H6'})}).catch(()=>{});
-      // #endregion
 
       // Create note from mindmap data
       const noteFromMindmap: Note = {
@@ -440,18 +424,10 @@ export function useStudioHandlers({
         mindMapData: mindmap.data,
       };
 
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/8fe05cda-53a6-4f10-9366-95f9d6180c7f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useStudioHandlers.ts:440',message:'Before onUpdateNoteFull call',data:{placeholderId,noteFromMindmapId:noteFromMindmap.id,hasOnUpdateNoteFull:!!onUpdateNoteFull},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H5'})}).catch(()=>{});
-      // #endregion
-
       // Update note ID with real mind map ID
       if (onUpdateNoteFull) {
         onUpdateNoteFull(placeholderId, noteFromMindmap);
       }
-      
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/8fe05cda-53a6-4f10-9366-95f9d6180c7f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useStudioHandlers.ts:449',message:'After onUpdateNoteFull call',data:{placeholderId,noteFromMindmapId:noteFromMindmap.id},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H5'})}).catch(()=>{});
-      // #endregion
 
       // Start polling for status
       mindMapApi.pollMindMapStatus(
@@ -487,10 +463,6 @@ export function useStudioHandlers({
       });
 
     } catch (error) {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/8fe05cda-53a6-4f10-9366-95f9d6180c7f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useStudioHandlers.ts:475',message:'Mind map creation error caught',data:{error:error instanceof Error?error.message:String(error),errorStack:error instanceof Error?error.stack:undefined,placeholderId},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1,H2,H3'})}).catch(()=>{});
-      // #endregion
-      
       console.error('Failed to create mind map:', error);
       alert(error instanceof Error ? error.message : 'Failed to create mind map');
       // Remove the placeholder note

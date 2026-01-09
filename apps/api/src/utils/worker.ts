@@ -1,5 +1,5 @@
 import { run, runMigrations } from 'graphile-worker';
-import { pgPool, workerConfig } from '../config/worker.js';
+import { pgPool, workerConfig, poolHealthQuery, queueDepthQuery, taskConcurrencyLimits } from '../config/worker.js';
 
 // Type imports for payloads
 type DocEmbeddingJobPayload = import('../services/jobs/DocEmbeddingJob.js').DocEmbeddingJobPayload;
@@ -125,6 +125,15 @@ async function startWorker() {
   }
 
   console.log(`[Worker] Starting Graphile Worker with concurrency=${workerConfig.concurrency}, pollInterval=2000ms (Total capacity: ${workerConfig.totalCapacity})`);
+  console.log('[Worker] Configuration:');
+  console.log(`[Worker]   - Instances: ${workerConfig.instances}`);
+  console.log(`[Worker]   - Concurrency per instance: ${workerConfig.concurrency}`);
+  console.log(`[Worker]   - Total capacity: ${workerConfig.totalCapacity} jobs`);
+  console.log(`[Worker]   - DB pool max: ${workerConfig.poolMax} connections`);
+  console.log('[Worker] Task-specific concurrency limits:');
+  for (const [task, limit] of Object.entries(taskConcurrencyLimits)) {
+    console.log(`[Worker]   - ${task}: ${limit}`);
+  }
   console.log('[Worker] Registered tasks: docEmbedding, reportGeneration, mindmapGeneration, flashcardGeneration, quizGeneration, audioOverviewGeneration, writtenQuestionsGeneration');
 
   // Start heartbeat in parallel (don't await it)

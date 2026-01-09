@@ -90,9 +90,16 @@ const envSchema = z.object({
   TAVILY_API_KEY: z.string(),
   CORS_ORIGIN: z.string().default('http://localhost:5173,https://www.solomindlm.com,https://solomindlm.com,https://*.vercel.app'),
   // Graphile Worker Configuration
-  WORKER_CONCURRENCY: z.string().default('5'),
-  WORKER_INSTANCES: z.string().default('1'),
-  DB_POOL_MAX: z.string().default('10'),
+  // Optimized for AI/LLM I/O-bound workloads
+  // Concurrency: Number of jobs processed concurrently per worker instance
+  // Higher values (10-15) recommended for I/O-bound tasks waiting on external APIs
+  WORKER_CONCURRENCY: z.string().default('12'),
+  // Instances: Number of worker instances for horizontal scaling
+  // Multiple instances provide fault tolerance and better CPU utilization
+  WORKER_INSTANCES: z.string().default('2'),
+  // DB_POOL_MAX: Database connection pool size per instance
+  // Formula: max(concurrency + 3, 10) for tasks with DB access during execution
+  DB_POOL_MAX: z.string().default('15'),
   // Rate Limiting Configuration
   RATE_LIMIT_ENABLED: z.string().default('true'),
   RATE_LIMIT_FAIL_OPEN: z.string().default('true'),

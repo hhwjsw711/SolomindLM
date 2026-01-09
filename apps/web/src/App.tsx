@@ -362,31 +362,15 @@ const AppContent: React.FC = () => {
   };
 
   const handleUpdateNoteFull = (id: string, note: Note) => {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/8fe05cda-53a6-4f10-9366-95f9d6180c7f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:330',message:'handleUpdateNoteFull entry',data:{oldId:id,newNoteId:note.id,newNoteType:note.type,newNoteTitle:note.title},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H5'})}).catch(()=>{});
-    // #endregion
-    
     setNotes(prev => {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/8fe05cda-53a6-4f10-9366-95f9d6180c7f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:336',message:'Inside setNotes updater',data:{oldId:id,newNoteId:note.id,prevNotesCount:prev.length,prevNoteIds:prev.map(n=>n.id)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H5'})}).catch(()=>{});
-      // #endregion
-      
       return prev.map(n => n.id === id ? { ...note } : n);
     });
   };
 
   const handleDeleteNote = async (id: string) => {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/8fe05cda-53a6-4f10-9366-95f9d6180c7f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:344',message:'handleDeleteNote entry',data:{id,idLength:id.length,isValidUUID:/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H4'})}).catch(()=>{});
-    // #endregion
-    
     try {
       // Find the note to check its type
       const noteToDelete = notes.find(n => n.id === id);
-
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/8fe05cda-53a6-4f10-9366-95f9d6180c7f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:353',message:'Found note to delete',data:{id,noteToDeleteId:noteToDelete?.id,noteToDeleteType:noteToDelete?.type,noteToDeleteTitle:noteToDelete?.title},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H4'})}).catch(()=>{});
-      // #endregion
 
       // Optimistically remove from UI
       setNotes(prev => prev.filter(n => n.id !== id));
