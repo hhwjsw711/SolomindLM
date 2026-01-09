@@ -98,15 +98,31 @@ function parseQuestionsData(wq: WrittenQuestionsRow): WrittenQuestion[] {
 
   // Handle both string (during initial insert) and object/array (Supabase jsonb auto-parse)
   try {
-    const data = typeof wq.questions_data === 'string'
-      ? JSON.parse(wq.questions_data)
-      : wq.questions_data;
+    let data: any;
+    
+    // Handle double-encoded JSON (text containing JSON string)
+    if (typeof wq.questions_data === 'string') {
+      const firstParse = JSON.parse(wq.questions_data);
+      // If the first parse gives us a string, parse again
+      if (typeof firstParse === 'string') {
+        data = JSON.parse(firstParse);
+      } else {
+        data = firstParse;
+      }
+    } else {
+      data = wq.questions_data;
+    }
 
     // Handle structured format { questions: [...] } or direct array [...]
-    if (Array.isArray(data)) {
-      return data;
-    }
-    return data.questions || [];
+    let questions: WrittenQuestion[] = Array.isArray(data) ? data : (data.questions || []);
+    
+    // Ensure all questions have valid IDs (assign UUIDs to any with empty/missing IDs)
+    questions = questions.map(q => ({
+      ...q,
+      id: (q.id && q.id.trim()) ? q.id : crypto.randomUUID(),
+    }));
+    
+    return questions;
   } catch (error) {
     console.error('[WrittenQuestions] Error parsing questions_data:', error);
     return [];

@@ -96,12 +96,19 @@ export async function writtenQuestionsGenerationJob(
       },
     });
 
+    // Explicitly update status to completed to ensure UI reflects the final state
+    await service.updateWrittenQuestionsStatus(writtenQuestionId, 'completed', {
+      phase: 'completed',
+      completedAt: new Date().toISOString(),
+    });
+
     console.log(JSON.stringify({
       timestamp: new Date().toISOString(),
       service: 'WrittenQuestionsGeneration',
       action: 'job_complete',
       writtenQuestionId,
       questionsCount: result.questions.length,
+      status: 'completed',
     }));
   } catch (error) {
     console.error(JSON.stringify({

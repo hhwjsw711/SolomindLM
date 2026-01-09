@@ -2,6 +2,7 @@ import { StateGraph, START, END, Send, Annotation } from '@langchain/langgraph';
 import { ChatTogetherAI } from '@langchain/community/chat_models/togetherai';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { z } from 'zod';
+import { randomUUID } from 'crypto';
 import { env } from '../../config/env.js';
 
 // Shared utilities
@@ -456,7 +457,14 @@ export class WrittenQuestionsGraph {
       );
 
       // Validate questions are self-contained
-      const validQuestions = response.questions.filter(q => this.validateSelfContained(q));
+      let validQuestions = response.questions.filter(q => this.validateSelfContained(q));
+      
+      // Ensure all questions have valid IDs (assign UUIDs to any with empty/missing IDs)
+      // This fixes the issue at the source, right after LLM generation
+      validQuestions = validQuestions.map(q => ({
+        ...q,
+        id: (q.id && q.id.trim()) ? q.id : randomUUID(),
+      }));
 
       // For mixed type, log distribution for this chunk
       if (questionType === 'mixed') {
@@ -578,7 +586,14 @@ export class WrittenQuestionsGraph {
     for (let i = 0; i < state.mapOutputs.length; i++) {
       const jsonStr = state.mapOutputs[i];
       try {
-        const questions = JSON.parse(jsonStr) as WrittenQuestion[];
+        let questions = JSON.parse(jsonStr) as WrittenQuestion[];
+        
+        // Ensure all questions have valid IDs (defensive check - should already be set in map phase)
+        questions = questions.map(q => ({
+          ...q,
+          id: (q.id && q.id.trim()) ? q.id : randomUUID(),
+        }));
+        
         if (questions.length === 0) {
           emptyChunks.push(i);
         }
@@ -849,12 +864,18 @@ export class WrittenQuestionsGraph {
 
   // Helper method to finalize and return questions
   private finalizeQuestions(questions: WrittenQuestion[], state: OverallStateType): Partial<OverallStateType> {
+    // IDs should already be assigned in map phase, but ensure as defensive measure
+    const questionsWithIds = questions.map(q => ({
+      ...q,
+      id: (q.id && q.id.trim()) ? q.id : randomUUID(),
+    }));
+
     // For mixed type, validate final distribution
-    if (state.questionType === 'mixed' && questions.length > 0) {
-      const shortCount = questions.filter(q => q.questionType === 'short').length;
-      const essayCount = questions.filter(q => q.questionType === 'essay').length;
-      const shortPercent = Math.round(shortCount / questions.length * 100);
-      const essayPercent = Math.round(essayCount / questions.length * 100);
+    if (state.questionType === 'mixed' && questionsWithIds.length > 0) {
+      const shortCount = questionsWithIds.filter(q => q.questionType === 'short').length;
+      const essayCount = questionsWithIds.filter(q => q.questionType === 'essay').length;
+      const shortPercent = Math.round(shortCount / questionsWithIds.length * 100);
+      const essayPercent = Math.round(essayCount / questionsWithIds.length * 100);
 
       logInfo({
         agent: 'WrittenQuestionsGraph',
@@ -884,9 +905,10 @@ export class WrittenQuestionsGraph {
     logInfo({
       agent: 'WrittenQuestionsGraph',
       phase: 'reduce_final',
-      finalQuestionCount: questions.length,
-      finalQuestions: questions.map((q, idx) => ({
+      finalQuestionCount: questionsWithIds.length,
+      finalQuestions: questionsWithIds.map((q, idx) => ({
         index: idx + 1,
+        id: q.id,
         question: q.question,
         questionType: q.questionType,
         maxPoints: q.rubric.maxPoints,
@@ -897,7 +919,7 @@ export class WrittenQuestionsGraph {
       {
         agent: 'WrittenQuestionsGraph',
         phase: 'generation_complete',
-        finalQuestionCount: questions.length,
+        finalQuestionCount: questionsWithIds.length,
         targetQuestionCount: state.questionCount,
       },
       'GENERATION COMPLETE'
@@ -905,7 +927,7 @@ export class WrittenQuestionsGraph {
 
     return {
       ...state,
-      finalOutput: questions,
+      finalOutput: questionsWithIds,
       status: 'completed',
     };
   }
