@@ -96,7 +96,7 @@ export function useStudioHandlers({
     const cardCount = countMap[config.count];
 
     // Create placeholder note
-    const placeholderId = Math.random().toString(36).substr(2, 9);
+    const placeholderId = Math.random().toString(36).slice(2, 11);
     const newNote: Note = {
       id: placeholderId,
       title: 'Flashcards', // Initial placeholder - AI will generate descriptive title
@@ -194,7 +194,7 @@ export function useStudioHandlers({
     const questionCount = countMap[config.count];
 
     // Create placeholder note
-    const placeholderId = Math.random().toString(36).substr(2, 9);
+    const placeholderId = Math.random().toString(36).slice(2, 11);
     const newNote: Note = {
       id: placeholderId,
       title: 'Quiz', // Initial placeholder - AI will generate descriptive title
@@ -299,7 +299,7 @@ export function useStudioHandlers({
     };
 
     // Create note with generating status (placeholder ID)
-    const placeholderId = Math.random().toString(36).substr(2, 9);
+    const placeholderId = Math.random().toString(36).slice(2, 11);
     const newNote: Note = {
       id: placeholderId,
       title: titles[formatId] || 'New Report',
@@ -390,7 +390,7 @@ export function useStudioHandlers({
     }
 
     // Create note with generating status (placeholder ID)
-    const placeholderId = Math.random().toString(36).substr(2, 9);
+    const placeholderId = Math.random().toString(36).slice(2, 11);
     const newNote: Note = {
       id: placeholderId,
       title: 'Mind Map',
@@ -494,7 +494,7 @@ export function useStudioHandlers({
     const questionCount = countMap[config.count];
 
     // Create placeholder note
-    const placeholderId = Math.random().toString(36).substr(2, 9);
+    const placeholderId = Math.random().toString(36).slice(2, 11);
     const newNote: Note = {
       id: placeholderId,
       title: 'Written Questions', // Initial placeholder - AI will generate descriptive title
@@ -607,7 +607,7 @@ export function useStudioHandlers({
     }
 
     // Create placeholder note with simple title - AI will generate descriptive title
-    const placeholderId = Math.random().toString(36).substr(2, 9);
+    const placeholderId = Math.random().toString(36).slice(2, 11);
     const newNote: Note = {
       id: placeholderId,
       title: 'Audio Overview', // Initial placeholder - AI will generate descriptive title

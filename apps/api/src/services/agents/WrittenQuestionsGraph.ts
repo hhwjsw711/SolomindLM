@@ -160,7 +160,7 @@ const getMapPrompt = (params: {
   questionType: string;
   focus?: string;
 }): string => {
-  const { chunk, questionCount, questionsPerChunk, difficulty, questionType, focus } = params;
+  const { chunk, questionsPerChunk, difficulty, questionType, focus } = params;
 
   const difficultyGuidance: Record<string, string> = {
     easy: 'basic recall and definitions - straightforward facts',

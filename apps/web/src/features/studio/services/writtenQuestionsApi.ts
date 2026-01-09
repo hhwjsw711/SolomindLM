@@ -48,26 +48,10 @@ export interface GradedResult {
 }
 
 /**
- * Get question count label
+ * Get preview text based on status, actual question count, and metadata
  */
-function getQuestionCountLabel(count: string | number): string {
-  if (typeof count === 'string') {
-    const labels: Record<string, string> = {
-      fewer: '5',
-      standard: '10',
-      more: '15',
-    };
-    return labels[count] || '10';
-  }
-  return String(count);
-}
-
-/**
- * Get preview text based on status and metadata
- */
-function getPreviewText(status: string, metadata?: any): string {
+function getPreviewText(status: string, questionCount: number, metadata?: any): string {
   const phase = metadata?.phase || status;
-  const questionCount = metadata?.questionCount || 'standard';
   const questionType = metadata?.questionType || 'short';
 
   const isGenerating = status === 'generating' ||
@@ -77,12 +61,12 @@ function getPreviewText(status: string, metadata?: any): string {
     phase === 'reducing';
 
   if (isGenerating) {
-    return `${getQuestionCountLabel(questionCount)} Questions • ${questionType} • Generating...`;
+    return `${questionCount} Questions • ${questionType} • Generating...`;
   }
   if (status === 'failed' || phase === 'failed') {
     return 'Written Questions • Failed';
   }
-  return `${getQuestionCountLabel(questionCount)} Questions • ${questionType}`;
+  return `${questionCount} Questions • ${questionType}`;
 }
 
 /**
@@ -95,7 +79,7 @@ function mapWrittenQuestionsToNote(dbWQ: any): WrittenQuestionsNote {
   return {
     id: dbWQ.id,
     title: dbWQ.title,
-    preview: getPreviewText(dbWQ.status, dbWQ.metadata),
+    preview: getPreviewText(dbWQ.status, questionCount, dbWQ.metadata),
     type: 'writtenQuestions',
     questions,
     userAnswers: dbWQ.userAnswers || {},
