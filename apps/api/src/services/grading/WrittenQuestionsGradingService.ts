@@ -118,6 +118,8 @@ export class WrittenQuestionsGradingService {
       ? 'Short Answer: 1-3 sentences expected, testing recall and basic understanding'
       : 'Essay: Multi-paragraph response expected, testing analysis and synthesis';
 
+    const hasSourceMaterial = !!referenceContext;
+
     return `You are grading a ${questionType} answer.
 
 **QUESTION:**
@@ -133,14 +135,15 @@ ${rubric.criteria.map((c, i) => `${i + 1}. ${c}`).join('\n')}
 **STUDENT ANSWER:**
 ${userAnswer}
 
-${modelAnswer ? `**REFERENCE ANSWER (for guidance):**\n${modelAnswer}\n` : ''}
-${referenceContext ? `**REFERENCE MATERIAL:**\n${referenceContext}\n` : ''}
+${modelAnswer ? `**MODEL ANSWER (for guidance):**\n${modelAnswer}\n` : ''}
+${referenceContext ? `**SOURCE MATERIAL:**\n${referenceContext}\n` : ''}
 
 **GRADING INSTRUCTIONS:**
 1. Score the answer out of ${rubric.maxPoints} points
 2. Provide detailed, constructive feedback
 3. List specific strengths (what was done well)
 4. List specific areas for improvement (what could be better)
+${hasSourceMaterial ? `5. **CRITICAL:** Your feedback MUST be grounded in the provided SOURCE MATERIAL above. Only praise or critique content that is directly supported by the source material. Do not use outside knowledge to evaluate the answer.` : ''}
 
 Be fair, constructive, and educational in your feedback.
 

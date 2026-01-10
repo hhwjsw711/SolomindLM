@@ -45,6 +45,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   const tooltipRef = useRef<HTMLDivElement>(null);
   const hideTooltipTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const virtuosoRef = useRef<any>(null);
+  const citationBadgeRefs = useRef<Map<number, HTMLElement>>(new Map());
 
   const { confirm, ConfirmDialogComponent } = useConfirmDialog();
 
@@ -105,7 +106,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         setHoveredRefId(null);
         setHoveredMessageId(null);
       }
-    }, 200); // 200ms delay
+    }, 150); // Reduced delay for better responsiveness
   };
 
   const handleRefEnter = () => {
@@ -114,6 +115,64 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       clearTimeout(hideTooltipTimeoutRef.current);
     }
   };
+
+  const handleRefClick = (refId: number, messageId: string, event: React.MouseEvent | React.TouchEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    // Toggle tooltip on mobile/touch devices
+    if (hoveredRefId === refId && hoveredMessageId === messageId) {
+      // If already showing this tooltip, close it
+      setHoveredRefId(null);
+      setHoveredMessageId(null);
+    } else {
+      // Show tooltip
+      handleRefHover(refId, messageId, event as React.MouseEvent);
+    }
+  };
+
+  const closeTooltip = () => {
+    if (hideTooltipTimeoutRef.current) {
+      clearTimeout(hideTooltipTimeoutRef.current);
+    }
+    setHoveredRefId(null);
+    setHoveredMessageId(null);
+    setIsTooltipHovered(false);
+  };
+
+  // Close tooltip when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (hoveredRefId === null) return;
+      
+      const target = event.target as Node;
+      
+      // Check if click is outside tooltip
+      if (tooltipRef.current && !tooltipRef.current.contains(target)) {
+        // Check if click is on a citation badge
+        let clickedOnBadge = false;
+        citationBadgeRefs.current.forEach((badgeElement) => {
+          if (badgeElement && badgeElement.contains(target)) {
+            clickedOnBadge = true;
+          }
+        });
+        
+        // Only close if not clicking on a badge (badge clicks are handled separately)
+        if (!clickedOnBadge) {
+          closeTooltip();
+        }
+      }
+    };
+
+    // Use both mouse and touch events
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [hoveredRefId]);
 
   // Handle sending a message
   const handleSendMessage = useCallback(async () => {
@@ -221,9 +280,18 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                 const refId = parseInt(text.slice(5));
                 return (
                   <span
+                    ref={(el) => {
+                      if (el) {
+                        citationBadgeRefs.current.set(refId, el);
+                      } else {
+                        citationBadgeRefs.current.delete(refId);
+                      }
+                    }}
                     onMouseEnter={(e) => handleRefHover(refId, messageId, e)}
                     onMouseLeave={handleRefLeave}
-                    className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold cursor-pointer hover:bg-primary/90 transition-colors mx-1 align-middle relative"
+                    onClick={(e) => handleRefClick(refId, messageId, e)}
+                    onTouchStart={(e) => handleRefClick(refId, messageId, e)}
+                    className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold cursor-pointer hover:bg-primary/90 active:bg-primary/80 transition-colors mx-1 align-middle relative touch-manipulation"
                     title={`Reference ${refId}`}
                     style={{ verticalAlign: 'middle' }}
                   >
@@ -441,12 +509,31 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
               }}
               onMouseLeave={() => {
                 setIsTooltipHovered(false);
-                // Hide immediately when leaving tooltip
-                setHoveredRefId(null);
+                // Set a small delay before hiding to allow moving back to badge
+                if (hideTooltipTimeoutRef.current) {
+                  clearTimeout(hideTooltipTimeoutRef.current);
+                }
+                hideTooltipTimeoutRef.current = setTimeout(() => {
+                  setHoveredRefId(null);
+                  setHoveredMessageId(null);
+                }, 100);
               }}
             >
-              <div className="bg-popover border border-border rounded-2xl shadow-xl p-5 w-96 max-h-64 overflow-y-auto text-sm animate-in fade-in zoom-in-95 duration-200 flex flex-col">
-                <p className="text-[10px] uppercase tracking-widest font-mono text-muted-foreground mb-3 font-bold shrink-0">
+              <div className="bg-popover border border-border rounded-2xl shadow-xl p-5 w-96 max-h-64 overflow-y-auto text-sm animate-in fade-in zoom-in-95 duration-200 flex flex-col relative">
+                <button
+                  onClick={closeTooltip}
+                  onTouchEnd={(e) => {
+                    e.preventDefault();
+                    closeTooltip();
+                  }}
+                  className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center rounded-full bg-muted hover:bg-muted/80 active:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors touch-manipulation z-10"
+                  aria-label="Close tooltip"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+                <p className="text-[10px] uppercase tracking-widest font-mono text-muted-foreground mb-3 font-bold shrink-0 pr-8">
                   Reference {hoveredRefId} • {ref.sourceTitle}
                 </p>
                 <p className="text-popover-foreground whitespace-pre-wrap text-sm leading-relaxed">

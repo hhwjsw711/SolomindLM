@@ -100,7 +100,7 @@ function parseQuestionsData(wq: WrittenQuestionsRow): WrittenQuestion[] {
   // Handle both string (during initial insert) and object/array (Supabase jsonb auto-parse)
   try {
     let data: any;
-    
+
     // Handle double-encoded JSON (text containing JSON string)
     if (typeof wq.questions_data === 'string') {
       const firstParse = JSON.parse(wq.questions_data);
@@ -116,17 +116,66 @@ function parseQuestionsData(wq: WrittenQuestionsRow): WrittenQuestion[] {
 
     // Handle structured format { questions: [...] } or direct array [...]
     let questions: WrittenQuestion[] = Array.isArray(data) ? data : (data.questions || []);
-    
+
     // Ensure all questions have valid IDs (assign UUIDs to any with empty/missing IDs)
     questions = questions.map(q => ({
       ...q,
       id: (q.id && q.id.trim()) ? q.id : crypto.randomUUID(),
     }));
-    
+
     return questions;
   } catch (error) {
     console.error('[WrittenQuestions] Error parsing questions_data:', error);
     return [];
+  }
+}
+
+/**
+ * Fetches document content from document_chunks for the given document IDs.
+ * Returns a concatenated string of all document content for grounding the grading.
+ */
+async function fetchDocumentsContent(documentIds: string[]): Promise<string> {
+  if (!documentIds || documentIds.length === 0) {
+    return '';
+  }
+
+  try {
+    // Fetch all chunks for the given documents
+    const { data: chunks, error } = await supabase
+      .from('document_chunks')
+      .select('content, document_id')
+      .in('document_id', documentIds)
+      .order('chunk_index', { ascending: true });
+
+    if (error) {
+      console.error('[WrittenQuestions] Error fetching document chunks:', error);
+      return '';
+    }
+
+    if (!chunks || chunks.length === 0) {
+      console.warn('[WrittenQuestions] No document chunks found for IDs:', documentIds);
+      return '';
+    }
+
+    // Group chunks by document and concatenate
+    const chunksByDocument = chunks.reduce((acc, chunk) => {
+      if (!acc[chunk.document_id]) {
+        acc[chunk.document_id] = [];
+      }
+      acc[chunk.document_id].push(chunk.content);
+      return acc;
+    }, {} as Record<string, string[]>);
+
+    // Join all documents with document separators
+    const allDocumentsContent = Object.values(chunksByDocument)
+      .map(docChunks => docChunks.join('\n\n'))
+      .join('\n\n---\n\n');
+
+    console.log(`[WrittenQuestions] Fetched ${chunks.length} chunks from ${Object.keys(chunksByDocument).length} documents`);
+    return allDocumentsContent;
+  } catch (error) {
+    console.error('[WrittenQuestions] Error fetching documents content:', error);
+    return '';
   }
 }
 
@@ -457,11 +506,14 @@ router.post('/:id/submit', async (req: Request, res: Response) => {
     const { WrittenQuestionsGradingService } = await import('../services/grading/WrittenQuestionsGradingService.js');
     const gradingService = new WrittenQuestionsGradingService();
 
-    // Grade the answer
+    // Fetch source document content for grounded grading
+    const sourceContent = await fetchDocumentsContent(wq.metadata?.documentIds || []);
+
+    // Grade the answer with source material for grounding
     const gradingResult = await gradingService.gradeAnswer({
       question: questionToGrade,
       userAnswer: answer.trim(),
-      referenceContext: wq.metadata?.focusArea,
+      referenceContext: sourceContent || wq.metadata?.focus,
     });
 
     // Update metadata with the graded answer
