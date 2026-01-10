@@ -1,12 +1,19 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FileText, AlertCircle, Shield, CreditCard, Ban, Gavel } from 'lucide-react';
+import { SEOMeta } from '@/shared/seo/SEOMeta';
 
 export const TermsOfService: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
+      <SEOMeta
+        title="Terms of Service - SolomindLM"
+        description="Read SolomindLM's Terms of Service to understand your rights and responsibilities when using our AI-powered study platform."
+        canonical="/terms"
+      />
+      <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b border-border bg-card">
         <div className="max-w-4xl mx-auto px-4 py-6">
@@ -185,13 +192,13 @@ export const TermsOfService: React.FC = () => {
             </div>
 
             <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 mb-6">
-              <h3 className="text-lg font-semibold text-red-800 dark:text-red-200 mb-3">
+              <h3 className="text-lg font-semibold text-foreground mb-3">
                 Prohibited Activities
               </h3>
-              <p className="text-red-700 dark:text-red-300 mb-3">
+              <p className="text-foreground mb-3">
                 You agree NOT to use the Service to:
               </p>
-              <ul className="space-y-2 text-red-700 dark:text-red-300 text-sm">
+              <ul className="space-y-2 text-foreground text-sm">
                 <li>• Violate any applicable laws or regulations</li>
                 <li>• Infringe on intellectual property rights of others</li>
                 <li>• Upload viruses, malware, or malicious code</li>
@@ -272,10 +279,10 @@ export const TermsOfService: React.FC = () => {
             </div>
 
             <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-yellow-800 dark:text-yellow-200 mb-3">
+              <h3 className="text-lg font-semibold text-foreground mb-3">
                 Important Disclaimers
               </h3>
-              <ul className="space-y-2 text-yellow-800 dark:text-yellow-200 text-sm">
+              <ul className="space-y-2 text-foreground text-sm">
                 <li>• THE SERVICE IS PROVIDED "AS IS" WITHOUT WARRANTIES OF ANY KIND</li>
                 <li>• We do not guarantee uninterrupted or error-free operation</li>
                 <li>• AI-generated content may be inaccurate, incomplete, or misleading</li>
@@ -412,7 +419,7 @@ export const TermsOfService: React.FC = () => {
               <div className="bg-muted/50 rounded-lg p-4">
                 <p className="text-foreground font-semibold mb-2">SolomindLM</p>
                 <p className="text-muted-foreground">
-                  Email: legal@solomindlm.com
+                  Email: support@solomindlm.com
                 </p>
                 <p className="text-sm text-muted-foreground mt-2">
                   We will respond to your inquiry within 30 days.
@@ -433,5 +440,6 @@ export const TermsOfService: React.FC = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };

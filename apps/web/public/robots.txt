@@ -1,0 +1,20 @@
+# robots.txt for SolomindLM
+# https://www.robotstxt.org/robotstxt.html
+
+User-agent: *
+Allow: /
+
+# Disallow authenticated/protected routes
+Disallow: /home
+Disallow: /billing
+Disallow: /notebook/
+Disallow: /auth/
+
+# Disallow API endpoints (if any)
+Disallow: /api/
+
+# Crawl-delay (optional, helps prevent server overload)
+Crawl-delay: 1
+
+# Sitemap reference (update with your actual domain)
+Sitemap: https://solomindlm.com/sitemap.xml

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
+import { SEOMeta, generateFAQStructuredData } from '@/shared/seo/SEOMeta';
 
 interface FAQItem {
   question: string;
@@ -46,7 +47,14 @@ export const FAQSection: React.FC = () => {
   };
 
   return (
-    <section id="faq" className="py-20 px-6 bg-background">
+    <>
+      <SEOMeta
+        title="Frequently Asked Questions - SolomindLM"
+        description="Find answers to common questions about SolomindLM's AI-powered study materials, including pricing, features, data privacy, and export options."
+        canonical="/#faq"
+        structuredData={generateFAQStructuredData(faqs)}
+      />
+      <section id="faq" className="py-20 px-6 bg-background">
       <div className="max-w-3xl mx-auto">
         {/* Section Header */}
         <div className="text-center mb-12">
@@ -113,5 +121,6 @@ export const FAQSection: React.FC = () => {
         </div>
       </div>
     </section>
+    </>
   );
 };

@@ -1,12 +1,19 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shield, Eye, Database, Lock, Cookie, Trash2 } from 'lucide-react';
+import { SEOMeta } from '@/shared/seo/SEOMeta';
 
 export const PrivacyPolicy: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
+      <SEOMeta
+        title="Privacy Policy - SolomindLM"
+        description="Learn how SolomindLM protects your data and privacy. We're GDPR compliant, encrypt your content, and never sell your data to third parties."
+        canonical="/privacy"
+      />
+      <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b border-border bg-card">
         <div className="max-w-4xl mx-auto px-4 py-6">
@@ -180,7 +187,7 @@ export const PrivacyPolicy: React.FC = () => {
               </div>
 
               <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-                <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                <p className="text-sm text-foreground">
                   <strong>Important:</strong> Your content is sent to and processed by these AI services to provide our features.
                   Please review their privacy policies to understand how they handle your data.
                 </p>
@@ -351,5 +358,6 @@ export const PrivacyPolicy: React.FC = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
