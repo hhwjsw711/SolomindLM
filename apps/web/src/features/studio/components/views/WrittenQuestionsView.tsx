@@ -5,6 +5,7 @@ import {
   Award,
   AlertCircle,
   Eye,
+  ArrowLeft,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -16,9 +17,10 @@ import { writtenQuestionsApi } from '@/features/studio/services/writtenQuestions
 export interface WrittenQuestionsViewProps {
   note: WrittenQuestionsNote;
   onNoteUpdate?: (note: WrittenQuestionsNote) => void;
+  onBack?: () => void;
 }
 
-export const WrittenQuestionsView: React.FC<WrittenQuestionsViewProps> = ({ note, onNoteUpdate }) => {
+export const WrittenQuestionsView: React.FC<WrittenQuestionsViewProps> = ({ note, onNoteUpdate, onBack }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<Record<string, WrittenQuestionAnswer>>(note.userAnswers || {});
   const [showResults, setShowResults] = useState(false);
@@ -222,6 +224,19 @@ export const WrittenQuestionsView: React.FC<WrittenQuestionsViewProps> = ({ note
 
   return (
     <div className="flex flex-col h-full bg-background animate-in fade-in slide-in-from-right-4 duration-300 relative">
+      {/* Mobile Back Button */}
+      {onBack && (
+        <div className="md:hidden flex items-center gap-2 p-4 border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-20">
+          <button
+            onClick={onBack}
+            className="p-1.5 hover:bg-secondary rounded-md transition-colors text-foreground flex items-center justify-center shrink-0"
+            aria-label="Back to Studio"
+          >
+            <ArrowLeft className="w-5 h-5 shrink-0" />
+          </button>
+          <span className="text-sm font-semibold text-foreground truncate">{note.title}</span>
+        </div>
+      )}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-3xl mx-auto w-full p-8 md:p-12 min-h-full flex flex-col">
           {/* Review Mode Banner */}

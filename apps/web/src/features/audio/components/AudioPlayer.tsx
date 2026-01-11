@@ -1,13 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Pause, Download, RotateCcw, RotateCw } from 'lucide-react';
+import { Play, Pause, Download, RotateCcw, RotateCw, ArrowLeft } from 'lucide-react';
 
 interface AudioPlayerProps {
   audioUrl: string;
   transcript?: string;
   title?: string;
+  onBack?: () => void;
 }
 
-export const AudioPlayer: React.FC<AudioPlayerProps> = ({ audioUrl, transcript, title }) => {
+export const AudioPlayer: React.FC<AudioPlayerProps> = ({ audioUrl, transcript, title, onBack }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [playbackRate, setPlaybackRate] = useState(1);
@@ -93,13 +94,27 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({ audioUrl, transcript, 
   };
 
   return (
-    <div className="h-full flex flex-col bg-card border border-border rounded-xl p-4 space-y-4">
-      {/* Hidden audio element */}
-      <audio ref={audioRef} src={audioUrl} />
+    <div className="h-full flex flex-col relative">
+      {/* Mobile Back Button */}
+      {onBack && (
+        <div className="md:hidden flex items-center gap-2 p-4 border-b border-border bg-background/80 backdrop-blur-sm z-20 mb-4">
+          <button
+            onClick={onBack}
+            className="p-1.5 hover:bg-secondary rounded-md transition-colors text-foreground flex items-center justify-center shrink-0"
+            aria-label="Back to Studio"
+          >
+            <ArrowLeft className="w-5 h-5 shrink-0" />
+          </button>
+          <span className="text-sm font-semibold text-foreground truncate">{title || 'Audio Overview'}</span>
+        </div>
+      )}
+      <div className="flex-1 flex flex-col bg-card border border-border rounded-xl p-4 space-y-4">
+        {/* Hidden audio element */}
+        <audio ref={audioRef} src={audioUrl} />
 
-      {/* Header */}
-      <div className="flex items-center justify-between shrink-0">
-        <h3 className="font-bold text-foreground">{title || 'Audio Overview'}</h3>
+        {/* Header */}
+        <div className="flex items-center justify-between shrink-0">
+          <h3 className="font-bold text-foreground">{title || 'Audio Overview'}</h3>
         <div className="flex gap-2">
           <a
             href={audioUrl}
@@ -172,6 +187,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({ audioUrl, transcript, 
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };

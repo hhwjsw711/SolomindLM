@@ -3,14 +3,15 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
-import { XCircle, Loader2 } from 'lucide-react';
+import { XCircle, Loader2, ArrowLeft } from 'lucide-react';
 import { ReportNote } from '@/shared/types/index';
 
 export interface ReportViewProps {
   note: ReportNote;
+  onBack?: () => void;
 }
 
-export const ReportView: React.FC<ReportViewProps> = ({ note }) => {
+export const ReportView: React.FC<ReportViewProps> = ({ note, onBack }) => {
   const isFailed = note.status === 'failed';
   const isCompleted = note.status === 'completed';
   const isGenerating = note.status === 'generating' ||
@@ -20,6 +21,19 @@ export const ReportView: React.FC<ReportViewProps> = ({ note }) => {
 
   return (
       <div className="flex flex-col h-full bg-background animate-in fade-in slide-in-from-right-4 duration-300">
+           {/* Mobile Back Button */}
+           {onBack && (
+             <div className="md:hidden flex items-center gap-2 p-4 border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-20">
+               <button
+                 onClick={onBack}
+                 className="p-1.5 hover:bg-secondary rounded-md transition-colors text-foreground flex items-center justify-center shrink-0"
+                 aria-label="Back to Studio"
+               >
+                 <ArrowLeft className="w-5 h-5 shrink-0" />
+               </button>
+               <span className="text-sm font-semibold text-foreground truncate">{note.title}</span>
+             </div>
+           )}
            {/* Error State */}
            {isFailed && (
              <div className="p-4 border-b border-border bg-destructive/10">

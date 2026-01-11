@@ -7,6 +7,7 @@ import {
   XCircle,
   Info,
   Eye,
+  ArrowLeft,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -18,9 +19,10 @@ import { quizzesApi } from '@/features/studio/services/quizzesApi';
 export interface QuizViewProps {
   note: QuizNote;
   onNoteUpdate?: (note: QuizNote) => void;
+  onBack?: () => void;
 }
 
-export const QuizView: React.FC<QuizViewProps> = ({ note, onNoteUpdate }) => {
+export const QuizView: React.FC<QuizViewProps> = ({ note, onNoteUpdate, onBack }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [userAnswers, setUserAnswers] = useState<Record<number, number>>(note.userAnswers || {});
     const [showResults, setShowResults] = useState(false);
@@ -51,8 +53,11 @@ export const QuizView: React.FC<QuizViewProps> = ({ note, onNoteUpdate }) => {
         // Submit to server in the background
         try {
             await quizzesApi.submitAnswer(note.id, currentIndex, index);
-            // Optionally refresh the note to get updated data
-            // We can do this silently or wait for next sync
+            // Fetch updated note to sync with server state
+            const updatedNote = await quizzesApi.getQuiz(note.id);
+            if (onNoteUpdate) {
+                onNoteUpdate(updatedNote);
+            }
         } catch (error) {
             console.error('Failed to submit answer:', error);
             // Revert the local state on error
@@ -169,6 +174,19 @@ export const QuizView: React.FC<QuizViewProps> = ({ note, onNoteUpdate }) => {
 
     return (
         <div className="flex flex-col h-full bg-background animate-in fade-in slide-in-from-right-4 duration-300 relative">
+            {/* Mobile Back Button */}
+            {onBack && (
+                <div className="md:hidden flex items-center gap-2 p-4 border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-20">
+                    <button
+                        onClick={onBack}
+                        className="p-1.5 hover:bg-secondary rounded-md transition-colors text-foreground flex items-center justify-center shrink-0"
+                        aria-label="Back to Studio"
+                    >
+                        <ArrowLeft className="w-5 h-5 shrink-0" />
+                    </button>
+                    <span className="text-sm font-semibold text-foreground truncate">{note.title}</span>
+                </div>
+            )}
             <div className="flex-1 overflow-y-auto">
                 <div className="max-w-2xl mx-auto w-full p-8 md:p-12 min-h-full flex flex-col">
                     {/* Review Mode Banner */}
@@ -224,11 +242,13 @@ export const QuizView: React.FC<QuizViewProps> = ({ note, onNoteUpdate }) => {
                     <div className="space-y-4 flex-1 pb-10">
                         {currentQuestion.options.map((option, idx) => {
                             let stateStyles = "border-border hover:bg-secondary/50 hover:border-primary/50";
+                            const isCorrect = idx === currentQuestion.answer;
+                            const isIncorrectSelection = idx === selectedOption && idx !== currentQuestion.answer;
 
-                            if (isAnswered || reviewMode) {
-                                if (idx === currentQuestion.answer) {
+                            if (reviewMode || isAnswered) {
+                                if (isCorrect) {
                                     stateStyles = "bg-vintage-green-50 dark:bg-vintage-green-50 border-vintage-green-600 dark:border-vintage-green-200 text-vintage-green-700 dark:text-vintage-green-700";
-                                } else if (idx === selectedOption) {
+                                } else if (isIncorrectSelection) {
                                     stateStyles = "bg-vintage-red-50 dark:bg-vintage-red-50 border-vintage-red-600 dark:border-vintage-red-200 text-vintage-red-700 dark:text-vintage-red-700";
                                 } else {
                                     stateStyles = "opacity-50 border-border";

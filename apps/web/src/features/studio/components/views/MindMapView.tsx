@@ -6,6 +6,7 @@ import {
   ZoomOut,
   Maximize2,
   Minimize2,
+  ArrowLeft,
 } from 'lucide-react';
 import { MindMapNote } from '@/shared/types/index';
 
@@ -13,9 +14,10 @@ export interface MindMapViewProps {
   note: MindMapNote;
   isExpanded?: boolean;
   onToggleExpanded?: () => void;
+  onBack?: () => void;
 }
 
-export const MindMapView: React.FC<MindMapViewProps> = ({ note, isExpanded = false, onToggleExpanded }) => {
+export const MindMapView: React.FC<MindMapViewProps> = ({ note, isExpanded = false, onToggleExpanded, onBack }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mindRef = useRef<any>(null);
   const [renderKey, setRenderKey] = useState(0);
@@ -274,6 +276,16 @@ export const MindMapView: React.FC<MindMapViewProps> = ({ note, isExpanded = fal
       {/* Custom Control Bar */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card/30">
         <div className="flex items-center gap-2">
+          {/* Mobile Back Button */}
+          {onBack && !isExpanded && (
+            <button
+              onClick={onBack}
+              className="md:hidden p-1.5 hover:bg-secondary rounded-md transition-colors text-foreground flex items-center justify-center shrink-0"
+              aria-label="Back to Studio"
+            >
+              <ArrowLeft className="w-5 h-5 shrink-0" />
+            </button>
+          )}
           {isExpanded && (
             <h2 className="text-sm font-bold text-foreground mr-4">
               {note.title}

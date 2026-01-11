@@ -314,14 +314,15 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
       <div className={`flex-1 overflow-y-auto w-full relative ${miniPlayerVisible ? 'overflow-hidden' : ''}`}>
         {activeNote ? (
             <div className="h-full p-4">
-                {isReportNote(activeNote) && <ReportView note={activeNote} />}
-                {isFlashcardNote(activeNote) && <FlashcardView note={activeNote} />}
-                {isQuizNote(activeNote) && <QuizView note={activeNote} onNoteUpdate={(updatedNote) => onUpdateNoteFull?.(activeNote.id, updatedNote)} />}
+                {isReportNote(activeNote) && <ReportView note={activeNote} onBack={isMobile ? () => setActiveNoteId(null) : undefined} />}
+                {isFlashcardNote(activeNote) && <FlashcardView note={activeNote} onBack={isMobile ? () => setActiveNoteId(null) : undefined} />}
+                {isQuizNote(activeNote) && <QuizView note={activeNote} onNoteUpdate={(updatedNote) => onUpdateNoteFull?.(activeNote.id, updatedNote)} onBack={isMobile ? () => setActiveNoteId(null) : undefined} />}
                 {isMindMapNote(activeNote) && (
                   <MindMapView
                     note={activeNote}
                     isExpanded={isMindMapExpanded}
                     onToggleExpanded={() => setIsMindMapExpanded(!isMindMapExpanded)}
+                    onBack={isMobile ? () => setActiveNoteId(null) : undefined}
                   />
                 )}
                 {isAudioNote(activeNote) && activeNote.status === 'completed' && activeNote.metadata.audioUrl && (
@@ -329,6 +330,7 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
                     audioUrl={activeNote.metadata.audioUrl}
                     transcript={activeNote.content}
                     title={activeNote.title}
+                    onBack={isMobile ? () => setActiveNoteId(null) : undefined}
                   />
                 )}
                 {isAudioNote(activeNote) && activeNote.status === 'failed' && (
@@ -342,7 +344,7 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
                     </div>
                   </div>
                 )}
-                {isWrittenQuestionsNote(activeNote) && <WrittenQuestionsView note={activeNote} onNoteUpdate={(updatedNote) => onUpdateNoteFull?.(activeNote.id, updatedNote)} />}
+                {isWrittenQuestionsNote(activeNote) && <WrittenQuestionsView note={activeNote} onNoteUpdate={(updatedNote) => onUpdateNoteFull?.(activeNote.id, updatedNote)} onBack={isMobile ? () => setActiveNoteId(null) : undefined} />}
             </div>
         ) : (
             <div className="p-4 space-y-8">

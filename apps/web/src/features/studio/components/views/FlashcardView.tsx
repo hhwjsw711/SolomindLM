@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, RotateCw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Sparkles, RotateCw, ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
@@ -8,9 +8,10 @@ import { FlashcardNote } from '@/shared/types/index';
 
 export interface FlashcardViewProps {
   note: FlashcardNote;
+  onBack?: () => void;
 }
 
-export const FlashcardView: React.FC<FlashcardViewProps> = ({ note }) => {
+export const FlashcardView: React.FC<FlashcardViewProps> = ({ note, onBack }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isFlipped, setIsFlipped] = useState(false);
     const cards = note.flashcards;
@@ -37,7 +38,20 @@ export const FlashcardView: React.FC<FlashcardViewProps> = ({ note }) => {
     const currentCard = cards[currentIndex];
 
     return (
-        <div className="flex flex-col h-full items-center justify-center p-4 sm:p-6 bg-secondary/10 animate-in fade-in slide-in-from-right-4 duration-300 gap-4 sm:gap-6 overflow-y-auto">
+        <div className={`flex flex-col h-full items-center justify-center p-4 sm:p-6 bg-secondary/10 animate-in fade-in slide-in-from-right-4 duration-300 gap-4 sm:gap-6 overflow-y-auto relative ${onBack ? 'md:pt-0 pt-16' : ''}`}>
+            {/* Mobile Back Button */}
+            {onBack && (
+                <div className="md:hidden absolute top-0 left-0 right-0 flex items-center gap-2 p-4 border-b border-border bg-background/80 backdrop-blur-sm z-20">
+                    <button
+                        onClick={onBack}
+                        className="p-1.5 hover:bg-secondary rounded-md transition-colors text-foreground flex items-center justify-center shrink-0"
+                        aria-label="Back to Studio"
+                    >
+                        <ArrowLeft className="w-5 h-5 shrink-0" />
+                    </button>
+                    <span className="text-sm font-semibold text-foreground truncate">{note.title}</span>
+                </div>
+            )}
             <div className="w-full max-w-lg min-h-0 shrink-0 perspective-1000 group cursor-pointer" style={{ aspectRatio: '3 / 2' }} onClick={() => setIsFlipped(!isFlipped)}>
                 <div className={`relative w-full h-full transition-transform duration-500 transform-style-3d shadow-xl rounded-xl border border-border ${isFlipped ? 'rotate-y-180' : ''}`}>
 
