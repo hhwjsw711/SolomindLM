@@ -3,7 +3,7 @@
 export interface Source {
   id: string;
   title: string;
-  type: 'PDF' | 'TXT' | 'WEB';
+  type: 'PDF' | 'TXT' | 'WEB' | 'DOCX' | 'PPTX' | 'IMG' | 'DOC' | 'PPT' | 'XLSX' | 'XLS' | 'MD' | 'JSON' | 'CSV';
   date: string;
   selected: boolean;
   content?: string;

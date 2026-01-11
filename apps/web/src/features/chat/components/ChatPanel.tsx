@@ -499,20 +499,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
               }}
             >
               <div className="bg-popover border border-border rounded-2xl shadow-xl p-5 w-96 max-h-64 overflow-y-auto text-sm animate-in fade-in zoom-in-95 duration-200 flex flex-col relative">
-                <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    closeTooltip();
-                  }}
-                  className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center rounded-full bg-muted hover:bg-muted/80 active:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors touch-manipulation z-10"
-                  aria-label="Close tooltip"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-                <p className="text-[10px] uppercase tracking-widest font-mono text-muted-foreground mb-3 font-bold shrink-0 pr-8">
+                <p className="text-[10px] uppercase tracking-widest font-mono text-muted-foreground mb-3 font-bold shrink-0">
                   Reference {hoveredRefId} • {ref.sourceTitle}
                 </p>
                 <p className="text-popover-foreground whitespace-pre-wrap text-sm leading-relaxed">

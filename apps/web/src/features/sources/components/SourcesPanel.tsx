@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   Plus, Search, FileText, Globe, CheckSquare, Square, ChevronLeft,
-  X, Upload, Link as LinkIcon, Youtube, Clipboard, HardDrive, LayoutGrid, File,
+  X, Upload, Link as LinkIcon, Youtube, Clipboard, File,
   FileStack, Loader2, XCircle, MoreVertical, Edit2, Trash2
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
@@ -65,6 +65,7 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const { confirm, ConfirmDialogComponent } = useConfirmDialog();
   const [isMobile, setIsMobile] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -74,6 +75,13 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Reset dragging state when modal closes
+  useEffect(() => {
+    if (!isModalOpen) {
+      setIsDragging(false);
+    }
+  }, [isModalOpen]);
 
   const viewingSource = useMemo(() =>
     sources.find(s => s.id === viewingSourceId),
@@ -124,9 +132,8 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
   const allSelected = sources.length > 0 && sources.every(s => s.selected);
   const selectedCount = sources.filter(s => s.selected).length;
 
-  // File upload handler
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
+  // Process files (used by both file input and drag & drop)
+  const processFiles = async (files: File[]) => {
     if (files.length === 0) return;
 
     if (!userId || !noteId) {
@@ -152,6 +159,66 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
     }
   };
 
+  // File upload handler
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    await processFiles(files);
+  };
+
+  // Drag and drop handlers
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (userId && noteId && sources.length < MAX_SOURCES) {
+      setIsDragging(true);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only set dragging to false if we're leaving the drop zone itself
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsDragging(false);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    if (!userId || !noteId || sources.length >= MAX_SOURCES) {
+      return;
+    }
+
+    const files = Array.from(e.dataTransfer.files).filter(file => {
+      const extension = '.' + file.name.split('.').pop()?.toLowerCase();
+      const acceptedTypes = ['.pdf', '.docx', '.pptx', '.txt', '.md', '.json', '.csv', '.png', '.jpg', '.jpeg', '.avif'];
+      return acceptedTypes.includes(extension);
+    });
+
+    if (files.length === 0) {
+      alert('No supported files found. Supported types: PDF, Word, PowerPoint, Text, Markdown, JSON, CSV, PNG, JPEG, AVIF');
+      return;
+    }
+
+    await processFiles(files);
+  };
+
+  // Helper function to parse multiple URLs from input
+  const parseUrls = (input: string): string[] => {
+    return input
+      .split(/\s+/)
+      .map(url => url.trim())
+      .filter(url => url.length > 0 && (url.startsWith('http://') || url.startsWith('https://')));
+  };
+
   // URL upload handler
   const handleUrlUpload = async () => {
     if (!urlInput) return;
@@ -161,13 +228,37 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
       return;
     }
 
+    const urls = parseUrls(urlInput);
+    if (urls.length === 0) {
+      alert('Please enter at least one valid URL (starting with http:// or https://).');
+      return;
+    }
+
     setIsUploading(true);
     try {
-      const response = await documentsApi.uploadUrl(userId, noteId, urlInput, 'url');
-      onDocumentUploaded?.(response.documentId);
-      setShowUrlInput(false);
-      setUrlInput('');
-      setIsModalOpen(false);
+      const errors: string[] = [];
+      for (const url of urls) {
+        try {
+          const response = await documentsApi.uploadUrl(userId, noteId, url, 'url');
+          onDocumentUploaded?.(response.documentId);
+        } catch (err) {
+          const errorMsg = err instanceof Error ? err.message : 'Upload failed';
+          errors.push(`${url}: ${errorMsg}`);
+          console.error(`URL upload failed for ${url}:`, err);
+        }
+      }
+      
+      if (errors.length > 0 && errors.length === urls.length) {
+        alert(`Failed to upload all URLs:\n${errors.join('\n')}`);
+      } else if (errors.length > 0) {
+        alert(`Some URLs failed to upload:\n${errors.join('\n')}`);
+      }
+      
+      if (errors.length < urls.length) {
+        setShowUrlInput(false);
+        setUrlInput('');
+        setIsModalOpen(false);
+      }
     } catch (err) {
       console.error('URL upload failed:', err);
       alert(err instanceof Error ? err.message : 'Upload failed');
@@ -185,13 +276,37 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
       return;
     }
 
+    const urls = parseUrls(urlInput);
+    if (urls.length === 0) {
+      alert('Please enter at least one valid URL (starting with http:// or https://).');
+      return;
+    }
+
     setIsUploading(true);
     try {
-      const response = await documentsApi.uploadUrl(userId, noteId, urlInput, 'youtube');
-      onDocumentUploaded?.(response.documentId);
-      setShowSocialMediaInput(false);
-      setUrlInput('');
-      setIsModalOpen(false);
+      const errors: string[] = [];
+      for (const url of urls) {
+        try {
+          const response = await documentsApi.uploadUrl(userId, noteId, url, 'youtube');
+          onDocumentUploaded?.(response.documentId);
+        } catch (err) {
+          const errorMsg = err instanceof Error ? err.message : 'Upload failed';
+          errors.push(`${url}: ${errorMsg}`);
+          console.error(`Social media upload failed for ${url}:`, err);
+        }
+      }
+      
+      if (errors.length > 0 && errors.length === urls.length) {
+        alert(`Failed to upload all URLs:\n${errors.join('\n')}`);
+      } else if (errors.length > 0) {
+        alert(`Some URLs failed to upload:\n${errors.join('\n')}`);
+      }
+      
+      if (errors.length < urls.length) {
+        setShowSocialMediaInput(false);
+        setUrlInput('');
+        setIsModalOpen(false);
+      }
     } catch (err) {
       console.error('Social media upload failed:', err);
       alert(err instanceof Error ? err.message : 'Upload failed');
@@ -466,7 +581,7 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
                           <div className="text-muted-foreground shrink-0 flex items-center justify-center">
                             {source.type === 'WEB' ? (
                               <Globe className="w-5 h-5" />
-                            ) : source.type === 'PDF' ? (
+                            ) : source.type === 'IMG' ? (
                               <File className="w-5 h-5" />
                             ) : (
                               <FileText className="w-5 h-5" />
@@ -628,8 +743,16 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
                   {/* Upload Area */}
                   <div
                     onClick={() => userId && noteId && sources.length < MAX_SOURCES && fileInputRef.current?.click()}
-                    className={`border-2 border-dashed border-border rounded-xl p-12 flex flex-col items-center justify-center gap-4 bg-secondary/5 transition-colors group ${
-                      !userId || !noteId || sources.length >= MAX_SOURCES ? 'opacity-50 cursor-not-allowed' : 'hover:bg-secondary/10 cursor-pointer'
+                    onDragEnter={handleDragEnter}
+                    onDragLeave={handleDragLeave}
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                    className={`border-2 border-dashed rounded-xl p-12 flex flex-col items-center justify-center gap-4 transition-all group ${
+                      !userId || !noteId || sources.length >= MAX_SOURCES 
+                        ? 'opacity-50 cursor-not-allowed border-border bg-secondary/5' 
+                        : isDragging
+                        ? 'border-primary bg-primary/10 cursor-pointer scale-[1.02]'
+                        : 'border-border bg-secondary/5 hover:bg-secondary/10 cursor-pointer'
                     }`}
                   >
                       <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shrink-0">
@@ -645,27 +768,8 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
                   </div>
 
                   {/* Grid Options */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {/* Column 1 */}
-                      <div className="border border-border/50 rounded-xl p-5 space-y-4 bg-card shadow-sm hover:shadow-md transition-shadow">
-                          <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-                              <LayoutGrid className="w-4 h-4" />
-                              Google Workspace
-                          </div>
-                          <div className="space-y-2">
-                              <button
-                                disabled={!userId || !noteId || sources.length >= MAX_SOURCES}
-                                className="w-full flex items-center gap-3 p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 border border-transparent hover:border-border transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
-                              >
-                                  <div className="w-8 h-8 rounded-full bg-background flex items-center justify-center border border-border shadow-sm group-hover:scale-105 transition-transform shrink-0">
-                                      <HardDrive className="w-4 h-4 text-chart-2" />
-                                  </div>
-                                  <span className="text-sm font-medium">Google Drive</span>
-                              </button>
-                          </div>
-                      </div>
-
-                      {/* Column 2 */}
                       <div className="border border-border/50 rounded-xl p-5 space-y-4 bg-card shadow-sm hover:shadow-md transition-shadow">
                           <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
                               <LinkIcon className="w-4 h-4" />
@@ -777,12 +881,14 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
               </button>
             </div>
             <div className="p-6 space-y-4">
-              <input
-                type="url"
+              <textarea
                 value={urlInput}
                 onChange={(e) => setUrlInput(e.target.value)}
-                placeholder="https://example.com"
-                className="w-full px-4 py-3 bg-background border-2 border-border rounded-xl font-serif focus:border-primary focus:outline-none transition-colors"
+                placeholder="https://example.com
+https://another-example.com
+
+Separate multiple URLs with spaces or new lines"
+                className="w-full h-32 px-4 py-3 bg-background border-2 border-border rounded-xl font-serif focus:border-primary focus:outline-none transition-colors resize-none"
                 disabled={isUploading}
                 autoFocus
               />
@@ -805,7 +911,7 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
                       Adding...
                     </>
                   ) : (
-                    'Add Source'
+                    'Add Sources'
                   )}
                 </button>
               </div>
@@ -832,14 +938,15 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
             </div>
             <div className="p-6 space-y-4">
               <p className="text-sm text-muted-foreground">
-                Paste a video URL to extract its transcript. Supports YouTube, TikTok, Instagram, and X (Twitter).
+                Paste video URLs to extract their transcripts. Supports YouTube, TikTok, Instagram, and X (Twitter). Separate multiple URLs with spaces or new lines.
               </p>
-              <input
-                type="url"
+              <textarea
                 value={urlInput}
                 onChange={(e) => setUrlInput(e.target.value)}
-                placeholder="Paste URL from YouTube, TikTok, Instagram, or X..."
-                className="w-full px-4 py-3 bg-background border-2 border-border rounded-xl font-serif focus:border-primary focus:outline-none transition-colors"
+                placeholder="Paste URL from YouTube, TikTok, Instagram, or X...
+
+Separate multiple URLs with spaces or new lines"
+                className="w-full h-32 px-4 py-3 bg-background border-2 border-border rounded-xl font-serif focus:border-primary focus:outline-none transition-colors resize-none"
                 disabled={isUploading}
                 autoFocus
               />
@@ -862,7 +969,7 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
                       Adding...
                     </>
                   ) : (
-                    'Add Source'
+                    'Add Sources'
                   )}
                 </button>
               </div>

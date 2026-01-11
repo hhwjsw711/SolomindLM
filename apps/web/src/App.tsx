@@ -37,7 +37,7 @@ const MAX_PANEL_WIDTH = 900;
 // Transform Document API type to Source UI type
 function documentToSource(doc: Document): Source {
   // Extract file extension and determine type
-  let type: 'PDF' | 'TXT' | 'WEB' = 'PDF';
+  let type: Source['type'] = 'PDF';
   
   if (doc.file_type === 'youtube') {
     type = 'WEB';
@@ -46,10 +46,55 @@ function documentToSource(doc: Document): Source {
   } else if (doc.file_type === 'file') {
     // Extract extension from file_name
     const ext = doc.file_name.split('.').pop()?.toLowerCase() || '';
-    if (ext === 'txt' || ext === 'md' || ext === 'json' || ext === 'csv') {
-      type = 'TXT';
-    } else {
-      type = 'PDF';
+    
+    // Map extensions to types
+    switch (ext) {
+      case 'pdf':
+        type = 'PDF';
+        break;
+      case 'docx':
+        type = 'DOCX';
+        break;
+      case 'doc':
+        type = 'DOC';
+        break;
+      case 'pptx':
+        type = 'PPTX';
+        break;
+      case 'ppt':
+        type = 'PPT';
+        break;
+      case 'xlsx':
+        type = 'XLSX';
+        break;
+      case 'xls':
+        type = 'XLS';
+        break;
+      case 'txt':
+        type = 'TXT';
+        break;
+      case 'md':
+      case 'markdown':
+        type = 'MD';
+        break;
+      case 'json':
+        type = 'JSON';
+        break;
+      case 'csv':
+        type = 'CSV';
+        break;
+      case 'png':
+      case 'jpg':
+      case 'jpeg':
+      case 'gif':
+      case 'webp':
+      case 'bmp':
+      case 'svg':
+      case 'avif':
+        type = 'IMG';
+        break;
+      default:
+        type = 'PDF'; // Default fallback
     }
   }
   

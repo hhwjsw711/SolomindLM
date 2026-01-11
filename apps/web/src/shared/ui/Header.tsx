@@ -65,7 +65,7 @@ export const Header: React.FC<HeaderProps> = ({ title, onRename, isHome, onLogoC
   };
 
   return (
-    <header className="h-14 flex items-center justify-between px-4 border-b-2 border-border bg-background relative z-50 transition-all duration-300">
+    <header className="h-14 flex items-center justify-between px-4 border-b-2 border-border bg-background relative z-[70] transition-all duration-300">
       
       {/* Hidden span for measuring text width */}
       <span ref={spanRef} className="absolute opacity-0 pointer-events-none text-lg font-sans font-bold whitespace-pre">

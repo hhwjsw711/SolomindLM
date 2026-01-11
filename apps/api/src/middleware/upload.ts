@@ -20,6 +20,7 @@ const ALLOWED_MIME_TYPES = [
   'application/vnd.oasis.opendocument.text',
   'application/vnd.oasis.opendocument.presentation',
   'application/vnd.oasis.opendocument.spreadsheet',
+  'application/json',
 
   // Images
   'image/png',
@@ -28,6 +29,7 @@ const ALLOWED_MIME_TYPES = [
   'image/webp',
   'image/bmp',
   'image/svg+xml',
+  'image/avif',
 
   // Markdown
   'text/markdown',
@@ -46,11 +48,73 @@ const MAX_FILE_SIZES = {
   'image/jpeg': 10 * 1024 * 1024,
   'image/gif': 10 * 1024 * 1024,
   'image/webp': 10 * 1024 * 1024,
+  'image/bmp': 10 * 1024 * 1024,
+  'image/avif': 10 * 1024 * 1024,
   'text/plain': 1 * 1024 * 1024, // 1MB
   'text/markdown': 1 * 1024 * 1024,
+  'application/json': 1 * 1024 * 1024, // 1MB
 };
 
 const DEFAULT_MAX_SIZE = 10 * 1024 * 1024; // 10MB default
+
+/**
+ * Extension to MIME type mapping
+ * Used when browser reports application/octet-stream
+ */
+const extToMime: Record<string, string> = {
+  'pdf': 'application/pdf',
+  'doc': 'application/msword',
+  'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'ppt': 'application/vnd.ms-powerpoint',
+  'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'xls': 'application/vnd.ms-excel',
+  'png': 'image/png',
+  'jpg': 'image/jpeg',
+  'jpeg': 'image/jpeg',
+  'gif': 'image/gif',
+  'webp': 'image/webp',
+  'bmp': 'image/bmp',
+  'svg': 'image/svg+xml',
+  'txt': 'text/plain',
+  'csv': 'text/csv',
+  'md': 'text/markdown',
+  'markdown': 'text/markdown',
+  'rtf': 'application/rtf',
+  'odt': 'application/vnd.oasis.opendocument.text',
+  'odp': 'application/vnd.oasis.opendocument.presentation',
+  'ods': 'application/vnd.oasis.opendocument.spreadsheet',
+  'json': 'application/json',
+  'avif': 'image/avif',
+};
+
+/**
+ * MIME type to allowed extensions mapping
+ */
+const mimeToExt: Record<string, string[]> = {
+  'application/pdf': ['pdf'],
+  'application/msword': ['doc'],
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['docx'],
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation': ['pptx'],
+  'application/vnd.ms-powerpoint': ['ppt'],
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['xlsx'],
+  'application/vnd.ms-excel': ['xls'],
+  'image/png': ['png'],
+  'image/jpeg': ['jpg', 'jpeg'],
+  'image/gif': ['gif'],
+  'image/webp': ['webp'],
+  'image/bmp': ['bmp'],
+  'image/svg+xml': ['svg'],
+  'image/avif': ['avif'],
+  'text/plain': ['txt'],
+  'text/csv': ['csv'],
+  'text/markdown': ['md', 'markdown'],
+  'application/rtf': ['rtf'],
+  'application/vnd.oasis.opendocument.text': ['odt'],
+  'application/vnd.oasis.opendocument.presentation': ['odp'],
+  'application/vnd.oasis.opendocument.spreadsheet': ['ods'],
+  'application/json': ['json'],
+};
 
 /**
  * File filter function to validate file types
@@ -65,35 +129,38 @@ const fileFilter = (
     return callback(new Error('File must have a valid MIME type'));
   }
 
+  // Get file extension
+  const ext = file.originalname.toLowerCase().split('.').pop() || '';
+  
+  // Handle application/octet-stream by checking file extension
+  let mimetype = file.mimetype;
+  if (mimetype === 'application/octet-stream' || mimetype === 'application/x-msdownload') {
+    const detectedMime = extToMime[ext];
+    if (!detectedMime) {
+      return callback(new Error(
+        `File type could not be determined from extension .${ext}. ` +
+        `Allowed types: ${ALLOWED_MIME_TYPES.join(', ')}`
+      ));
+    }
+    // Update the mimetype for validation
+    mimetype = detectedMime;
+    // Update the file object's mimetype so it's correct downstream
+    (file as any).mimetype = mimetype;
+  }
+
   // Check if MIME type is allowed
-  if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+  if (!ALLOWED_MIME_TYPES.includes(mimetype)) {
     return callback(new Error(
-      `File type ${file.mimetype} is not allowed. ` +
+      `File type ${mimetype} is not allowed. ` +
       `Allowed types: ${ALLOWED_MIME_TYPES.join(', ')}`
     ));
   }
 
   // Check file extension matches MIME type (basic validation)
-  const ext = file.originalname.toLowerCase().split('.').pop();
-  const mimeToExt: Record<string, string[]> = {
-    'application/pdf': ['pdf'],
-    'application/msword': ['doc'],
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['docx'],
-    'application/vnd.openxmlformats-officedocument.presentationml.presentation': ['pptx'],
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['xlsx'],
-    'image/png': ['png'],
-    'image/jpeg': ['jpg', 'jpeg'],
-    'image/gif': ['gif'],
-    'image/webp': ['webp'],
-    'image/svg+xml': ['svg'],
-    'text/plain': ['txt'],
-    'text/markdown': ['md', 'markdown'],
-  };
-
-  const allowedExtensions = mimeToExt[file.mimetype];
+  const allowedExtensions = mimeToExt[mimetype];
   if (allowedExtensions && ext && !allowedExtensions.includes(ext)) {
     return callback(new Error(
-      `File extension .${ext} does not match declared MIME type ${file.mimetype}`
+      `File extension .${ext} does not match declared MIME type ${mimetype}`
     ));
   }
 
@@ -176,14 +243,24 @@ export function getExtensionFromMimeType(mimeType: string): string {
     'application/msword': '.doc',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
     'application/vnd.openxmlformats-officedocument.presentationml.presentation': '.pptx',
+    'application/vnd.ms-powerpoint': '.ppt',
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '.xlsx',
+    'application/vnd.ms-excel': '.xls',
     'image/png': '.png',
     'image/jpeg': '.jpg',
     'image/gif': '.gif',
     'image/webp': '.webp',
+    'image/bmp': '.bmp',
+    'image/avif': '.avif',
     'image/svg+xml': '.svg',
     'text/plain': '.txt',
+    'text/csv': '.csv',
     'text/markdown': '.md',
+    'application/rtf': '.rtf',
+    'application/vnd.oasis.opendocument.text': '.odt',
+    'application/vnd.oasis.opendocument.presentation': '.odp',
+    'application/vnd.oasis.opendocument.spreadsheet': '.ods',
+    'application/json': '.json',
   };
 
   return extMap[mimeType] || '';
