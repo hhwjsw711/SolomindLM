@@ -357,12 +357,25 @@ router.post('/refresh', async (req, res) => {
  */
 router.get('/google', async (req, res) => {
   try {
-    const redirectUrl = req.query.redirect as string || `${req.protocol}://${req.get('host')}/auth/callback`;
+    // Get the frontend URL to redirect to after authentication
+    const frontendRedirectUrl = req.query.redirect as string || `${req.protocol}://${req.get('host')}/auth/callback`;
+    // Store the frontend redirect URL in a cookie so we can use it after OAuth callback
+    // Use a short-lived cookie (5 minutes) that will be used in the callback
+    res.cookie('oauth_redirect', frontendRedirectUrl, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production' ? true : false,
+      sameSite: (process.env.NODE_ENV === 'production' ? 'none' : 'lax') as 'strict' | 'lax' | 'none',
+      maxAge: 5 * 60 * 1000, // 5 minutes
+      path: '/',
+    });
 
+    // Redirect to API callback endpoint (same domain) - this works better with Safari
+    const apiCallbackUrl = `${req.protocol}://${req.get('host')}/api/auth/google/callback`;
+    
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: redirectUrl,
+        redirectTo: apiCallbackUrl,
       },
     });
 
@@ -380,8 +393,96 @@ router.get('/google', async (req, res) => {
 });
 
 /**
+ * GET /api/auth/google/callback
+ * Handle Google OAuth callback (Safari-compatible redirect flow)
+ * Supabase returns tokens in URL hash, which server can't read, so we serve an HTML page
+ * that extracts the hash client-side and sets cookies via POST, then redirects to frontend.
+ */
+router.get('/google/callback', async (req, res) => {
+  try {
+    // Get the frontend redirect URL from cookie
+    const frontendRedirectUrl = req.cookies.oauth_redirect || `${req.protocol}://${req.get('host')?.replace(/^api\./, '') || 'localhost:5173'}/auth/callback`;
+
+    // Serve an HTML page that will extract tokens from hash and set cookies
+    // This works around Safari's restrictions on cross-origin POST requests
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Completing sign in...</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+  <script>
+    (function() {
+      try {
+        // Extract tokens from URL hash (Supabase returns them in hash)
+        const hash = window.location.hash.substring(1);
+        const params = new URLSearchParams(hash);
+        const accessToken = params.get('access_token');
+        const refreshToken = params.get('refresh_token');
+        const errorParam = params.get('error');
+        const errorDescription = params.get('error_description');
+
+        const frontendUrl = ${JSON.stringify(frontendRedirectUrl)};
+
+        if (errorParam) {
+          // Redirect to frontend with error
+          window.location.href = frontendUrl + '?error=' + encodeURIComponent(errorDescription || errorParam);
+          return;
+        }
+
+        if (!accessToken) {
+          // Redirect to frontend with error
+          window.location.href = frontendUrl + '?error=' + encodeURIComponent('No authorization tokens received');
+          return;
+        }
+
+        // Set cookies via POST to the same domain (this works in Safari)
+        fetch('/api/auth/google/callback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ accessToken, refreshToken }),
+          credentials: 'include',
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            window.location.href = frontendUrl + '?error=' + encodeURIComponent(data.error);
+          } else {
+            // Success - redirect to frontend, cookies are now set
+            window.location.href = frontendUrl;
+          }
+        })
+        .catch(error => {
+          console.error('Auth callback error:', error);
+          window.location.href = frontendUrl + '?error=' + encodeURIComponent('Authentication failed');
+        });
+      } catch (error) {
+        console.error('Auth callback error:', error);
+        const frontendUrl = ${JSON.stringify(frontendRedirectUrl)};
+        window.location.href = frontendUrl + '?error=' + encodeURIComponent('Authentication failed');
+      }
+    })();
+  </script>
+  <p>Completing sign in...</p>
+</body>
+</html>`;
+
+    res.send(html);
+  } catch (error) {
+    console.error('Google callback error:', error);
+    const frontendRedirectUrl = req.cookies.oauth_redirect || `${req.protocol}://${req.get('host')?.replace(/^api\./, '') || 'localhost:5173'}/auth/callback`;
+    const errorUrl = new URL(frontendRedirectUrl);
+    errorUrl.searchParams.set('error', 'Authentication failed');
+    res.redirect(errorUrl.toString());
+  }
+});
+
+/**
  * POST /api/auth/google/callback
- * Handle Google OAuth callback and verify tokens
+ * Handle Google OAuth callback (legacy POST method for non-Safari browsers)
+ * Kept for backward compatibility, but GET method above is preferred for Safari
  */
 router.post('/google/callback', async (req, res) => {
   try {

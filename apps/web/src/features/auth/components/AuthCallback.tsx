@@ -11,45 +11,44 @@ export function AuthCallback() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // Parse hash fragment for OAuth tokens
-        const hashFragment = window.location.hash.substring(1); // Remove leading #
-        const params = new URLSearchParams(hashFragment);
-
-        const accessToken = params.get('access_token');
-        const refreshToken = params.get('refresh_token');
-        const errorParam = params.get('error');
-        const errorDescription = params.get('error_description');
+        // Check for error in query parameters (from API redirect)
+        const urlParams = new URLSearchParams(window.location.search);
+        const errorParam = urlParams.get('error');
 
         if (errorParam) {
-          setError(errorDescription || errorParam);
+          setError(errorParam);
           setTimeout(() => navigate('/'), 3000);
           return;
         }
 
-        if (!accessToken) {
-          setError('No authorization tokens received');
-          setTimeout(() => navigate('/'), 3000);
-          return;
+        // Check if we have tokens in hash (legacy flow for non-Safari browsers)
+        const hashFragment = window.location.hash.substring(1);
+        const hashParams = new URLSearchParams(hashFragment);
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+
+        if (accessToken) {
+          // Legacy POST flow (for non-Safari browsers that support it)
+          const response = await fetch(`${API_BASE_URL}/api/auth/google/callback`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ accessToken, refreshToken }),
+            credentials: 'include',
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || 'Authentication failed');
+          }
         }
-
-        // Verify tokens with backend and set cookies
-        const response = await fetch(`${API_BASE_URL}/api/auth/google/callback`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ accessToken, refreshToken }),
-          credentials: 'include',
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || 'Authentication failed');
-        }
+        // If no tokens in hash, assume redirect-based flow succeeded
+        // Cookies should already be set by the API redirect
 
         // Dispatch event to notify AuthContext of login
         window.dispatchEvent(new CustomEvent('auth-change'));
 
-        // Clean up URL hash and redirect to home
+        // Clean up URL and redirect to home
         window.history.replaceState({}, '', window.location.pathname);
         navigate('/home');
       } catch (err) {
