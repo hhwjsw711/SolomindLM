@@ -8,6 +8,7 @@
 import { StateGraph, START, END, Send } from '@langchain/langgraph';
 import { ChatTogetherAI } from '@langchain/community/chat_models/togetherai';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { z } from 'zod';
 import { env } from '../../../config/env.js';
 
 // Shared utilities for production-level patterns
@@ -25,11 +26,39 @@ import {
   sanitizeUserInput,
   validateFlashcards,
   countTokens,
+  clearStateKeys,
 } from '../shared/index.js';
 
 // Import from local modules
 import { OverallState, type OverallStateType, type ChunkProcessState, type Flashcard } from './state.js';
 import { getMapPrompt, getReducePrompt, PROBLEMATIC_PHRASES, FlashcardArraySchema, type FlashcardResponse } from './prompts.js';
+
+// ============================================================
+// STRUCTURED OUTPUT SCHEMAS
+// ============================================================
+
+/**
+ * Interface for the structured LLM to avoid deep type instantiation.
+ * Follows the pattern from ReportGraph.
+ */
+interface FlashcardOutputInvoker {
+  invoke(messages: Array<SystemMessage | HumanMessage>): Promise<FlashcardResponse>;
+}
+
+/**
+ * Helper function to create a structured LLM without triggering deep type instantiation.
+ * TypeScript tries to infer the full generic chain of withStructuredOutput, which exceeds
+ * its recursion limits. We use a local any cast to break this chain while preserving
+ * type safety through the FlashcardOutputInvoker interface.
+ * Follows the pattern from ReportGraph.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function createStructuredLLM(llm: ChatTogetherAI, schema: z.ZodTypeAny): FlashcardOutputInvoker {
+  // @ts-ignore - Type instantiation is excessively deep with LangChain's withStructuredOutput
+  return llm.withStructuredOutput(schema, {
+    name: 'flashcard_array'
+  }) as any;
+}
 
 // ============================================================
 // CONFIGURATION
@@ -50,6 +79,68 @@ const FLASHCARD_CONFIG = {
 const GRAPH_CONFIG = {
   ...FLASHCARD_CONFIG,
 } as const;
+
+// ============================================================
+// TEXT CLEANING UTILITIES
+// ============================================================
+
+/**
+ * Cleans up the front text by removing formatting artifacts.
+ * Enhanced to handle escaped quotes and markdown issues.
+ */
+function cleanFrontText(front: string): string {
+  let cleaned = front.trim();
+
+  // Remove escaped quotes (\"pure\" → "pure")
+  cleaned = cleaned.replace(/\\"/g, '"');
+
+  // Remove trailing markdown formatting artifacts
+  cleaned = cleaned.replace(/\s*[*_~]{1,2}\s*$/, '');
+
+  // Remove trailing enumeration numbers
+  cleaned = cleaned.replace(/\s*\d+\.\s*$/, '');
+
+  // Remove trailing whitespace
+  cleaned = cleaned.trim();
+
+  // Fix common markdown issues
+  cleaned = cleaned.replace(/\*\*\s*\*/g, '**'); // Fix ** *
+  cleaned = cleaned.replace(/\*\s*\*/g, '**');   // Fix * *
+
+  // Remove leading bullets if present
+  cleaned = cleaned.replace(/^[\s\-•*]\*/, '');
+
+  return cleaned.trim();
+}
+
+/**
+ * Cleans up the back text by removing formatting artifacts.
+ * Enhanced to handle escaped quotes and weird punctuation.
+ */
+function cleanBackText(back: string): string {
+  let cleaned = back.trim();
+
+  // Remove escaped quotes
+  cleaned = cleaned.replace(/\\"/g, '"');
+
+  // Remove trailing enumeration numbers
+  cleaned = cleaned.replace(/\s*\d+\.\s*$/, '');
+
+  // Remove markdown artifacts at end
+  cleaned = cleaned.replace(/\s*[*_~]{1,2}\s*$/, '');
+
+  // Fix common punctuation issues (e.g., "concept."")
+  cleaned = cleaned.replace(/"\./g, '".');  // Fix ". scenarios
+  cleaned = cleaned.replace(/\.\./g, '.');  // Fix double periods
+
+  // Remove trailing punctuation that's clearly an artifact
+  cleaned = cleaned.replace(/[,;:\s]+$/, '');
+
+  // Clean up multiple spaces
+  cleaned = cleaned.replace(/\s{2,}/g, ' ');
+
+  return cleaned.trim();
+}
 
 // ============================================================
 // CHUNK HELPERS
@@ -186,10 +277,11 @@ function routeToMap(state: OverallStateType): Send[] | 'collapse' {
 
 /**
  * Node: Map phase (runs in parallel via Send)
+ * Uses structured output to generate JSON flashcards directly.
  */
 async function mapProcess(
   state: ChunkProcessState,
-  fastLlm: ChatTogetherAI
+  structuredLlm: FlashcardOutputInvoker
 ): Promise<Partial<OverallStateType>> {
   const { chunk, chunkIndex, cardCount, difficulty, topic, cardsPerChunk } = state;
   const startTime = Date.now();
@@ -225,8 +317,8 @@ async function mapProcess(
     // Timeout + Retry wrapper for resilient LLM calls
     const response = await invokeWithRetry(
       () => invokeWithTimeout(
-        () => fastLlm.invoke([
-          new SystemMessage('You are a professional educator and content analyst.'),
+        () => structuredLlm.invoke([
+          new SystemMessage('You are an expert educator. Output strictly in JSON.'),
           new HumanMessage(prompt),
         ]),
         FLASHCARD_CONFIG.MAP_TIMEOUT_MS,
@@ -248,55 +340,84 @@ async function mapProcess(
       'FlashcardMap'
     );
 
-    output = response.content.toString();
+    // Structured output returns Flashcard[] directly - no parsing needed
+    const flashcards = response.flashcards;
+    
+    // Clean flashcard text to remove formatting artifacts
+    const cleanedFlashcards = flashcards.map(card => ({
+      front: cleanFrontText(card.front),
+      back: cleanBackText(card.back),
+      topic: card.topic,
+    }));
+
+    const flashcardCount = cleanedFlashcards.length;
+    const elapsed = Date.now() - startTime;
+
+    // Structured logging complete
+    logPhaseComplete({
+      agent: 'FlashcardGraph',
+      phase: 'map_process',
+      chunkIndex,
+      questionsGenerated: flashcardCount,
+      processingTimeMs: elapsed,
+    });
+
+    // Return single output in array - reducer will concatenate all outputs
+    // NOTE: Do NOT update progress here - parallel executions cause race conditions.
+    // Progress is calculated in collapse node based on mapOutputs.length
+    return {
+      mapOutputs: [cleanedFlashcards],
+    };
   } catch (error) {
-    // Graceful fallback on permanent failure
+    // ============================================================
+    // DEBUG: Unmask the actual exception
+    // ============================================================
+    console.error('\n' + '='.repeat(80));
+    console.error('[FlashcardGraph] RAW ERROR DETAILS - Map Process Failed');
+    console.error('='.repeat(80));
+    console.error(JSON.stringify({
+      timestamp: new Date().toISOString(),
+      phase: 'map_process',
+      chunkIndex,
+      chunkLength: chunk.length,
+      errorType: typeof error,
+      errorName: error instanceof Error ? error.name : 'N/A',
+      errorMessage: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack?.split('\n').slice(0, 5).join('\n') : 'N/A',
+      fullError: error instanceof Error ? {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      } : String(error),
+    }, null, 2));
+    console.error('='.repeat(80) + '\n');
+
+    // Error handling: return empty array on permanent failure
     const errorContext = {
       agent: 'FlashcardGraph',
       phase: 'map_process',
       chunkIndex,
       chunkLength: chunk.length,
       difficulty,
-      error: error instanceof Error ? {
-        name: error.name,
-        message: error.message,
-        stack: error.stack?.split('\n').slice(0, 3).join('\n'),
-      } : String(error),
     };
 
-    logError(errorContext, 'Map process failed');
+    // Pass the actual error object to logError, not a generic string
+    const errorToLog = error instanceof Error ? error : new Error(String(error));
+    logError(errorContext, errorToLog);
 
-    output = `- Main Topics: Error processing chunk
-- Error: ${error instanceof Error ? error.message : 'Unknown error'}
-- Chunk Info: ${chunk.length} chars, difficulty: ${difficulty}
-
-[Fallback: This chunk could not be processed due to timeout or error. The flashcard generation will continue with other chunks.]`;
-  }
-
-  const questionCount = output.split('Q:').length - 1;
-  const elapsed = Date.now() - startTime;
-
-  // Structured logging complete
-  logPhaseComplete({
-    agent: 'FlashcardGraph',
-    phase: 'map_process',
-    chunkIndex,
-    outputLength: output.length,
-    questionsGenerated: questionCount,
-    processingTimeMs: elapsed,
-    outputPreview: output.substring(0, 200).replace(/\n/g, ' '),
-  });
-
-  // Return single output in array - reducer will concatenate all outputs
-  return {
-    mapOutputs: [output],
-    progress: {
+    const elapsed = Date.now() - startTime;
+    logPhaseComplete({
+      agent: 'FlashcardGraph',
       phase: 'map_process',
-      percentage: Math.min(10 + ((chunkIndex ?? 0) * 30), 60),
-      message: `Chunk ${(chunkIndex ?? 0) + 1} complete: ${questionCount} cards`,
-      chunksCompleted: (chunkIndex ?? 0) + 1,
-    },
-  };
+      chunkIndex,
+      questionsGenerated: 0,
+      processingTimeMs: elapsed,
+    });
+
+    return {
+      mapOutputs: [[]],
+    };
+  }
 }
 
 /**
@@ -305,7 +426,7 @@ async function mapProcess(
 async function collapse(
   state: OverallStateType,
   estimateTokens: (text: string) => number,
-  recursiveCollapse: (outputs: string[]) => Promise<string[]>
+  recursiveCollapse: (outputs: Flashcard[][]) => Promise<Flashcard[][]>
 ): Promise<Partial<OverallStateType>> {
   // ============================================================
   // DEBUG: Collapse Phase Analysis
@@ -318,12 +439,17 @@ async function collapse(
     timestamp: new Date().toISOString(),
     phase: 'collapse',
     mapOutputsReceived: state.mapOutputs.length,
-    mapOutputsDetails: state.mapOutputs.map((output, idx) => ({
-      index: idx,
-      length: output.length,
-      questions: output.split('Q:').length - 1,
-      preview: output.substring(0, 100).replace(/\n/g, ' '),
-    })),
+    mapOutputsDetails: state.mapOutputs.map((output, idx) => {
+      const cardCount = output.length;
+      const preview = output.length > 0 
+        ? `${output[0].front.substring(0, 50)}...` 
+        : 'empty';
+      return {
+        index: idx,
+        cards: cardCount,
+        preview,
+      };
+    }),
   }, null, 2));
 
   // Safety check: if no mapOutputs, return early
@@ -333,11 +459,34 @@ async function collapse(
       ...state,
       collapsedOutputs: [],
       status: 'reducing',
+      progress: {
+        phase: 'collapse',
+        percentage: 60,
+        message: 'No chunks to process',
+        chunksCompleted: 0,
+        totalChunks: state.progress?.totalChunks || 0,
+      },
     };
   }
 
+  // Calculate progress based on completed chunks (fixes race condition from parallel map_process)
+  // All map processes have completed by the time we reach collapse
+  const chunksCompleted = state.mapOutputs.length;
+  const totalChunks = state.progress?.totalChunks || state.chunks.length || chunksCompleted;
+  // Progress: 10% (split) + 50% (map phase, based on completion) + 20% (collapse/reduce phases)
+  const mapPhaseProgress = Math.min((chunksCompleted / Math.max(totalChunks, 1)) * 50, 50);
+  const percentage = Math.min(10 + mapPhaseProgress + 10, 70); // 10% split + map progress + 10% for collapse start
+
+  // Helper to format flashcards as text (matches collapseGroup prompt format)
+  const formatFlashcardsAsText = (flashcards: Flashcard[]): string => {
+    return flashcards
+      .map((card, index) => `${index + 1}. Q: ${card.front}\n   A: ${card.back}`)
+      .join('\n\n');
+  };
+
+  // Calculate tokens by formatting as text (matches actual prompt format)
   const totalTokens = state.mapOutputs.reduce(
-    (sum, s) => sum + estimateTokens(s),
+    (sum, flashcards) => sum + estimateTokens(formatFlashcardsAsText(flashcards)),
     0
   );
 
@@ -346,14 +495,24 @@ async function collapse(
   // Use REDUCE_CHUNK_SIZE_TOKENS for collapse phase (smart_llm has larger context)
   if (totalTokens <= FLASHCARD_CONFIG.REDUCE_CHUNK_SIZE_TOKENS) {
     console.log('[FlashcardGraph] Collapse: skipping recursive collapse, using mapOutputs directly');
+
+    // Calculate memory freed before clearing (estimate based on flashcard count)
+    const totalCards = state.mapOutputs.reduce((sum, group) => sum + group.length, 0);
+    const estimatedSize = totalCards * 200; // Rough estimate: ~200 bytes per flashcard
+    console.log(`[FlashcardGraph] Collapse: freeing ~${(estimatedSize / 1024).toFixed(2)} KB from mapOutputs`);
+
     return {
       ...state,
       collapsedOutputs: state.mapOutputs,
       status: 'reducing',
+      // Clear mapOutputs to free memory - no longer needed after collapse
+      ...clearStateKeys<OverallStateType>(['mapOutputs']),
       progress: {
         phase: 'collapse',
-        percentage: 70,
-        message: `Collected ${state.mapOutputs.length} chunk outputs`,
+        percentage,
+        message: `Collected ${chunksCompleted} chunk outputs`,
+        chunksCompleted,
+        totalChunks,
       },
     };
   }
@@ -361,14 +520,24 @@ async function collapse(
   // Recursive collapse
   console.log('[FlashcardGraph] Collapse: performing recursive collapse');
   const collapsed = await recursiveCollapse(state.mapOutputs);
+
+  // Calculate memory freed before clearing (estimate based on flashcard count)
+  const totalCards = state.mapOutputs.reduce((sum, group) => sum + group.length, 0);
+  const estimatedSize = totalCards * 200; // Rough estimate: ~200 bytes per flashcard
+  console.log(`[FlashcardGraph] Collapse: freeing ~${(estimatedSize / 1024).toFixed(2)} KB from mapOutputs`);
+
   return {
     ...state,
     collapsedOutputs: collapsed,
     status: 'reducing',
+    // Clear mapOutputs to free memory - no longer needed after collapse
+    ...clearStateKeys<OverallStateType>(['mapOutputs']),
     progress: {
       phase: 'collapse',
-      percentage: 70,
-      message: `Collapsed ${state.mapOutputs.length} outputs into ${collapsed.length}`,
+      percentage,
+      message: `Collapsed ${chunksCompleted} outputs into ${collapsed.length}`,
+      chunksCompleted,
+      totalChunks,
     },
   };
 }
@@ -384,9 +553,10 @@ async function collapse(
 export class FlashcardGraph {
   private fastLlm: ChatTogetherAI;
   private smartLlm: ChatTogetherAI;
+  private fastLlmStructured: FlashcardOutputInvoker;
 
   constructor(apiKey: string, mapModel: string, reduceModel: string) {
-    // Fast model for map phase (parallel Q&A generation)
+    // Fast model for map phase (parallel flashcard generation with structured output)
     // No maxTokens needed - output is short and controlled by prompt
     this.fastLlm = new ChatTogetherAI({
       apiKey,
@@ -402,11 +572,24 @@ export class FlashcardGraph {
       temperature: 0.3, // Lower temperature for consistent selection
       maxTokens: FLASHCARD_CONFIG.REDUCE_MAX_TOKENS, // Enough for large flashcard sets in JSON format
     });
+
+    // Fast model with structured output for reliable JSON flashcard generation
+    this.fastLlmStructured = createStructuredLLM(this.fastLlm, FlashcardArraySchema);
   }
 
   private estimateTokens(text: string): number {
     // Use accurate token counting via tiktoken
     return countTokens(text);
+  }
+
+  /**
+   * Format flashcards as text for LLM input.
+   * This matches the format used in collapseGroup prompts, ensuring accurate token estimation.
+   */
+  private formatFlashcardsAsText(flashcards: Flashcard[]): string {
+    return flashcards
+      .map((card, index) => `${index + 1}. Q: ${card.front}\n   A: ${card.back}`)
+      .join('\n\n');
   }
 
   // Generate a short hash for identifying chunks in logs
@@ -417,9 +600,10 @@ export class FlashcardGraph {
     return `[${chunk.length} chars] "${start}..."..."${end}"`;
   }
 
-  private async recursiveCollapse(outputs: string[]): Promise<string[]> {
+  private async recursiveCollapse(outputs: Flashcard[][]): Promise<Flashcard[][]> {
+    // Calculate tokens by formatting as text (matches actual prompt format)
     const totalTokens = outputs.reduce(
-      (sum, s) => sum + this.estimateTokens(s),
+      (sum, flashcards) => sum + this.estimateTokens(this.formatFlashcardsAsText(flashcards)),
       0
     );
 
@@ -430,18 +614,18 @@ export class FlashcardGraph {
 
     // Dynamic grouping based on token budget
     const targetGroupTokens = FLASHCARD_CONFIG.REDUCE_CHUNK_SIZE_TOKENS * 0.8; // Leave 20% buffer
-    const collapsed: string[] = [];
-    let currentGroup: string[] = [];
+    const collapsed: Flashcard[][] = [];
+    let currentGroup: Flashcard[][] = [];
     let currentTokens = 0;
 
-    for (const output of outputs) {
-      const tokens = this.estimateTokens(output);
+    for (const flashcards of outputs) {
+      const tokens = this.estimateTokens(this.formatFlashcardsAsText(flashcards));
       if (currentTokens + tokens > targetGroupTokens && currentGroup.length > 0) {
         collapsed.push(await this.collapseGroup(currentGroup));
-        currentGroup = [output];
+        currentGroup = [flashcards];
         currentTokens = tokens;
       } else {
-        currentGroup.push(output);
+        currentGroup.push(flashcards);
         currentTokens += tokens;
       }
     }
@@ -454,16 +638,59 @@ export class FlashcardGraph {
     return this.recursiveCollapse(collapsed);
   }
 
-  private async collapseGroup(group: string[]): Promise<string> {
-    const combined = group.join('\n\n---\n\n');
+  /**
+   * Collapse a group of flashcard arrays by merging and condensing.
+   * Uses structured output to ensure valid JSON output.
+   */
+  private async collapseGroup(group: Flashcard[][]): Promise<Flashcard[]> {
+    // Flatten all flashcard arrays into a single array
+    const allCards: Flashcard[] = [];
+    for (const flashcards of group) {
+      allCards.push(...flashcards);
+    }
 
-    const prompt = `Condense these question-answer pairs into a consolidated set while retaining all unique and high-quality pairs:\n\n${combined}\n\nCONDENSED:`;
+    logInfo({
+      agent: 'FlashcardGraph',
+      phase: 'collapse_group',
+      inputCount: group.length,
+      mergedCardCount: allCards.length,
+    }, `Collapsing ${group.length} outputs (${allCards.length} cards)`);
 
-    // Use timeout and retry for collapse operations
+    // If we have few cards, just return the merged array as-is
+    // For large sets, we might want to deduplicate/condense
+    if (allCards.length <= 30) {
+      // No need for LLM condensation for small sets
+      return allCards;
+    }
+
+    // For larger sets, use LLM to condense and deduplicate
+    // Format flashcards for the prompt
+    const flashcardsText = allCards
+      .map((card, index) => `${index + 1}. Q: ${card.front}\n   A: ${card.back}`)
+      .join('\n\n');
+
+    const prompt = `You are consolidating flashcard sets. Your task is to:
+1. Remove duplicate or highly similar flashcards
+2. Keep the highest quality, most diverse set
+3. Target approximately ${Math.floor(allCards.length * 0.7)} flashcards (remove ~30%)
+
+Condense these flashcards while maintaining quality and diversity:
+
+${flashcardsText}
+
+Return the condensed flashcards as a JSON array with "front" and "back" fields.`;
+
+    // Use structured output for reliable JSON
+    // @ts-ignore - Type instantiation is excessively deep with LangChain's withStructuredOutput
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const structuredLlm = this.smartLlm.withStructuredOutput(FlashcardArraySchema, {
+      name: "flashcard_array"
+    }) as any;
+
     const response = await invokeWithRetry(
       () => invokeWithTimeout(
-        () => this.smartLlm.invoke([
-          new SystemMessage('You are a skilled content consolidator.'),
+        () => structuredLlm.invoke([
+          new SystemMessage('You are a skilled content consolidator. Output strictly in JSON.'),
           new HumanMessage(prompt),
         ]),
         FLASHCARD_CONFIG.REDUCE_TIMEOUT_MS,
@@ -474,9 +701,14 @@ export class FlashcardGraph {
         baseDelayMs: 1000,
       },
       'FlashcardCollapseGroup'
-    );
+    ) as FlashcardResponse;
 
-    return response.content.toString();
+    // Clean the response flashcards
+    return response.flashcards.map(card => ({
+      front: cleanFrontText(card.front),
+      back: cleanBackText(card.back),
+      topic: card.topic,
+    }));
   }
 
   /**
@@ -497,7 +729,7 @@ export class FlashcardGraph {
     }, `Selecting ${targetCount} best cards from ${flashcards.length}`);
 
     // Detect similar flashcards for logging visibility
-    const similarFlashcards = this.detectSimilarFlashcards(flashcards);
+    const similarFlashcards = await this.detectSimilarFlashcards(flashcards);
 
     if (similarFlashcards.length > 0) {
       logInfo({
@@ -549,11 +781,14 @@ ${topic ? `User preference: ${topic} (but still maintain diversity)` : ''}
 Available flashcards:
 ${flashcardsText}
 
-Return the complete selected flashcards as a JSON array.`;
+Return the complete selected flashcards as a JSON array. For each flashcard, include a "topic" field that categorizes the card (e.g., "Definitions", "Processes", "Timeline", "Concepts", etc.). This helps ensure topic diversity.`;
 
     // Use structured output for reliable parsing
-    // @ts-ignore - LangGraph structured output has complex types
-    const structuredLlm = this.smartLlm.withStructuredOutput(FlashcardArraySchema);
+    // @ts-ignore - Type instantiation is excessively deep with LangChain's withStructuredOutput
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const structuredLlm = this.smartLlm.withStructuredOutput(FlashcardArraySchema, {
+      name: "flashcard_array"
+    }) as any;
 
     // Use timeout and retry for refinement LLM call
     const response = await invokeWithRetry(
@@ -572,12 +807,15 @@ Return the complete selected flashcards as a JSON array.`;
       'FlashcardRefineSelection'
     );
 
+    // Type assertion is safe now with proper schema configuration
     let selected = (response as FlashcardResponse).flashcards;
 
     // Clean up any trailing artifacts from structured output (defensive)
+    // Preserve topic if provided by LLM, otherwise will use keyword-based extraction
     selected = selected.map(card => ({
-      front: this.cleanFrontText(card.front),
-      back: this.cleanBackText(card.back),
+      front: cleanFrontText(card.front),
+      back: cleanBackText(card.back),
+      topic: card.topic, // Preserve LLM-provided topic if available
     }));
 
     logInfo({
@@ -594,16 +832,16 @@ Return the complete selected flashcards as a JSON array.`;
       topicDistribution: topicGroups,
     });
 
-    // Enhanced fallback: handle various edge cases
+    // If LLM returned no flashcards, this is an error condition
     if (selected.length === 0) {
-      logWarn({
+      logError({
         agent: 'FlashcardGraph',
         phase: 'refine_selection',
-        issue: 'parsing_failed',
-      }, 'Parsing failed, using heuristic selection with deduplication');
-
-      // Fallback: Apply heuristic deduplication and then select
-      return this.heuristicDeduplicateAndSelect(flashcards, targetCount);
+        issue: 'llm_returned_empty',
+        inputCount: flashcards.length,
+        targetCount,
+      }, 'LLM returned empty selection - this should not happen with structured output');
+      return [];
     }
 
     // If still over limit, apply intelligent trimming (respecting semantic diversity)
@@ -614,7 +852,7 @@ Return the complete selected flashcards as a JSON array.`;
         selectedCount: selected.length,
         targetCount,
       }, `Got ${selected.length}, applying semantic-aware trimming to ${targetCount}`);
-      return this.trimBySemanticDiversity(selected, targetCount);
+      return await this.trimBySemanticDiversity(selected, targetCount);
     }
 
     // If under limit, fill from remaining (also respecting semantic diversity)
@@ -629,62 +867,20 @@ Return the complete selected flashcards as a JSON array.`;
       const remaining = flashcards.filter(f =>
         !selected.some(s => s.front === f.front && s.back === f.back)
       );
-      const additional = this.trimBySemanticDiversity(remaining, targetCount - selected.length);
+      const additional = await this.trimBySemanticDiversity(remaining, targetCount - selected.length);
       return [...selected, ...additional];
     }
 
     return selected;
   }
 
-  /**
-   * Heuristic deduplication and selection when LLM fails.
-   * Uses similarity detection to remove duplicates, then selects by semantic diversity.
-   */
-  private heuristicDeduplicateAndSelect(
-    flashcards: Flashcard[],
-    targetCount: number
-  ): Flashcard[] {
-    logInfo({
-      agent: 'FlashcardGraph',
-      phase: 'heuristic_deduplication',
-      inputCount: flashcards.length,
-      targetCount,
-    }, 'Applying heuristic deduplication...');
-
-    // Detect duplicates
-    const duplicateGroups = this.detectSimilarFlashcards(flashcards);
-
-    // Track indices to keep
-    const indicesToRemove = new Set<number>();
-
-    for (const group of duplicateGroups) {
-      // Keep the first card, mark rest for removal
-      for (let i = 1; i < group.flashcards.length; i++) {
-        indicesToRemove.add(group.flashcards[i].index);
-      }
-    }
-
-    // Filter out duplicates
-    const deduplicated = flashcards.filter((_, idx) => !indicesToRemove.has(idx));
-
-    logInfo({
-      agent: 'FlashcardGraph',
-      phase: 'heuristic_deduplication_complete',
-      originalCount: flashcards.length,
-      duplicatesRemoved: indicesToRemove.size,
-      remainingCount: deduplicated.length,
-    }, `Removed ${indicesToRemove.size} duplicates`);
-
-    // Select by semantic diversity
-    return this.trimBySemanticDiversity(deduplicated, targetCount);
-  }
 
   /**
    * Trim flashcards to target count while respecting semantic diversity.
    * Prioritizes removing duplicates and keeping diverse concepts.
    * Does NOT enforce strict topic limits - allows more cards on a topic if they test different concepts.
    */
-  private trimBySemanticDiversity(flashcards: Flashcard[], targetCount: number): Flashcard[] {
+  private async trimBySemanticDiversity(flashcards: Flashcard[], targetCount: number): Promise<Flashcard[]> {
     if (flashcards.length <= targetCount) {
       return flashcards;
     }
@@ -697,7 +893,7 @@ Return the complete selected flashcards as a JSON array.`;
     }, 'Trimming with semantic diversity...');
 
     // Step 1: Detect duplicates and mark them for removal
-    const duplicateGroups = this.detectSimilarFlashcards(flashcards);
+    const duplicateGroups = await this.detectSimilarFlashcards(flashcards);
     const indicesToRemove = new Set<number>();
 
     for (const group of duplicateGroups) {
@@ -753,20 +949,16 @@ Return the complete selected flashcards as a JSON array.`;
   }
 
   // Extract topic from a flashcard for topic distribution logging
+  // Trusts LLM-provided topic entirely for flexibility and consistency
   private extractTopic(card: Flashcard): string {
-    const question = card.front.toLowerCase();
+    // Use LLM-provided topic if available - trust it entirely
+    if (card.topic && card.topic.trim().length > 0) {
+      return card.topic.trim();
+    }
 
-    // Simple keyword-based topic extraction (generalized for all content types)
-    if (question.includes('what is') || question.includes('define') || question.includes('definition')) return 'Definitions';
-    if (question.includes('when') || question.includes('year') || question.includes('century') || question.includes('date')) return 'Timeline/Dates';
-    if (question.includes('who') || question.includes('person') || question.includes('people')) return 'People';
-    if (question.includes('where') || question.includes('place') || question.includes('location')) return 'Places';
-    if (question.includes('why') || question.includes('because') || question.includes('reason') || question.includes('cause')) return 'Causes/Reasons';
-    if (question.includes('how') || question.includes('process') || question.includes('method') || question.includes('step')) return 'Processes';
-    if (question.includes('which') || question.includes('select') || question.includes('choose') || question.includes('identify')) return 'Classification';
-    if (question.includes('true') || question.includes('false') || question.includes('correct')) return 'Facts';
-
-    return 'General';
+    // If no LLM topic provided (should be rare with structured output), use generic category
+    // This avoids mismatches between LLM topics and hardcoded keyword categories
+    return 'Uncategorized';
   }
 
   // Helper method to group flashcards by topic for debugging
@@ -847,17 +1039,27 @@ Return the complete selected flashcards as a JSON array.`;
   /**
    * Detect semantically similar flashcards using multi-dimensional heuristics.
    * Enhanced to catch more duplicates with improved accuracy.
+   * 
+   * Performance optimization: For large sets (>100), yields control periodically
+   * to prevent event loop blocking. For very large sets (>200), limits comparison
+   * window to last 20 cards to reduce O(n²) complexity.
    */
-  private detectSimilarFlashcards(flashcards: Flashcard[]): Array<{
+  private async detectSimilarFlashcards(flashcards: Flashcard[]): Promise<Array<{
     similarity: string;
     flashcards: Array<{index: number; front: string; back: string}>;
     reason: string;
-  }> {
+  }>> {
     const duplicates: Array<{
       similarity: string;
       flashcards: Array<{index: number; front: string; back: string}>;
       reason: string;
     }> = [];
+
+    // Performance optimization: Limit comparison window for very large sets
+    const COMPARISON_WINDOW = 20; // Only compare against last N cards for large sets
+    const YIELD_INTERVAL = 50; // Yield control every N comparisons for large sets
+    const LARGE_SET_THRESHOLD = 100; // Start yielding at this size
+    const useWindowedComparison = flashcards.length > 200;
 
     // Helper to normalize text for comparison
     const normalizeText = (text: string): string => {
@@ -876,8 +1078,22 @@ Return the complete selected flashcards as a JSON array.`;
       return new Set(words);
     };
 
+    let comparisonCount = 0;
+
     for (let i = 0; i < flashcards.length; i++) {
-      for (let j = i + 1; j < flashcards.length; j++) {
+      // Determine comparison range: use windowed comparison for very large sets
+      const startJ = useWindowedComparison 
+        ? Math.max(i + 1, flashcards.length - COMPARISON_WINDOW)
+        : i + 1;
+
+      for (let j = startJ; j < flashcards.length; j++) {
+        comparisonCount++;
+
+        // Yield control periodically for large sets to prevent event loop blocking
+        if (flashcards.length > LARGE_SET_THRESHOLD && comparisonCount % YIELD_INTERVAL === 0) {
+          await new Promise(resolve => setImmediate(resolve));
+        }
+
         const f1 = flashcards[i];
         const f2 = flashcards[j];
 
@@ -947,23 +1163,26 @@ Return the complete selected flashcards as a JSON array.`;
         }
 
         // Check 4: Character sequence similarity (catches slight rewordings)
-        const charSimilarity = (s1: string, s2: string): number => {
-          const longer = s1.length > s2.length ? s1 : s2;
-          const shorter = s1.length > s2.length ? s2 : s1;
-          if (longer.length === 0) return 1.0;
-          return (longer.length - this.levenshteinDistance(longer, shorter)) / longer.length;
-        };
+        // Skip expensive Levenshtein for very large sets in windowed mode
+        if (!useWindowedComparison) {
+          const charSimilarity = (s1: string, s2: string): number => {
+            const longer = s1.length > s2.length ? s1 : s2;
+            const shorter = s1.length > s2.length ? s2 : s1;
+            if (longer.length === 0) return 1.0;
+            return (longer.length - this.levenshteinDistance(longer, shorter)) / longer.length;
+          };
 
-        const frontCharSim = charSimilarity(normalizedFront1, normalizedFront2);
-        if (frontCharSim > 0.85) {
-          duplicates.push({
-            similarity: 'high_character_similarity',
-            flashcards: [
-              { index: i, front: f1.front, back: f1.back },
-              { index: j, front: f2.front, back: f2.back },
-            ],
-            reason: `Character similarity: ${(frontCharSim * 100).toFixed(0)}%`,
-          });
+          const frontCharSim = charSimilarity(normalizedFront1, normalizedFront2);
+          if (frontCharSim > 0.85) {
+            duplicates.push({
+              similarity: 'high_character_similarity',
+              flashcards: [
+                { index: i, front: f1.front, back: f1.back },
+                { index: j, front: f2.front, back: f2.back },
+              ],
+              reason: `Character similarity: ${(frontCharSim * 100).toFixed(0)}%`,
+            });
+          }
         }
       }
     }
@@ -986,49 +1205,46 @@ Return the complete selected flashcards as a JSON array.`;
     });
 
     // Log each collapsed output for analysis
-    state.collapsedOutputs.forEach((output, idx) => {
-      const questionCount = output.split('Q:').length - 1;
+    state.collapsedOutputs.forEach((flashcards, idx) => {
+      const cardCount = flashcards.length;
+      const preview = flashcards.length > 0 
+        ? `${flashcards[0].front.substring(0, 50)}...` 
+        : 'empty';
+
       logInfo({
         agent: 'FlashcardGraph',
         phase: 'reduce_analyze_output',
         outputIndex: idx,
         outputCount: state.collapsedOutputs.length,
-        outputLength: output.length,
-        questionCount,
-        preview: output.substring(0, 150).replace(/\n/g, ' '),
+        cardCount,
+        preview,
       });
     });
 
-    const combined = state.collapsedOutputs.join('\n\n---\n\n');
-    const totalQuestionsBefore = combined.split('Q:').length - 1;
+    // Step 1: Flatten collapsed outputs into a single array
+    const parsedFlashcards = this.flattenCollapsedOutputs(state.collapsedOutputs);
 
     logInfo({
       agent: 'FlashcardGraph',
-      phase: 'reduce_before_parsing',
-      combinedLength: combined.length,
-      totalQuestionsExtracted: totalQuestionsBefore,
-    }, `Parsing ${totalQuestionsBefore} cards from map outputs for refinement...`);
-
-    // Step 1: Parse all cards from map outputs
-    const parsedFlashcards = this.fallbackParseFlashcards(combined);
-
-    logInfo({
-      agent: 'FlashcardGraph',
-      phase: 'reduce_after_initial_parse',
+      phase: 'reduce_after_flatten',
       initialCardCount: parsedFlashcards.length,
-    }, `Parsed ${parsedFlashcards.length} flashcards - running LLM refinement...`);
+    }, `Flattened ${parsedFlashcards.length} flashcards - running LLM refinement...`);
 
     // Step 2: ALWAYS run LLM refinement for quality control
     let finalFlashcards: Flashcard[];
 
     // If still no flashcards, this is a critical failure
     if (parsedFlashcards.length === 0) {
+      const totalInputs = state.collapsedOutputs.reduce((sum, flashcards) => {
+        return sum + flashcards.length;
+      }, 0);
+
       logError({
         agent: 'FlashcardGraph',
         phase: 'reduce',
         error: 'No flashcards parsed',
-        totalQuestionsBefore,
-      }, `CRITICAL: No flashcards parsed despite ${totalQuestionsBefore} input questions!`);
+        totalInputs,
+      }, `CRITICAL: No flashcards parsed despite ${totalInputs} input cards!`);
       return {
         ...state,
         finalOutput: [],
@@ -1123,10 +1339,18 @@ Return the complete selected flashcards as a JSON array.`;
       'GENERATION COMPLETE'
     );
 
+    // Calculate memory to be freed (estimate based on flashcard count)
+    const totalCards = state.collapsedOutputs.reduce((sum, group) => sum + group.length, 0);
+    const estimatedSize = totalCards * 200; // Rough estimate: ~200 bytes per flashcard
+    const chunksSize = (state.chunks || []).reduce((sum, s) => sum + s.length * 2, 0);
+    console.log(`[FlashcardGraph] Reduce: freeing ~${((estimatedSize + chunksSize) / 1024).toFixed(2)} KB from intermediate data`);
+
     return {
       ...state,
       finalOutput: finalFlashcards,
       status: 'completed',
+      // Clear collapsedOutputs and chunks to free memory - no longer needed after reduce
+      ...clearStateKeys<OverallStateType>(['collapsedOutputs', 'chunks']),
       progress: {
         phase: 'reduce',
         percentage: 100,
@@ -1137,117 +1361,36 @@ Return the complete selected flashcards as a JSON array.`;
   }
 
   /**
-   * Cleans up the front text by removing formatting artifacts.
-   * Enhanced to handle escaped quotes and markdown issues.
+   * Flatten collapsed outputs (Flashcard[][]) into a single Flashcard[] array.
+   * Validates and cleans each flashcard.
    */
-  private cleanFrontText(front: string): string {
-    let cleaned = front.trim();
-
-    // Remove escaped quotes (\"pure\" → "pure")
-    cleaned = cleaned.replace(/\\"/g, '"');
-
-    // Remove trailing markdown formatting artifacts
-    cleaned = cleaned.replace(/\s*[*_~]{1,2}\s*$/, '');
-
-    // Remove trailing enumeration numbers
-    cleaned = cleaned.replace(/\s*\d+\.\s*$/, '');
-
-    // Remove trailing whitespace
-    cleaned = cleaned.trim();
-
-    // Fix common markdown issues
-    cleaned = cleaned.replace(/\*\*\s*\*/g, '**'); // Fix ** *
-    cleaned = cleaned.replace(/\*\s*\*/g, '**');   // Fix * *
-
-    // Remove leading bullets if present
-    cleaned = cleaned.replace(/^[\s\-•*]\*/, '');
-
-    return cleaned.trim();
-  }
-
-  /**
-   * Cleans up the back text by removing formatting artifacts.
-   * Enhanced to handle escaped quotes and weird punctuation.
-   */
-  private cleanBackText(back: string): string {
-    let cleaned = back.trim();
-
-    // Remove escaped quotes
-    cleaned = cleaned.replace(/\\"/g, '"');
-
-    // Remove trailing enumeration numbers
-    cleaned = cleaned.replace(/\s*\d+\.\s*$/, '');
-
-    // Remove markdown artifacts at end
-    cleaned = cleaned.replace(/\s*[*_~]{1,2}\s*$/, '');
-
-    // Fix common punctuation issues (e.g., "concept."")
-    cleaned = cleaned.replace(/"\./g, '".');  // Fix ". scenarios
-    cleaned = cleaned.replace(/\.\./g, '.');  // Fix double periods
-
-    // Remove trailing punctuation that's clearly an artifact
-    cleaned = cleaned.replace(/[,;:\s]+$/, '');
-
-    // Clean up multiple spaces
-    cleaned = cleaned.replace(/\s{2,}/g, ' ');
-
-    return cleaned.trim();
-  }
-
-  // Parser for text-based flashcard output (Q: ... A: ... format)
-  // Used in reduce phase to parse map outputs
-  private fallbackParseFlashcards(content: string): Flashcard[] {
-    logInfo({
-      agent: 'FlashcardGraph',
-      phase: 'fallback_parse',
-      contentLength: content.length,
-    }, 'Attempting manual parsing...');
-
-    const flashcards: Flashcard[] = [];
-    let failedParseCount = 0;
+  private flattenCollapsedOutputs(outputs: Flashcard[][]): Flashcard[] {
+    const allCards: Flashcard[] = [];
     let failedValidationCount = 0;
 
-    const qaPattern = /Q:\s*(.+?)\s*A:\s*([\s\S]+?)(?=Q:|$)/g;
-    let match: RegExpExecArray | null;
-
-    while ((match = qaPattern.exec(content)) !== null) {
-      let front = match[1].trim();
-      let back = match[2].trim();
-
-      // Clean up trailing artifacts from both front and back
-      front = this.cleanFrontText(front);
-      back = this.cleanBackText(back);
-
-      if (front.length > 0 && back.length > 0) {
-        const card: Flashcard = { front, back };
-
-        // Validate that flashcard is self-contained
-        if (!this.validateSelfContained(card)) {
+    for (const flashcards of outputs) {
+      for (const card of flashcards) {
+        // Validate each card before adding
+        if (card.front && card.back && this.validateSelfContained(card)) {
+          allCards.push({
+            front: cleanFrontText(card.front),
+            back: cleanBackText(card.back),
+            topic: card.topic,
+          });
+        } else {
           failedValidationCount++;
-          continue; // Skip flashcards that aren't self-contained
         }
-
-        flashcards.push(card);
-      } else {
-        failedParseCount++;
       }
     }
 
     logInfo({
       agent: 'FlashcardGraph',
-      phase: 'fallback_parse_regex',
-      extractedCount: flashcards.length,
-    }, `Regex extraction: ${flashcards.length} cards`);
-
-    logInfo({
-      agent: 'FlashcardGraph',
-      phase: 'fallback_parse_complete',
-      extractedCount: flashcards.length,
-      failedParseCount,
+      phase: 'flatten_collapsed_outputs_complete',
+      extractedCount: allCards.length,
       failedValidationCount,
-    }, `Extracted ${flashcards.length} flashcards (${failedParseCount} failed to parse, ${failedValidationCount} failed validation)`);
+    }, `Flattened ${allCards.length} flashcards (${failedValidationCount} failed validation)`);
 
-    return flashcards;
+    return allCards;
   }
 
   /**
@@ -1265,7 +1408,7 @@ Return the complete selected flashcards as a JSON array.`;
 
     // Bind node functions to this instance
     builder.addNode('split_chunks', (s: OverallStateType) => splitChunks(s));
-    builder.addNode('map_process', (s: ChunkProcessState) => mapProcess(s, this.fastLlm));
+    builder.addNode('map_process', (s: ChunkProcessState) => mapProcess(s, this.fastLlmStructured));
     builder.addNode('collapse', (s: OverallStateType) => collapse(s, this.estimateTokens.bind(this), this.recursiveCollapse.bind(this)));
     builder.addNode('reduce', (s: OverallStateType) => this.reduce(s));
 

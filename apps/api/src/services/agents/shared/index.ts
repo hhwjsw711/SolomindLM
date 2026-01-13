@@ -29,6 +29,14 @@ export {
   createTimeoutWrapper,
 } from './timeout.js';
 
+// Concurrency control utilities
+export {
+  allWithConcurrency,
+  getConcurrencyLimiter,
+  createLimiter,
+  type AsyncTask,
+} from './concurrency.js';
+
 // Retry utilities
 export {
   invokeWithRetry,
@@ -155,3 +163,11 @@ export {
   type ChunkHelperConfig,
   type ChunkHelpers,
 } from './chunk-helper-factory.js';
+
+// State cleanup utilities
+export {
+  createCleanupNode,
+  clearStateKeys,
+  type CleanupNodeConfig,
+  type CleanupResult,
+} from './state-cleanup.js';

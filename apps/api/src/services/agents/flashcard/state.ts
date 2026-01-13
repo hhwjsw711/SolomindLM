@@ -36,14 +36,14 @@ export const OverallState = Annotation.Root({
     reducer: (_x: string | undefined, y?: string | undefined) => y ?? _x,
     default: () => undefined,
   }),
-  mapOutputs: Annotation<string[]>({
+  mapOutputs: Annotation<Flashcard[][]>({
     // Reducer concatenates arrays - critical for aggregating parallel outputs
     // Fixed: handle undefined y to prevent runtime errors
-    reducer: (x: string[], y?: string[]) => y ? x.concat(y) : x,
+    reducer: (x: Flashcard[][], y?: Flashcard[][]) => y ? x.concat(y) : x,
     default: () => [],
   }),
-  collapsedOutputs: Annotation<string[]>({
-    reducer: (_x: string[], y?: string[]) => y ?? _x,
+  collapsedOutputs: Annotation<Flashcard[][]>({
+    reducer: (_x: Flashcard[][], y?: Flashcard[][]) => y ?? _x,
     default: () => [],
   }),
   finalOutput: Annotation<Flashcard[]>({

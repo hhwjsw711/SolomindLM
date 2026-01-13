@@ -8,6 +8,7 @@
 import { StateGraph, START, END, Send } from '@langchain/langgraph';
 import { ChatTogetherAI } from '@langchain/community/chat_models/togetherai';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { z } from 'zod';
 import { env } from '../../../config/env.js';
 
 // Shared utilities for production-level patterns
@@ -17,6 +18,8 @@ import {
   packChunks as sharedPackChunks,
   validateChunks as sharedValidateChunks,
   countTokens,
+  clearStateKeys,
+  allWithConcurrency,
 } from '../shared/index.js';
 
 // Import from local modules
@@ -52,6 +55,45 @@ const PROCESSING_CONFIG = {
   RETRY_BACKOFF_MS: 1000,
   MAX_PROMPT_LENGTH: 5000,
 } as const;
+
+// ============================================================
+// STRUCTURED OUTPUT SCHEMAS
+// ============================================================
+
+/**
+ * Zod schema for structured map phase output.
+ * This ensures reliable topic extraction without fragile regex parsing.
+ */
+export const MapOutputSchema = z.object({
+  topics: z.array(z.string())
+    .min(1, 'At least one topic is required')
+    .max(5, 'Maximum 5 topics allowed')
+    .describe('3-5 key topics that this section covers, ordered by importance'),
+  summary: z.string()
+    .min(50, 'Summary must be at least 50 characters')
+    .max(10000, 'Summary must not exceed 10000 characters')
+    .describe('The complete structured summary including all sections (Key Insights, Main Themes, Supporting Evidence, etc.)'),
+});
+
+export type MapOutput = z.infer<typeof MapOutputSchema>;
+
+// Interface for the structured LLM to avoid deep type instantiation
+interface MapOutputInvoker {
+  invoke(messages: Array<SystemMessage | HumanMessage>): Promise<MapOutput>;
+}
+
+/**
+ * Helper function to create a structured LLM without triggering deep type instantiation.
+ * TypeScript tries to infer the full generic chain of withStructuredOutput, which exceeds
+ * its recursion limits. We use a local any cast to break this chain while preserving
+ * type safety through the MapOutputInvoker interface.
+ */
+function createStructuredLLM(llm: ChatTogetherAI, schema: z.ZodTypeAny): MapOutputInvoker {
+  // @ts-expect-error - Type instantiation is excessively deep with LangChain's withStructuredOutput
+  return llm.withStructuredOutput(schema, {
+    name: 'extract_topics_and_summary',
+  }) as any;
+}
 
 // ============================================================
 // CHUNK HELPERS
@@ -92,7 +134,7 @@ export function validateChunks(chunks: string[]): string[] {
 export class ReportGraph {
   private fastLlm: ChatTogetherAI;
   private smartLlm: ChatTogetherAI;
-  private topicCache = new Map<string, string[]>();
+  private fastLlmStructured: MapOutputInvoker;
   private maxTokens: number;
 
   constructor(apiKey: string, mapModel: string, reduceModel: string, maxTokens: number = 64000) {
@@ -114,6 +156,9 @@ export class ReportGraph {
       maxTokens: parseInt(env.REPORT_REDUCE_MAX_OUTPUT_TOKENS || '32000', 10),
     });
 
+    // Fast model with structured output for reliable topic extraction
+    this.fastLlmStructured = createStructuredLLM(this.fastLlm, MapOutputSchema);
+
     this.maxTokens = maxTokens;
   }
 
@@ -129,12 +174,22 @@ export class ReportGraph {
     return `[${chunk.length} chars] "${start}..."..."${end}"`;
   }
 
-  // Sanitize user input to prevent prompt injection
+  /**
+   * Sanitize custom prompt input.
+   * Since we use LangChain's message structure (SystemMessage/HumanMessage),
+   * we only need to prevent template injection via the {customPrompt} placeholder.
+   * This is much less aggressive than the previous implementation and preserves
+   * legitimate user content like "system requirements:" or dialogue in novels.
+   */
   private sanitizeUserInput(input: string): string {
     if (!input) return '';
+
     return input
+      // Normalize excessive newlines
       .replace(/\n{3,}/g, '\n\n')
-      .replace(/system:|assistant:|user:/gi, '')
+      // Prevent template injection by removing potential template variable patterns
+      .replace(/\{.*?\}/g, '')
+      // Remove special token markers used by some models
       .replace(/<\|.*?\|>/g, '')
       .trim()
       .substring(0, PROCESSING_CONFIG.MAX_PROMPT_LENGTH);
@@ -220,78 +275,8 @@ export class ReportGraph {
     throw lastError || new Error(`${phase} failed after ${maxRetries} attempts`);
   }
 
-  // Extract topics from map output text (with caching)
-  private extractTopicsFromOutput(output: string): string[] {
-    const cacheKey = output.substring(0, PROCESSING_CONFIG.TOPIC_CACHE_KEY_LENGTH);
-    if (this.topicCache.has(cacheKey)) {
-      return this.topicCache.get(cacheKey)!;
-    }
-
-    const topics = this.extractTopicsInternal(output);
-
-    if (this.topicCache.size >= PROCESSING_CONFIG.TOPIC_CACHE_SIZE) {
-      const firstKey = this.topicCache.keys().next().value;
-      if (firstKey) {
-        this.topicCache.delete(firstKey);
-      }
-    }
-    this.topicCache.set(cacheKey, topics);
-
-    return topics;
-  }
-
-  // Internal topic extraction with single-pass parsing
-  private extractTopicsInternal(output: string): string[] {
-    const topics: string[] = [];
-    const lines = output.split('\n');
-    let inTopicsSection = false;
-
-    for (const line of lines) {
-      if (/\*{0,2}Main Topics:\*{0,2}/i.test(line)) {
-        inTopicsSection = true;
-        continue;
-      }
-
-      if (inTopicsSection) {
-        if (line.match(/^\*{0,2}(Key|Important|Learning|Surprising|Notable|Actionable|Technical|Supporting)/i)) {
-          break;
-        }
-
-        const match = line.match(/^\s*\d+\.\s*(.+)$/);
-        if (match) {
-          const topic = match[1].trim();
-          if (topic.length > 2 && topics.length < PROCESSING_CONFIG.MAX_TOPICS_PER_CHUNK) {
-            topics.push(topic);
-          }
-        }
-      }
-    }
-
-    if (topics.length === 0) {
-      const mainTopicsMatch = output.match(/\*{0,2}Main Topics:\*{0,2}\s*([\s\S]+?)(?=\n\n|\n\*{0,2}Main|\n\*{0,2}Key|\n\*{0,2}Important|$)/i);
-      if (mainTopicsMatch) {
-        const topicsText = mainTopicsMatch[1].trim();
-        const numberedTopics = topicsText.match(/\d+\.\s+([^.\d]+?)(?=\s+\d+\.|$)/g);
-        if (numberedTopics) {
-          const extracted = numberedTopics
-            .map(t => t.replace(/^\d+\.\s*/, '').trim())
-            .filter(t => t.length > 2)
-            .slice(0, PROCESSING_CONFIG.MAX_TOPICS_PER_CHUNK);
-          topics.push(...extracted);
-        } else {
-          const extractedTopics = topicsText.split(/,|;|\n|\d+\.|and|&/i)
-            .map(t => t.trim().replace(/^\*+|\*+$/g, ''))
-            .filter(t => t.length > 3 && !t.match(/Main Topics/i))
-            .slice(0, PROCESSING_CONFIG.MAX_TOPICS_PER_CHUNK);
-          topics.push(...extractedTopics);
-        }
-      }
-    }
-
-    return topics.length > 0 ? topics : ['Unknown'];
-  }
-
   // Group map outputs by extracted topics for analysis
+  // Handles both JSON (MapOutput from map phase) and Markdown (from collapse phase)
   private groupOutputsByTopic(outputs: string[]): Record<string, number> {
     const topics: Record<string, number> = {};
 
@@ -305,20 +290,104 @@ export class ReportGraph {
   }
 
   // Analyze all topics from outputs for comprehensive logging
+  // Handles both JSON (MapOutput from map phase) and Markdown (from collapse phase)
   private analyzeAllTopics(outputs: string[]): { topics: Record<string, number>, allTopics: string[] } {
     const topicCounts: Record<string, number> = {};
     const allTopics: string[] = [];
 
     for (const output of outputs) {
-      const extractedTopics = this.extractTopicsFromOutput(output);
-      allTopics.push(...extractedTopics);
+      const topics = this.extractTopicsFromOutput(output);
+      allTopics.push(...topics);
 
-      for (const topic of extractedTopics) {
+      for (const topic of topics) {
         topicCounts[topic] = (topicCounts[topic] || 0) + 1;
       }
     }
 
     return { topics: topicCounts, allTopics };
+  }
+
+  /**
+   * Extract topics from an output string.
+   * Handles both JSON format (MapOutput from map phase) and Markdown format (from collapse phase).
+   */
+  private extractTopicsFromOutput(output: string): string[] {
+    // Try JSON format first (MapOutput from structured LLM)
+    try {
+      const parsed = JSON.parse(output) as MapOutput;
+      if (parsed.topics && Array.isArray(parsed.topics) && parsed.topics.length > 0) {
+        return parsed.topics;
+      }
+    } catch {
+      // Not JSON, continue to Markdown parsing
+    }
+
+    // Fall back to Markdown parsing (for collapsed outputs)
+    return this.extractTopicsFromMarkdown(output);
+  }
+
+  /**
+   * Extract topics from Markdown text.
+   * Looks for "Main Topics:" sections and handles various list formats.
+   */
+  private extractTopicsFromMarkdown(markdown: string): string[] {
+    const topics: string[] = [];
+    const cleanOutput = markdown.replace(/\*\*/g, '').trim();
+
+    // Strategy A: Look for "Main Topics:" followed by a list
+    const mainTopicsMatch = cleanOutput.match(/Main Topics:?([\s\S]+?)(?=\n\n|\n[A-Z][a-z]+:|- Key Insights|- Learning Objectives|Key Concepts|Main Themes|Supporting Evidence|Action Items|Potential Quiz|Notable Quotes|Actionable Advice|Key Evidence|Important Conclusions|Technical Specifications|Methodologies|Data and Metrics|Findings|Core Concepts|Relationships|Examples|Common Misconceptions|Research Methods|Frameworks Applied|Data Collection|Analysis Approaches|##|$)/i);
+
+    if (mainTopicsMatch) {
+      const content = mainTopicsMatch[1].trim();
+
+      // Handle comma-separated list (e.g., "Topic A, Topic B, Topic C")
+      if (content.includes(',') && !content.includes('\n')) {
+        content.split(',').forEach(t => {
+          const topic = t.trim().replace(/^-\s*/, '').replace(/^\d+\.\s*/, '');
+          if (topic.length > 2 && topic.length < 100) {
+            topics.push(topic);
+          }
+        });
+      }
+      // Handle bulleted/numbered list (e.g., "- Topic A \n - Topic B")
+      else {
+        const lines = content.split('\n');
+        for (const line of lines) {
+          const trimmed = line.trim();
+          // Skip empty lines and section headers
+          if (!trimmed || /^[A-Z][a-z]+:/.test(trimmed)) continue;
+
+          const topic = trimmed.replace(/^[-*•]\s*/, '').replace(/^\d+\.\s*/, '');
+          if (topic.length > 2 && topic.length < 100) {
+            topics.push(topic);
+          }
+        }
+      }
+    }
+
+    // Strategy B: Fallback - look for any bullet points that seem like topics
+    if (topics.length === 0) {
+      const topicLines = cleanOutput.match(/^[-*•]\s+[A-Z].+$/gm) || [];
+      for (const line of topicLines.slice(0, 5)) {
+        const topic = line.replace(/^[-*•]\s+/, '').trim();
+        if (topic.length > 2 && topic.length < 100) {
+          topics.push(topic);
+        }
+      }
+    }
+
+    // Deduplicate and filter noise
+    const uniqueTopics = Array.from(new Set(topics))
+      .filter(t => {
+        const lower = t.toLowerCase();
+        return !lower.includes('main topics') &&
+               !lower.includes('key insights') &&
+               !lower.includes('learning objectives') &&
+               !lower.includes('all of the above') &&
+               t.length < 100;
+      });
+
+    return uniqueTopics.length > 0 ? uniqueTopics : ['General Content'];
   }
 
   // Validate input state before processing
@@ -504,20 +573,28 @@ export class ReportGraph {
       reportType: reportType,
     }, null, 2));
 
+    // Build prompt for structured output
     const promptTemplate = MAP_PROMPTS[reportType] || MAP_PROMPTS['custom'];
     const prompt = promptTemplate
       .replace('{chunk}', chunk)
       .replace('{customPrompt}', this.sanitizeUserInput(customPrompt || ''));
 
+    // Add instruction for structured output
+    const structuredPrompt = `${prompt}
+
+IMPORTANT: Respond with a JSON object containing:
+1. "topics": An array of 3-5 key topics this section covers
+2. "summary": The complete structured summary as described above`;
+
     console.log(`[ReportGraph] ${chunkId} Sending prompt to LLM (${prompt.length} chars)...`);
 
-    let output: string;
+    let mapOutput: MapOutput;
     try {
-      const response = await this.invokeWithRetry(
+      mapOutput = await this.invokeWithRetry<MapOutput>(
         () => this.invokeWithTimeout(
-          () => this.fastLlm.invoke([
-            new SystemMessage('You are a professional content analyzer and writer.'),
-            new HumanMessage(prompt),
+          () => this.fastLlmStructured.invoke([
+            new SystemMessage('You are a professional content analyzer and writer. Always extract 3-5 key topics and provide comprehensive summaries.'),
+            new HumanMessage(structuredPrompt),
           ]),
           GRAPH_CONFIG.MAP_TIMEOUT_MS,
           'Map'
@@ -525,7 +602,6 @@ export class ReportGraph {
         PROCESSING_CONFIG.MAX_RETRY_ATTEMPTS,
         `Map ${chunkId}`
       );
-      output = this.getMessageContent(response);
     } catch (error) {
       const errorContext = {
         timestamp: new Date().toISOString(),
@@ -539,31 +615,30 @@ export class ReportGraph {
         } : String(error),
       };
       console.error('[ReportGraph] Map process error:', JSON.stringify(errorContext, null, 2));
-
-      output = `- Main Topics: Error processing chunk
-- Error: ${error instanceof Error ? error.message : 'Unknown error'}
-- Chunk Info: ${chunk.length} chars, type: ${reportType}
-
-[Fallback: This chunk could not be processed due to timeout or error. The report will continue with other chunks.]`;
+      throw error;
     }
 
     const elapsed = Date.now() - startTime;
-    const extractedTopics = this.extractTopicsFromOutput(output);
+
+    // Serialize MapOutput to JSON for storage in state
+    const outputJson = JSON.stringify(mapOutput);
+    const extractedTopics = mapOutput.topics;
 
     console.log(JSON.stringify({
       timestamp: new Date().toISOString(),
       phase: 'map_process_complete',
       chunkIndex: chunkIndex,
-      outputLength: output.length,
+      outputLength: outputJson.length,
+      summaryLength: mapOutput.summary.length,
       processingTimeMs: elapsed,
       extractedTopics: extractedTopics,
-      outputPreview: output.substring(0, 300).replace(/\n/g, ' '),
+      summaryPreview: mapOutput.summary.substring(0, 300).replace(/\n/g, ' '),
     }, null, 2));
 
     console.log(`[ReportGraph] ${chunkId} Extracted topics: ${extractedTopics.join(', ')}`);
 
     return {
-      mapOutputs: [output],
+      mapOutputs: [outputJson],
       progress: {
         phase: 'map_process',
         percentage: Math.min(10 + ((chunkIndex ?? 0) * 30), 60),
@@ -580,16 +655,26 @@ export class ReportGraph {
     console.log('[ReportGraph] ===== COLLAPSE PHASE =====');
     console.log('='.repeat(80));
 
+    // Extract summaries from structured MapOutput JSON
+    const summaries: string[] = [];
+    const mapOutputsDetails = state.mapOutputs.map((output, idx) => {
+      const parsed = JSON.parse(output) as MapOutput;
+      const summary = parsed.summary;
+      const topics = parsed.topics;
+      summaries.push(summary);
+      return {
+        index: idx,
+        length: output.length,
+        topics,
+        preview: summary.substring(0, 100).replace(/\n/g, ' '),
+      };
+    });
+
     console.log(JSON.stringify({
       timestamp: new Date().toISOString(),
       phase: 'collapse',
       mapOutputsReceived: state.mapOutputs.length,
-      mapOutputsDetails: state.mapOutputs.map((output, idx) => ({
-        index: idx,
-        length: output.length,
-        topics: this.extractTopicsFromOutput(output),
-        preview: output.substring(0, 100).replace(/\n/g, ' '),
-      })),
+      mapOutputsDetails,
     }, null, 2));
 
     const { topics: topicDistribution, allTopics } = this.analyzeAllTopics(state.mapOutputs);
@@ -605,7 +690,7 @@ export class ReportGraph {
       };
     }
 
-    const totalTokens = state.mapOutputs.reduce(
+    const totalTokens = summaries.reduce(
       (sum, s) => sum + this.estimateTokens(s),
       0
     );
@@ -613,11 +698,18 @@ export class ReportGraph {
     console.log(`[ReportGraph] Collapse: total tokens ${totalTokens}`);
 
     console.log('[ReportGraph] Collapse: performing recursive collapse');
-    const collapsed = await this.recursiveCollapse(state.mapOutputs);
+    const collapsed = await this.recursiveCollapse(summaries);
+
+    // Calculate memory freed before clearing
+    const mapOutputsSize = state.mapOutputs.reduce((sum, s) => sum + s.length * 2, 0);
+    console.log(`[ReportGraph] Collapse: freeing ~${(mapOutputsSize / 1024).toFixed(2)} KB from mapOutputs`);
+
     return {
       ...state,
       collapsedOutputs: collapsed,
       status: 'reducing',
+      // Clear mapOutputs to free memory - no longer needed after collapse
+      ...clearStateKeys<OverallStateType>(['mapOutputs']),
       progress: {
         phase: 'collapse',
         percentage: 70,
@@ -648,12 +740,14 @@ export class ReportGraph {
       groups.push(currentGroup);
     }
 
-    console.log(`[ReportGraph] Collapsing ${groups.length} groups in parallel`);
-    const collapsed = await Promise.all(
+    const concurrency = parseInt(env.REPORT_COLLAPSE_CONCURRENCY || '5', 10);
+    console.log(`[ReportGraph] Collapsing ${groups.length} groups with concurrency limit of ${concurrency}`);
+    const collapsed = await allWithConcurrency(
       groups.map((group, idx) => {
         console.log(`[ReportGraph] Collapsing group ${idx + 1}/${groups.length} (${group.length} summaries)`);
-        return this.collapseGroup(group);
-      })
+        return () => this.collapseGroup(group);
+      }),
+      concurrency
     );
 
     return this.recursiveCollapse(collapsed);
@@ -692,10 +786,14 @@ CONDENSED (maintain topic structure and "Main Topics:" format):`;
     console.log('[ReportGraph] ===== REDUCE PHASE =====');
     console.log('='.repeat(80));
 
+    // Store counts before clearing for logging
+    const collapsedOutputsCount = state.collapsedOutputs.length;
+    const chunksCount = state.chunks?.length || 0;
+
     console.log(JSON.stringify({
       timestamp: new Date().toISOString(),
       phase: 'reduce',
-      collapsedOutputsCount: state.collapsedOutputs.length,
+      collapsedOutputsCount,
       reportType: state.reportType,
     }, null, 2));
 
@@ -812,7 +910,7 @@ Do NOT combine topics or focus primarily on one.
 **Details:**
 - Report Type: ${state.reportType}
 - Input Size: ${combined.length} characters
-- Processed Chunks: ${state.collapsedOutputs.length}
+- Processed Chunks: ${collapsedOutputsCount}
 
 The report generation could not be completed due to a timeout or error. Please try again with fewer documents or a shorter report type.`;
     }
@@ -829,10 +927,17 @@ The report generation could not be completed due to a timeout or error. Please t
 
     console.log(`[ReportGraph] Reduce: final output length: ${finalOutput.length} chars (took ${elapsed}ms)`);
 
+    // Calculate memory to be freed
+    const collapsedOutputsSize = state.collapsedOutputs.reduce((sum, s) => sum + s.length * 2, 0);
+    const chunksSize = (state.chunks || []).reduce((sum, s) => sum + s.length * 2, 0);
+    console.log(`[ReportGraph] Reduce: freeing ~${((collapsedOutputsSize + chunksSize) / 1024).toFixed(2)} KB from intermediate data`);
+
     return {
       ...state,
       finalOutput,
       status: 'completed',
+      // Clear collapsedOutputs and chunks to free memory - no longer needed after reduce
+      ...clearStateKeys<OverallStateType>(['collapsedOutputs', 'chunks']),
       progress: {
         phase: 'reduce',
         percentage: 100,

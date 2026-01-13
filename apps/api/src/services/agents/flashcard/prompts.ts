@@ -15,12 +15,15 @@ export const FlashcardArraySchema = z.object({
   flashcards: z.array(z.object({
     front: z.string(),
     back: z.string(),
+    // FIX: TogetherAI/OpenAI strict output requires .nullable() before .optional()
+    topic: z.string().nullable().optional().describe("Topic category or null if not applicable"),
   })),
 });
 
 export interface Flashcard {
   front: string;
   back: string;
+  topic?: string | null; // Optional topic field (nullable for TogetherAI/OpenAI strict output)
 }
 
 export interface FlashcardResponse {
@@ -49,7 +52,7 @@ export const PROBLEMATIC_PHRASES = [
 // ============================================================
 
 /**
- * Map prompt for generating Q&A pairs from chunks
+ * Map prompt for generating flashcards from chunks using structured JSON output.
  */
 export const getMapPrompt = (params: {
   chunk: string;
@@ -68,7 +71,7 @@ export const getMapPrompt = (params: {
 
   return `You are an expert educator creating HIGH-QUALITY & RELEVANT study flashcards from educational content.
 
-HARD LIMIT: Generate ${cardsPerChunk} question-answer pairs maximum from this section. NOT more.
+HARD LIMIT: Generate ${cardsPerChunk} flashcards maximum from this section. NOT more.
 This is part of a larger set targeting ${cardCount} total cards across all chunks.
 
 **Difficulty Level: ${difficulty.toUpperCase()}** (${difficultyGuidance[difficulty] || difficulty})
@@ -105,38 +108,21 @@ RULES FOR CONTEXT INCLUSION:
 
 BALANCE: Questions should be complete but concise. Include only what's necessary to answer correctly.
 
-*** IMPORTANT: THE EXAMPLES BELOW ARE FOR REFERENCE ONLY. DO NOT INCLUDE THEM IN YOUR OUTPUT. ***
-
-EXAMPLES OF SELF-CONTAINED FLASHCARDS (DO NOT COPY):
-
-EXAMPLE 1 - Formula Reference:
-Q: Using the formula F = ma, if a force of 100N is applied to a 10kg object, what is the acceleration?
-A: 10 m/s² (a = F/m = 100N / 10kg = 10 m/s²)
-
-EXAMPLE 2 - Code Reference:
-Q: What does the following JavaScript code output? 'const arr = [1, 2, 3]; arr.push(4); console.log(arr.length);'
-A: 4 (The push() method adds an element to the array, resulting in [1, 2, 3, 4], so length is 4)
-
-EXAMPLE 3 - Context-Heavy Reference:
-Q: A chemical reaction produces 50g of product from 100g of reactant. If the theoretical maximum yield is 80g, what is the percent yield?
-A: 62.5% (Percent yield = (actual / theoretical) × 100 = (50g / 80g) × 100 = 62.5%)
-
-*** END OF EXAMPLES - NOW GENERATE ORIGINAL FLASHCARDS FROM THE CONTENT BELOW ***
-
-**Format each pair as:**
-Q: [your question text - COMPLETE AND SELF-CONTAINED with all necessary context]
-A: [your answer]
-
-REMEMBER: Generate ORIGINAL questions from the content below. Do NOT copy the examples above.
+**OUTPUT FORMAT:**
+Return a JSON object with a "flashcards" array containing objects with:
+- "front": The question
+- "back": The answer
+- "topic": A short 1-3 word category for this specific card (e.g., "History", "Definition", "Formula")
 
 Content:
 ${chunk}
 
-FLASHCARDS:`;
+Generate exactly ${cardsPerChunk} flashcards from the content above as JSON:`;
 };
 
 /**
- * Reduce prompt for selecting and refining final flashcards
+ * Reduce prompt for selecting and refining final flashcards.
+ * Updated to include deduplication, merging, and topic diversity logic.
  */
 export const getReducePrompt = (params: {
   content: string;
@@ -146,23 +132,38 @@ export const getReducePrompt = (params: {
 }): string => {
   const { content, cardCount, difficulty, topic } = params;
 
-  return `You are selecting flashcards for a study set. Your goal is to create a DIVERSE & HIGH-QUALITY set that covers ALL major topics.
+  return `You are an expert educator selecting and refining flashcards for a study set.
 
-CRITICAL REQUIREMENT - READ CAREFULLY:
-You MUST select flashcards from DIFFERENT topics. Do NOT select more than 3 cards from any single topic.
+CRITICAL REQUIREMENTS:
+- Select approximately ${cardCount} flashcards (flexible: ±${Math.ceil(cardCount * 0.2)} is acceptable)
+- IDENTIFY AND MERGE similar or duplicate flashcards before selecting
+- Quality over quantity: Better to have fewer unique cards than duplicates
+- Your goal is MAXIMUM SEMANTIC DIVERSITY - each card should cover a distinct concept
+
+SIMILARITY DETECTION GUIDELINES:
+Flashcards are considered similar if they:
+- Test the same definition or concept (e.g., "Define X" on front, "What is X" on front)
+- Have the same answer despite different question phrasing
+- Cover overlapping content that could be combined into one card
+
+MERGING STRATEGY:
+When you find similar flashcards:
+- Combine the best elements from each version (clearest question, most complete answer)
+- Create a single, clearer flashcard
+- Ensure the merged card is self-contained
+- Keep the most comprehensive explanation or examples
+
+TOPIC DIVERSITY:
+Additionally, select flashcards from DIFFERENT topics. Do NOT select more than 3 cards from any single topic if possible.
 If there are 6+ topics available, select 1-3 cards from each topic.
-Your goal is MAXIMUM TOPIC DIVERSITY, not maximum cards on one topic.
-
-TASK:
-1. First, mentally identify 5-7 distinct topics in the content below
-2. Then select ${cardCount} cards distributed EVENLY across those topics
-3. Example: If you need 20 cards and have 5 topics, select 4 from each topic
+Example: If you need 20 cards and have 5 topics, select 4 from each topic
 
 Difficulty: ${difficulty}
 ${topic ? `User preference: ${topic} (but still maintain diversity)` : ''}
 
-QUESTION-ANSWER PAIRS:
+Available flashcards:
 ${content}
 
-Select exactly ${cardCount} diverse flashcards:`;
+Return the selected flashcards as a JSON array. 
+For each flashcard, include a "topic" field that categorizes the card (e.g., "Definitions", "Processes", "Timeline", "Concepts", etc.). This helps ensure topic diversity.`;
 };

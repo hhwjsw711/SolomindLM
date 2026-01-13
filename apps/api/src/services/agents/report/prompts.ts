@@ -1,7 +1,10 @@
 /**
  * Prompt templates for ReportGraph.
  *
- * Contains all prompt templates for different report types.
+ * Updated for SolomindLM to include:
+ * 1. "Key Quotes" extraction (for citations)
+ * 2. "All Topics" coverage (preventing data loss)
+ * 3. Deeper analysis sections (Critical Analysis, Glossaries)
  */
 
 // ============================================================
@@ -9,94 +12,100 @@
 // ============================================================
 
 export const MAP_PROMPTS: Record<string, string> = {
-  briefing: `Extract key insights, main themes, evidence, and action items from this section:
+  briefing: `Analyze this section deeply. Extract key insights, main themes, evidence, and verbatim quotes.
 
 {chunk}
 
 Format your response as:
-- Main Topics: [list 3-5 key topics this section covers]
-- Key Insights: [bulleted list of critical takeaways]
-- Main Themes: [core topics and patterns]
-- Supporting Evidence: [data, quotes, or examples that back up claims]
-- Action Items: [specific next steps or recommendations]
+- Main Topics: [List ALL distinct topics discussed in this section - do not limit to top 3]
+- Key Insights: [Bulleted list of critical takeaways]
+- Key Quotes: [Extract 3-5 direct verbatim quotes that support the insights, for citation purposes]
+- Main Themes: [Core topics and patterns]
+- Supporting Evidence: [Data, statistics, or specific examples that back up claims]
+- Action Items: [Specific next steps or recommendations]
 
 INSIGHTS:`,
 
-  study_guide: `Extract learning content from this section:
+  study_guide: `Extract learning content from this section.
 
 {chunk}
 
 Format your response as:
-- Main Topics: [list 3-5 key topics this section covers]
-- Learning Objectives: [what students should understand]
-- Key Concepts: [definitions with explanations]
-- Important Terms: [vocabulary words with brief definitions]
-- Potential Quiz Questions: [short-answer questions based on this section]
+- Main Topics: [List ALL distinct topics discussed in this section - do not limit to top 3]
+- Learning Objectives: [What students should be able to do or understand]
+- Key Concepts: [Definitions of core ideas with brief explanations]
+- Key Quotes: [Extract 3-5 direct verbatim quotes that define concepts or summarize key points]
+- Important Terms: [Vocabulary words with brief definitions]
+- Potential Quiz Questions: [Short-answer questions based on this section]
 
 CONCEPTS:`,
 
-  blog_post: `Extract engaging content for a blog post from this section:
+  blog_post: `Extract engaging content for a blog post from this section.
 
 {chunk}
 
 Format your response as:
-- Main Topics: [list 3-5 key topics this section covers]
-- Surprising Takeaways: [counter-intuitive or unexpected points]
-- Impactful Insights: [ideas that would resonate with readers]
-- Notable Quotes: [powerful quotes worth featuring]
-- Actionable Advice: [practical tips readers can apply]
+- Main Topics: [List ALL distinct topics discussed in this section - do not limit to top 3]
+- Surprising Takeaways: [Counter-intuitive, novel, or unexpected points]
+- Impactful Insights: [Ideas that would resonate emotionally or intellectually with readers]
+- Notable Quotes: [Powerful, punchy verbatim quotes worth featuring as blockquotes]
+- Actionable Advice: [Practical tips readers can apply immediately]
 
 CONTENT:`,
 
-  summary: `Extract the essential information from this section:
+  summary: `Extract the essential information from this section.
 
 {chunk}
 
 Format your response as:
-- Main Topics: [list 3-5 key topics this section covers]
-- Main Arguments: [core claims and positions]
-- Key Evidence: [supporting data and examples]
-- Important Conclusions: [significant findings or outcomes]
-- Context: [relevant background information]
+- Main Topics: [List ALL distinct topics discussed in this section - do not limit to top 3]
+- Main Arguments: [Core claims and positions presented]
+- Key Evidence: [Supporting data, studies, and examples]
+- Key Quotes: [Extract 3-5 direct verbatim quotes that represent the core arguments]
+- Important Conclusions: [Significant findings or outcomes]
+- Context: [Relevant background information needed to understand the text]
 
 SUMMARY:`,
 
-  technical_report: `Extract technical details from this section:
+  technical_report: `Extract technical details and specifications from this section.
 
 {chunk}
 
 Format your response as:
-- Main Topics: [list 3-5 key topics this section covers]
-- Technical Specifications: [specific parameters, configurations, or requirements]
-- Methodologies: [approaches, algorithms, or frameworks used]
-- Data and Metrics: [quantitative information and measurements]
-- Findings: [technical conclusions and observations]
+- Main Topics: [List ALL distinct topics discussed in this section - do not limit to top 3]
+- Technical Specifications: [Specific parameters, configurations, versions, or requirements]
+- Methodologies: [Approaches, algorithms, protocols, or frameworks used]
+- Data and Metrics: [Exact quantitative information, measurements, and benchmarks]
+- Key Quotes: [Extract direct verbatim quotes describing specifications or findings]
+- Findings: [Technical conclusions and observations]
 
 TECHNICAL:`,
 
-  concept_explainer: `Identify concepts and relationships from this section:
+  concept_explainer: `Identify concepts, definitions, and relationships from this section.
 
 {chunk}
 
 Format your response as:
-- Main Topics: [list 3-5 key topics this section covers]
-- Core Concepts: [main ideas and definitions]
-- Relationships: [how concepts connect to each other]
-- Examples: [illustrative instances or analogies]
-- Common Misconceptions: [potential misunderstandings to clarify]
+- Main Topics: [List ALL distinct topics discussed in this section - do not limit to top 3]
+- Core Concepts: [Main ideas and their specific definitions]
+- Relationships: [How these concepts connect to, influence, or contradict each other]
+- Key Quotes: [Extract direct verbatim quotes that define the core concepts]
+- Examples: [Illustrative instances, case studies, or analogies mentioned]
+- Common Misconceptions: [Potential misunderstandings or clarifications]
 
 CONCEPTS:`,
 
-  methodology_overview: `Extract methodological information from this section:
+  methodology_overview: `Extract methodological information from this section.
 
 {chunk}
 
 Format your response as:
-- Main Topics: [list 3-5 key topics this section covers]
-- Research Methods: [approaches and techniques used]
-- Frameworks Applied: [theoretical or practical models]
-- Data Collection: [how information was gathered]
-- Analysis Approaches: [how data was processed and interpreted]
+- Main Topics: [List ALL distinct topics discussed in this section - do not limit to top 3]
+- Research Methods: [Specific approaches, techniques, and study designs used]
+- Frameworks Applied: [Theoretical or practical models utilized]
+- Data Collection: [How information was gathered (sample size, tools, duration)]
+- Key Quotes: [Extract direct verbatim quotes describing the methods or limitations]
+- Analysis Approaches: [How data was processed and interpreted]
 
 METHODOLOGY:`,
 
@@ -116,7 +125,7 @@ Do not focus primarily on one or two topics while neglecting others.
 Ensure each major theme receives balanced, thorough coverage.
 If the sources cover 6+ distinct topics, each should be addressed meaningfully.
 
-Create a comprehensive briefing document that synthesizes the main themes and ideas from the sources. Start with a concise Executive Summary that presents the most critical takeaways upfront. The body of the document must provide a detailed and thorough examination of the main themes, evidence, and conclusions found in the sources. This analysis should be structured logically with headings and bullet points to ensure clarity. The tone must be objective and incisive.
+Create a comprehensive briefing document that synthesizes the main themes and ideas from the sources. Start with a concise Executive Summary that presents the most critical takeaways upfront. The body of the document must provide a detailed and thorough examination of the main themes, evidence, and conclusions. This analysis should be structured logically with headings.
 
 ## Executive Summary
 [Concise overview of the most critical takeaways]
@@ -125,7 +134,10 @@ Create a comprehensive briefing document that synthesizes the main themes and id
 [Detailed examination of core themes found in the sources]
 
 ## Key Findings and Evidence
-[Organized insights with supporting data, quotes, or examples]
+[Organized insights with supporting data. Integrate specific quotes where relevant.]
+
+## Critical Analysis
+[Identify potential biases, missing data, counter-arguments, or limitations in the source's claims]
 
 ## Conclusions
 [Significant outcomes and implications]
@@ -145,16 +157,16 @@ Do not focus primarily on one or two topics while neglecting others.
 Ensure each major theme receives balanced, thorough coverage.
 If the sources cover 6+ distinct topics, each should be addressed meaningfully.
 
-You are a highly capable research assistant and tutor. Create a detailed study guide designed to review understanding of the sources. Create a quiz with ten short-answer questions (2-3 sentences each) and include a separate answer key. Suggest five essay format questions, but do not supply answers. Also conclude with a comprehensive glossary of key terms with definitions.
+You are a highly capable research assistant and tutor. Create a detailed study guide designed to review understanding of the sources. Create a quiz with ten short-answer questions and include a separate answer key. Suggest five essay format questions. Conclude with a comprehensive glossary.
 
 ## Learning Objectives
 [What students should be able to do after studying]
 
 ## Study Notes
-[Organized summary of main topics and concepts]
+[Organized summary of main topics and concepts. Use bold text for key terms.]
 
 ## Quiz Questions
-[10 short-answer questions (2-3 sentences each)]
+[10 short-answer questions (2-3 sentences each) to test comprehension]
 
 ## Answer Key
 [Answers to the quiz questions]
@@ -163,7 +175,7 @@ You are a highly capable research assistant and tutor. Create a detailed study g
 [5 essay prompts for deeper exploration - no answers provided]
 
 ## Glossary
-[Comprehensive list of key terms with definitions]
+[Comprehensive list of key terms with clear definitions based on the text]
 
 Based on the following source material:
 
@@ -177,7 +189,7 @@ Do not focus primarily on one or two topics while neglecting others.
 Ensure each major theme receives balanced, thorough coverage.
 If the sources cover 6+ distinct topics, each should be addressed meaningfully.
 
-Act as a thoughtful writer and synthesizer of ideas, tasked with creating an engaging and readable blog post for a popular online publishing platform known for its clean aesthetic and insightful content. Your goal is to distill the top most surprising, counter-intuitive, or impactful takeaways from the provided source materials into a compelling listicle. The writing style should be clean, accessible, and highly scannable, employing a conversational yet intelligent tone. Craft a compelling, click-worthy headline. Begin the article with a short introduction that hooks the reader by establishing a relatable problem or curiosity, then present each of the takeaway points as a distinct section with a clear, bolded subheading. Within each section, use short paragraphs to explain the concept clearly, and don't just summarize; offer a brief analysis or a reflection on why this point is so interesting or important, and if a powerful quote exists in the sources, feature it in a blockquote for emphasis. Conclude the post with a brief, forward-looking summary that leaves the reader with a final thought-provoking question or a powerful takeaway to ponder.
+Act as a thoughtful writer and synthesizer of ideas, tasked with creating an engaging and readable blog post for a popular online publishing platform known for its clean aesthetic and insightful content. Your goal is to distill the top most surprising, counter-intuitive, or impactful takeaways from the provided source materials into a compelling listicle. The writing style should be clean, accessible, and highly scannable. Craft a compelling, click-worthy headline.
 
 ## [Compelling, Click-Worthy Headline]
 
@@ -185,16 +197,16 @@ Act as a thoughtful writer and synthesizer of ideas, tasked with creating an eng
 [Hook that establishes a relatable problem or curiosity]
 
 ### [First Key Takeaway]
-[Clear explanation with analysis and potential blockquote]
+[Clear explanation with analysis. Include a blockquote if a powerful quote exists in the source.]
 
 ### [Second Key Takeaway]
-[Clear explanation with analysis and potential blockquote]
+[Clear explanation with analysis. Include a blockquote if a powerful quote exists in the source.]
 
 ### [Third Key Takeaway]
-[Clear explanation with analysis and potential blockquote]
+[Clear explanation with analysis. Include a blockquote if a powerful quote exists in the source.]
 
 ### [Additional Key Takeaways as needed]
-[Continue with same structure]
+[Continue with same structure for other major topics]
 
 ### Conclusion
 [Forward-looking summary with final thought-provoking question or powerful takeaway]
@@ -211,7 +223,7 @@ Do not focus primarily on one or two topics while neglecting others.
 Ensure each major theme receives balanced, thorough coverage.
 If the sources cover 6+ distinct topics, each should be addressed meaningfully.
 
-Create a comprehensive yet concise summary that synthesizes the essential information from the sources. Begin with an overview that captures the core subject and purpose. The body should systematically present the main arguments, key evidence supporting those arguments, and important conclusions. Maintain a neutral, objective tone while ensuring all significant points are covered. Use clear headings and bullet points to enhance readability.
+Create a comprehensive yet concise summary that synthesizes the essential information from the sources. Begin with an overview that captures the core subject and purpose. The body should systematically present the main arguments, key evidence supporting those arguments, and important conclusions. Maintain a neutral, objective tone.
 
 ## Overview
 [Brief introduction to the subject and purpose of the sources]
@@ -220,7 +232,7 @@ Create a comprehensive yet concise summary that synthesizes the essential inform
 [Core claims and positions presented in the sources]
 
 ## Key Evidence
-[Supporting data, examples, and evidence]
+[Supporting data, examples, and evidence used to back the arguments]
 
 ## Conclusions
 [Significant findings, outcomes, and implications]
@@ -237,25 +249,28 @@ Do not focus primarily on one or two topics while neglecting others.
 Ensure each major theme receives balanced, thorough coverage.
 If the sources cover 6+ distinct topics, each should be addressed meaningfully.
 
-Create a detailed technical report that thoroughly documents the technical aspects of the subject matter. Begin with an executive summary of technical findings. The body should include comprehensive sections on technical specifications, methodologies employed, data and metrics analysis, and detailed findings. Use precise technical language and include specific parameters, configurations, and quantitative measurements where applicable. The report should be structured for technical professionals who require in-depth information.
+Create a detailed technical report that thoroughly documents the technical aspects of the subject matter. Begin with an executive summary. The body should include comprehensive sections on technical specifications, methodologies, data analysis, and findings. Use precise technical language.
 
 ## Executive Summary
 [Concise overview of technical findings]
 
 ## Technical Specifications
-[Detailed parameters, configurations, and requirements]
+[Detailed parameters, configurations, requirements, and versions]
 
 ## Methodologies
 [Approaches, algorithms, or frameworks used]
 
 ## Data and Metrics
-[Quantitative information and measurements]
+[Quantitative information, measurements, and benchmarks]
 
 ## Analysis
 [Detailed examination of technical data]
 
 ## Findings and Conclusions
 [Technical conclusions and recommendations]
+
+## Glossary
+[Definitions of technical terms and acronyms used in the report]
 
 Based on the following source material:
 
@@ -269,7 +284,7 @@ Do not focus primarily on one or two topics while neglecting others.
 Ensure each major theme receives balanced, thorough coverage.
 If the sources cover 6+ distinct topics, each should be addressed meaningfully.
 
-Create an accessible and comprehensive explanation of the core concepts found in the sources. Begin with an introduction that explains why these concepts matter and who they are relevant for. For each concept, provide a clear definition, explain how it relates to other concepts, give concrete examples or analogies to aid understanding, and address common misconceptions. Use clear, jargon-free language that makes complex ideas understandable to a non-expert audience. Organize the content logically with concepts building upon each other.
+Create an accessible and comprehensive explanation of the core concepts found in the sources. Begin with an introduction that explains why these concepts matter. For each concept, provide a clear definition, explain how it relates to other concepts, give concrete examples, and address common misconceptions. Organize the content logically.
 
 ## Introduction
 [Why these concepts matter and who they are for]
@@ -285,8 +300,8 @@ Create an accessible and comprehensive explanation of the core concepts found in
 ## Key Relationships
 [How concepts interact and connect]
 
-## Summary
-[Quick reference of the most important points]
+## Glossary
+[Quick reference list of all defined terms]
 
 Based on the following source material:
 
@@ -300,7 +315,7 @@ Do not focus primarily on one or two topics while neglecting others.
 Ensure each major theme receives balanced, thorough coverage.
 If the sources cover 6+ distinct topics, each should be addressed meaningfully.
 
-Create a comprehensive overview of the methodological approaches found in the sources. Begin with an introduction that explains the purpose and scope of the methodologies covered. Systematically document the research methods, frameworks applied, data collection techniques, and analysis approaches used. For each method, explain its purpose, how it was implemented, and what it was designed to achieve. Use clear headings and structured formatting to make the information easily accessible to researchers or practitioners who may need to understand or apply these methods.
+Create a comprehensive overview of the methodological approaches found in the sources. Begin with an introduction that explains the purpose and scope. Systematically document the research methods, frameworks applied, data collection techniques, and analysis approaches used.
 
 ## Introduction
 [Purpose and scope of the methodologies]
@@ -326,13 +341,15 @@ Based on the following source material:
 
 METHODOLOGY OVERVIEW:`,
 
-  custom: `CRITICAL REQUIREMENT - READ CAREFULLY:
-You MUST cover ALL major topics present in the source material.
-Do not focus primarily on one or two topics while neglecting others.
-Ensure each major theme receives balanced, thorough coverage.
-If the sources cover 6+ distinct topics, each should be addressed meaningfully.
+  custom: `INSTRUCTIONS:
+The user has provided a custom prompt below.
+Unless the user explicitly asks to focus on a narrow specific detail, you MUST generally cover all major topics found in the source material.
+However, the user's custom instruction takes precedence if it conflicts with general coverage.
 
-{customPrompt}
+User's Custom Prompt:
+"{customPrompt}"
+
+Based on the following source material:
 
 {content}`,
 };

@@ -24,6 +24,7 @@ import {
   sanitizeUserInput,
   validateQuiz,
   countTokens,
+  clearStateKeys,
 } from '../shared/index.js';
 
 // Import from local modules
@@ -348,10 +349,21 @@ export class QuizGraph {
         totalTokens,
         reduceChunkSize: GRAPH_CONFIG.REDUCE_CHUNK_SIZE_TOKENS,
       }, 'Collapse: skipping recursive collapse, using mapOutputs directly');
+
+      // Calculate memory freed before clearing
+      const mapOutputsSize = state.mapOutputs.reduce((sum, s) => sum + s.length * 2, 0);
+      logInfo({
+        agent: 'QuizGraph',
+        phase: 'collapse_cleanup',
+        memoryFreedKB: (mapOutputsSize / 1024).toFixed(2),
+      }, `Freeing ~${(mapOutputsSize / 1024).toFixed(2)} KB from mapOutputs`);
+
       return {
         ...state,
         collapsedOutputs: state.mapOutputs,
         status: 'reducing',
+        // Clear mapOutputs to free memory - no longer needed after collapse
+        ...clearStateKeys<OverallStateType>(['mapOutputs']),
         progress: {
           phase: 'collapse',
           percentage: 70,
@@ -367,10 +379,21 @@ export class QuizGraph {
       reduceChunkSize: GRAPH_CONFIG.REDUCE_CHUNK_SIZE_TOKENS,
     }, 'Collapse: performing recursive collapse');
     const collapsed = await this.recursiveCollapse(state.mapOutputs);
+
+    // Calculate memory freed before clearing
+    const mapOutputsSize = state.mapOutputs.reduce((sum, s) => sum + s.length * 2, 0);
+    logInfo({
+      agent: 'QuizGraph',
+      phase: 'collapse_cleanup',
+      memoryFreedKB: (mapOutputsSize / 1024).toFixed(2),
+    }, `Freeing ~${(mapOutputsSize / 1024).toFixed(2)} KB from mapOutputs`);
+
     return {
       ...state,
       collapsedOutputs: collapsed,
       status: 'reducing',
+      // Clear mapOutputs to free memory - no longer needed after collapse
+      ...clearStateKeys<OverallStateType>(['mapOutputs']),
       progress: {
         phase: 'collapse',
         percentage: 70,
@@ -727,10 +750,21 @@ Return the complete selected questions as a JSON array.`;
       'GENERATION COMPLETE'
     );
 
+    // Calculate memory to be freed
+    const collapsedOutputsSize = state.collapsedOutputs.reduce((sum, s) => sum + s.length * 2, 0);
+    const chunksSize = (state.chunks || []).reduce((sum, s) => sum + s.length * 2, 0);
+    logInfo({
+      agent: 'QuizGraph',
+      phase: 'reduce_cleanup',
+      memoryFreedKB: ((collapsedOutputsSize + chunksSize) / 1024).toFixed(2),
+    }, `Freeing ~${((collapsedOutputsSize + chunksSize) / 1024).toFixed(2)} KB from intermediate data`);
+
     return {
       ...state,
       finalOutput: questions,
       status: 'completed',
+      // Clear collapsedOutputs and chunks to free memory - no longer needed after reduce
+      ...clearStateKeys<OverallStateType>(['collapsedOutputs', 'chunks']),
       progress: {
         phase: 'reduce',
         percentage: 100,
