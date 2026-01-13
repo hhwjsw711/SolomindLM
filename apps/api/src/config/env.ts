@@ -93,6 +93,11 @@ const envSchema = z.object({
   SUPADATA_API_KEY: z.string(),
   TAVILY_API_KEY: z.string(),
   CORS_ORIGIN: z.string().default('http://localhost:5173,https://www.solomindlm.com,https://solomindlm.com,https://*.vercel.app'),
+  // Cookie Domain Configuration
+  // For Safari ITP compatibility - set to root domain (e.g., '.solomindlm.com')
+  // to share cookies across subdomains (www, api, etc.)
+  // Leave empty for development or if using same origin
+  COOKIE_DOMAIN: z.string().optional(),
   // Graphile Worker Configuration
   // Optimized for AI/LLM I/O-bound workloads
   // Concurrency: Number of jobs processed concurrently per worker instance

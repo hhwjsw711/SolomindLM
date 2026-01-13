@@ -120,24 +120,38 @@ function checkAuthRateLimit(ip: string): { allowed: boolean; retryAfter?: number
 const router = Router();
 
 // Cookie configuration for httpOnly cookies
-// For development: Use 'lax' to allow cookies to work across localhost:5173 and localhost:3001
-// 'lax' works for cross-origin top-level navigations and same-origin requests
-// For production: Use 'none' with secure:true for cross-origin cookie sharing
-// 'strict' does NOT work for cross-origin requests (frontend and API on different domains)
-// 'none' requires secure:true (HTTPS) which production should have
 //
-// Safari ITP compatibility:
-// - 'partitioned' attribute enables CHIPS (Cookies Having Independent Partitioned State)
-// - This helps Safari accept cookies in cross-origin scenarios
+// Safari ITP (Intelligent Tracking Prevention) compatibility:
+// -----------------------------------------------------------
+// Safari on iOS blocks cookies from "third-party" sources (different domains).
+// To fix this, we use a shared root domain (e.g., '.solomindlm.com') so cookies
+// set by 'api.solomindlm.com' are readable by 'www.solomindlm.com'.
+//
+// Requirements for production:
+// 1. Frontend and backend MUST share a root domain (e.g., www.solomindlm.com, api.solomindlm.com)
+// 2. Set COOKIE_DOMAIN environment variable to root domain with leading dot (e.g., '.solomindlm.com')
+// 3. DO NOT use generic cloud URLs (e.g., yourapp.railway.app) - Safari will block these
+//
+// Development:
+// - Uses 'lax' sameSite for localhost compatibility
+// - No domain set (cookies work across localhost:5173 and localhost:3001)
+const isProduction = env.NODE_ENV === 'production';
+const cookieDomain = isProduction ? env.COOKIE_DOMAIN : undefined;
+
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: env.NODE_ENV === 'production' ? true : false,
-  sameSite: (env.NODE_ENV === 'production' ? 'none' : 'lax') as 'strict' | 'lax' | 'none',
+  secure: isProduction,
+  // Use 'lax' in production since we share root domain (not cross-origin)
+  // 'lax' is more compatible with Safari and works better with redirects
+  sameSite: 'lax' as 'strict' | 'lax' | 'none',
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   path: '/',
-  // domain: undefined, // Don't set domain - let browser use current origin
-  // Note: 'partitioned' attribute is only supported in newer browsers (Safari 16.4+)
-  // Omitting for broader compatibility while maintaining sameSite: 'none' + secure
+  // Set domain explicitly to share cookies across subdomains
+  // Leading dot ensures compatibility across all subdomains
+  // Example: '.solomindlm.com' works for www.solomindlm.com, api.solomindlm.com, etc.
+  domain: cookieDomain,
+  // Note: 'partitioned' attribute (CHIPS) can be added for future Chrome compatibility
+  // but is not supported in all Node.js versions yet. Can be added per-request if needed.
 };
 
 /**
