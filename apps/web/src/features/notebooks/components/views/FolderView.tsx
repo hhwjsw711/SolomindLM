@@ -97,6 +97,17 @@ export const FolderView: React.FC<FolderViewProps> = ({
     notebookHandlers.closeMoveToFolder();
   };
 
+  const handleDeleteNotebook = async (notebookId: string) => {
+    // Call the parent's delete handler
+    await onDeleteNotebook(notebookId);
+    
+    // Update local state to remove the deleted notebook
+    setNotebooks(prev => prev.filter(nb => nb.id !== notebookId));
+    
+    // Reload folders to update the notebook count
+    if (loadFolders) loadFolders();
+  };
+
   if (isLoading) {
     return (
       <div className="flex-1 overflow-y-auto bg-background p-6 md:p-12 font-serif">
@@ -221,7 +232,7 @@ export const FolderView: React.FC<FolderViewProps> = ({
                 onSelectNotebook={onSelectNotebook}
                 onOpenCustomize={() => notebookHandlers.openCustomize(nb.id)}
                 onOpenMoveToFolder={() => notebookHandlers.openMoveToFolder(nb.id)}
-                onDeleteNotebook={onDeleteNotebook}
+                onDeleteNotebook={handleDeleteNotebook}
                 onToggleMenu={() => notebookHandlers.setActiveMenuId(notebookHandlers.activeMenuId === nb.id ? null : nb.id)}
                 onCloseMenu={() => notebookHandlers.setActiveMenuId(null)}
               />
@@ -252,7 +263,7 @@ export const FolderView: React.FC<FolderViewProps> = ({
                 onSelectNotebook={onSelectNotebook}
                 onOpenCustomize={() => notebookHandlers.openCustomize(nb.id)}
                 onOpenMoveToFolder={() => notebookHandlers.openMoveToFolder(nb.id)}
-                onDeleteNotebook={onDeleteNotebook}
+                onDeleteNotebook={handleDeleteNotebook}
                 onToggleMenu={() => notebookHandlers.setActiveMenuId(notebookHandlers.activeMenuId === nb.id ? null : nb.id)}
                 onCloseMenu={() => notebookHandlers.setActiveMenuId(null)}
               />
