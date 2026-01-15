@@ -171,3 +171,9 @@ export {
   type CleanupNodeConfig,
   type CleanupResult,
 } from './state-cleanup.js';
+
+// LangSmith tracing utilities
+export {
+  createLangSmithRunConfig,
+  type LangSmithRunConfig,
+} from './langsmith.js';

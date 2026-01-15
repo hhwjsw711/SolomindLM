@@ -1,8 +1,8 @@
 /**
  * Prompt templates and schemas for QuizGraph.
- *
- * Contains all prompt templates, Zod schemas, and constants
- * related to quiz question generation prompts.
+ * * OPTIMIZED VERSION:
+ * - Map Phase: Focuses on "Concept Extraction" vs "Data Lookup"
+ * - Expand Phase: Enforces "Scenario Generation" and "Visuals"
  */
 
 import { z } from 'zod';
@@ -12,8 +12,9 @@ import { env } from '../../../config/env.js';
 // SCHEMAS
 // ============================================================
 
+// 1. Final Output Schema (The Polish)
 export const QuizQuestionSchema = z.object({
-  question: z.string().describe('The complete question text'),
+  question: z.string().describe('The complete question text (scenario-based preferred)'),
   options: z.array(z.string())
     .min(2)
     .max(5)
@@ -23,25 +24,33 @@ export const QuizQuestionSchema = z.object({
     .min(0)
     .max(4)
     .describe('Zero-based index of the correct option (0 = First Option). MUST match the index in the options array.'),
-  hint: z.string().describe('A helpful hint that guides without revealing the answer'),
-  explanation: z.string().describe('Explanation of why the correct answer is right'),
+  hint: z.string().describe('A helpful hint that guides logic without giving the answer'),
+  explanation: z.string().describe('Detailed explanation citing the context, optionally including  tags'),
+});
+
+// 2. Intermediate Candidate Schema (The Draft)
+export const QuizCandidateSchema = z.object({
+  topic: z.string().describe('Short topic identifier (e.g. "Seasonality", "Error Metrics")'),
+  question: z.string().describe('The draft question text (focus on concepts, not specific data values)'),
+  correctAnswer: z.string().describe('The verified correct answer'),
+  // CHANGED: "contextSnippet" requires a larger chunk of text to support distractor generation
+  contextSnippet: z.string().describe('A verbatim paragraph or 3-5 sentences from the text that fully explain this concept and mention related concepts (for generating distractors).'),
+  difficulty: z.enum(['easy', 'medium', 'hard']),
+});
+
+export const QuizCandidateArraySchema = z.object({
+  questions: z.array(QuizCandidateSchema).describe('Array of quiz question candidates'),
 });
 
 export const QuizQuestionArraySchema = z.object({
   questions: z.array(QuizQuestionSchema).describe('Array of quiz questions'),
 });
 
-export interface QuizQuestion {
-  question: string;
-  options: string[];
-  answer: number;
-  hint: string;
-  explanation: string;
-}
-
-export interface QuizQuestionResponse {
-  questions: QuizQuestion[];
-}
+// Types inferred from Zod
+export type QuizCandidate = z.infer<typeof QuizCandidateSchema>;
+export type QuizQuestion = z.infer<typeof QuizQuestionSchema>;
+export interface QuizCandidateResponse { questions: QuizCandidate[]; }
+export interface QuizQuestionResponse { questions: QuizQuestion[]; }
 
 // ============================================================
 // CONFIGURATION
@@ -56,14 +65,18 @@ const safeParseInt = (val: string | undefined, fallback: number): number => {
 };
 
 const QUIZ_CONFIG = {
-  MAP_CHUNK_SIZE_TOKENS: safeParseInt(env.QUIZ_MAP_CHUNK_TOKENS, 5000),
+  // OPTIMIZED: Smaller chunks (2500 tokens) to prevent timeouts
+  MAP_CHUNK_SIZE_TOKENS: safeParseInt(env.QUIZ_MAP_CHUNK_TOKENS, 2500),
   REDUCE_CHUNK_SIZE_TOKENS: safeParseInt(env.QUIZ_REDUCE_CHUNK_TOKENS, 10000),
-  MIN_QUESTIONS_PER_CHUNK: safeParseInt(env.QUIZ_MIN_QUESTIONS_PER_CHUNK, 3),
-  MAX_QUESTIONS_PER_CHUNK: safeParseInt(env.QUIZ_MAX_QUESTIONS_PER_CHUNK, 25),
+  MIN_QUESTIONS_PER_CHUNK: safeParseInt(env.QUIZ_MIN_QUESTIONS_PER_CHUNK, 2),
+  MAX_QUESTIONS_PER_CHUNK: safeParseInt(env.QUIZ_MAX_QUESTIONS_PER_CHUNK, 20),
   MIN_CHUNKS: safeParseInt(env.QUIZ_MIN_CHUNKS, 2),
+  MAP_MAX_TOKENS: safeParseInt(env.QUIZ_MAX_TOKENS, 8000),
   MAP_TIMEOUT_MS: safeParseInt(env.QUIZ_MAP_TIMEOUT_MS, 180000),
   REDUCE_TIMEOUT_MS: safeParseInt(env.QUIZ_REDUCE_TIMEOUT_MS, 240000),
   REDUCE_MAX_TOKENS: safeParseInt(env.QUIZ_REDUCE_MAX_TOKENS, 24000),
+  EXPAND_MAX_TOKENS: safeParseInt(env.QUIZ_EXPAND_MAX_TOKENS, 4096),
+  EXPAND_CONCURRENCY: safeParseInt(env.QUIZ_EXPAND_CONCURRENCY, 5),
   MAX_COLLAPSE_DEPTH: 5,
 } as const;
 
@@ -72,190 +85,131 @@ export const GRAPH_CONFIG = {
 } as const;
 
 // ============================================================
-// PROMPT TEMPLATES
+// SYSTEM PROMPTS
 // ============================================================
 
-/**
- * Map prompt for generating quiz questions from chunks
- */
-export const getMapPrompt = (params: {
+/** System prompt for map phase candidate generation */
+export const MAP_CANDIDATES_SYSTEM_PROMPT = 'You are a professional educator drafting quiz question candidates.';
+
+/** System prompt for reduce phase candidate selection */
+export const REDUCE_SELECT_SYSTEM_PROMPT = 'You are a quiz curator selecting diverse, high-quality candidate questions for study sets.';
+
+/** System prompt for expand phase distractor generation */
+export const EXPAND_QUESTION_SYSTEM_PROMPT = 'You are a professional educator creating rigorous multiple-choice questions.';
+
+// ============================================================
+// MAP PROMPT (THE DRAFT)
+// ============================================================
+
+export const getCandidateMapPrompt = (params: {
   chunk: string;
   questionCount: number;
   questionsPerChunk: number;
   difficulty: string;
   focus?: string;
 }): string => {
-  const { chunk, questionCount, questionsPerChunk, difficulty, focus } = params;
+  const { chunk, questionsPerChunk, difficulty, focus } = params;
 
-  const difficultyGuidance: Record<string, string> = {
-    easy: 'basic recall and definitions - straightforward facts',
-    medium: 'concepts and relationships - requires understanding',
-    hard: 'application and analysis - requires deeper thinking',
-  };
+  return `You are an expert analyst extracting "Testable Concepts" from a document.
 
-  return `You are an expert educator creating HIGH-QUALITY multiple-choice quiz questions from educational content.
+TARGET: Identify approximately ${questionsPerChunk} key concepts.
 
-TARGET: Generate approximately ${questionsPerChunk} questions from this section (part of ${questionCount} total questions).
-
-**Difficulty: ${difficulty.toUpperCase()}** (${difficultyGuidance[difficulty] || difficulty})
+**Difficulty: ${difficulty.toUpperCase()}**
 ${focus ? `**Focus:** ${focus}` : ''}
 
-REQUIREMENTS:
-- Provide 4 options for standard questions (use 2 for True/False).
-- Distractors must be plausible but clearly incorrect.
-- Avoid obvious patterns like "All of the above".
-- Hints must guide without revealing the answer.
-- Questions MUST be self-contained (include all necessary context).
+CRITICAL RULES (DO NOT IGNORE):
+1. **NO DATA RETRIEVAL:** Do NOT create questions that ask for specific numbers, dates, or table values found in the text (e.g., "What was the RMSE in 2008?").
+2. **NO ASCII TABLES:** If the text contains data tables, ignore the specific rows. Instead, extract the *principle* the table illustrates (e.g., "Why does Model A outperform Model B?").
+3. **CONCEPTUAL FOCUS:** Extract the *logic*, *syntax*, or *relationship* behind the facts.
 
-**ANSWER FORMAT CRITICAL:**
-- The "answer" field MUST be a NUMBER representing the 0-based index of the correct option.
-- Option indices: 0 = first option, 1 = second option, etc.
-- Example: If the correct answer is the FIRST option, set answer: 0.
-- DO NOT use letters (A, B, C, D) - use ONLY numbers (0, 1, 2, 3).
+OUTPUT FORMAT:
+For each concept, provide:
+- **Topic:** Short category name.
+- **Question:** A draft question testing the concept (hypothetical scenarios are best).
+- **Context Snippet:** Extract a RICH text segment (3-5 sentences) that explains the concept AND mentions related concepts (this is crucial for generating wrong answers later).
 
-**SELF-CONTAINED QUESTIONS:**
-If a question references diagrams, code, or scenarios:
-- Include the relevant content IN the question.
-- NEVER use vague references like "the diagram" or "the following" without context.
-- Example: BAD → "In the diagram shown..."  GOOD → "In the ER diagram with Entities A(id) and B(id)..."
-
-**HINT GUIDELINES:**
-- Point to relevant concepts without giving the answer.
-- Use phrases like "Consider...", "Recall that...", "Think about...".
-
-**EXPLANATION GUIDELINES:**
-- CRITICAL: Your explanation MUST be grounded in the provided source material.
-- Reference specific concepts, facts, or quotes from the content above.
-- Explain WHY the correct answer is right using evidence from the material.
-
-Content to create questions from:
+Content to analyze:
 ${chunk}`;
 };
 
-/**
- * Collapse prompt for deduplicating and filtering quiz questions during recursive collapse.
- * Uses a "Strict Editor" persona to merge concepts rather than just deleting them.
- */
-export const getCollapsePrompt = (params: {
-  questions: string;
+// ============================================================
+// EXPAND PROMPT (THE POLISH) - NEW!
+// ============================================================
+
+export const getExpandPrompt = (candidate: QuizCandidate): string => {
+  return `You are a Professor creating a high-quality exam question.
+
+CONTEXT: 
+"${candidate.contextSnippet}"
+
+TASK: Refine this draft into a difficult, scenario-based multiple-choice question.
+
+Draft Question: "${candidate.question}"
+Correct Answer: "${candidate.correctAnswer}"
+
+INSTRUCTIONS:
+1. **SCENARIO-BASED:** Do not ask "What is X?". Instead, create a hypothetical scenario: "A user observes X... what does this imply?" or "You run function Y... what is the output?".
+2. **DISTRACTORS:** Use the CONTEXT to find related but incorrect concepts. Common misconceptions make the best distractors.
+3. **VISUALS:** If the concept is visual (e.g., anatomy, charts, graphs, code structures), insert a tag like 
+
+[Image of linear regression plot]
+ or 
+
+[Image of mitosis stages]
+ in the explanation. Only do this if it aids understanding.
+4. **EXPLANATION:** Explain *why* the answer is correct and *why* the distractors are wrong, citing the context.
+
+Output full JSON.`;
+};
+
+// ============================================================
+// SELECTION PROMPT (REDUCE PHASE)
+// ============================================================
+
+export const getCandidateSelectionPrompt = (params: {
+  candidates: QuizCandidate[];
   targetCount: number;
+  difficulty: string;
+  focus?: string;
 }): string => {
-  const { questions, targetCount } = params;
+  const { candidates, targetCount, difficulty, focus } = params;
+  const candidatesList = formatCandidatesAsText(candidates);
 
-  return `You are a strict editor refining a quiz database.
-  
-INPUT: A raw list of questions generated from text chunks.
-TASK: Compress this list into a smaller, higher-quality set.
+  return `You are a strict Quiz Curator.
 
-TARGET COUNT: ~${targetCount} questions.
+TASK: Select exactly ${targetCount} unique, high-quality candidates from the list below.
 
-STRATEGY:
-1. MERGE DUPLICATES: If multiple questions test the same concept, combine them into ONE superior question with better distractors.
-2. DISCARD TRIVIA: Remove questions that ask about minor dates or irrelevant details. Keep conceptual questions.
-3. FIX DISTRACTORS: If a question has weak options (e.g., "All of the above"), rewrite them to be plausible.
+FILTERS (DISCARD THESE IMMEDIATELY):
+- Questions that ask for specific data values (e.g., "What is the value of X in row 5?").
+- Questions that rely on "the table below" or "the following list" if that context is missing.
+- Duplicate concepts (keep only the strongest version).
 
-**ANSWER FORMAT CRITICAL:**
-- Keep the exact JSON structure.
-- "answer" must be a number (0-based index).
-- "options" should usually be 4 items (2 for True/False).
+DIVERSITY:
+- Select questions across different topics.
+- Do not pick more than 3 questions for the same narrow concept.
 
-INPUT QUESTIONS:
-${questions}
+Difficulty: ${difficulty}
+${focus ? `Focus: ${focus}` : ''}
 
-Return the optimized JSON array.`;
+CANDIDATES POOL:
+${candidatesList}
+
+Return the selected candidates as a JSON array.`;
 };
 
 // ============================================================
 // UTILITY FUNCTIONS
 // ============================================================
 
-/**
- * Format quiz questions as text for LLM prompts.
- * Used in selection prompts to provide full question context.
- */
-export function formatQuestionsAsText(questions: QuizQuestion[]): string {
-  return questions
-    .map((q, index) => {
-      const optionsText = q.options.map((opt, i) => `  [${i}] ${opt}`).join('\n');
-      return `${index + 1}. Question: ${q.question}
-Options:
-${optionsText}
-Answer: [${q.answer}]
-Hint: ${q.hint}
-Explanation: ${q.explanation}`;
+export function formatCandidatesAsText(candidates: QuizCandidate[]): string {
+  return candidates
+    .map((c, index) => {
+      return `ID ${index + 1}
+Topic: ${c.topic}
+Question: ${c.question}
+Correct Answer: ${c.correctAnswer}
+Context Snippet: ${c.contextSnippet}
+Difficulty: ${c.difficulty}`;
     })
     .join('\n\n---\n\n');
 }
-
-// ============================================================
-// REDUCE PHASE PROMPTS
-// ============================================================
-
-/**
- * Selection prompt for refining and selecting quiz questions in the reduce phase.
- * Handles deduplication, quality selection, and topic diversity.
- */
-export const getSelectionPrompt = (params: {
-  questions: QuizQuestion[];
-  targetCount: number;
-  difficulty: string;
-  focus?: string;
-}): string => {
-  const { questions, targetCount, difficulty, focus } = params;
-
-  // Use full question format for better deduplication and quality selection
-  const questionsList = formatQuestionsAsText(questions);
-
-  return `You are an expert educator selecting and refining quiz questions for an assessment.
-
-CRITICAL REQUIREMENTS:
-- ${questions.length < targetCount 
-    ? `You have ${questions.length} questions available (target is ${targetCount}). Use ALL available questions after deduplication and quality checks.` 
-    : `Select approximately ${targetCount} questions (flexible: ±${Math.ceil(targetCount * 0.2)} is acceptable)`}
-- IDENTIFY AND MERGE similar or duplicate questions before selecting
-- Quality over quantity: Better to have ${Math.ceil(targetCount * 0.8)} unique questions than ${targetCount} with duplicates
-- Your goal is MAXIMUM SEMANTIC DIVERSITY - each question should test a distinct concept
-
-**ANSWER FORMAT CRITICAL:**
-- The "answer" field MUST be a NUMBER representing the 0-based index of the correct option
-- Option indices: 0 = first option, 1 = second option, 2 = third option, 3 = fourth option
-- Example: If the correct answer is the FIRST option, set answer: 0
-- Example: If the correct answer is the SECOND option, set answer: 1
-- DO NOT use letters (A, B, C, D) - use ONLY numbers (0, 1, 2, 3)
-
-SIMILARITY DETECTION GUIDELINES:
-Questions are considered similar if they:
-- Ask about the same concept using different wording (e.g., "What is X?" vs "Define X")
-- Test the same comparison/contrast (e.g., "Difference between A and B" vs "Compare A and B")
-- Have the same core answer despite surface-level differences
-- Cover overlapping content that could be combined
-
-MERGING STRATEGY:
-When you find similar questions:
-- Combine the best elements from each version (best question text, options, explanations)
-- Create a single, clearer question with proper distractors
-- Ensure the merged question is self-contained
-- Keep the most comprehensive explanation
-
-TOPIC DIVERSITY:
-Additionally, select questions from DIFFERENT topics. Do NOT select more than 3 questions from any single topic if possible.
-If there are 6+ topics available, select 1-3 questions from each topic.
-Example: If you need 20 questions and have 5 topics, select 4 from each topic
-
-**EXPLANATION GUIDELINES:**
-- CRITICAL: Your explanation MUST be grounded in the provided source material
-- Reference specific concepts, facts, or quotes from the content above
-- DO NOT hallucinate or rely on outside knowledge
-- If the source doesn't support an explanation, create a different question
-- Example format: "According to the text, [concept]..." or "The material states that..."
-
-Return the FULL, COMPLETE question objects for your selections.
-
-Difficulty: ${difficulty}
-${focus ? `Focus: ${focus} (but maintain diversity)` : ''}
-
-AVAILABLE QUESTIONS (${questions.length} total):
-${questionsList}
-
-Return the complete selected questions as a JSON array.`;
-};

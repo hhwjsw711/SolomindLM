@@ -2,6 +2,7 @@ import { supabase } from '../../config/database.js';
 import { WrittenQuestionsGraph, OverallStateType, WrittenQuestion } from '../agents/WrittenQuestionsGraph.js';
 import { env } from '../../config/env.js';
 import { TitleGeneratorService } from '../processing/TitleGeneratorService.js';
+import { createLangSmithRunConfig } from '../agents/shared/index.js';
 
 export interface WrittenQuestionsGenerationParams {
   documentIds: string[];
@@ -62,6 +63,18 @@ export class WrittenQuestionsGenerationService {
 
       const graph = this.writtenQuestionsGraph.buildGraph();
 
+      const traceConfig = createLangSmithRunConfig({
+        runName: 'WrittenQuestionsGraph',
+        tags: ['agent', 'written-questions'],
+        metadata: {
+          documentIds,
+          questionCount,
+          difficulty,
+          questionType,
+          focus,
+          chunksCount: chunks.length,
+        },
+      });
       // Stream the graph execution to get progress updates
       const stream = await graph.stream({
         documentIds,
@@ -77,6 +90,7 @@ export class WrittenQuestionsGenerationService {
         progress: { phase: 'initializing', percentage: 0, message: 'Starting...' },
       }, {
         streamMode: 'values',
+        ...traceConfig,
       });
 
       let finalResult: OverallStateType | null = null;

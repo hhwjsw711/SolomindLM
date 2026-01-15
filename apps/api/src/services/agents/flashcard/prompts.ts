@@ -31,6 +31,19 @@ export interface FlashcardResponse {
 }
 
 // ============================================================
+// SYSTEM PROMPTS
+// ============================================================
+
+/** System prompt for map phase flashcard generation */
+export const MAP_SYSTEM_PROMPT = 'You are an expert educator. Output strictly in JSON.';
+
+/** System prompt for collapse phase flashcard consolidation */
+export const COLLAPSE_SYSTEM_PROMPT = 'You are a skilled content consolidator. Output strictly in JSON.';
+
+/** System prompt for reduce phase flashcard selection and diversification */
+export const REDUCE_SYSTEM_PROMPT = 'You are an expert curriculum designer creating DIVERSE study sets. Your goal is to spread selections across ALL topics, not cluster on one.';
+
+// ============================================================
 // CONSTANTS
 // ============================================================
 

@@ -2,6 +2,7 @@ import { supabase } from '../../config/database.js';
 import { AudioOverviewGraph, OverallStateType, DialogueLine } from '../agents/AudioOverviewGraph.js';
 import { env } from '../../config/env.js';
 import { TitleGeneratorService } from '../processing/TitleGeneratorService.js';
+import { createLangSmithRunConfig } from '../agents/shared/index.js';
 
 // Default signed URL expiration time (24 hours)
 const SIGNED_URL_EXPIRY_SECONDS = 60 * 60 * 24;
@@ -63,6 +64,17 @@ export class AudioOverviewGenerationService {
       onStatusUpdate?.('mapping');
 
       const graph = this.audioGraph.buildGraph();
+      const traceConfig = createLangSmithRunConfig({
+        runName: 'AudioOverviewGraph',
+        tags: ['agent', 'audio-overview'],
+        metadata: {
+          documentIds,
+          audioType,
+          length,
+          focus,
+          chunksCount: chunks.length,
+        },
+      });
       const result = await graph.invoke({
         documentIds,
         chunks,
@@ -74,7 +86,7 @@ export class AudioOverviewGenerationService {
         dialogueScript: [],
         audioBuffer: Buffer.alloc(0),
         status: 'generating',
-      }) as unknown as OverallStateType;
+      }, traceConfig) as unknown as OverallStateType;
 
       console.log(JSON.stringify({
         timestamp: new Date().toISOString(),

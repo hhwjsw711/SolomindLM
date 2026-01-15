@@ -9,6 +9,7 @@ import { ChatTogetherAI } from '@langchain/community/chat_models/togetherai';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { z } from 'zod';
 import type { ReferenceChunk } from '../../storage/ChatHistoryService.js';
+import { createLangSmithRunConfig } from '../shared/index.js';
 
 // ============================================================
 // Types
@@ -203,9 +204,17 @@ export class ChatLLMWrapper {
     }
 
     const messages = [new SystemMessage(systemPrompt), new HumanMessage(groundedPrompt)];
+    const traceConfig = createLangSmithRunConfig({
+      runName: 'ChatAgentStructuredResponse',
+      tags: ['agent', 'chat'],
+      metadata: {
+        chunksCount: chunks.length,
+        userQuestionsCount: userQuestions.length,
+      },
+    });
 
     try {
-      const response: any = await structuredLlm.invoke(messages);
+      const response: any = await structuredLlm.invoke(messages, traceConfig);
 
       // Validate the response matches our schema
       const validated = ChatResponseSchema.safeParse(response);

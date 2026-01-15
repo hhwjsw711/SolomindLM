@@ -75,17 +75,22 @@ const envSchema = z.object({
   QUIZ_MAP_CHUNK_TOKENS: z.string().default('5000'),
   // Reduce phase: 10K tokens (~4% of 261K context)
   QUIZ_REDUCE_CHUNK_TOKENS: z.string().default('10000'),
-  QUIZ_MAX_TOKENS: z.string().default('16000'),
+  // Max OUTPUT tokens for map phase (candidate generation)
+  QUIZ_MAX_TOKENS: z.string().default('8000'),
   // Questions per chunk bounds for quality control
   QUIZ_MIN_QUESTIONS_PER_CHUNK: z.string().default('2'),
-  QUIZ_MAX_QUESTIONS_PER_CHUNK: z.string().default('25'),
+  QUIZ_MAX_QUESTIONS_PER_CHUNK: z.string().default('20'),
   // Minimum chunks to process for diversity
   QUIZ_MIN_CHUNKS: z.string().default('2'),
   // Max OUTPUT tokens for reduce phase (selection/refinement)
   QUIZ_REDUCE_MAX_TOKENS: z.string().default('24000'),
+  // Max OUTPUT tokens for expand phase (final question generation)
+  QUIZ_EXPAND_MAX_TOKENS: z.string().default('4096'),
   // Timeout settings for LLM calls
   QUIZ_MAP_TIMEOUT_MS: z.string().default('180000'),
   QUIZ_REDUCE_TIMEOUT_MS: z.string().default('240000'),
+  // Max parallel API calls during expand phase
+  QUIZ_EXPAND_CONCURRENCY: z.string().default('5'),
   // Written Questions Generation
   // Map phase: 20K tokens (~6% of 131K context)
   WRITTEN_QUESTIONS_MAP_CHUNK_TOKENS: z.string().default('20000'),
@@ -127,6 +132,14 @@ const envSchema = z.object({
   CHAT_DOCUMENT_MAX_CHARS: z.string().default('3000'),
   SUPADATA_API_KEY: z.string(),
   TAVILY_API_KEY: z.string(),
+  // LangSmith Tracing
+  LANGSMITH_TRACING: z.string().default('false'),
+  LANGCHAIN_TRACING_V2: z.string().default('false'),
+  LANGSMITH_API_KEY: z.string().optional(),
+  LANGCHAIN_API_KEY: z.string().optional(),
+  LANGSMITH_PROJECT: z.string().default('SolomindLM'),
+  LANGCHAIN_PROJECT: z.string().optional(),
+  LANGSMITH_ENDPOINT: z.string().optional(),
   CORS_ORIGIN: z.string().default('http://localhost:5173,https://www.solomindlm.com,https://solomindlm.com,https://*.vercel.app'),
   // Cookie Domain Configuration
   // For Safari ITP compatibility - set to root domain (e.g., '.solomindlm.com')

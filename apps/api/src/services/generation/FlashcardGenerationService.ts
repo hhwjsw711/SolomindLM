@@ -2,6 +2,7 @@ import { supabase } from '../../config/database.js';
 import { FlashcardGraph, OverallStateType, Flashcard } from '../agents/FlashcardGraph.js';
 import { env } from '../../config/env.js';
 import { TitleGeneratorService } from '../processing/TitleGeneratorService.js';
+import { createLangSmithRunConfig } from '../agents/shared/index.js';
 
 export interface FlashcardGenerationParams {
   documentIds: string[];
@@ -62,6 +63,17 @@ export class FlashcardGenerationService {
 
       // Build and invoke graph
       const graph = this.flashcardGraph.buildGraph();
+      const traceConfig = createLangSmithRunConfig({
+        runName: 'FlashcardGraph',
+        tags: ['agent', 'flashcard'],
+        metadata: {
+          documentIds,
+          cardCount,
+          difficulty,
+          topic,
+          chunksCount: chunks.length,
+        },
+      });
       const result = await graph.invoke({
         documentIds,
         chunks,
@@ -72,7 +84,7 @@ export class FlashcardGenerationService {
         collapsedOutputs: [],
         finalOutput: [],
         status: 'generating',
-      }) as unknown as OverallStateType;
+      }, traceConfig) as unknown as OverallStateType;
 
       console.log(
         `[FlashcardGeneration] Flashcard generation completed. Status: ${result.status}, Cards: ${result.finalOutput.length}`

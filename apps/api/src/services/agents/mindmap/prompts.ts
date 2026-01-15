@@ -5,6 +5,16 @@
  */
 
 // ============================================================
+// SYSTEM PROMPTS
+// ============================================================
+
+/** System prompt for map phase concept extraction */
+export const MAP_SYSTEM_PROMPT = 'Extract main theme, 2–3 sentence summary, and 10–20 key concepts.';
+
+/** System prompt for reduce phase mind map generation */
+export const REDUCE_SYSTEM_PROMPT = 'You are a Mind Map Architect. Create hierarchical markdown outlines.';
+
+// ============================================================
 // PROMPT TEMPLATES
 // ============================================================
 

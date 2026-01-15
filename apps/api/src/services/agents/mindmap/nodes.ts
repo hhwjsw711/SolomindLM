@@ -7,7 +7,7 @@
 
 import { StateGraph, START, END, Send } from '@langchain/langgraph';
 import { ChatTogetherAI } from '@langchain/community/chat_models/togetherai';
-import { SystemMessage, HumanMessage } from '@langchain/core/messages';
+import { SystemMessage, HumanMessage, BaseMessage } from '@langchain/core/messages';
 import { z } from 'zod';
 import { env } from '../../../config/env.js';
 
@@ -23,6 +23,7 @@ import {
   logPhaseStart,
   logBanner,
   countTokens,
+  createLangSmithRunConfig,
 } from '../shared/index.js';
 
 // Import from local modules
@@ -35,7 +36,7 @@ import {
   type MindMapNode,
   type FinalMindMap,
 } from './state.js';
-import { MAP_PROMPT, REDUCE_PROMPT, NODES } from './prompts.js';
+import { MAP_PROMPT, REDUCE_PROMPT, NODES, MAP_SYSTEM_PROMPT, REDUCE_SYSTEM_PROMPT } from './prompts.js';
 
 // ============================================================
 // SCHEMAS
@@ -129,10 +130,16 @@ export class MindMapGraph {
     );
 
     return await invokeWithTimeout(
-      () => structuredLlm.invoke([
-        new SystemMessage('Extract main theme, 2–3 sentence summary, and 10–20 key concepts.'),
+      () => (structuredLlm as any).invoke([
+        new SystemMessage(MAP_SYSTEM_PROMPT),
         new HumanMessage(MAP_PROMPT.replace('{content}', content))
-      ]),
+      ], createLangSmithRunConfig({
+        runName: 'MindMapGraph.MapProcess',
+        tags: ['agent', 'mindmap', 'map'],
+        metadata: {
+          contentLength: content.length,
+        },
+      })),
       GRAPH_CONFIG.MAP_TIMEOUT_MS,
       'MindMapMap'
     );
@@ -287,15 +294,22 @@ export class MindMapGraph {
     try {
       const start = Date.now();
       const response = await invokeWithTimeout(
-        () => this.smartLlm.invoke([
-          new SystemMessage('You are a Mind Map Architect. Create hierarchical markdown outlines.'),
+        () => (this.smartLlm as any).invoke([
+          new SystemMessage(REDUCE_SYSTEM_PROMPT),
           new HumanMessage(REDUCE_PROMPT.replace('{extractions}', safeInput))
-        ]),
+        ], createLangSmithRunConfig({
+          runName: 'MindMapGraph.Reduce',
+          tags: ['agent', 'mindmap', 'reduce'],
+          metadata: {
+            extractionCount: extractions.length,
+            inputSize: safeInput.length,
+          },
+        })),
         GRAPH_CONFIG.REDUCE_TIMEOUT_MS,
         'MindMapReduce'
       );
 
-      const markdown = (response.content[0] as any)?.text || String(response.content);
+      const markdown = ((response as BaseMessage).content[0] as { text?: string })?.text || String((response as BaseMessage).content);
 
       const validation = validateWithPreset(markdown, 'mindmap');
       if (!validation.isValid) {

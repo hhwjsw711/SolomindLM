@@ -6,6 +6,19 @@
  */
 
 // ============================================================
+// System Prompts
+// ============================================================
+
+/** System prompt for map phase dialogue beat extraction */
+export const MAP_SYSTEM_PROMPT = 'You are extracting engaging content for a podcast conversation. Extract key points that would make for interesting discussion.';
+
+/** System prompt for reduce phase script writing */
+export const REDUCE_SYSTEM_PROMPT = 'You are an expert podcast scriptwriter. Output ONLY valid JSON arrays of dialogue lines.';
+
+/** System prompt for example extraction for anti-repetition */
+export const EXAMPLE_EXTRACTION_SYSTEM_PROMPT = 'You are a text analyzer. Extract concrete examples as a JSON array only.';
+
+// ============================================================
 // Types
 // ============================================================
 

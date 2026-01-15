@@ -10,14 +10,13 @@ import { ChatTogetherAI } from '@langchain/community/chat_models/togetherai';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { z } from 'zod';
 
-import { env } from '../../../config/env.js';
-
 // Shared utilities
 import {
   invokeWithTimeout,
   invokeWithRetry,
   packChunks as sharedPackChunks,
   validateChunks as sharedValidateChunks,
+  allWithConcurrency,
   logInfo,
   logWarn,
   logError,
@@ -28,16 +27,23 @@ import {
   validateQuiz,
   countTokens,
   clearStateKeys,
+  createLangSmithRunConfig,
 } from '../shared/index.js';
 
 // Import from local modules
 import { OverallState, type OverallStateType, type ChunkProcessState, type QuizQuestion } from './state.js';
 import {
-  getMapPrompt,
-  getSelectionPrompt,
-  QuizQuestionArraySchema,
-  type QuizQuestionResponse,
+  getCandidateMapPrompt,
+  getCandidateSelectionPrompt,
+  getExpandPrompt,
+  QuizCandidateArraySchema,
+  QuizQuestionSchema,
+  type QuizCandidate,
+  type QuizCandidateResponse,
   GRAPH_CONFIG,
+  MAP_CANDIDATES_SYSTEM_PROMPT,
+  REDUCE_SELECT_SYSTEM_PROMPT,
+  EXPAND_QUESTION_SYSTEM_PROMPT,
 } from './prompts.js';
 
 // ============================================================
@@ -48,18 +54,16 @@ import {
  * Interface for the structured LLM to avoid deep type instantiation.
  * Follows the pattern from FlashcardGraph.
  */
-interface QuizQuestionOutputInvoker {
-  invoke(messages: Array<SystemMessage | HumanMessage>): Promise<QuizQuestionResponse>;
+interface StructuredOutputInvoker<T> {
+  invoke(messages: Array<SystemMessage | HumanMessage>): Promise<T>;
 }
 
 /**
  * Helper function to create a structured LLM without triggering deep type instantiation.
  */
-function createStructuredLLM(llm: ChatTogetherAI, schema: z.ZodTypeAny): QuizQuestionOutputInvoker {
+function createStructuredLLM<T>(llm: ChatTogetherAI, schema: z.ZodTypeAny, name: string): StructuredOutputInvoker<T> {
   // @ts-ignore - Type instantiation is excessively deep with LangChain's withStructuredOutput
-  return llm.withStructuredOutput(schema, {
-    name: 'quiz_questions'
-  }) as any;
+  return llm.withStructuredOutput(schema, { name }) as any;
 }
 
 // ============================================================
@@ -101,14 +105,17 @@ export function validateChunks(chunks: string[]): string[] {
 export class QuizGraph {
   private fastLlm: ChatTogetherAI;
   private smartLlm: ChatTogetherAI;
-  private fastLlmStructured: QuizQuestionOutputInvoker;
+  private fastLlmCandidateStructured: StructuredOutputInvoker<QuizCandidateResponse>;
+  private smartLlmQuestionStructured: StructuredOutputInvoker<QuizQuestion>;
+  private expandLlm: ChatTogetherAI;
+  private expandLlmQuestionStructured: StructuredOutputInvoker<QuizQuestion>;
 
   constructor(apiKey: string, mapModel: string, reduceModel: string) {
     this.fastLlm = new ChatTogetherAI({
       apiKey,
       model: mapModel,
       temperature: 0.4,
-      maxTokens: 16000,
+      maxTokens: GRAPH_CONFIG.MAP_MAX_TOKENS,
     });
 
     this.smartLlm = new ChatTogetherAI({
@@ -118,8 +125,29 @@ export class QuizGraph {
       maxTokens: GRAPH_CONFIG.REDUCE_MAX_TOKENS,
     });
 
-    // Create structured LLM instance
-    this.fastLlmStructured = createStructuredLLM(this.fastLlm, QuizQuestionArraySchema);
+    this.expandLlm = new ChatTogetherAI({
+      apiKey,
+      model: reduceModel,
+      temperature: 0.3,
+      maxTokens: GRAPH_CONFIG.EXPAND_MAX_TOKENS,
+    });
+
+    // Create structured LLM instances
+    this.fastLlmCandidateStructured = createStructuredLLM<QuizCandidateResponse>(
+      this.fastLlm,
+      QuizCandidateArraySchema,
+      'quiz_candidates'
+    );
+    this.smartLlmQuestionStructured = createStructuredLLM<QuizQuestion>(
+      this.smartLlm,
+      QuizQuestionSchema,
+      'quiz_question'
+    );
+    this.expandLlmQuestionStructured = createStructuredLLM<QuizQuestion>(
+      this.expandLlm,
+      QuizQuestionSchema,
+      'quiz_question_expand'
+    );
   }
 
   private estimateTokens(text: string): number {
@@ -172,9 +200,9 @@ export class QuizGraph {
     const validatedChunks = validateChunks(state.chunks);
     const packedChunks = packChunks(validatedChunks, GRAPH_CONFIG.MAP_CHUNK_SIZE_TOKENS);
 
-    const MIN_QUESTIONS_PER_CHUNK = 2;
-    const BUFFER_MULTIPLIER = 1.5;
-    const MAX_QUESTIONS_PER_CHUNK = 25;
+    const MIN_QUESTIONS_PER_CHUNK = GRAPH_CONFIG.MIN_QUESTIONS_PER_CHUNK;
+    const BUFFER_MULTIPLIER = 1.2;
+    const MAX_QUESTIONS_PER_CHUNK = GRAPH_CONFIG.MAX_QUESTIONS_PER_CHUNK;
 
     // Calculate questions per chunk
     const questionsPerChunk = Math.max(
@@ -200,8 +228,9 @@ export class QuizGraph {
     console.log(`[QuizGraph] Creating ${packedChunks.length} parallel map tasks (~${questionsPerChunk} questions/chunk)`);
 
     return packedChunks.map((chunk, idx) => {
+      const chunkTokens = this.estimateTokens(chunk);
       const preview = chunk.substring(0, 100).replace(/\n/g, ' ');
-      console.log(`  [Task ${idx + 1}/${packedChunks.length}] ${preview}... (${chunk.length} chars)`);
+      console.log(`  [Task ${idx + 1}/${packedChunks.length}] ${preview}... (~${chunkTokens} tokens)`);
       return new Send('map_process', {
         chunk,
         chunkIndex: idx,
@@ -224,7 +253,7 @@ export class QuizGraph {
       agent: 'QuizGraph',
       phase: 'map_process',
       chunkIndex,
-      chunkLength: chunk.length,
+      chunkTokens: this.estimateTokens(chunk),
       chunkPreview: chunk.substring(0, 150).replace(/\n/g, ' '),
       targetQuestionCount: questionCount,
       questionsPerChunkTarget: questionsPerChunk,
@@ -233,25 +262,34 @@ export class QuizGraph {
     });
 
     const sanitizedFocus = focus ? sanitizeUserInput(focus) : undefined;
-    const prompt = getMapPrompt({ chunk, questionCount, questionsPerChunk, difficulty, focus: sanitizedFocus });
+    const prompt = getCandidateMapPrompt({ chunk, questionCount, questionsPerChunk, difficulty, focus: sanitizedFocus });
 
     logInfo({
       agent: 'QuizGraph',
       phase: 'map_process',
       chunkId,
-      promptLength: prompt.length,
-    }, `Sending prompt to LLM (${prompt.length} chars)...`);
+      promptTokens: this.estimateTokens(prompt),
+    }, `Sending prompt to LLM (~${this.estimateTokens(prompt)} tokens)...`);
 
     let output: string;
-    let questionsGenerated = 0;
+    let candidatesGenerated = 0;
 
     try {
-      const response: QuizQuestionResponse = await invokeWithRetry(
+      const response: QuizCandidateResponse = await invokeWithRetry(
         () => invokeWithTimeout(
-          () => this.fastLlmStructured.invoke([
-            new SystemMessage('You are a professional educator creating multiple-choice quiz questions.'),
+          () => (this.fastLlmCandidateStructured as any).invoke([
+            new SystemMessage(MAP_CANDIDATES_SYSTEM_PROMPT),
             new HumanMessage(prompt),
-          ]),
+          ], createLangSmithRunConfig({
+            runName: 'QuizGraph.MapCandidates',
+            tags: ['agent', 'quiz', 'map'],
+            metadata: {
+              chunkIndex,
+              questionCount,
+              difficulty,
+              focus: focus || 'none',
+            },
+          })),
           GRAPH_CONFIG.MAP_TIMEOUT_MS,
           'QuizMap'
         ),
@@ -271,7 +309,7 @@ export class QuizGraph {
         'QuizMap'
       );
 
-      questionsGenerated = response.questions.length;
+      candidatesGenerated = response.questions.length;
       output = JSON.stringify(response.questions);
     } catch (error) {
       const errorContext = {
@@ -290,7 +328,7 @@ export class QuizGraph {
       logError(errorContext, 'Map process failed');
 
       output = '[]';
-      questionsGenerated = 0;
+      candidatesGenerated = 0;
     }
 
     const elapsed = Date.now() - startTime;
@@ -299,8 +337,8 @@ export class QuizGraph {
       agent: 'QuizGraph',
       phase: 'map_process',
       chunkIndex,
-      outputLength: output.length,
-      questionsGenerated,
+      outputTokens: this.estimateTokens(output),
+      questionsGenerated: candidatesGenerated,
       processingTimeMs: elapsed,
       outputPreview: output.substring(0, 200).replace(/\n/g, ' '),
     });
@@ -310,7 +348,7 @@ export class QuizGraph {
       progress: {
         phase: 'map_process',
         percentage: Math.min(10 + ((chunkIndex ?? 0) * 30), 60),
-        message: `Chunk ${(chunkIndex ?? 0) + 1} complete: ${questionsGenerated} questions`,
+        message: `Chunk ${(chunkIndex ?? 0) + 1} complete: ${candidatesGenerated} candidates`,
         chunksCompleted: (chunkIndex ?? 0) + 1,
       },
     };
@@ -323,17 +361,17 @@ export class QuizGraph {
     console.log('='.repeat(80));
 
     const mapOutputsDetails = state.mapOutputs.map((output, idx) => {
-      let questions = 0;
+      let candidates = 0;
       try {
-        const parsed = JSON.parse(output) as QuizQuestion[];
-        questions = parsed.length;
+        const parsed = JSON.parse(output) as QuizCandidate[];
+        candidates = parsed.length;
       } catch {
-        questions = 0;
+        candidates = 0;
       }
       return {
         index: idx,
-        length: output.length,
-        questions,
+        tokens: this.estimateTokens(output),
+        candidates,
         preview: output.substring(0, 100).replace(/\n/g, ' '),
       };
     });
@@ -481,7 +519,7 @@ export class QuizGraph {
    * Compares questions for overlap and removes duplicates above threshold.
    * This is much faster than LLM-based deduplication and works well for quiz questions.
    */
-  private heuristicDedupe(questions: QuizQuestion[]): QuizQuestion[] {
+  private heuristicDedupe(questions: QuizCandidate[]): QuizCandidate[] {
     if (questions.length <= 1) return questions;
 
     const SIMILARITY_THRESHOLD = 0.8; // 80% similarity considered duplicate
@@ -517,7 +555,7 @@ export class QuizGraph {
    * Calculate text similarity between two quiz questions.
    * Returns a value between 0 (no similarity) and 1 (identical).
    */
-  private calculateSimilarity(q1: QuizQuestion, q2: QuizQuestion): number {
+  private calculateSimilarity(q1: QuizCandidate, q2: QuizCandidate): number {
     // Stop words to filter out for better similarity detection
     const stopWords = new Set([
       'the', 'is', 'a', 'an', 'and', 'or', 'of', 'to', 'in', 'on', 'at', 'by',
@@ -533,8 +571,8 @@ export class QuizGraph {
       return new Set(words.filter(w => !stopWords.has(w)));
     };
 
-    const q1Text = q1.question;
-    const q2Text = q2.question;
+    const q1Text = `${q1.question} ${q1.correctAnswer}`;
+    const q2Text = `${q2.question} ${q2.correctAnswer}`;
 
     // Calculate word overlap for question text (without stop words)
     const words1 = extractWords(q1Text);
@@ -552,38 +590,15 @@ export class QuizGraph {
     const union = new Set([...words1, ...words2]);
     const questionSimilarity = union.size > 0 ? intersection.size / union.size : 0;
 
-    // Also check if options are similar (if question text is similar)
-    let optionsSimilarity = 0;
-    if (questionSimilarity > 0.5) {
-      const normalize = (text: string) => text.toLowerCase().trim().replace(/\s+/g, ' ');
-      const q1Options = q1.options.map(normalize);
-      const q2Options = q2.options.map(normalize);
-
-      let optionMatches = 0;
-      for (const opt1 of q1Options) {
-        for (const opt2 of q2Options) {
-          const optWords1 = extractWords(opt1);
-          const optWords2 = extractWords(opt2);
-          const optIntersection = new Set([...optWords1].filter(w => optWords2.has(w)));
-          const optUnion = new Set([...optWords1, ...optWords2]);
-          if (optUnion.size > 0 && optIntersection.size / optUnion.size > 0.7) {
-            optionMatches++;
-          }
-        }
-      }
-      optionsSimilarity = optionMatches / 4; // 4 options total
-    }
-
-    // Weight question similarity more heavily than options
-    return Math.max(questionSimilarity, questionSimilarity * 0.7 + optionsSimilarity * 0.3);
+    return questionSimilarity;
   }
 
   private async collapseGroup(group: string[]): Promise<string> {
     // Flatten all question arrays
-    const allQuestions: QuizQuestion[] = [];
+    const allQuestions: QuizCandidate[] = [];
     for (const output of group) {
       try {
-        const parsed = JSON.parse(output) as QuizQuestion[];
+        const parsed = JSON.parse(output) as QuizCandidate[];
         allQuestions.push(...parsed);
       } catch (e) {
         logWarn({
@@ -613,11 +628,11 @@ export class QuizGraph {
       focus: state.focus || 'none',
     });
 
-    const allQuestions: QuizQuestion[] = [];
+    const allCandidates: QuizCandidate[] = [];
     for (const output of state.collapsedOutputs) {
       try {
-        const parsed = JSON.parse(output) as QuizQuestion[];
-        allQuestions.push(...parsed);
+        const parsed = JSON.parse(output) as QuizCandidate[];
+        allCandidates.push(...parsed);
       } catch (e) {
         logWarn({
           agent: 'QuizGraph',
@@ -627,14 +642,14 @@ export class QuizGraph {
       }
     }
 
-    const totalQuestionsBefore = allQuestions.length;
+    const totalCandidatesBefore = allCandidates.length;
 
-    if (totalQuestionsBefore === 0) {
+    if (totalCandidatesBefore === 0) {
       logError({
         agent: 'QuizGraph',
         phase: 'reduce',
-        error: 'No questions generated',
-      }, 'CRITICAL: No questions in collapsed outputs!');
+        error: 'No candidates generated',
+      }, 'CRITICAL: No candidates in collapsed outputs!');
       return {
         ...state,
         finalOutput: [],
@@ -645,8 +660,8 @@ export class QuizGraph {
     logInfo({
       agent: 'QuizGraph',
       phase: 'reduce_after_flatten',
-      initialQuestionCount: totalQuestionsBefore,
-    }, `Flattened ${totalQuestionsBefore} questions - running LLM refinement...`);
+      initialQuestionCount: totalCandidatesBefore,
+    }, `Flattened ${totalCandidatesBefore} candidates - running LLM refinement...`);
 
     // ALWAYS run LLM refinement for quality control (deduplication, merging, semantic diversity)
     // This ensures consistent behavior regardless of question count
@@ -655,13 +670,13 @@ export class QuizGraph {
     logInfo({
       agent: 'QuizGraph',
       phase: 'reduce_llm_selection',
-      totalQuestionsBefore,
+      totalQuestionsBefore: totalCandidatesBefore,
       targetQuestionCount: state.questionCount,
       retryAttempt: retryCount + 1,
       reason: 'Running LLM refinement for deduplication, quality selection, and topic diversity',
-    }, `Using smart LLM for intelligent question refinement from ${totalQuestionsBefore} questions [Attempt ${retryCount + 1}/2]...`);
+    }, `Using smart LLM for intelligent candidate selection from ${totalCandidatesBefore} candidates [Attempt ${retryCount + 1}/2]...`);
 
-    const similarQuestions = this.detectSimilarQuestions(allQuestions);
+    const similarQuestions = this.detectSimilarQuestions(allCandidates);
 
     if (similarQuestions.length > 0) {
       logInfo({
@@ -677,24 +692,33 @@ export class QuizGraph {
     }
 
     try {
-      const structuredLlm = this.smartLlm.withStructuredOutput<QuizQuestionResponse>(
-        QuizQuestionArraySchema,
-        { name: 'quiz_selection' }
+      const structuredLlm = this.smartLlm.withStructuredOutput<QuizCandidateResponse>(
+        QuizCandidateArraySchema,
+        { name: 'quiz_candidate_selection' }
       );
 
-      const selectionPrompt = getSelectionPrompt({
-        questions: allQuestions,
+      const selectionPrompt = getCandidateSelectionPrompt({
+        candidates: allCandidates,
         targetCount: state.questionCount,
         difficulty: state.difficulty,
         focus: state.focus,
       });
 
-      const response: QuizQuestionResponse = await invokeWithRetry(
+      const response: QuizCandidateResponse = await invokeWithRetry(
         () => invokeWithTimeout(
-          () => structuredLlm.invoke([
-            new SystemMessage('You are a quiz curator selecting diverse, high-quality questions for study sets.'),
+          () => (structuredLlm as any).invoke([
+            new SystemMessage(REDUCE_SELECT_SYSTEM_PROMPT),
             new HumanMessage(selectionPrompt),
-          ]),
+          ], createLangSmithRunConfig({
+            runName: 'QuizGraph.ReduceSelect',
+            tags: ['agent', 'quiz', 'reduce'],
+            metadata: {
+              targetQuestionCount: state.questionCount,
+              difficulty: state.difficulty,
+              focus: state.focus || 'none',
+              candidatesCount: allCandidates.length,
+            },
+          })),
           GRAPH_CONFIG.REDUCE_TIMEOUT_MS,
           'QuizReduce'
         ),
@@ -717,14 +741,55 @@ export class QuizGraph {
         agent: 'QuizGraph',
         phase: 'reduce_llm_success',
         selectedCount: response.questions.length,
-        originalCount: totalQuestionsBefore,
-      }, `LLM refinement complete: ${totalQuestionsBefore} → ${response.questions.length} questions`);
+        originalCount: totalCandidatesBefore,
+      }, `LLM refinement complete: ${totalCandidatesBefore} → ${response.questions.length} candidates`);
 
       if (response.questions.length === 0) {
-        throw new Error('LLM returned zero questions');
+        throw new Error('LLM returned zero candidates');
       }
 
-      return this.finalizeQuestions(response.questions, state);
+      const expandConcurrency = GRAPH_CONFIG.EXPAND_CONCURRENCY;
+      logInfo({
+        agent: 'QuizGraph',
+        phase: 'expand_questions',
+        selectedCount: response.questions.length,
+        concurrency: expandConcurrency,
+      }, `Generating distractors for ${response.questions.length} questions (concurrency: ${expandConcurrency})...`);
+
+      const expandedResults = await allWithConcurrency(
+        response.questions.map((candidate, index) => {
+          return async () => {
+            try {
+              return await this.expandQuestion(candidate);
+            } catch (error) {
+              logWarn({
+                agent: 'QuizGraph',
+                phase: 'expand_question_failed',
+                index,
+                error: error instanceof Error ? error.message : String(error),
+              }, 'Failed to expand candidate');
+              return null;
+            }
+          };
+        }),
+        expandConcurrency
+      );
+
+      const expandedQuestions = expandedResults.filter((q): q is QuizQuestion => q !== null);
+      const failedCount = expandedResults.length - expandedQuestions.length;
+      if (failedCount > 0) {
+        logWarn({
+          agent: 'QuizGraph',
+          phase: 'expand_questions_failed',
+          failedCount,
+        }, `${failedCount} candidate expansions failed`);
+      }
+
+      if (expandedQuestions.length === 0) {
+        throw new Error('Expansion returned zero questions');
+      }
+
+      return this.finalizeQuestions(expandedQuestions, state);
     } catch (error) {
       logError({
         agent: 'QuizGraph',
@@ -735,7 +800,7 @@ export class QuizGraph {
         } : String(error),
       }, `LLM reduce failed, falling back to simple slice`);
 
-      const fallback = allQuestions.slice(0, state.questionCount);
+      const fallback = allCandidates.slice(0, state.questionCount);
 
       if (fallback.length === 0 && retryCount < 1) {
         return new Send('reduce', {
@@ -744,8 +809,74 @@ export class QuizGraph {
         } as any);
       }
 
-      return this.finalizeQuestions(fallback, state);
+      const expandConcurrency = GRAPH_CONFIG.EXPAND_CONCURRENCY;
+      const expandedFallbackResults = await allWithConcurrency(
+        fallback.map((candidate, index) => {
+          return async () => {
+            try {
+              return await this.expandQuestion(candidate);
+            } catch (error) {
+              logWarn({
+                agent: 'QuizGraph',
+                phase: 'expand_question_failed',
+                index,
+                error: error instanceof Error ? error.message : String(error),
+              }, 'Failed to expand candidate');
+              return null;
+            }
+          };
+        }),
+        expandConcurrency
+      );
+
+      const expandedFallback = expandedFallbackResults.filter((q): q is QuizQuestion => q !== null);
+
+      if (expandedFallback.length === 0) {
+        return {
+          ...state,
+          finalOutput: [],
+          status: 'failed',
+        };
+      }
+
+      return this.finalizeQuestions(expandedFallback, state);
     }
+  }
+
+  // New method: expand a candidate into a full question
+  private async expandQuestion(candidate: QuizCandidate): Promise<QuizQuestion> {
+    const prompt = getExpandPrompt(candidate);
+
+    return invokeWithRetry(
+      () => invokeWithTimeout(
+        () => (this.expandLlmQuestionStructured as any).invoke([
+          new SystemMessage(EXPAND_QUESTION_SYSTEM_PROMPT),
+          new HumanMessage(prompt),
+        ], createLangSmithRunConfig({
+          runName: 'QuizGraph.ExpandQuestion',
+          tags: ['agent', 'quiz', 'expand'],
+          metadata: {
+            difficulty: candidate.difficulty,
+            topic: candidate.topic,
+          },
+        })),
+        GRAPH_CONFIG.MAP_TIMEOUT_MS,
+        'QuizExpand'
+      ),
+      {
+        maxAttempts: 2,
+        baseDelayMs: 1000,
+        onRetry: (attempt, error) => {
+          logWarn({
+            agent: 'QuizGraph',
+            phase: 'expand_question_retry',
+            attempt,
+            error: error.message,
+          }, `LLM expand retry attempt ${attempt}/2`);
+        }
+      },
+      'QuizExpand'
+    );
   }
 
   // Helper method to finalize and return questions
@@ -849,7 +980,7 @@ export class QuizGraph {
   /**
    * Detect semantically similar questions using simple heuristics.
    */
-  private detectSimilarQuestions(questions: QuizQuestion[]): Array<{
+  private detectSimilarQuestions(questions: QuizCandidate[]): Array<{
     similarity: string;
     questions: Array<{index: number; question: string}>;
     reason: string;
@@ -862,8 +993,8 @@ export class QuizGraph {
 
     for (let i = 0; i < questions.length; i++) {
       for (let j = i + 1; j < questions.length; j++) {
-        const q1 = questions[i].question.toLowerCase();
-        const q2 = questions[j].question.toLowerCase();
+        const q1 = `${questions[i].question} ${questions[i].correctAnswer}`.toLowerCase();
+        const q2 = `${questions[j].question} ${questions[j].correctAnswer}`.toLowerCase();
 
         const words1 = new Set(q1.match(/\b\w+\b/g) || []);
         const words2 = new Set(q2.match(/\b\w+\b/g) || []);

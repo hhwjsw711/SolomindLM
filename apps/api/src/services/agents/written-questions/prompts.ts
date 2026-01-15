@@ -80,6 +80,16 @@ export const GRAPH_CONFIG = {
 } as const;
 
 // ============================================================
+// SYSTEM PROMPTS
+// ============================================================
+
+/** System prompt for map phase written question generation */
+export const MAP_SYSTEM_PROMPT = 'You are a professional educator creating written assessment questions.';
+
+/** System prompt for reduce phase question selection and refinement */
+export const REDUCE_SELECT_SYSTEM_PROMPT = 'You are an expert educator selecting diverse, high-quality written questions for assessments.';
+
+// ============================================================
 // PROMPT TEMPLATES
 // ============================================================
 

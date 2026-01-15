@@ -21,11 +21,12 @@ import {
   logBanner,
   sanitizeUserInput,
   countTokens,
+  createLangSmithRunConfig,
 } from '../shared/index.js';
 import { createChunkHelpers, type ChunkHelpers } from '../shared/chunk-helper-factory.js';
 import { OverallState, type OverallStateType, type ChunkProcessState, type DialogueLine } from './state.js';
 import type { AudioType, AudioLength } from './prompts.js';
-import { getMapPrompt, getReducePrompt, buildCoveredTopicsPrompt, TARGET_LINE_COUNTS, DIALOGUE_CHUNK_SIZE, ESTIMATED_WORDS_PER_LINE } from './prompts.js';
+import { getMapPrompt, getReducePrompt, buildCoveredTopicsPrompt, TARGET_LINE_COUNTS, DIALOGUE_CHUNK_SIZE, ESTIMATED_WORDS_PER_LINE, MAP_SYSTEM_PROMPT, REDUCE_SYSTEM_PROMPT, EXAMPLE_EXTRACTION_SYSTEM_PROMPT } from './prompts.js';
 
 // ============================================================
 // Constants
@@ -151,9 +152,19 @@ export async function extractBeats(
     const response = await invokeWithRetry(
       () => invokeWithTimeout(
         () => fastLlm.invoke([
-          new SystemMessage('You are extracting engaging content for a podcast conversation. Extract key points that would make for interesting discussion.'),
+          new SystemMessage(MAP_SYSTEM_PROMPT),
           new HumanMessage(prompt),
-        ]),
+        ], createLangSmithRunConfig({
+          runName: 'AudioOverviewGraph.ExtractBeats',
+          tags: ['agent', 'audio-overview', 'map'],
+          metadata: {
+            chunkIndex,
+            chunkLength: chunk.length,
+            audioType,
+            length,
+            focus: focus || 'none',
+          },
+        })),
         GRAPH_CONFIG.MAP_TIMEOUT_MS,
         'AudioMap'
       ),
@@ -328,9 +339,19 @@ export async function writeScript(
       const response = await invokeWithRetry(
         () => invokeWithTimeout(
           () => smartLlm.invoke([
-            new SystemMessage('You are an expert podcast scriptwriter. Output ONLY valid JSON arrays of dialogue lines.'),
+            new SystemMessage(REDUCE_SYSTEM_PROMPT),
             new HumanMessage(chunkPrompt),
-          ]),
+          ], createLangSmithRunConfig({
+            runName: 'AudioOverviewGraph.WriteScript',
+            tags: ['agent', 'audio-overview', 'reduce'],
+            metadata: {
+              chunkIndex: chunkIndex + 1,
+              totalChunks: numChunks,
+              audioType,
+              length,
+              focus: sanitizedFocus || 'general overview',
+            },
+          })),
           GRAPH_CONFIG.REDUCE_TIMEOUT_MS,
           'AudioReduce'
         ),
@@ -410,9 +431,16 @@ DIALOGUE:
 ${chunkDialogue.map(d => `${d.speaker}: ${d.text}`).join('\n')}`;
 
           const extractionResponse = await smartLlm.invoke([
-            new SystemMessage('You are a text analyzer. Extract concrete examples as a JSON array only.'),
+            new SystemMessage(EXAMPLE_EXTRACTION_SYSTEM_PROMPT),
             new HumanMessage(extractionPrompt),
-          ]);
+          ], createLangSmithRunConfig({
+            runName: 'AudioOverviewGraph.ExampleExtraction',
+            tags: ['agent', 'audio-overview', 'analysis'],
+            metadata: {
+              chunkIndex: chunkIndex + 1,
+              linesGenerated: chunkDialogue.length,
+            },
+          }));
 
           const extractionText = extractionResponse.content.toString();
           const exJsonStart = extractionText.indexOf('[');

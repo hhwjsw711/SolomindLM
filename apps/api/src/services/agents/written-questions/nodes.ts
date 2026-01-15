@@ -27,6 +27,7 @@ import {
   sanitizeUserInput,
   countTokens,
   clearStateKeys,
+  createLangSmithRunConfig,
 } from '../shared/index.js';
 
 // Import from local modules
@@ -37,6 +38,8 @@ import {
   type WrittenQuestionsResponse,
   PROBLEMATIC_PHRASES,
   GRAPH_CONFIG,
+  MAP_SYSTEM_PROMPT,
+  REDUCE_SELECT_SYSTEM_PROMPT,
 } from './prompts.js';
 
 // ============================================================
@@ -271,10 +274,20 @@ export class WrittenQuestionsGraph {
     try {
       const response: WrittenQuestionsResponse = await invokeWithRetry(
         () => invokeWithTimeout(
-          () => this.fastLlmStructured.invoke([
-            new SystemMessage('You are a professional educator creating written assessment questions.'),
+          () => (this.fastLlmStructured as any).invoke([
+            new SystemMessage(MAP_SYSTEM_PROMPT),
             new HumanMessage(prompt),
-          ]),
+          ], createLangSmithRunConfig({
+            runName: 'WrittenQuestionsGraph.MapProcess',
+            tags: ['agent', 'written-questions', 'map'],
+            metadata: {
+              chunkIndex,
+              questionCount,
+              difficulty,
+              questionType,
+              focus: focus || 'none',
+            },
+          })),
           GRAPH_CONFIG.MAP_TIMEOUT_MS,
           'WrittenQuestionsMap'
         ),
@@ -719,10 +732,20 @@ Return the complete selected questions as a JSON array.`;
 
       const response: WrittenQuestionsResponse = await invokeWithRetry(
         () => invokeWithTimeout(
-          () => structuredLlm.invoke([
-            new SystemMessage('You are an expert educator selecting diverse, high-quality written questions for assessments.'),
+          () => (structuredLlm as any).invoke([
+            new SystemMessage(REDUCE_SELECT_SYSTEM_PROMPT),
             new HumanMessage(selectionPrompt),
-          ]),
+          ], createLangSmithRunConfig({
+            runName: 'WrittenQuestionsGraph.ReduceSelect',
+            tags: ['agent', 'written-questions', 'reduce'],
+            metadata: {
+              targetCount: state.questionCount,
+              difficulty: state.difficulty,
+              questionType: state.questionType,
+              focus: state.focus || 'none',
+              candidateCount: questionsForLLM.length,
+            },
+          })),
           GRAPH_CONFIG.REDUCE_TIMEOUT_MS,
           'WrittenQuestionsReduce'
         ),

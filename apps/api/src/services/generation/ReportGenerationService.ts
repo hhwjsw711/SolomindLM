@@ -2,6 +2,7 @@ import { supabase } from '../../config/database.js';
 import { ReportGraph, OverallStateType } from '../agents/ReportGraph.js';
 import { env } from '../../config/env.js';
 import { TitleGeneratorService } from '../processing/TitleGeneratorService.js';
+import { createLangSmithRunConfig } from '../agents/shared/index.js';
 
 export interface ReportGenerationParams {
   documentIds: string[];
@@ -61,6 +62,16 @@ export class ReportGenerationService {
 
       // Build and invoke graph
       const graph = this.reportGraph.buildGraph();
+      const traceConfig = createLangSmithRunConfig({
+        runName: 'ReportGraph',
+        tags: ['agent', 'report'],
+        metadata: {
+          documentIds,
+          reportType,
+          customPrompt,
+          chunksCount: chunks.length,
+        },
+      });
       const result = await graph.invoke({
         documentIds,
         chunks,
@@ -70,7 +81,7 @@ export class ReportGenerationService {
         collapsedOutputs: [],
         finalOutput: '',
         status: 'generating',
-      }) as unknown as OverallStateType;
+      }, traceConfig) as unknown as OverallStateType;
 
       console.log(
         `[ReportGeneration] Report generation completed. Status: ${result.status}`

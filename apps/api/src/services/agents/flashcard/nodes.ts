@@ -27,11 +27,12 @@ import {
   validateFlashcards,
   countTokens,
   clearStateKeys,
+  createLangSmithRunConfig,
 } from '../shared/index.js';
 
 // Import from local modules
 import { OverallState, type OverallStateType, type ChunkProcessState, type Flashcard } from './state.js';
-import { getMapPrompt, getReducePrompt, PROBLEMATIC_PHRASES, FlashcardArraySchema, type FlashcardResponse } from './prompts.js';
+import { getMapPrompt, getReducePrompt, PROBLEMATIC_PHRASES, FlashcardArraySchema, type FlashcardResponse, MAP_SYSTEM_PROMPT, COLLAPSE_SYSTEM_PROMPT, REDUCE_SYSTEM_PROMPT } from './prompts.js';
 
 // ============================================================
 // STRUCTURED OUTPUT SCHEMAS
@@ -317,10 +318,19 @@ async function mapProcess(
     // Timeout + Retry wrapper for resilient LLM calls
     const response = await invokeWithRetry(
       () => invokeWithTimeout(
-        () => structuredLlm.invoke([
-          new SystemMessage('You are an expert educator. Output strictly in JSON.'),
+        () => (structuredLlm as any).invoke([
+          new SystemMessage(MAP_SYSTEM_PROMPT),
           new HumanMessage(prompt),
-        ]),
+        ], createLangSmithRunConfig({
+          runName: 'FlashcardGraph.MapProcess',
+          tags: ['agent', 'flashcard', 'map'],
+          metadata: {
+            chunkIndex,
+            cardCount,
+            difficulty,
+            topic: topic || 'none',
+          },
+        })),
         FLASHCARD_CONFIG.MAP_TIMEOUT_MS,
         'FlashcardMap'
       ),
@@ -341,10 +351,10 @@ async function mapProcess(
     );
 
     // Structured output returns Flashcard[] directly - no parsing needed
-    const flashcards = response.flashcards;
-    
+    const flashcards = (response as FlashcardResponse).flashcards;
+
     // Clean flashcard text to remove formatting artifacts
-    const cleanedFlashcards = flashcards.map(card => ({
+    const cleanedFlashcards = flashcards.map((card: Flashcard) => ({
       front: cleanFrontText(card.front),
       back: cleanBackText(card.back),
       topic: card.topic,
@@ -689,10 +699,17 @@ Return the condensed flashcards as a JSON array with "front" and "back" fields.`
 
     const response = await invokeWithRetry(
       () => invokeWithTimeout(
-        () => structuredLlm.invoke([
-          new SystemMessage('You are a skilled content consolidator. Output strictly in JSON.'),
+        () => (structuredLlm as any).invoke([
+          new SystemMessage(COLLAPSE_SYSTEM_PROMPT),
           new HumanMessage(prompt),
-        ]),
+        ], createLangSmithRunConfig({
+          runName: 'FlashcardGraph.CollapseGroup',
+          tags: ['agent', 'flashcard', 'collapse'],
+          metadata: {
+            inputCount: group.length,
+            mergedCardCount: allCards.length,
+          },
+        })),
         FLASHCARD_CONFIG.REDUCE_TIMEOUT_MS,
         'FlashcardCollapseGroup'
       ),
@@ -789,10 +806,19 @@ Return the complete selected flashcards as a JSON array. For each flashcard, inc
     // Use timeout and retry for refinement LLM call
     const response = await invokeWithRetry(
       () => invokeWithTimeout(
-        () => structuredLlm.invoke([
-          new SystemMessage('You are an expert curriculum designer creating DIVERSE study sets. Your goal is to spread selections across ALL topics, not cluster on one.'),
+        () => (structuredLlm as any).invoke([
+          new SystemMessage(REDUCE_SYSTEM_PROMPT),
           new HumanMessage(prompt),
-        ]),
+        ], createLangSmithRunConfig({
+          runName: 'FlashcardGraph.RefineSelection',
+          tags: ['agent', 'flashcard', 'reduce'],
+          metadata: {
+            targetCount,
+            difficulty,
+            topic: topic || 'none',
+            candidateCount: flashcards.length,
+          },
+        })),
         FLASHCARD_CONFIG.REDUCE_TIMEOUT_MS,
         'FlashcardRefineSelection'
       ),

@@ -20,11 +20,12 @@ import {
   countTokens,
   clearStateKeys,
   allWithConcurrency,
+  createLangSmithRunConfig,
 } from '../shared/index.js';
 
 // Import from local modules
 import { OverallState, type OverallStateType, type ChunkProcessState } from './state.js';
-import { MAP_PROMPTS, REDUCE_PROMPTS } from './prompts.js';
+import { MAP_PROMPTS, REDUCE_PROMPTS, MAP_SYSTEM_PROMPT, COLLAPSE_SYSTEM_PROMPT, REDUCE_SYSTEM_PROMPT } from './prompts.js';
 
 // ============================================================
 // CONFIGURATION
@@ -592,10 +593,18 @@ IMPORTANT: Respond with a JSON object containing:
     try {
       mapOutput = await this.invokeWithRetry<MapOutput>(
         () => this.invokeWithTimeout(
-          () => this.fastLlmStructured.invoke([
-            new SystemMessage('You are a professional content analyzer and writer. Always extract 3-5 key topics and provide comprehensive summaries.'),
+          () => (this.fastLlmStructured as any).invoke([
+            new SystemMessage(MAP_SYSTEM_PROMPT),
             new HumanMessage(structuredPrompt),
-          ]),
+          ], createLangSmithRunConfig({
+            runName: 'ReportGraph.MapProcess',
+            tags: ['agent', 'report', 'map'],
+            metadata: {
+              chunkIndex,
+              reportType,
+              chunkLength: chunk.length,
+            },
+          })),
           GRAPH_CONFIG.MAP_TIMEOUT_MS,
           'Map'
         ),
@@ -766,10 +775,16 @@ CONDENSED (maintain topic structure and "Main Topics:" format):`;
 
     const response = await this.invokeWithRetry(
       () => this.invokeWithTimeout(
-        () => this.smartLlm.invoke([
-          new SystemMessage('You are a skilled summarizer. Always maintain structured format with topic headers like "Main Topics:"'),
+        () => (this.smartLlm as any).invoke([
+          new SystemMessage(COLLAPSE_SYSTEM_PROMPT),
           new HumanMessage(prompt),
-        ]),
+        ], createLangSmithRunConfig({
+          runName: 'ReportGraph.CollapseGroup',
+          tags: ['agent', 'report', 'collapse'],
+          metadata: {
+            groupCount: group.length,
+          },
+        })),
         GRAPH_CONFIG.REDUCE_TIMEOUT_MS,
         'CollapseGroup'
       ),
@@ -848,10 +863,18 @@ Do NOT combine topics or focus primarily on one.
     try {
       const response = await this.invokeWithRetry(
         () => this.invokeWithTimeout(
-          () => this.smartLlm.invoke([
-            new SystemMessage('You are a professional content writer and editor.'),
+          () => (this.smartLlm as any).invoke([
+            new SystemMessage(REDUCE_SYSTEM_PROMPT),
             new HumanMessage(prompt),
-          ]),
+          ], createLangSmithRunConfig({
+            runName: 'ReportGraph.Reduce',
+            tags: ['agent', 'report', 'reduce'],
+            metadata: {
+              reportType: state.reportType,
+              collapsedOutputsCount,
+              validTopicsCount: validTopics.length,
+            },
+          })),
           GRAPH_CONFIG.REDUCE_TIMEOUT_MS,
           'Reduce'
         ),

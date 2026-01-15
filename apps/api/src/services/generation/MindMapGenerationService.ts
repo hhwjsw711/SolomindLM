@@ -2,6 +2,7 @@ import { supabase } from '../../config/database.js';
 import { MindMapGraph, OverallStateType, packChunks } from '../agents/MindMapGraph.js';
 import { env } from '../../config/env.js';
 import { TitleGeneratorService } from '../processing/TitleGeneratorService.js';
+import { createLangSmithRunConfig } from '../agents/shared/index.js';
 
 export interface MindMapGenerationParams {
   documentIds: string[];
@@ -66,6 +67,14 @@ export class MindMapGenerationService {
       console.log(`[MindMapGeneration] Input chunks: ${rawChunks.length}`);
       console.log(`[MindMapGeneration] Recursion limit: 50`);
 
+      const traceConfig = createLangSmithRunConfig({
+        runName: 'MindMapGraph',
+        tags: ['agent', 'mindmap'],
+        metadata: {
+          documentIds,
+          chunksCount: rawChunks.length,
+        },
+      });
       const invokeStart = Date.now();
       const result = await graph.invoke(
         {
@@ -74,6 +83,7 @@ export class MindMapGenerationService {
         {
           // Increase recursion limit to handle more batches safely
           recursionLimit: 50,
+          ...traceConfig,
         }
       ) as unknown as OverallStateType;
 

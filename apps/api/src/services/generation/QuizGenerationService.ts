@@ -2,6 +2,7 @@ import { supabase } from '../../config/database.js';
 import { QuizGraph, OverallStateType, QuizQuestion } from '../agents/QuizGraph.js';
 import { env } from '../../config/env.js';
 import { TitleGeneratorService } from '../processing/TitleGeneratorService.js';
+import { createLangSmithRunConfig } from '../agents/shared/index.js';
 
 export interface QuizGenerationParams {
   documentIds: string[];
@@ -59,6 +60,17 @@ export class QuizGenerationService {
       );
 
       const graph = this.quizGraph.buildGraph();
+      const traceConfig = createLangSmithRunConfig({
+        runName: 'QuizGraph',
+        tags: ['agent', 'quiz'],
+        metadata: {
+          documentIds,
+          questionCount,
+          difficulty,
+          focus,
+          chunksCount: chunks.length,
+        },
+      });
       const result = await graph.invoke({
         documentIds,
         chunks,
@@ -69,7 +81,7 @@ export class QuizGenerationService {
         collapsedOutputs: [],
         finalOutput: [],
         status: 'generating',
-      }) as unknown as OverallStateType;
+      }, traceConfig) as unknown as OverallStateType;
 
       console.log(
         `[QuizGeneration] Quiz generation completed. Status: ${result.status}, Questions: ${result.finalOutput.length}`
