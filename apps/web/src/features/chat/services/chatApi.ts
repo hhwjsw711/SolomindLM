@@ -1,4 +1,5 @@
 import { ReferenceChunk } from '@/shared/types/index';
+import { getUserId } from '@/shared/utils/auth';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -33,27 +34,6 @@ export interface SendMessageCallbacks {
   onStatus?: (status: string, message?: string) => void;
   onComplete: () => void;
   onError: (error: string | ChatError) => void;
-}
-
-// ============================================================
-// Helper Functions
-// ============================================================
-
-/**
- * Get userId from localStorage (for transition period)
- * TODO: Replace with proper auth context after migration
- */
-function getUserId(): string | null {
-  const storedUser = localStorage.getItem('solomind_user');
-  if (storedUser) {
-    try {
-      const user = JSON.parse(storedUser);
-      return user.id || user.user?.id || null;
-    } catch {
-      return null;
-    }
-  }
-  return null;
 }
 
 // ============================================================

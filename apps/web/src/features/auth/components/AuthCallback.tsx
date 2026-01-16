@@ -55,6 +55,8 @@ export function AuthCallback() {
           }
 
           // Success! Backend has set HttpOnly cookies
+          // Wait a moment for cookies to be set before triggering auth check
+          await new Promise(resolve => setTimeout(resolve, 100));
           window.dispatchEvent(new CustomEvent('auth-change'));
           navigate('/home', { replace: true });
           return;
@@ -81,6 +83,8 @@ export function AuthCallback() {
           }
 
           // Success! Backend has set HttpOnly cookies
+          // Wait a moment for cookies to be set before triggering auth check
+          await new Promise(resolve => setTimeout(resolve, 100));
           window.dispatchEvent(new CustomEvent('auth-change'));
           // Clean up URL hash
           window.history.replaceState({}, '', window.location.pathname);

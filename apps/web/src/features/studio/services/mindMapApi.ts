@@ -1,21 +1,8 @@
 import type { Note, MindMapNote } from '@/shared/types/index';
+import { apiGet, apiPost, apiPatch, apiDelete } from '@/shared/utils/api';
+import { getUserId } from '@/shared/utils/auth';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-
-// Get auth headers with access token
-function getAuthHeaders(): HeadersInit {
-  const storedUser = localStorage.getItem('solomind_user');
-  if (storedUser) {
-    const user = JSON.parse(storedUser);
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${user.accessToken}`,
-    };
-  }
-  return {
-    'Content-Type': 'application/json',
-  };
-}
 
 export interface CreateMindMapParams {
   userId: string;
@@ -76,11 +63,7 @@ export const mindMapApi = {
    * Create a new mind map and queue generation
    */
   async generateMindMap(params: CreateMindMapParams): Promise<CreateMindMapResponse> {
-    const response = await fetch(`${API_BASE_URL}/api/mindmaps`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(params),
-    });
+    const response = await apiPost('/api/mindmaps', params);
 
     if (!response.ok) {
       const error = await response.json();
@@ -99,20 +82,14 @@ export const mindMapApi = {
    * Get a specific mind map by ID
    */
   async getMindMap(mindMapId: string): Promise<MindMapNote> {
-    const storedUser = localStorage.getItem('solomind_user');
-    const userId = storedUser ? JSON.parse(storedUser).id : null;
+    const userId = getUserId();
 
     if (!userId) {
       throw new Error('User not authenticated');
     }
 
     const queryParams = new URLSearchParams({ userId });
-    const response = await fetch(
-      `${API_BASE_URL}/api/mindmaps/${mindMapId}?${queryParams.toString()}`,
-      {
-        headers: getAuthHeaders(),
-      }
-    );
+    const response = await apiGet(`/api/mindmaps/${mindMapId}?${queryParams.toString()}`);
 
     if (!response.ok) {
       throw new Error('Failed to fetch mind map');
@@ -149,48 +126,37 @@ export const mindMapApi = {
    * Get all mind maps for a notebook
    */
   async getMindMaps(notebookId: string): Promise<MindMapNote[]> {
-    const storedUser = localStorage.getItem('solomind_user');
-    const userId = storedUser ? JSON.parse(storedUser).id : null;
+    const userId = getUserId();
 
     if (!userId) {
       throw new Error('User not authenticated');
     }
 
-    const params = new URLSearchParams({ userId });
-    const response = await fetch(
-      `${API_BASE_URL}/api/mindmaps/notebook/${notebookId}?${params.toString()}`,
-      {
-        headers: getAuthHeaders(),
-      }
-    );
+    const queryParams = new URLSearchParams({ userId });
+    const response = await apiGet(`/api/mindmaps/notebook/${notebookId}?${queryParams.toString()}`);
 
     if (!response.ok) {
       throw new Error('Failed to fetch mind maps');
     }
 
     const mindmaps = await response.json();
-    return mindmaps.map((m: MindMapData) => mapMindMapToNote(m));
+    return mindmaps.map((mindmap: MindMapData) => mapMindMapToNote(mindmap));
   },
 
   /**
    * Rename a mind map by ID
    */
   async renameMindMap(mindMapId: string, newTitle: string): Promise<{ success: boolean; title: string }> {
-    const storedUser = localStorage.getItem('solomind_user');
-    const userId = storedUser ? JSON.parse(storedUser).id : null;
+    const userId = getUserId();
 
     if (!userId) {
       throw new Error('User not authenticated');
     }
 
     const params = new URLSearchParams({ userId });
-    const response = await fetch(
-      `${API_BASE_URL}/api/mindmaps/${mindMapId}?${params.toString()}`,
-      {
-        method: 'PATCH',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ title: newTitle }),
-      }
+    const response = await apiPatch(
+      `/api/mindmaps/${mindMapId}?${params.toString()}`,
+      { title: newTitle }
     );
 
     if (!response.ok) {
@@ -204,21 +170,14 @@ export const mindMapApi = {
    * Delete a mind map by ID
    */
   async deleteMindMap(mindMapId: string): Promise<void> {
-    const storedUser = localStorage.getItem('solomind_user');
-    const userId = storedUser ? JSON.parse(storedUser).id : null;
+    const userId = getUserId();
 
     if (!userId) {
       throw new Error('User not authenticated');
     }
 
     const params = new URLSearchParams({ userId });
-    const response = await fetch(
-      `${API_BASE_URL}/api/mindmaps/${mindMapId}?${params.toString()}`,
-      {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-      }
-    );
+    const response = await apiDelete(`/api/mindmaps/${mindMapId}?${params.toString()}`);
 
     if (!response.ok) {
       throw new Error('Failed to delete mind map');

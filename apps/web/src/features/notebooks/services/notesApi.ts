@@ -1,24 +1,8 @@
 import type { Note } from '@/shared/types/index';
 import { apiGet, apiPatch, apiDelete } from '@/shared/utils/api';
+import { getUserId } from '@/shared/utils/auth';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-
-/**
- * Get userId from localStorage (for transition period)
- * TODO: Replace with proper auth context after migration
- */
-function getUserId(): string | null {
-  const storedUser = localStorage.getItem('solomind_user');
-  if (storedUser) {
-    try {
-      const user = JSON.parse(storedUser);
-      return user.id || user.user?.id || null;
-    } catch {
-      return null;
-    }
-  }
-  return null;
-}
 
 // Convert database note to UI Note format (only reports and text notes)
 function dbNoteToNote(dbNote: any): Note {

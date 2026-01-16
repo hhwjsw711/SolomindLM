@@ -184,7 +184,16 @@ router.post('/', authenticate, checkNotebookLimit, async (req: Request, res: Res
     if (icon) metadata.icon = icon;
     if (isFeatured !== undefined) metadata.isFeatured = isFeatured;
 
-    const { data: notebook, error } = await supabase
+    // Get user's JWT token to create a client that respects RLS
+    const token = getTokenFromRequest(req);
+    if (!token) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Use user client for RLS-respecting operations
+    const userClient = createUserClient(token);
+
+    const { data: notebook, error } = await userClient
       .from('notebooks')
       .insert({
         user_id: userId,

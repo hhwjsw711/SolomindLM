@@ -140,7 +140,7 @@ const envSchema = z.object({
   LANGSMITH_PROJECT: z.string().default('SolomindLM'),
   LANGCHAIN_PROJECT: z.string().optional(),
   LANGSMITH_ENDPOINT: z.string().optional(),
-  CORS_ORIGIN: z.string().default('http://localhost:5173,https://www.solomindlm.com,https://solomindlm.com,https://*.vercel.app'),
+  CORS_ORIGIN: z.string().default('http://localhost:5173,https://www.solomindlm.com,https://solomindlm.com,https://*.vercel.app,https://*-*-*.vercel.app'),
   // Cookie Domain Configuration
   // For Safari ITP compatibility - set to root domain (e.g., '.solomindlm.com')
   // to share cookies across subdomains (www, api, etc.)

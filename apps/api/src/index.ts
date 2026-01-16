@@ -108,9 +108,11 @@ app.use(cors({
         return true;
       }
 
-      // Wildcard pattern support (e.g., https://*.vercel.app)
+      // Wildcard pattern support (e.g., https://*.vercel.app, https://*-*-*.vercel.app)
       if (allowedOrigin.includes('*')) {
-        const pattern = allowedOrigin.replace(/\*/g, '[^.]+');
+        // Replace * with a pattern that matches any characters except /
+        // This allows matching subdomains and Vercel preview URLs
+        const pattern = allowedOrigin.replace(/\*/g, '[^/]+');
         const regex = new RegExp(`^${pattern}$`);
         return regex.test(origin);
       }

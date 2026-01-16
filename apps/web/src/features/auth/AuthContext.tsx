@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { setStoredUser } from '@/shared/utils/auth';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -25,6 +26,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Wrapper to set user and sync to localStorage synchronously
+  const setUserAndSync = useCallback((newUser: User | null) => {
+    setUser(newUser);
+    setStoredUser(newUser);
+  }, []);
+
   // Check for existing session (cookies are set by backend)
   const checkSession = useCallback(async () => {
     try {
@@ -36,21 +43,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (response.ok) {
         const data = await response.json();
-        setUser({ id: data.userId, email: data.email });
+        setUserAndSync({ id: data.userId, email: data.email });
       } else {
         // Session expired or not authenticated (expected if user hasn't logged in)
-        setUser(null);
+        setUserAndSync(null);
       }
     } catch (error) {
       // Only log unexpected errors, not expected 401s
       if (error instanceof Error && !error.message.includes('401')) {
         console.error('Session check error:', error);
       }
-      setUser(null);
+      setUserAndSync(null);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [setUserAndSync]);
 
   // Check for existing session on mount
   useEffect(() => {
@@ -93,8 +100,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email: data.email,
     };
 
+    setUserAndSync(newUser);
     return newUser;
-  }, [checkSession]);
+  }, [checkSession, setUserAndSync]);
 
   const signUp = useCallback(async (email: string, password: string): Promise<User> => {
     const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
@@ -120,9 +128,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email: data.email,
     };
 
-    setUser(newUser);
+    setUserAndSync(newUser);
     return newUser;
-  }, []);
+  }, [setUserAndSync]);
 
   const signOut = useCallback(async () => {
     try {
@@ -133,9 +141,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      setUser(null);
+      setUserAndSync(null);
     }
-  }, []);
+  }, [setUserAndSync]);
 
   const signInWithGoogle = useCallback(async () => {
     // Initiate OAuth with Supabase directly from the browser
@@ -171,14 +179,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (!response.ok) {
       // Session is truly invalid, clear user state
-      setUser(null);
+      setUserAndSync(null);
       throw new Error('Session refresh failed');
     }
 
     // Cookies are automatically updated by the backend
     // Re-check session to get updated user info
     await checkSession();
-  }, [checkSession]);
+  }, [checkSession, setUserAndSync]);
 
   return (
     <AuthContext.Provider
