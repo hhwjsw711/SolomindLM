@@ -18,7 +18,8 @@ export class VectorStoreService {
       user_id: userId,
       notebook_id: noteId,
       chunk_index: chunk.index,
-      content: chunk.content,
+      // Sanitize content to remove null bytes (PostgreSQL cannot store \u0000 in text fields)
+      content: chunk.content.replace(/\u0000/g, ''),
       embedding: chunk.embedding,
     }));
 

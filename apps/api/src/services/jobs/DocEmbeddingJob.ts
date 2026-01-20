@@ -136,6 +136,13 @@ export async function docEmbeddingJob(payload: DocEmbeddingJobPayload) {
       throw new Error('No text extracted from document');
     }
 
+    // Sanitize extracted text to remove null bytes (PostgreSQL cannot store \u0000 in text fields)
+    const originalLength = extractedText.length;
+    extractedText = extractedText.replace(/\u0000/g, '');
+    if (originalLength !== extractedText.length) {
+      console.warn(`[DocEmbedding] Removed ${originalLength - extractedText.length} null byte(s) from extracted text`);
+    }
+
     console.log(`[DocEmbedding] Extracted ${extractedText.length} characters`);
 
     // Step 2: Split text
