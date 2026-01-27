@@ -8,6 +8,7 @@
     "build": "tsup src/index.ts --format esm --clean --outDir dist --minify",
     "build:worker": "tsup src/utils/worker.ts --format esm --clean --outDir dist --minify",
     "type-check": "tsc --noEmit",
+    "type-check:fast": "tsc --noEmit --skipLibCheck",
     "start": "bun dist/index.js",
     "start:worker": "bun dist/worker.js",
     "worker": "bun run src/utils/worker.ts",

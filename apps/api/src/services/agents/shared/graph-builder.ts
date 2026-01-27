@@ -103,16 +103,16 @@ export function buildMapReduceGraph<TState extends Record<string, unknown>>(
   const collapseNodeName = config.collapseNodeName || 'collapse';
 
   // Add map node
-  builder.addNode(mapNodeName, config.mapNode);
+  builder.addNode(mapNodeName, config.mapNode as never);
 
   // Add collapse node if provided and not skipping
   if (config.collapseNode && !config.skipCollapse) {
-    builder.addNode(collapseNodeName, config.collapseNode);
+    builder.addNode(collapseNodeName, config.collapseNode as never);
   }
 
   // Add reduce node if provided
   if (config.reduceNode) {
-    builder.addNode(reduceNodeName, config.reduceNode);
+    builder.addNode(reduceNodeName, config.reduceNode as never);
   }
 
   // Add edges - use as never casts for node names like existing code
@@ -175,7 +175,7 @@ export function buildLinearGraph<TState extends Record<string, unknown>>(
 
   // Add all nodes
   for (const node of config.nodes) {
-    builder.addNode(node.name, node.handler);
+    builder.addNode(node.name, node.handler as never);
   }
 
   // Add edges sequentially - use as never casts for node names like existing code
@@ -229,7 +229,7 @@ export function buildCustomGraph<TState extends Record<string, unknown>>(
 
   // Add all nodes
   for (const [name, handler] of Object.entries(nodes)) {
-    builder.addNode(name, handler);
+    builder.addNode(name, handler as never);
   }
 
   // Add all edges - use as never casts for node names like existing code
