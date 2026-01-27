@@ -8,6 +8,7 @@ on:
 
 env:
   NODE_VERSION: "20"
+  NODE_OPTIONS: "--max-old-space-size=4096"
 
 jobs:
   type-check-api:
@@ -21,12 +22,13 @@ jobs:
         uses: oven-sh/setup-bun@v1
         with:
           bun-version: "1.2.2"
+          cache-dependency-path: "**/bun.lockb"
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
       - name: Type check API
-        run: bun run --filter @solomindlm/api type-check
+        run: cd apps/api && bun run type-check:fast
 
   build-web:
     name: Build (Web)
@@ -39,6 +41,7 @@ jobs:
         uses: oven-sh/setup-bun@v1
         with:
           bun-version: "1.2.2"
+          cache-dependency-path: "**/bun.lockb"
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
@@ -57,6 +60,7 @@ jobs:
         uses: oven-sh/setup-bun@v1
         with:
           bun-version: "1.2.2"
+          cache-dependency-path: "**/bun.lockb"
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
