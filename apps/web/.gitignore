@@ -1,1 +1,3 @@
 .vercel
+# KaTeX fonts copied at build time by vite.config
+public/katex/

@@ -1,14 +1,13 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
 import { ArrowUp, PanelLeftOpen, PanelRightOpen, MessageCircle, RefreshCw, Loader2, Search, FileText, Brain, Copy, Check } from 'lucide-react';
-import { ConfirmDialog, useConfirmDialog } from '@/shared/ui/ConfirmDialog';
+import { useConfirmDialog } from '@/shared/ui/ConfirmDialog';
 import { Virtuoso } from 'react-virtuoso';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
-import { Message, ReferenceChunk } from '@/shared/types/index';
-import { chatApi } from '../services/chatApi';
+import { Message } from '@/shared/types/index';
 import { sanitizeMarkdown } from '@/shared/utils';
+
+const MarkdownRenderer = lazy(() =>
+  import('@/shared/components/MarkdownRenderer').then((m) => ({ default: m.default }))
+);
 
 interface ChatPanelProps {
   messages: Message[];
@@ -256,53 +255,53 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
 
     return (
       <div className="font-serif text-base leading-relaxed space-y-2">
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm, remarkMath]}
-          rehypePlugins={[rehypeKatex]}
-          components={{
-            img: () => null,
-            a: ({ node, children, ...props }) => <span className="text-foreground">{children}</span>,
-            video: () => null,
-            audio: () => null,
-            iframe: () => null,
-            table: ({ children }) => <table className="w-full border-collapse border border-border rounded-lg overflow-hidden">{children}</table>,
-            thead: ({ children }) => <thead className="bg-secondary/50">{children}</thead>,
-            tbody: ({ children }) => <tbody>{children}</tbody>,
-            tr: ({ children }) => <tr className="border-b border-border">{children}</tr>,
-            th: ({ children }) => <th className="px-4 py-2 text-left font-semibold text-foreground border-r border-border last:border-r-0">{children}</th>,
-            td: ({ children }) => <td className="px-4 py-2 text-foreground border-r border-border last:border-r-0">{children}</td>,
-            p: ({ children }) => {
-              return <p className="text-base leading-relaxed">{children}</p>;
-            },
-            code: ({ children, node, ...props }: any) => {
-              // Check if this is a citation marker
-              const text = String(children);
-              // Code blocks are wrapped in pre, inline code is not
-              const isInline = !node?.position || (node as any).data?.meta === undefined;
-              
-              if (isInline && text.startsWith('CITE:')) {
-                const refId = parseInt(text.slice(5));
-                return (
-                  <span
-                    onMouseEnter={(e) => handleRefHover(refId, messageId, e)}
-                    onMouseLeave={handleRefLeave}
-                    onClick={(e) => handleRefClick(refId, messageId, e)}
-                    onTouchStart={(e) => handleRefClick(refId, messageId, e)}
-                    className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold cursor-pointer hover:bg-primary/90 active:bg-primary/80 transition-colors mx-1 align-middle relative touch-manipulation"
-                    title={`Reference ${refId}`}
-                    style={{ verticalAlign: 'middle' }}
-                  >
-                    {refId}
-                  </span>
-                );
-              }
-              // Regular inline code
-              return <code className="bg-secondary/50 px-1.5 py-0.5 rounded text-sm">{children}</code>;
-            },
-          }}
-        >
-          {processedContent}
-        </ReactMarkdown>
+        <Suspense fallback={<div className="animate-pulse h-4 bg-secondary/30 rounded w-full" />}>
+          <MarkdownRenderer
+            components={{
+              img: () => null,
+              a: ({ node, children, ...props }) => <span className="text-foreground">{children}</span>,
+              video: () => null,
+              audio: () => null,
+              iframe: () => null,
+              table: ({ children }) => React.createElement('table', { className: 'w-full border-collapse border border-border rounded-lg overflow-hidden' }, children),
+              thead: ({ children }) => React.createElement('thead', { className: 'bg-secondary/50' }, children),
+              tbody: ({ children }) => React.createElement('tbody', null, children),
+              tr: ({ children }) => React.createElement('tr', { className: 'border-b border-border' }, children),
+              th: ({ children }) => React.createElement('th', { className: 'px-4 py-2 text-left font-semibold text-foreground border-r border-border last:border-r-0' }, children),
+              td: ({ children }) => React.createElement('td', { className: 'px-4 py-2 text-foreground border-r border-border last:border-r-0' }, children),
+              p: ({ children }) => {
+                return <p className="text-base leading-relaxed">{children}</p>;
+              },
+              code: ({ children, node, ...props }: any) => {
+                // Check if this is a citation marker
+                const text = String(children);
+                // Code blocks are wrapped in pre, inline code is not
+                const isInline = !node?.position || (node as any).data?.meta === undefined;
+                
+                if (isInline && text.startsWith('CITE:')) {
+                  const refId = parseInt(text.slice(5));
+                  return (
+                    <span
+                      onMouseEnter={(e) => handleRefHover(refId, messageId, e)}
+                      onMouseLeave={handleRefLeave}
+                      onClick={(e) => handleRefClick(refId, messageId, e)}
+                      onTouchStart={(e) => handleRefClick(refId, messageId, e)}
+                      className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold cursor-pointer hover:bg-primary/90 active:bg-primary/80 transition-colors mx-1 align-middle relative touch-manipulation"
+                      title={`Reference ${refId}`}
+                      style={{ verticalAlign: 'middle' }}
+                    >
+                      {refId}
+                    </span>
+                  );
+                }
+                // Regular inline code
+                return <code className="bg-secondary/50 px-1.5 py-0.5 rounded text-sm">{children}</code>;
+              },
+            }}
+          >
+            {processedContent}
+          </MarkdownRenderer>
+        </Suspense>
       </div>
     );
   };

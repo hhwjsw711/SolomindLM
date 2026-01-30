@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import {
   Sparkles,
   Lightbulb,
@@ -9,13 +9,13 @@ import {
   Eye,
   ArrowLeft,
 } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
 import { QuizNote } from '@/shared/types/index';
 import { useSubmitQuizAnswer, useResetQuizAnswers } from '@/features/studio/services/quizzesApi';
 import { sanitizeMarkdown } from '@/shared/utils';
+
+const MarkdownRenderer = lazy(() =>
+  import('@/shared/components/MarkdownRenderer').then((m) => ({ default: m.default }))
+);
 
 export interface QuizViewProps {
   note: QuizNote;
@@ -211,25 +211,25 @@ export const QuizView: React.FC<QuizViewProps> = ({ note, onNoteUpdate, onBack }
                     </div>
 
                     <div className="w-full prose prose-stone dark:prose-invert max-w-none font-serif leading-relaxed text-foreground mb-10 text-lg md:text-2xl">
-                        <ReactMarkdown
-                            remarkPlugins={[remarkGfm, remarkMath]}
-                            rehypePlugins={[rehypeKatex]}
-                            components={{
-                                img: () => null,
-                                a: ({ node, children, ...props }) => <span className="text-foreground">{children}</span>,
-                                video: () => null,
-                                audio: () => null,
-                                iframe: () => null,
-                                table: ({ children }) => <table className="w-full border-collapse border border-border rounded-lg overflow-hidden">{children}</table>,
-                                thead: ({ children }) => <thead className="bg-secondary/50">{children}</thead>,
-                                tbody: ({ children }) => <tbody>{children}</tbody>,
-                                tr: ({ children }) => <tr className="border-b border-border">{children}</tr>,
-                                th: ({ children }) => <th className="px-4 py-2 text-left font-semibold text-foreground border-r border-border last:border-r-0">{children}</th>,
-                                td: ({ children }) => <td className="px-4 py-2 text-foreground border-r border-border last:border-r-0">{children}</td>,
-                            }}
-                        >
-                            {sanitizeMarkdown(currentQuestion.question)}
-                        </ReactMarkdown>
+                        <Suspense fallback={<div className="animate-pulse h-6 bg-secondary/30 rounded w-full" />}>
+                            <MarkdownRenderer
+                                components={{
+                                    img: () => null,
+                                    a: ({ node, children, ...props }) => <span className="text-foreground">{children}</span>,
+                                    video: () => null,
+                                    audio: () => null,
+                                    iframe: () => null,
+                                    table: ({ children }) => <table className="w-full border-collapse border border-border rounded-lg overflow-hidden">{children}</table>,
+                                    thead: ({ children }) => <thead className="bg-secondary/50">{children}</thead>,
+                                    tbody: ({ children }) => <tbody>{children}</tbody>,
+                                    tr: ({ children }) => <tr className="border-b border-border">{children}</tr>,
+                                    th: ({ children }) => <th className="px-4 py-2 text-left font-semibold text-foreground border-r border-border last:border-r-0">{children}</th>,
+                                    td: ({ children }) => <td className="px-4 py-2 text-foreground border-r border-border last:border-r-0">{children}</td>,
+                                }}
+                            >
+                                {sanitizeMarkdown(currentQuestion.question)}
+                            </MarkdownRenderer>
+                        </Suspense>
                     </div>
 
                     <div className="space-y-4 flex-1 pb-10">
@@ -258,26 +258,26 @@ export const QuizView: React.FC<QuizViewProps> = ({ note, onNoteUpdate, onBack }
                                     className={`w-full text-left p-5 md:p-6 rounded-xl border-2 transition-all flex items-center justify-between group ${stateStyles} ${reviewMode ? 'cursor-not-allowed' : ''}`}
                                 >
                                     <div className="flex-1 prose prose-stone dark:prose-invert max-w-none font-serif text-base md:text-lg">
-                                        <ReactMarkdown
-                                            remarkPlugins={[remarkGfm, remarkMath]}
-                                            rehypePlugins={[rehypeKatex]}
-                                            components={{
-                                                img: () => null,
-                                                a: ({ node, children, ...props }) => <span className="text-foreground">{children}</span>,
-                                                video: () => null,
-                                                audio: () => null,
-                                                iframe: () => null,
-                                                table: ({ children }) => <table className="w-full border-collapse border border-border rounded-lg overflow-hidden">{children}</table>,
-                                                thead: ({ children }) => <thead className="bg-secondary/50">{children}</thead>,
-                                                tbody: ({ children }) => <tbody>{children}</tbody>,
-                                                tr: ({ children }) => <tr className="border-b border-border">{children}</tr>,
-                                                th: ({ children }) => <th className="px-4 py-2 text-left font-semibold text-foreground border-r border-border last:border-r-0">{children}</th>,
-                                                td: ({ children }) => <td className="px-4 py-2 text-foreground border-r border-border last:border-r-0">{children}</td>,
-                                                p: ({ children }) => <span className="font-medium">{children}</span>,
-                                            }}
-                                        >
-                                            {sanitizeMarkdown(option)}
-                                        </ReactMarkdown>
+                                        <Suspense fallback={<div className="animate-pulse h-5 bg-secondary/30 rounded w-full" />}>
+                                            <MarkdownRenderer
+                                                components={{
+                                                    img: () => null,
+                                                    a: ({ node, children, ...props }) => <span className="text-foreground">{children}</span>,
+                                                    video: () => null,
+                                                    audio: () => null,
+                                                    iframe: () => null,
+                                                    table: ({ children }) => <table className="w-full border-collapse border border-border rounded-lg overflow-hidden">{children}</table>,
+                                                    thead: ({ children }) => <thead className="bg-secondary/50">{children}</thead>,
+                                                    tbody: ({ children }) => <tbody>{children}</tbody>,
+                                                    tr: ({ children }) => <tr className="border-b border-border">{children}</tr>,
+                                                    th: ({ children }) => <th className="px-4 py-2 text-left font-semibold text-foreground border-r border-border last:border-r-0">{children}</th>,
+                                                    td: ({ children }) => <td className="px-4 py-2 text-foreground border-r border-border last:border-r-0">{children}</td>,
+                                                    p: ({ children }) => <span className="font-medium">{children}</span>,
+                                                }}
+                                            >
+                                                {sanitizeMarkdown(option)}
+                                            </MarkdownRenderer>
+                                        </Suspense>
                                     </div>
                                     {isAnswered && idx === currentQuestion.answer && <CheckCircle2 className="w-5 h-5 text-success" />}
                                     {isAnswered && idx === selectedOption && idx !== currentQuestion.answer && <XCircle className="w-5 h-5 text-destructive" />}
@@ -294,26 +294,26 @@ export const QuizView: React.FC<QuizViewProps> = ({ note, onNoteUpdate, onBack }
                                 <div className="flex-1">
                                     <span className="font-semibold text-base text-vintage-blue-700 dark:text-vintage-blue-700">Explanation</span>
                                     <div className="text-base mt-2 leading-relaxed prose prose-base prose-stone dark:prose-invert max-w-none text-vintage-blue-700 dark:text-vintage-blue-700">
-                                        <ReactMarkdown
-                                            remarkPlugins={[remarkGfm, remarkMath]}
-                                            rehypePlugins={[rehypeKatex]}
-                                            components={{
-                                                img: () => null,
-                                                a: ({ node, children, ...props }) => <span className="text-vintage-blue-700 dark:text-vintage-blue-700">{children}</span>,
-                                                video: () => null,
-                                                audio: () => null,
-                                                iframe: () => null,
-                                                table: ({ children }) => <table className="w-full border-collapse border border-vintage-blue-300 dark:border-vintage-blue-300 rounded-lg overflow-hidden">{children}</table>,
-                                                thead: ({ children }) => <thead className="bg-vintage-blue-200/50 dark:bg-vintage-blue-200/50">{children}</thead>,
-                                                tbody: ({ children }) => <tbody>{children}</tbody>,
-                                                tr: ({ children }) => <tr className="border-b border-vintage-blue-300 dark:border-vintage-blue-300">{children}</tr>,
-                                                th: ({ children }) => <th className="px-4 py-2 text-left font-semibold border-r border-vintage-blue-300 dark:border-vintage-blue-300 last:border-r-0 text-vintage-blue-700 dark:text-vintage-blue-700">{children}</th>,
-                                                td: ({ children }) => <td className="px-4 py-2 border-r border-vintage-blue-300 dark:border-vintage-blue-300 last:border-r-0 text-vintage-blue-700 dark:text-vintage-blue-700">{children}</td>,
-                                                p: ({ children }) => <p className="text-base text-vintage-blue-700 dark:text-vintage-blue-700">{children}</p>,
-                                            }}
-                                        >
-                                            {sanitizeMarkdown(currentQuestion.explanation)}
-                                        </ReactMarkdown>
+                                        <Suspense fallback={<div className="animate-pulse h-4 bg-secondary/30 rounded w-full" />}>
+                                            <MarkdownRenderer
+                                                components={{
+                                                    img: () => null,
+                                                    a: ({ node, children, ...props }) => <span className="text-vintage-blue-700 dark:text-vintage-blue-700">{children}</span>,
+                                                    video: () => null,
+                                                    audio: () => null,
+                                                    iframe: () => null,
+                                                    table: ({ children }) => <table className="w-full border-collapse border border-vintage-blue-300 dark:border-vintage-blue-300 rounded-lg overflow-hidden">{children}</table>,
+                                                    thead: ({ children }) => <thead className="bg-vintage-blue-200/50 dark:bg-vintage-blue-200/50">{children}</thead>,
+                                                    tbody: ({ children }) => <tbody>{children}</tbody>,
+                                                    tr: ({ children }) => <tr className="border-b border-vintage-blue-300 dark:border-vintage-blue-300">{children}</tr>,
+                                                    th: ({ children }) => <th className="px-4 py-2 text-left font-semibold border-r border-vintage-blue-300 dark:border-vintage-blue-300 last:border-r-0 text-vintage-blue-700 dark:text-vintage-blue-700">{children}</th>,
+                                                    td: ({ children }) => <td className="px-4 py-2 border-r border-vintage-blue-300 dark:border-vintage-blue-300 last:border-r-0 text-vintage-blue-700 dark:text-vintage-blue-700">{children}</td>,
+                                                    p: ({ children }) => <p className="text-base text-vintage-blue-700 dark:text-vintage-blue-700">{children}</p>,
+                                                }}
+                                            >
+                                                {sanitizeMarkdown(currentQuestion.explanation)}
+                                            </MarkdownRenderer>
+                                        </Suspense>
                                     </div>
                                 </div>
                             </div>

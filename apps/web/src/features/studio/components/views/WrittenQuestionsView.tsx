@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import {
   MessageSquareText,
   CheckCircle2,
@@ -7,13 +7,13 @@ import {
   Eye,
   ArrowLeft,
 } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
 import { WrittenQuestionsNote, WrittenQuestionAnswer } from '@/shared/types/index';
 import { writtenQuestionsApi, useSubmitWrittenAnswer, useResetWrittenAnswers, useWrittenQuestionSet } from '@/features/studio/services/writtenQuestionsApi';
 import { sanitizeMarkdown } from '@/shared/utils';
+
+const MarkdownRenderer = lazy(() =>
+  import('@/shared/components/MarkdownRenderer').then((m) => ({ default: m.default }))
+);
 
 export interface WrittenQuestionsViewProps {
   note: WrittenQuestionsNote;
@@ -295,33 +295,33 @@ export const WrittenQuestionsView: React.FC<WrittenQuestionsViewProps> = ({ note
 
           {/* Question */}
           <div className="w-full prose prose-stone dark:prose-invert max-w-none font-serif leading-relaxed text-foreground mb-6 text-lg md:text-xl">
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm, remarkMath]}
-              rehypePlugins={[rehypeKatex]}
-              components={{
-                img: () => null,
-                a: ({ node, children, ...props }) => <span className="text-foreground">{children}</span>,
-                video: () => null,
-                audio: () => null,
-                iframe: () => null,
-                table: ({ children }) => (
-                  <table className="w-full border-collapse border border-border rounded-lg overflow-hidden">{children}</table>
-                ),
-                thead: ({ children }) => <thead className="bg-secondary/50">{children}</thead>,
-                tbody: ({ children }) => <tbody>{children}</tbody>,
-                tr: ({ children }) => <tr className="border-b border-border">{children}</tr>,
-                th: ({ children }) => (
-                  <th className="px-4 py-2 text-left font-semibold text-foreground border-r border-border last:border-r-0">
-                    {children}
-                  </th>
-                ),
-                td: ({ children }) => (
-                  <td className="px-4 py-2 text-foreground border-r border-border last:border-r-0">{children}</td>
-                ),
-              }}
-            >
-              {sanitizeMarkdown(currentQuestion.question)}
-            </ReactMarkdown>
+            <Suspense fallback={<div className="animate-pulse h-5 bg-secondary/30 rounded w-full" />}>
+              <MarkdownRenderer
+                components={{
+                  img: () => null,
+                  a: ({ node, children, ...props }) => <span className="text-foreground">{children}</span>,
+                  video: () => null,
+                  audio: () => null,
+                  iframe: () => null,
+                  table: ({ children }) => (
+                    <table className="w-full border-collapse border border-border rounded-lg overflow-hidden">{children}</table>
+                  ),
+                  thead: ({ children }) => <thead className="bg-secondary/50">{children}</thead>,
+                  tbody: ({ children }) => <tbody>{children}</tbody>,
+                  tr: ({ children }) => <tr className="border-b border-border">{children}</tr>,
+                  th: ({ children }) => (
+                    <th className="px-4 py-2 text-left font-semibold text-foreground border-r border-border last:border-r-0">
+                      {children}
+                    </th>
+                  ),
+                  td: ({ children }) => (
+                    <td className="px-4 py-2 text-foreground border-r border-border last:border-r-0">{children}</td>
+                  ),
+                }}
+              >
+                {sanitizeMarkdown(currentQuestion.question)}
+              </MarkdownRenderer>
+            </Suspense>
           </div>
 
           {/* Answer Input or Graded Result */}
