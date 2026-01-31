@@ -1,28 +1,5 @@
-
-import React, { useState, useRef, useEffect } from 'react';
-import {
-  ChevronRight,
-  MoreVertical,
-  AudioLines,
-  GitFork,
-  FileText,
-  Layers,
-  HelpCircle,
-  Pencil,
-  PenTool,
-  Trash2,
-  Play,
-  ArrowLeft,
-  X,
-  Loader2,
-  MessageSquareText,
-  Download,
-  Copy,
-  Presentation,
-  Table2,
-} from 'lucide-react';
-import { StudioTool, Note, isReportNote, isFlashcardNote, isQuizNote, isMindMapNote, isAudioNote, isWrittenQuestionsNote, isSlideDeckNote, isSpreadsheetNote } from '@/shared/types/index';
-import { flashcardsApi } from '../services/flashcardsApi';
+import React, { useState, useEffect } from 'react';
+import { StudioTool, Note } from '@/shared/types/index';
 import { ConfirmDialog, useConfirmDialog } from '@/shared/ui/ConfirmDialog';
 import { CreateReportModal } from './CreateReportModal';
 import { CustomizeFlashcardsModal } from './CustomizeFlashcardsModal';
@@ -31,17 +8,13 @@ import { CustomizeAudioModal } from './CustomizeAudioModal';
 import { CustomizeWrittenQuestionsModal } from './CustomizeWrittenQuestionsModal';
 import { CustomizeSlidesModal } from './CustomizeSlidesModal';
 import { CustomizeSpreadsheetsModal } from './CustomizeSpreadsheetsModal';
-import { ReportView } from './views/ReportView';
-import { FlashcardView } from './views/FlashcardView';
-import { QuizView } from './views/QuizView';
-import { MindMapView } from './views/MindMapView';
-import { WrittenQuestionsView } from './views/WrittenQuestionsView';
-import { SlidesView } from './views/SlidesView';
-import { SpreadsheetView } from './views/SpreadsheetView';
-import { AudioPlayer } from '@/features/audio/components/AudioPlayer';
+import { ResizeHandle } from './ResizeHandle';
+import { StudioPanelHeader } from './StudioPanelHeader';
+import { NoteListView } from './NoteListView';
+import { ActiveNoteView } from './ActiveNoteView';
 import { MiniAudioPlayer } from '@/features/audio/components/MiniAudioPlayer';
 import { useStudioHandlers } from '../hooks/useStudioHandlers';
-import './MindMapStyles.css';
+import { useNoteActions } from '../hooks/useNoteActions';
 
 interface StudioPanelProps {
   isOpen: boolean;
@@ -68,17 +41,10 @@ interface StudioPanelProps {
   onExpandAudioPlayer?: () => void;
 }
 
-const IconMap: Record<string, React.FC<any>> = {
-  AudioLines,
-  GitFork,
-  FileText,
-  Layers,
-  HelpCircle,
-  Presentation,
-  MessageSquareText,
-  Table2,
-};
-
+/**
+ * StudioPanel component - Main studio creation and notes panel.
+ * Refactored to use sub-components for better maintainability.
+ */
 export const StudioPanel: React.FC<StudioPanelProps> = ({
   isOpen,
   onClose,
@@ -99,11 +65,15 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
   onCloseMiniPlayer,
   onExpandAudioPlayer,
 }) => {
-  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editTitle, setEditTitle] = useState("");
+  // State
+  const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
+  const [isMindMapExpanded, setIsMindMapExpanded] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
+  // Derived state
+  const activeNote = notes.find(n => n.id === activeNoteId) || null;
+
+  // Mobile detection
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
@@ -112,15 +82,37 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
-  const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
-  const [isMindMapExpanded, setIsMindMapExpanded] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
 
-  const inputRef = useRef<HTMLInputElement>(null);
-  const activeNote = notes.find(n => n.id === activeNoteId);
+  // Custom event handler for setting active note from external sources
+  useEffect(() => {
+    const handleSetActiveNote = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const noteId = customEvent.detail?.noteId;
+      if (noteId) {
+        const note = notes.find(n => n.id === noteId);
+        // Prevent setting generating notes as active
+        if (note && note.status !== 'generating') {
+          setActiveNoteId(noteId);
+        }
+      }
+    };
+    window.addEventListener('setActiveNote', handleSetActiveNote);
+    return () => window.removeEventListener('setActiveNote', handleSetActiveNote);
+  }, [notes]);
+
+  // Confirm dialog
   const { confirm, ConfirmDialogComponent } = useConfirmDialog();
 
-  // Use custom hook for business logic handlers
+  // Note actions hook (edit, copy, download, delete, export)
+  const noteActions = useNoteActions({
+    activeNote,
+    notes,
+    onUpdateNote,
+    onDeleteNote,
+    confirm,
+  });
+
+  // Studio handlers hook (modals, creation flows)
   const {
     isReportModalOpen,
     isFlashcardModalOpen,
@@ -157,606 +149,136 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
     confirm,
   });
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (activeMenuId && !(event.target as Element).closest('.kebab-menu')) {
-        setActiveMenuId(null);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [activeMenuId]);
-
-  useEffect(() => {
-    const handleSetActiveNote = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      const noteId = customEvent.detail?.noteId;
-      if (noteId) {
-        const note = notes.find(n => n.id === noteId);
-        // Prevent setting generating notes as active
-        if (note && note.status !== 'generating') {
-          setActiveNoteId(noteId);
-        }
-      }
-    };
-    window.addEventListener('setActiveNote', handleSetActiveNote);
-    return () => window.removeEventListener('setActiveNote', handleSetActiveNote);
-  }, [notes]);
-
-  useEffect(() => {
-    if (editingId && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [editingId]);
-
-  const handleStartEdit = (note: Note) => {
-    setEditingId(note.id);
-    setEditTitle(note.title);
-    setActiveMenuId(null);
-  };
-
-  const handleSaveEdit = () => {
-    if (editingId && editTitle.trim()) {
-      onUpdateNote(editingId, editTitle.trim());
-    }
-    setEditingId(null);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') handleSaveEdit();
-    if (e.key === 'Escape') setEditingId(null);
-  };
-
-  const reportContent = activeNote && isReportNote(activeNote) ? activeNote.content : undefined;
-  const canCopyOrDownloadReport = Boolean(reportContent);
-
-  const handleCopyReport = async () => {
-    if (!reportContent) return;
-    try {
-      await navigator.clipboard.writeText(reportContent);
-    } catch (err) {
-      console.error('Copy failed:', err);
-    }
-  };
-
-  const handleDownloadReport = () => {
-    if (!reportContent || !activeNote) return;
-    const safeName = activeNote.title.replace(/[\\/:*?"<>|]/g, '_').trim() || 'report';
-    const filename = `${safeName}.md`;
-    const blob = new Blob([reportContent], { type: 'text/markdown;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const handleDeleteNoteWithConfirmation = async (note: Note) => {
-    const confirmed = await confirm(
-      'Delete Note',
-      `Are you sure you want to delete "${note.title}"? This action cannot be undone.`,
-      { confirmText: 'Delete', cancelText: 'Cancel', variant: 'danger' }
-    );
-    if (confirmed) {
-      onDeleteNote(note.id);
-    }
-  };
-
+  // Handle note click (for viewing)
   const handleNoteClick = (note: Note) => {
     // Prevent clicking on generating notes
     if (note.status === 'generating') {
       return;
     }
-    if (note.type === 'quiz' || note.type === 'flashcard' || note.type === 'report' || note.type === 'mindmap' || note.type === 'audio' || note.type === 'writtenQuestions' || note.type === 'slides' || note.type === 'spreadsheet') {
-        setActiveNoteId(note.id);
+    if (note.type === 'quiz' || note.type === 'flashcard' || note.type === 'report' ||
+        note.type === 'mindmap' || note.type === 'audio' || note.type === 'writtenQuestions' ||
+        note.type === 'slides' || note.type === 'spreadsheet') {
+      setActiveNoteId(note.id);
     }
   };
 
-  const handleExportFlashcards = async () => {
-    if (!activeNote || !isFlashcardNote(activeNote)) return;
-
-    try {
-      setIsExporting(true);
-      await flashcardsApi.exportFlashcardsCSV(activeNote.id, activeNote.title, activeNote.flashcards);
-    } catch (error) {
-      console.error('Failed to export flashcards:', error);
-      alert('Failed to export flashcards. Please try again.');
-    } finally {
-      setIsExporting(false);
+  // Handle play audio from note item
+  const handlePlayAudioFromNote = (note: Note) => {
+    if (note.type === 'audio' && note.metadata.audioUrl) {
+      onPlayAudio?.(note.metadata.audioUrl, note.title, note.content, note.id);
     }
   };
+
+  // Handle rename from header
+  const handleRenameSubmit = (id: string, newTitle: string) => {
+    onUpdateNote(id, newTitle);
+    noteActions.handleEditCancel();
+  };
+
+  // Handle edit start from header
+  const handleEditStartFromHeader = () => {
+    if (activeNote) {
+      noteActions.handleStartEdit(activeNote);
+    }
+  };
+
+  // Handle back button
+  const handleBack = () => {
+    setActiveNoteId(null);
+  };
+
+  if (!isOpen) {
+    return <>{miniPlayerVisible && miniPlayerData && (
+      <MiniAudioPlayer
+        audioUrl={miniPlayerData.audioUrl}
+        title={miniPlayerData.title}
+        transcript={miniPlayerData.transcript}
+        isVisible={miniPlayerVisible}
+        onClose={onCloseMiniPlayer || (() => {})}
+        onExpand={onExpandAudioPlayer || (() => {})}
+      />
+    )}</>;
+  }
 
   return (
-    <><div
-      style={{ 
-        width: isOpen ? (isMobile ? '100%' : width) : 0 
-      }}
-      className={`
-        relative shrink-0 bg-sidebar border-l-2 border-border h-full flex flex-col
-        overflow-hidden
-        ${isOpen ? 'opacity-100' : 'opacity-0'}
-        md:w-auto w-full max-w-full
-      `}
-    >
-      {/* Resize Handle */}
-      {isOpen && (
-        <div
-          className="absolute top-0 left-0 w-1.5 h-full cursor-col-resize hover:bg-primary/50 z-50 transition-colors active:bg-primary/70 group"
-          onMouseDown={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const startX = e.clientX;
-            const startWidth = width;
-            let animationFrameId: number | null = null;
-            
-            const handleMouseMove = (moveEvent: MouseEvent) => {
-              if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-              }
-              
-              animationFrameId = requestAnimationFrame(() => {
-                // When dragging left, positive movement expands, negative contracts
-                const delta = -(moveEvent.clientX - startX);
-                // Max width is 70% of screen width or 1400px, whichever is smaller
-                const maxWidth = Math.min(window.innerWidth * 0.7, 1400);
-                const newWidth = Math.max(220, Math.min(maxWidth, startWidth + delta));
-                // Dispatch custom event that parent can listen to
-                window.dispatchEvent(new CustomEvent('resizeStudioPanel', { detail: { width: newWidth } }));
-              });
-            };
-            
-            const handleMouseUp = () => {
-              if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-              }
-              document.removeEventListener('mousemove', handleMouseMove);
-              document.removeEventListener('mouseup', handleMouseUp);
-              document.body.style.userSelect = '';
-              document.body.style.cursor = '';
-            };
-            
-            document.body.style.userSelect = 'none';
-            document.body.style.cursor = 'col-resize';
-            document.addEventListener('mousemove', handleMouseMove);
-            document.addEventListener('mouseup', handleMouseUp);
-          }}
+    <>
+      <div
+        style={{
+          width: isMobile ? '100%' : width
+        }}
+        className={`
+          relative shrink-0 bg-sidebar border-l-2 border-border h-full flex flex-col
+          overflow-hidden
+          opacity-100
+          md:w-auto w-full max-w-full
+        `}
+      >
+        {/* Resize Handle */}
+        <ResizeHandle width={width} position="left" />
+
+        {/* Header */}
+        <StudioPanelHeader
+          activeNote={activeNote}
+          onBack={handleBack}
+          onClose={onClose}
+          editingId={noteActions.editingId}
+          editTitle={noteActions.editTitle}
+          onEditTitleChange={noteActions.setEditTitle}
+          onRenameSubmit={handleRenameSubmit}
+          onEditStart={handleEditStartFromHeader}
+          onEditCancel={noteActions.handleEditCancel}
+          onCopyReport={noteActions.handleCopyReport}
+          onDownloadReport={noteActions.handleDownloadReport}
+          onExportFlashcards={noteActions.handleExportFlashcards}
+          canCopyOrDownload={noteActions.canCopyOrDownloadReport}
+          canExportFlashcards={noteActions.canExportFlashcards}
+          isExporting={noteActions.isExporting}
+          isMobile={isMobile}
         />
-      )}
-      
-      {/* Mobile Header */}
-      <div className="flex md:hidden items-center justify-between gap-2 p-4 border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-20 h-14 shrink-0">
-        {activeNote ? (
-          <>
-            <div className="flex items-center gap-2 text-foreground overflow-hidden min-w-0 flex-1">
-              <button
-                onClick={() => setActiveNoteId(null)}
-                className="p-1.5 hover:bg-secondary rounded-md transition-colors text-foreground flex items-center justify-center shrink-0"
-                aria-label="Back to Studio"
-              >
-                <ArrowLeft className="w-5 h-5 shrink-0" />
-              </button>
-              {editingId === activeNote.id ? (
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={editTitle}
-                  spellCheck={false}
-                  onChange={(e) => setEditTitle(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && editTitle.trim()) {
-                      onUpdateNote(activeNote.id, editTitle.trim());
-                      setEditingId(null);
-                    } else if (e.key === 'Escape') {
-                      setEditTitle(activeNote.title);
-                      setEditingId(null);
-                    }
-                  }}
-                  onBlur={() => {
-                    if (editTitle.trim()) {
-                      onUpdateNote(activeNote.id, editTitle.trim());
-                    } else {
-                      setEditTitle(activeNote.title);
-                    }
-                    setEditingId(null);
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                  className="flex-1 min-w-0 font-sans font-bold text-sm tracking-wide bg-transparent border-0 border-b border-border rounded-none px-0 py-0.5 text-foreground focus:outline-none focus:ring-0 focus:border-primary"
-                  aria-label="Rename"
-                  autoFocus
-                />
-              ) : (
-                <span className="font-sans font-bold text-sm tracking-wide truncate text-foreground">
-                  {activeNote.title}
-                </span>
-              )}
-            </div>
-            {isReportNote(activeNote) && (
-              <div className="flex items-center gap-1 shrink-0">
-                <button
-                  type="button"
-                  onClick={handleCopyReport}
-                  disabled={!canCopyOrDownloadReport}
-                  className="p-2 hover:bg-secondary rounded-md transition-colors text-foreground/70 hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed"
-                  title="Copy report as Markdown"
-                  aria-label="Copy report as Markdown"
-                >
-                  <Copy className="w-4 h-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDownloadReport}
-                  disabled={!canCopyOrDownloadReport}
-                  className="p-2 hover:bg-secondary rounded-md transition-colors text-foreground/70 hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed"
-                  title="Download report as Markdown file"
-                  aria-label="Download report as Markdown file"
-                >
-                  <Download className="w-4 h-4" />
-                </button>
-              </div>
-            )}
-            {isFlashcardNote(activeNote) && (
-              <div className="flex items-center gap-1 shrink-0">
-                <button
-                  type="button"
-                  onClick={handleExportFlashcards}
-                  disabled={isExporting}
-                  className="p-2 hover:bg-secondary rounded-md transition-colors text-foreground/70 hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed"
-                  title="Download flashcards as CSV"
-                  aria-label="Download flashcards as CSV"
-                >
-                  {isExporting ? (
-                    <Loader2 className="w-4 h-4 animate-spin shrink-0" aria-hidden />
-                  ) : (
-                    <Download className="w-4 h-4" />
-                  )}
-                </button>
-              </div>
-            )}
-          </>
-        ) : (
-          <>
-            <div className="flex items-center gap-2 text-foreground">
-              <PenTool className="w-4 h-4 shrink-0" />
-              <span className="font-sans font-bold text-sm tracking-wide uppercase">Studio</span>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-1.5 hover:bg-secondary rounded-md transition-colors text-foreground/70 hover:text-foreground flex items-center justify-center shrink-0"
-              aria-label="Close Studio panel"
-            >
-              <ChevronRight className="w-5 h-5 shrink-0" />
-            </button>
-          </>
+
+        {/* Main Content */}
+        <div className={`flex-1 w-full relative ${miniPlayerVisible ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+          {activeNote ? (
+            <ActiveNoteView
+              activeNote={activeNote}
+              isMindMapExpanded={isMindMapExpanded}
+              onToggleMindMap={() => setIsMindMapExpanded(!isMindMapExpanded)}
+              onUpdateNoteFull={onUpdateNoteFull}
+              isMobile={isMobile}
+              onBack={handleBack}
+            />
+          ) : (
+            <NoteListView
+              tools={tools}
+              notes={notes}
+              activeNoteId={activeNoteId}
+              width={width}
+              onToolClick={handleToolClick}
+              onNoteClick={handleNoteClick}
+              onDeleteNote={noteActions.handleDeleteNote}
+              onPlayAudio={handlePlayAudioFromNote}
+              editingId={noteActions.editingId}
+              editTitle={noteActions.editTitle}
+              onEditTitleChange={noteActions.setEditTitle}
+              onEditStart={noteActions.handleStartEdit}
+              onEditSave={noteActions.handleSaveEdit}
+              onEditCancel={noteActions.handleEditCancel}
+              onEditKeyDown={noteActions.handleKeyDown}
+            />
+          )}
+        </div>
+
+        {/* Mini Audio Player */}
+        {miniPlayerVisible && miniPlayerData && (
+          <MiniAudioPlayer
+            audioUrl={miniPlayerData.audioUrl}
+            title={miniPlayerData.title}
+            transcript={miniPlayerData.transcript}
+            isVisible={miniPlayerVisible}
+            onClose={onCloseMiniPlayer || (() => {})}
+            onExpand={onExpandAudioPlayer || (() => {})}
+          />
         )}
-      </div>
-
-      {/* Desktop Header */}
-      <div className="hidden md:flex items-center justify-between p-4 border-b border-border bg-sidebar/50 backdrop-blur-sm sticky top-0 z-10 h-14">
-        {activeNote ? (
-            <>
-              <div className="flex items-center gap-2 text-sidebar-foreground overflow-hidden min-w-0 flex-1">
-                <button
-                  onClick={() => setActiveNoteId(null)}
-                  className="p-1 -ml-1 hover:bg-sidebar-accent rounded-sm transition-colors text-sidebar-foreground/70 hover:text-sidebar-foreground flex items-center justify-center shrink-0"
-                >
-                  <ArrowLeft className="w-5 h-5 shrink-0" />
-                </button>
-                {editingId === activeNote.id ? (
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    value={editTitle}
-                    spellCheck={false}
-                    onChange={(e) => setEditTitle(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && editTitle.trim()) {
-                        onUpdateNote(activeNote.id, editTitle.trim());
-                        setEditingId(null);
-                      } else if (e.key === 'Escape') {
-                        setEditTitle(activeNote.title);
-                        setEditingId(null);
-                      }
-                    }}
-                    onBlur={() => {
-                      if (editTitle.trim()) {
-                        onUpdateNote(activeNote.id, editTitle.trim());
-                      } else {
-                        setEditTitle(activeNote.title);
-                      }
-                      setEditingId(null);
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                    className="flex-1 min-w-0 font-sans font-bold text-sm tracking-wide bg-transparent border-0 border-b border-border rounded-none px-0 py-0.5 text-sidebar-foreground focus:outline-none focus:ring-0 focus:border-primary"
-                    aria-label="Rename"
-                    autoFocus
-                  />
-                ) : (
-                  <span
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => handleStartEdit(activeNote)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        handleStartEdit(activeNote);
-                      }
-                    }}
-                    className="font-sans font-bold text-sm tracking-wide truncate text-left min-w-0 flex-1 cursor-text hover:opacity-80 hover:underline hover:decoration-dotted hover:underline-offset-2 transition-opacity outline-none focus:outline-none focus:opacity-80 bg-transparent"
-                    title="Click to rename"
-                  >
-                    {activeNote.title}
-                  </span>
-                )}
-              </div>
-              {isReportNote(activeNote) && (
-                <div className="flex items-center gap-1 shrink-0">
-                  <button
-                    type="button"
-                    onClick={handleCopyReport}
-                    disabled={!canCopyOrDownloadReport}
-                    className="p-2 hover:bg-sidebar-accent rounded-sm transition-colors text-sidebar-foreground/70 hover:text-sidebar-foreground disabled:opacity-40 disabled:cursor-not-allowed"
-                    title="Copy report as Markdown"
-                    aria-label="Copy report as Markdown"
-                  >
-                    <Copy className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleDownloadReport}
-                    disabled={!canCopyOrDownloadReport}
-                    className="p-2 hover:bg-sidebar-accent rounded-sm transition-colors text-sidebar-foreground/70 hover:text-sidebar-foreground disabled:opacity-40 disabled:cursor-not-allowed"
-                    title="Download report as Markdown file"
-                    aria-label="Download report as Markdown file"
-                  >
-                    <Download className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
-              {isFlashcardNote(activeNote) && (
-                <div className="flex items-center gap-1 shrink-0">
-                  <button
-                    type="button"
-                    onClick={handleExportFlashcards}
-                    disabled={isExporting}
-                    className="p-2 hover:bg-sidebar-accent rounded-sm transition-colors text-sidebar-foreground/70 hover:text-sidebar-foreground disabled:opacity-40 disabled:cursor-not-allowed"
-                    title="Download flashcards as CSV"
-                    aria-label="Download flashcards as CSV"
-                  >
-                    {isExporting ? (
-                      <Loader2 className="w-4 h-4 animate-spin shrink-0" aria-hidden />
-                    ) : (
-                      <Download className="w-4 h-4" />
-                    )}
-                  </button>
-                </div>
-              )}
-            </>
-        ) : (
-            <>
-                <button
-                  onClick={onClose}
-                  className="p-1 hover:bg-sidebar-accent rounded-sm transition-colors text-sidebar-foreground/70 hover:text-sidebar-foreground flex items-center justify-center shrink-0"
-                >
-                  <ChevronRight className="w-5 h-5 shrink-0" />
-                </button>
-                <div className="flex items-center gap-2 text-sidebar-foreground">
-                  <PenTool className="w-4 h-4 shrink-0" />
-                  <span className="font-sans font-bold text-sm tracking-wide uppercase">Studio</span>
-                </div>
-            </>
-        )}
-      </div>
-
-      <div className={`flex-1 w-full relative ${miniPlayerVisible ? 'overflow-hidden' : 'overflow-y-auto'}`}>
-        {activeNote ? (
-            <div className="h-full">
-                {isReportNote(activeNote) && <ReportView note={activeNote} onBack={undefined} />}
-                {isFlashcardNote(activeNote) && <FlashcardView note={activeNote} onBack={undefined} />}
-                {isQuizNote(activeNote) && <QuizView note={activeNote} onNoteUpdate={(updatedNote) => onUpdateNoteFull?.(activeNote.id, updatedNote)} onBack={isMobile ? () => setActiveNoteId(null) : undefined} />}
-                {isMindMapNote(activeNote) && (
-                  <MindMapView
-                    note={activeNote}
-                    isExpanded={isMindMapExpanded}
-                    onToggleExpanded={() => setIsMindMapExpanded(!isMindMapExpanded)}
-                    onBack={isMobile ? () => setActiveNoteId(null) : undefined}
-                  />
-                )}
-                {isAudioNote(activeNote) && activeNote.status === 'completed' && activeNote.metadata.audioUrl && (
-                  <AudioPlayer
-                    audioUrl={activeNote.metadata.audioUrl}
-                    transcript={activeNote.content}
-                    title={activeNote.title}
-                    onBack={isMobile ? () => setActiveNoteId(null) : undefined}
-                  />
-                )}
-                {isAudioNote(activeNote) && activeNote.status === 'failed' && (
-                  <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
-                    <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
-                      <X className="w-6 h-6 text-destructive" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-destructive">Generation Failed</h3>
-                      <p className="text-sm text-muted-foreground mt-1">{activeNote.metadata.error || 'An error occurred while generating the audio overview'}</p>
-                    </div>
-                  </div>
-                )}
-                {isWrittenQuestionsNote(activeNote) && <WrittenQuestionsView note={activeNote} onNoteUpdate={(updatedNote) => onUpdateNoteFull?.(activeNote.id, updatedNote)} onBack={isMobile ? () => setActiveNoteId(null) : undefined} />}
-                {isSlideDeckNote(activeNote) && <SlidesView note={activeNote} onNoteUpdate={(updatedNote) => onUpdateNoteFull?.(activeNote.id, updatedNote)} onBack={isMobile ? () => setActiveNoteId(null) : undefined} />}
-                {isSpreadsheetNote(activeNote) && <SpreadsheetView note={activeNote} onBack={isMobile ? () => setActiveNoteId(null) : undefined} />}
-            </div>
-        ) : (
-            <div className="p-4 space-y-8">
-                <div className="space-y-3">
-                  <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-1 font-sans">Create</h3>
-                  <div className={`grid gap-3 ${width > 450 ? 'grid-cols-3' : 'grid-cols-2'}`}>
-                    {tools.map((tool) => {
-                      const Icon = IconMap[tool.iconName] || FileText;
-                      return (
-                        <div
-                          key={tool.id}
-                          onClick={() => handleToolClick(tool.id)}
-                          className="group flex flex-col justify-between p-3 h-24 bg-card border border-border rounded-lg hover:shadow-md hover:border-primary/50 transition-all cursor-pointer"
-                        >
-                           <div className="flex justify-between items-start w-full">
-                             <Icon className={`w-5 h-5 ${tool.color} opacity-90 group-hover:scale-110 transition-transform`} />
-                           </div>
-                           <span className="text-sm font-medium text-foreground leading-tight font-sans tracking-tight">{tool.label}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between px-1">
-                     <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest font-sans">Saved</h3>
-                  </div>
-                  <div className="space-y-3">
-                    {notes.map((note) => {
-                      const isGenerating = note.status === 'generating';
-                      return (
-                      <div
-                        key={note.id}
-                        onClick={() => handleNoteClick(note)}
-                        className={`relative bg-card border-l-4 border-l-primary border-y border-r border-border p-3 pl-4 shadow-sm transition-shadow group rounded-r-sm ${
-                          isGenerating 
-                            ? 'opacity-60 cursor-not-allowed' 
-                            : 'hover:shadow-md cursor-pointer'
-                        }`}
-                      >
-                        <div className="flex justify-between items-start gap-3">
-                          <div className="flex-1 flex gap-3 min-w-0">
-                            {note.status === 'generating' ? (
-                              <div className="shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                                <Loader2 className="w-4 h-4 text-primary animate-spin" />
-                              </div>
-                            ) : (
-                              <>
-                                {note.type === 'audio' && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      if (isAudioNote(note) && note.status === 'completed' && note.metadata.audioUrl) {
-                                        onPlayAudio?.(note.metadata.audioUrl, note.title, note.content, note.id);
-                                      }
-                                    }}
-                                    className="shrink-0 w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-all group/play"
-                                  >
-                                    <Play className="w-3.5 h-3.5 fill-current ml-0.5 shrink-0" />
-                                  </button>
-                                )}
-                                {note.type === 'flashcard' && (
-                                  <div className="shrink-0 w-8 h-8 rounded-lg bg-red-500/10 text-red-700 flex items-center justify-center">
-                                    <Layers className="w-4 h-4 shrink-0" />
-                                  </div>
-                                )}
-                                {note.type === 'report' && (
-                                  <div className="shrink-0 w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center">
-                                    <FileText className="w-4 h-4 shrink-0" />
-                                  </div>
-                                )}
-                                {note.type === 'quiz' && (
-                                  <div className="shrink-0 w-8 h-8 rounded-lg bg-blue-500/10 text-blue-700 flex items-center justify-center">
-                                    <HelpCircle className="w-4 h-4 shrink-0" />
-                                  </div>
-                                )}
-                                {note.type === 'mindmap' && (
-                                  <div className="shrink-0 w-8 h-8 rounded-lg bg-fuchsia-500/10 text-fuchsia-600 flex items-center justify-center">
-                                    <GitFork className="w-4 h-4 shrink-0" />
-                                  </div>
-                                )}
-                                {note.type === 'writtenQuestions' && (
-                                  <div className="shrink-0 w-8 h-8 rounded-lg bg-green-500/10 text-green-700 flex items-center justify-center">
-                                    <MessageSquareText className="w-4 h-4 shrink-0" />
-                                  </div>
-                                )}
-                                {note.type === 'slides' && (
-                                  <div className="shrink-0 w-8 h-8 rounded-lg bg-violet-500/10 text-violet-600 flex items-center justify-center">
-                                    <Presentation className="w-4 h-4 shrink-0" />
-                                  </div>
-                                )}
-                                {note.type === 'spreadsheet' && (
-                                  <div className="shrink-0 w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-600 flex items-center justify-center">
-                                    <Table2 className="w-4 h-4 shrink-0" />
-                                  </div>
-                                )}
-                              </>
-                            )}
-                            <div className="flex-1 min-w-0">
-                                {editingId === note.id ? (
-                                    <input
-                                        ref={inputRef}
-                                        value={editTitle}
-                                        onChange={(e) => setEditTitle(e.target.value)}
-                                        onBlur={handleSaveEdit}
-                                        onKeyDown={handleKeyDown}
-                                        onClick={(e) => e.stopPropagation()}
-                                        className="w-full bg-transparent border-b border-primary text-sm font-bold text-foreground font-serif focus:outline-none mb-1 p-0 rounded-none"
-                                    />
-                                ) : (
-                                    <h4 className={`text-sm font-bold text-foreground font-serif truncate leading-tight mb-1 transition-colors ${
-                                      isGenerating ? '' : 'group-hover:text-primary'
-                                    }`}>{note.title}</h4>
-                                )}
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                  {note.status === 'generating' ? (
-                                    <span className="font-mono tracking-tight text-primary italic">Generating...</span>
-                                  ) : (
-                                    <span className="font-mono tracking-tight">{note.preview}</span>
-                                  )}
-                                </div>
-                            </div>
-                          </div>
-                          <div className="relative kebab-menu shrink-0">
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setActiveMenuId(activeMenuId === note.id ? null : note.id);
-                                }}
-                                className="text-muted-foreground hover:text-foreground p-1 rounded-sm hover:bg-secondary transition-colors flex items-center justify-center shrink-0"
-                            >
-                              <MoreVertical className="w-3.5 h-3.5 shrink-0" />
-                            </button>
-                            {activeMenuId === note.id && (
-                                <div className="absolute right-0 top-6 w-36 bg-popover border border-border shadow-lg rounded-md z-50 py-1 animate-in fade-in zoom-in-95 duration-100">
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); handleStartEdit(note); }}
-                                        className="w-full text-left px-3 py-2 text-xs hover:bg-accent text-popover-foreground flex items-center gap-2"
-                                    >
-                                        <Pencil className="w-3.5 h-3.5 shrink-0" /> Rename
-                                    </button>
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); handleDeleteNoteWithConfirmation(note); setActiveMenuId(null); }}
-                                        className="w-full text-left px-3 py-2 text-xs hover:bg-destructive/10 text-destructive flex items-center gap-2"
-                                    >
-                                        <Trash2 className="w-3.5 h-3.5 shrink-0" /> Delete
-                                    </button>
-                                </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      );
-                    })}
-                  </div>
-                </div>
-            </div>
-        )}
-      </div>
-
-      {/* Mini Audio Player */}
-      {miniPlayerVisible && miniPlayerData && (
-        <MiniAudioPlayer
-          audioUrl={miniPlayerData.audioUrl}
-          title={miniPlayerData.title}
-          transcript={miniPlayerData.transcript}
-          isVisible={miniPlayerVisible}
-          onClose={onCloseMiniPlayer || (() => {})}
-          onExpand={onExpandAudioPlayer || (() => {})}
-        />
-      )}
       </div>
 
       {/* Modals */}
@@ -801,6 +323,8 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
         onClose={() => setIsSpreadsheetsModalOpen(false)}
         onGenerate={handleCreateSpreadsheet}
       />
+
       <ConfirmDialogComponent />
-    </>);
+    </>
+  );
 };

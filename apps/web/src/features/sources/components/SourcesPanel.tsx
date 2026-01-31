@@ -154,14 +154,20 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
     }
   };
 
-  const handleBack = () => {
-    if (viewingSource && renamingId !== viewingSource.id) {
+  const handleBackToList = () => {
+    setViewingSourceId(null);
+    setRenamingId(null);
+  };
+
+  const handleEnterRename = () => {
+    if (viewingSource) {
       setRenamingId(viewingSource.id);
       setRenameValue(viewingSource.title);
-    } else {
-      setViewingSourceId(null);
-      setRenamingId(null);
     }
+  };
+
+  const handleExitRename = () => {
+    setRenamingId(null);
   };
 
   const handleCopy = async () => {
@@ -230,7 +236,9 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
       >
         <SourcesPanelHeader
           viewingSource={viewingSource}
-          onBack={handleBack}
+          onBackToList={handleBackToList}
+          onEnterRename={handleEnterRename}
+          onExitRename={handleExitRename}
           onClose={onClose}
           selectedCount={selectedCount}
           onCopy={handleCopy}

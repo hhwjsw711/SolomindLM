@@ -4,7 +4,9 @@ import { Source } from '@/shared/types';
 
 interface SourcesPanelHeaderProps {
   viewingSource: Source | null;
-  onBack: () => void;
+  onBackToList: () => void;
+  onEnterRename: () => void;
+  onExitRename: () => void;
   onClose: () => void;
   selectedCount: number;
   onCopy: () => void;
@@ -19,7 +21,9 @@ interface SourcesPanelHeaderProps {
 
 export const SourcesPanelHeader: React.FC<SourcesPanelHeaderProps> = ({
   viewingSource,
-  onBack,
+  onBackToList,
+  onEnterRename,
+  onExitRename,
   onClose,
   selectedCount,
   onCopy,
@@ -43,14 +47,15 @@ export const SourcesPanelHeader: React.FC<SourcesPanelHeaderProps> = ({
       <div className="flex md:hidden items-center justify-between gap-2 p-4 border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-20 h-14 shrink-0">
         {viewingSource ? (
           <>
-            <div className="flex items-center gap-2 text-foreground overflow-hidden min-w-0 flex-1">
+            <div className="flex items-center gap-3 text-foreground overflow-hidden min-w-0 flex-1">
               <button
-                onClick={onBack}
+                onClick={onBackToList}
                 className="p-1.5 hover:bg-secondary rounded-md transition-colors text-foreground flex items-center justify-center shrink-0"
                 aria-label="Back to sources"
               >
-                <ChevronLeft className="w-5 h-5" />
+                <ChevronLeft className="w-5 h-5 shrink-0" />
               </button>
+              <div className="min-w-0 flex-1 overflow-hidden">
               {isRenaming ? (
                 <input
                   type="text"
@@ -62,7 +67,7 @@ export const SourcesPanelHeader: React.FC<SourcesPanelHeaderProps> = ({
                       onRenameSubmit(viewingSource.id, renameValue.trim());
                     } else if (e.key === 'Escape') {
                       onRenameChange(viewingSource.title);
-                      onBack();
+                      onExitRename();
                     }
                   }}
                   onBlur={() => {
@@ -71,7 +76,7 @@ export const SourcesPanelHeader: React.FC<SourcesPanelHeaderProps> = ({
                     } else {
                       onRenameChange(viewingSource.title);
                     }
-                    onBack();
+                    onExitRename();
                   }}
                   onClick={(e) => e.stopPropagation()}
                   className="flex-1 min-w-0 font-sans font-bold text-sm tracking-wide bg-transparent border-0 border-b border-border rounded-none px-0 py-0.5 text-foreground focus:outline-none focus:ring-0 focus:border-primary"
@@ -84,13 +89,13 @@ export const SourcesPanelHeader: React.FC<SourcesPanelHeaderProps> = ({
                   tabIndex={0}
                   onClick={() => {
                     onRenameChange(viewingSource.title);
-                    onBack();
+                    onEnterRename();
                   }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
                       onRenameChange(viewingSource.title);
-                      onBack();
+                      onEnterRename();
                     }
                   }}
                   className="font-sans font-bold text-sm tracking-wide truncate text-foreground cursor-text hover:opacity-80"
@@ -99,6 +104,7 @@ export const SourcesPanelHeader: React.FC<SourcesPanelHeaderProps> = ({
                   {viewingSource.title}
                 </span>
               )}
+              </div>
             </div>
             <div className="flex items-center gap-1 shrink-0">
               <button
@@ -124,22 +130,13 @@ export const SourcesPanelHeader: React.FC<SourcesPanelHeaderProps> = ({
             </div>
           </>
         ) : (
-          <>
-            <div className="flex items-center gap-2 text-foreground">
-              <FileStack className="w-4 h-4" />
-              <span className="font-sans font-bold text-sm tracking-wide uppercase">Sources</span>
-              <span className="ml-2 text-xs text-muted-foreground bg-sidebar-accent px-1.5 py-0.5 rounded-full font-mono">
-                {selectedCount}
-              </span>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-1.5 hover:bg-secondary rounded-md transition-colors text-foreground/70 hover:text-foreground flex items-center justify-center shrink-0"
-              aria-label="Close sources panel"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-          </>
+          <div className="flex items-center gap-2 text-foreground">
+            <FileStack className="w-4 h-4" />
+            <span className="font-sans font-bold text-sm tracking-wide uppercase">Sources</span>
+            <span className="ml-2 text-xs text-muted-foreground bg-sidebar-accent px-1.5 py-0.5 rounded-full font-mono">
+              {selectedCount}
+            </span>
+          </div>
         )}
       </div>
 
@@ -147,13 +144,14 @@ export const SourcesPanelHeader: React.FC<SourcesPanelHeaderProps> = ({
       <div className="hidden md:flex items-center justify-between p-4 border-b border-border bg-sidebar/50 backdrop-blur-sm sticky top-0 z-10 h-14">
         {viewingSource ? (
           <>
-            <div className="flex items-center gap-2 text-sidebar-foreground overflow-hidden min-w-0 flex-1">
+            <div className="flex items-center gap-3 text-sidebar-foreground overflow-hidden min-w-0 flex-1">
               <button
-                onClick={onBack}
-                className="p-1 -ml-1 hover:bg-sidebar-accent rounded-sm transition-colors text-sidebar-foreground/70 hover:text-sidebar-foreground shrink-0"
+                onClick={onBackToList}
+                className="p-1 hover:bg-sidebar-accent rounded-sm transition-colors text-sidebar-foreground/70 hover:text-sidebar-foreground shrink-0"
               >
-                <ChevronLeft className="w-5 h-5" />
+                <ChevronLeft className="w-5 h-5 shrink-0" />
               </button>
+              <div className="min-w-0 flex-1 overflow-hidden">
               {isRenaming ? (
                 <input
                   type="text"
@@ -165,7 +163,7 @@ export const SourcesPanelHeader: React.FC<SourcesPanelHeaderProps> = ({
                       onRenameSubmit(viewingSource.id, renameValue.trim());
                     } else if (e.key === 'Escape') {
                       onRenameChange(viewingSource.title);
-                      onBack();
+                      onExitRename();
                     }
                   }}
                   onBlur={() => {
@@ -174,7 +172,7 @@ export const SourcesPanelHeader: React.FC<SourcesPanelHeaderProps> = ({
                     } else {
                       onRenameChange(viewingSource.title);
                     }
-                    onBack();
+                    onExitRename();
                   }}
                   onClick={(e) => e.stopPropagation()}
                   className="flex-1 min-w-0 font-sans font-bold text-sm tracking-wide bg-transparent border-0 border-b border-border rounded-none px-0 py-0.5 text-sidebar-foreground focus:outline-none focus:ring-0 focus:border-primary"
@@ -187,13 +185,13 @@ export const SourcesPanelHeader: React.FC<SourcesPanelHeaderProps> = ({
                   tabIndex={0}
                   onClick={() => {
                     onRenameChange(viewingSource.title);
-                    onBack();
+                    onEnterRename();
                   }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
                       onRenameChange(viewingSource.title);
-                      onBack();
+                      onEnterRename();
                     }
                   }}
                   className="font-sans font-bold text-sm tracking-wide truncate text-left min-w-0 flex-1 cursor-text hover:opacity-80 hover:underline hover:decoration-dotted hover:underline-offset-2 transition-opacity outline-none focus:outline-none focus:opacity-80 bg-transparent"
@@ -202,6 +200,7 @@ export const SourcesPanelHeader: React.FC<SourcesPanelHeaderProps> = ({
                   {viewingSource.title}
                 </span>
               )}
+              </div>
             </div>
             <div className="flex items-center gap-1 shrink-0">
               <button
@@ -227,21 +226,13 @@ export const SourcesPanelHeader: React.FC<SourcesPanelHeaderProps> = ({
             </div>
           </>
         ) : (
-          <>
-            <div className="flex items-center gap-2 text-sidebar-foreground">
-              <FileStack className="w-4 h-4" />
-              <span className="font-sans font-bold text-sm tracking-wide uppercase">Sources</span>
-              <span className="ml-2 text-xs text-muted-foreground bg-sidebar-accent px-1.5 py-0.5 rounded-full font-mono">
-                {selectedCount}
-              </span>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-1 hover:bg-sidebar-accent rounded-sm transition-colors text-sidebar-foreground/70 hover:text-sidebar-foreground"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-          </>
+          <div className="flex items-center gap-2 text-sidebar-foreground">
+            <FileStack className="w-4 h-4" />
+            <span className="font-sans font-bold text-sm tracking-wide uppercase">Sources</span>
+            <span className="ml-2 text-xs text-muted-foreground bg-sidebar-accent px-1.5 py-0.5 rounded-full font-mono">
+              {selectedCount}
+            </span>
+          </div>
         )}
       </div>
     </>
