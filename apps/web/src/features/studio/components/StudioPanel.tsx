@@ -17,6 +17,7 @@ import {
   Loader2,
   MessageSquareText,
   Download,
+  Copy,
   Presentation,
   Table2,
 } from 'lucide-react';
@@ -206,6 +207,31 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
     if (e.key === 'Escape') setEditingId(null);
   };
 
+  const reportContent = activeNote && isReportNote(activeNote) ? activeNote.content : undefined;
+  const canCopyOrDownloadReport = Boolean(reportContent);
+
+  const handleCopyReport = async () => {
+    if (!reportContent) return;
+    try {
+      await navigator.clipboard.writeText(reportContent);
+    } catch (err) {
+      console.error('Copy failed:', err);
+    }
+  };
+
+  const handleDownloadReport = () => {
+    if (!reportContent || !activeNote) return;
+    const safeName = activeNote.title.replace(/[\\/:*?"<>|]/g, '_').trim() || 'report';
+    const filename = `${safeName}.md`;
+    const blob = new Blob([reportContent], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const handleDeleteNoteWithConfirmation = async (note: Note) => {
     const confirmed = await confirm(
       'Delete Note',
@@ -301,17 +327,104 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
       
       <div className="hidden md:flex items-center justify-between p-4 border-b border-border bg-sidebar/50 backdrop-blur-sm sticky top-0 z-10 h-14">
         {activeNote ? (
-            <div className="flex items-center gap-2 text-sidebar-foreground w-full">
+            <>
+              <div className="flex items-center gap-2 text-sidebar-foreground overflow-hidden min-w-0 flex-1">
                 <button
                   onClick={() => setActiveNoteId(null)}
                   className="p-1 -ml-1 hover:bg-sidebar-accent rounded-sm transition-colors text-sidebar-foreground/70 hover:text-sidebar-foreground flex items-center justify-center shrink-0"
                 >
                   <ArrowLeft className="w-5 h-5 shrink-0" />
                 </button>
-                <div className="flex flex-col overflow-hidden">
-                    <span className="font-sans font-bold text-sm tracking-wide truncate">{activeNote.title}</span>
+                {editingId === activeNote.id ? (
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={editTitle}
+                    spellCheck={false}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && editTitle.trim()) {
+                        onUpdateNote(activeNote.id, editTitle.trim());
+                        setEditingId(null);
+                      } else if (e.key === 'Escape') {
+                        setEditTitle(activeNote.title);
+                        setEditingId(null);
+                      }
+                    }}
+                    onBlur={() => {
+                      if (editTitle.trim()) {
+                        onUpdateNote(activeNote.id, editTitle.trim());
+                      } else {
+                        setEditTitle(activeNote.title);
+                      }
+                      setEditingId(null);
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex-1 min-w-0 font-sans font-bold text-sm tracking-wide bg-transparent border-0 border-b border-border rounded-none px-0 py-0.5 text-sidebar-foreground focus:outline-none focus:ring-0 focus:border-primary"
+                    aria-label="Rename"
+                    autoFocus
+                  />
+                ) : (
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => handleStartEdit(activeNote)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleStartEdit(activeNote);
+                      }
+                    }}
+                    className="font-sans font-bold text-sm tracking-wide truncate text-left min-w-0 flex-1 cursor-text hover:opacity-80 hover:underline hover:decoration-dotted hover:underline-offset-2 transition-opacity outline-none focus:outline-none focus:opacity-80 bg-transparent"
+                    title="Click to rename"
+                  >
+                    {activeNote.title}
+                  </span>
+                )}
+              </div>
+              {isReportNote(activeNote) && (
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleCopyReport}
+                    disabled={!canCopyOrDownloadReport}
+                    className="p-2 hover:bg-sidebar-accent rounded-sm transition-colors text-sidebar-foreground/70 hover:text-sidebar-foreground disabled:opacity-40 disabled:cursor-not-allowed"
+                    title="Copy report as Markdown"
+                    aria-label="Copy report as Markdown"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDownloadReport}
+                    disabled={!canCopyOrDownloadReport}
+                    className="p-2 hover:bg-sidebar-accent rounded-sm transition-colors text-sidebar-foreground/70 hover:text-sidebar-foreground disabled:opacity-40 disabled:cursor-not-allowed"
+                    title="Download report as Markdown file"
+                    aria-label="Download report as Markdown file"
+                  >
+                    <Download className="w-4 h-4" />
+                  </button>
                 </div>
-            </div>
+              )}
+              {isFlashcardNote(activeNote) && (
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleExportFlashcards}
+                    disabled={isExporting}
+                    className="p-2 hover:bg-sidebar-accent rounded-sm transition-colors text-sidebar-foreground/70 hover:text-sidebar-foreground disabled:opacity-40 disabled:cursor-not-allowed"
+                    title="Download flashcards as CSV"
+                    aria-label="Download flashcards as CSV"
+                  >
+                    {isExporting ? (
+                      <Loader2 className="w-4 h-4 animate-spin shrink-0" aria-hidden />
+                    ) : (
+                      <Download className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+              )}
+            </>
         ) : (
             <>
                 <button
@@ -524,20 +637,6 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
             </div>
         )}
       </div>
-
-      {activeNote && isFlashcardNote(activeNote) && !miniPlayerVisible && (
-          <div className="p-4 border-t border-border bg-sidebar/30 mt-auto">
-            <button 
-              onClick={handleExportFlashcards}
-              disabled={isExporting}
-              className="w-full flex items-center justify-center gap-2 py-2 bg-primary/10 border border-primary/30 text-primary text-xs font-bold uppercase tracking-wide rounded-sm hover:bg-primary/20 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Export flashcards as CSV"
-            >
-              <Download className="w-4 h-4" />
-              <span>{isExporting ? 'Exporting...' : 'Export CSV'}</span>
-            </button>
-          </div>
-      )}
 
       {/* Mini Audio Player */}
       {miniPlayerVisible && miniPlayerData && (

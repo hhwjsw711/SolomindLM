@@ -304,16 +304,24 @@ export const saveReportResults = internalMutation({
     metadata: v.any(),
   },
   handler: async (ctx, args) => {
+    // Check if document still exists (user may have deleted it)
+    const report = await ctx.db.get(args.reportId);
+    if (!report) {
+      console.log('[saveReportResults] Report no longer exists, skipping save:', args.reportId);
+      return null;
+    }
+
     await ctx.db.patch(args.reportId, {
       content: args.content,
       status: 'completed',
       updatedAt: Date.now(),
-      title: args.metadata?.title ?? 'Study Report',
+      title: args.metadata?.title ?? 'Report',
       metadata: {
         ...args.metadata,
         completedAt: Date.now(),
       },
     });
+    return args.reportId;
   },
 });
 
@@ -326,10 +334,18 @@ export const updateReportTitle = internalMutation({
     title: v.string(),
   },
   handler: async (ctx, args) => {
+    // Check if document still exists (user may have deleted it)
+    const report = await ctx.db.get(args.reportId);
+    if (!report) {
+      console.log('[updateReportTitle] Report no longer exists, skipping update:', args.reportId);
+      return null;
+    }
+
     await ctx.db.patch(args.reportId, {
       title: args.title,
       updatedAt: Date.now(),
     });
+    return args.reportId;
   },
 });
 
@@ -343,6 +359,13 @@ export const updateReportStatus = internalMutation({
     metadata: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
+    // Check if document still exists (user may have deleted it)
+    const report = await ctx.db.get(args.reportId);
+    if (!report) {
+      console.log('[updateReportStatus] Report no longer exists, skipping update:', args.reportId);
+      return null;
+    }
+
     const updates: any = {
       status: args.status,
       updatedAt: Date.now(),
@@ -351,6 +374,7 @@ export const updateReportStatus = internalMutation({
       updates.metadata = args.metadata;
     }
     await ctx.db.patch(args.reportId, updates);
+    return args.reportId;
   },
 });
 
@@ -364,7 +388,31 @@ export const markReportFailed = internalMutation({
     metadata: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
-    await ctx.db.patch(args.reportId, {
+    const { reportId, error, metadata } = args;
+
+    console.log('[markReportFailed] ==================================================');
+    console.log('[markReportFailed] CALLED WITH reportId:', reportId);
+    console.log('[markReportFailed] Error:', error);
+    console.log('[markReportFailed] Metadata:', metadata);
+    console.log('[markReportFailed] Full args:', args);
+    console.log('[markReportFailed] ==================================================');
+
+    // Check if document exists before patching
+    const report = await ctx.db.get(reportId);
+    if (!report) {
+      console.log('[markReportFailed] ==================================================');
+      console.log('[markReportFailed] DOCUMENT NOT FOUND - user likely deleted the report during generation');
+      console.log('[markReportFailed] reportId:', reportId);
+      console.log('[markReportFailed] Exiting gracefully (no error thrown)');
+      console.log('[markReportFailed] ==================================================');
+      // Don't throw an error - the user deleted the report, so just exit silently
+      return null;
+    }
+
+    console.log('[markReportFailed] Document exists, proceeding to patch');
+    console.log('[markReportFailed] Current document status:', report.status);
+
+    await ctx.db.patch(reportId, {
       status: 'failed',
       updatedAt: Date.now(),
       metadata: {
@@ -373,6 +421,9 @@ export const markReportFailed = internalMutation({
         ...args.metadata,
       },
     });
+
+    console.log('[markReportFailed] Successfully patched document');
+    return reportId;
   },
 });
 

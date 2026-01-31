@@ -55,12 +55,22 @@ export const reportGeneration = internalAction({
 
     const { reportId, userId, notebookId, documentIds, reportType, customPrompt } = args;
 
-    console.log('[ReportGenerationJob] Starting:', {
+    console.log('[ReportGenerationJob] ==================================================');
+    console.log('[ReportGenerationJob] STARTING JOB');
+    console.log('[ReportGenerationJob] Args received:', {
       reportId,
+      userId,
+      notebookId,
+      documentIds,
+      reportType,
+      customPrompt,
     });
+    console.log('[ReportGenerationJob] reportId at start:', reportId);
+    console.log('[ReportGenerationJob] ==================================================');
 
     try {
       // Update status to generating - initial phase
+      console.log('[ReportGenerationJob] Calling updateReportStatus (initializing) with reportId:', reportId);
       await ctx.runMutation(internal.jobs.helpers.updateReportStatus, {
         reportId,
         status: 'generating',
@@ -72,6 +82,7 @@ export const reportGeneration = internalAction({
       });
 
       // Update: Loading documents
+      console.log('[ReportGenerationJob] Calling updateReportStatus (loading_documents) with reportId:', reportId);
       await ctx.runMutation(internal.jobs.helpers.updateReportStatus, {
         reportId,
         status: 'generating',
@@ -96,6 +107,7 @@ export const reportGeneration = internalAction({
       });
 
       // Update: Analyzing content
+      console.log('[ReportGenerationJob] Calling updateReportStatus (analyzing_content) with reportId:', reportId);
       await ctx.runMutation(internal.jobs.helpers.updateReportStatus, {
         reportId,
         status: 'generating',
@@ -107,6 +119,7 @@ export const reportGeneration = internalAction({
       });
 
       // Update: Generating report
+      console.log('[ReportGenerationJob] Calling updateReportStatus (generating_report) with reportId:', reportId);
       await ctx.runMutation(internal.jobs.helpers.updateReportStatus, {
         reportId,
         status: 'generating',
@@ -120,14 +133,19 @@ export const reportGeneration = internalAction({
       // ============================================================
       // USE CACHED INVOCATION - This is where the magic happens
       // ============================================================
+      console.log('[ReportGenerationJob] BEFORE reportCache.fetch - reportId:', reportId);
       const content = (await reportCache.fetch(ctx, {
         chunks,
         status: 'generating',
         reportType: reportType || 'summary',
         customPrompt: customPrompt ?? undefined,
       })) as string;
+      console.log('[ReportGenerationJob] AFTER reportCache.fetch - reportId:', reportId);
+      console.log('[ReportGenerationJob] reportId verified after cache fetch:', reportId);
+      console.log('[ReportGenerationJob] Content length:', content.length);
 
       // Update: Finalizing
+      console.log('[ReportGenerationJob] Calling updateReportStatus (finalizing) with reportId:', reportId);
       await ctx.runMutation(internal.jobs.helpers.updateReportStatus, {
         reportId,
         status: 'generating',
@@ -139,7 +157,7 @@ export const reportGeneration = internalAction({
       });
 
       // Generate title from first chunk
-      let title = 'Study Report';
+      let title = 'Report';
       if (chunks.length > 0) {
         try {
           title = await ctx.runAction(internal.titleGenerator.generateTitle, {
@@ -148,11 +166,12 @@ export const reportGeneration = internalAction({
         } catch (error) {
           console.error('[ReportGenerationJob] Title generation failed:', error);
           // Fall back to default title
-          title = 'Study Report';
+          title = 'Report';
         }
       }
 
       // Save results
+      console.log('[ReportGenerationJob] Calling saveReportResults with reportId:', reportId);
       await ctx.runMutation(internal.jobs.helpers.saveReportResults, {
         reportId,
         content,
@@ -164,15 +183,23 @@ export const reportGeneration = internalAction({
         },
       });
 
+      console.log('[ReportGenerationJob] ==================================================');
+      console.log('[ReportGenerationJob] COMPLETED SUCCESSFULLY');
       console.log('[ReportGenerationJob] Completed:', {
         reportId,
         contentLength: content.length,
       });
+      console.log('[ReportGenerationJob] ==================================================');
     } catch (error) {
-      console.error('[ReportGenerationJob] Error:', error);
+      console.log('[ReportGenerationJob] ==================================================');
+      console.log('[ReportGenerationJob] ERROR CAUGHT');
+      console.log('[ReportGenerationJob] Error:', error);
+      console.log('[ReportGenerationJob] reportId in error handler:', reportId);
+      console.log('[ReportGenerationJob] About to call markReportFailed with reportId:', reportId);
+      console.log('[ReportGenerationJob] ==================================================');
 
       // Mark as failed
-      await ctx.runMutation(internal.jobs.helpers.markReportFailed, {
+      const result = await ctx.runMutation(internal.jobs.helpers.markReportFailed, {
         reportId,
         error: error instanceof Error ? error.message : 'Unknown error',
         metadata: {
@@ -181,6 +208,12 @@ export const reportGeneration = internalAction({
           failedAt: Date.now(),
         },
       });
+
+      // If result is null, the document was deleted by the user - exit gracefully
+      if (result === null) {
+        console.log('[ReportGenerationJob] Document was deleted by user, exiting gracefully');
+        return;
+      }
 
       throw error;
     }

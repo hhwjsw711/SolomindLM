@@ -111,7 +111,7 @@ bun install
 
 ```bash
 # Terminal 1: Convex
-bunx convex dev
+bun x convex dev
 
 # Terminal 2: Web
 bun run dev:web

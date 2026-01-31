@@ -35,7 +35,7 @@ export const scheduleReport = action({
     const report = await ctx.runMutation(internal.reports.createInternal, {
       userId,
       notebookId: args.notebookId,
-      title: "Study Report",
+      title: "Report",
       reportType: args.reportType || "summary",
       metadata: {
         status: "generating",
@@ -57,7 +57,7 @@ export const scheduleReport = action({
       customPrompt: args.customPrompt,
     });
 
-    return { reportId, status: "generating", report: { _id: reportId, title: "Study Report", status: "generating" } };
+    return { reportId, status: "generating", report: { _id: reportId, title: "Report", status: "generating" } };
   },
 });
 

@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef, useEffect, lazy, Suspense } from 'rea
 import {
   Plus, Search, FileText, Globe, CheckSquare, Square, ChevronLeft,
   X, Upload, Link as LinkIcon, Youtube, Clipboard, File,
-  FileStack, Loader2, XCircle, MoreVertical, Edit2, Trash2
+  FileStack, Loader2, XCircle, MoreVertical, Edit2, Trash2, Copy, Download
 } from 'lucide-react';
 import { Source } from '@/shared/types/index';
 import { DiscoverSourcesModal } from './DiscoverSourcesModal';
@@ -148,6 +148,31 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
 
   const allSelected = sources.length > 0 && sources.every(s => s.selected);
   const selectedCount = sources.filter(s => s.selected).length;
+
+  const markdownContent = viewingSourceId ? contentCache[viewingSourceId] : undefined;
+  const canCopyOrDownload = Boolean(markdownContent && !contentErrors[viewingSourceId ?? '']);
+
+  const handleCopySourceMarkdown = async () => {
+    if (!markdownContent || !viewingSourceId) return;
+    try {
+      await navigator.clipboard.writeText(markdownContent);
+    } catch (err) {
+      console.error('Copy failed:', err);
+    }
+  };
+
+  const handleDownloadSourceMarkdown = () => {
+    if (!markdownContent || !viewingSource) return;
+    const safeName = viewingSource.title.replace(/[\\/:*?"<>|]/g, '_').trim() || 'source';
+    const filename = `${safeName}.md`;
+    const blob = new Blob([markdownContent], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   // Process files (used by both file input and drag & drop)
   const processFiles = async (files: File[]) => {
@@ -432,17 +457,87 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
         {/* Header */}
         <div className="hidden md:flex items-center justify-between p-4 border-b border-border bg-sidebar/50 backdrop-blur-sm sticky top-0 z-10 h-14">
           {viewingSource ? (
-            <div className="flex items-center gap-2 text-sidebar-foreground overflow-hidden">
-              <button 
-                onClick={() => setViewingSourceId(null)}
-                className="p-1 -ml-1 hover:bg-sidebar-accent rounded-sm transition-colors text-sidebar-foreground/70 hover:text-sidebar-foreground"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <span className="font-sans font-bold text-sm tracking-wide truncate" title={viewingSource.title}>
-                {viewingSource.title}
-              </span>
-            </div>
+            <>
+              <div className="flex items-center gap-2 text-sidebar-foreground overflow-hidden min-w-0 flex-1">
+                <button 
+                  onClick={() => setViewingSourceId(null)}
+                  className="p-1 -ml-1 hover:bg-sidebar-accent rounded-sm transition-colors text-sidebar-foreground/70 hover:text-sidebar-foreground shrink-0"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                {renamingId === viewingSource.id ? (
+                  <input
+                    type="text"
+                    value={renameValue}
+                    spellCheck={false}
+                    onChange={(e) => setRenameValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && renameValue.trim()) {
+                        onRenameSource(viewingSource.id, renameValue.trim());
+                        setRenamingId(null);
+                      } else if (e.key === 'Escape') {
+                        setRenameValue(viewingSource.title);
+                        setRenamingId(null);
+                      }
+                    }}
+                    onBlur={() => {
+                      if (renameValue.trim()) {
+                        onRenameSource(viewingSource.id, renameValue.trim());
+                      } else {
+                        setRenameValue(viewingSource.title);
+                      }
+                      setRenamingId(null);
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex-1 min-w-0 font-sans font-bold text-sm tracking-wide bg-transparent border-0 border-b border-border rounded-none px-0 py-0.5 text-sidebar-foreground focus:outline-none focus:ring-0 focus:border-primary"
+                    autoFocus
+                    aria-label="Rename source"
+                  />
+                ) : (
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => {
+                      setRenamingId(viewingSource.id);
+                      setRenameValue(viewingSource.title);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setRenamingId(viewingSource.id);
+                        setRenameValue(viewingSource.title);
+                      }
+                    }}
+                    className="font-sans font-bold text-sm tracking-wide truncate text-left min-w-0 flex-1 cursor-text hover:opacity-80 hover:underline hover:decoration-dotted hover:underline-offset-2 transition-opacity outline-none focus:outline-none focus:opacity-80 bg-transparent"
+                    title="Click to rename"
+                  >
+                    {viewingSource.title}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleCopySourceMarkdown}
+                  disabled={!canCopyOrDownload}
+                  className="p-2 hover:bg-sidebar-accent rounded-sm transition-colors text-sidebar-foreground/70 hover:text-sidebar-foreground disabled:opacity-40 disabled:cursor-not-allowed"
+                  title="Copy content as Markdown"
+                  aria-label="Copy content as Markdown"
+                >
+                  <Copy className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDownloadSourceMarkdown}
+                  disabled={!canCopyOrDownload}
+                  className="p-2 hover:bg-sidebar-accent rounded-sm transition-colors text-sidebar-foreground/70 hover:text-sidebar-foreground disabled:opacity-40 disabled:cursor-not-allowed"
+                  title="Download as Markdown file"
+                  aria-label="Download as Markdown file"
+                >
+                  <Download className="w-4 h-4" />
+                </button>
+              </div>
+            </>
           ) : (
             <>
               <div className="flex items-center gap-2 text-sidebar-foreground">
@@ -471,20 +566,18 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
                   </span>
 
                   <button
+                    type="button"
                     onClick={() => onToggleSource(viewingSource.id)}
-                    className="flex items-center gap-2 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+                    className="flex items-center gap-2 text-xs font-medium text-primary hover:text-primary/80 transition-colors cursor-pointer select-none"
+                    aria-pressed={viewingSource.selected}
+                    aria-label={viewingSource.selected ? 'Included (click to exclude)' : 'Excluded (click to include)'}
                   >
                     {viewingSource.selected ? (
-                      <>
-                        <CheckSquare className="w-4 h-4" />
-                        Included
-                      </>
+                      <CheckSquare className="w-4 h-4 shrink-0" aria-hidden />
                     ) : (
-                      <>
-                        <Square className="w-4 h-4" />
-                        Include Source
-                      </>
+                      <Square className="w-4 h-4 shrink-0 opacity-60" aria-hidden />
                     )}
+                    <span>Included</span>
                   </button>
               </div>
 
