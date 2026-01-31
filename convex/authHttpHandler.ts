@@ -36,11 +36,12 @@ export const handle = internalAction({
 
     // Log incoming cookies for debugging
     const cookieHeader = args.headers["cookie"] || args.headers["Cookie"] || "";
-    console.log("[AuthHandler] Cookies:", cookieHeader ? "Present" : "None");
-    if (cookieHeader) {
-      const hasBetterAuthCookie = cookieHeader.includes("__Secure-better-auth") || cookieHeader.includes("better-auth.session_token");
-      console.log("[AuthHandler] Has Better Auth cookie:", hasBetterAuthCookie);
-    }
+    const betterAuthCookieHeader = args.headers["better-auth-cookie"] || args.headers["Better-Auth-Cookie"] || "";
+    console.log("[AuthHandler] Cookies:", {
+      browserCookie: cookieHeader ? "Present" : "None",
+      betterAuthCookie: betterAuthCookieHeader ? "Present" : "None",
+      betterAuthCookiePreview: betterAuthCookieHeader ? betterAuthCookieHeader.substring(0, 100) : undefined,
+    });
 
     const auth = createAuth(ctx as any);
     const request = new Request(args.url, {
