@@ -1,5 +1,4 @@
-"use node"
-import axios from 'axios';
+"use node";
 
 export class MistralOCRService {
   private apiKey: string;
@@ -63,46 +62,57 @@ export class MistralOCRService {
   }
 
   private async callOcrEndpoint(documentUrl: string): Promise<string> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
+
     try {
-      const response = await axios.post(
-        `${this.baseUrl}/ocr`,
-        {
+      const response = await fetch(`${this.baseUrl}/ocr`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           model: this.model,
           document: {
             type: 'document_url',
             document_url: documentUrl,
           },
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json',
-          },
-          timeout: 60000, // Best practice: 60s timeout
-        }
-      );
+        }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const details = data ? JSON.stringify(data) : response.statusText;
+        console.error('Mistral API Response:', { status: response.status, details });
+        throw new Error(`Mistral OCR failed: ${details}`);
+      }
 
       // FIX: Handle the "pages" array structure
       let content = '';
-      if (response.data?.pages && Array.isArray(response.data.pages)) {
-        content = response.data.pages
-          .map((page: any) => page.markdown || '')
+      if (data?.pages && Array.isArray(data.pages)) {
+        content = data.pages
+          .map((page: { markdown?: string }) => page.markdown || '')
           .join('\n\n');
       } else {
         // Fallback for other potential formats
-        content = response.data.markdown || response.data.text || '';
+        content = data.markdown || data.text || '';
       }
 
       // Strip all media references to ensure text-only output
       return this.stripMedia(content);
     } catch (error) {
+      clearTimeout(timeoutId);
       console.error('Mistral OCR error:', error);
-      if (axios.isAxiosError(error)) {
-        const details = error.response?.data
-          ? JSON.stringify(error.response.data)
-          : error.message;
-        console.error('Mistral API Response:', { status: error.response?.status, details });
-        throw new Error(`Mistral OCR failed: ${details}`);
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          throw new Error('Mistral OCR request timed out');
+        }
+        throw new Error(`Mistral OCR failed: ${error.message}`);
       }
       throw new Error('Failed to process document with Mistral OCR');
     }
