@@ -126,6 +126,12 @@ export const env = {
   CHAT_RERANK_TOP_N: process.env.CHAT_RERANK_TOP_N ?? '7',
   CHAT_MAX_RESULTS: process.env.CHAT_MAX_RESULTS ?? '5',
 
+  // Hybrid Search (NEW)
+  CHAT_ENABLE_HYBRID_SEARCH: process.env.CHAT_ENABLE_HYBRID_SEARCH ?? 'true',
+  CHAT_KEYWORD_MATCH_COUNT: process.env.CHAT_KEYWORD_MATCH_COUNT ?? '50',
+  CHAT_RRF_K: process.env.CHAT_RRF_K ?? '60',
+  CHAT_HYBRID_THRESHOLD: process.env.CHAT_HYBRID_THRESHOLD ?? '0.3',
+
   // ZeroEntropy (reranking)
   ZEROENTROPY_API_KEY: process.env.ZEROENTROPY_API_KEY || '',
   ZEROENTROPY_RERANK_MODEL: process.env.ZEROENTROPY_RERANK_MODEL || 'zerank-2',

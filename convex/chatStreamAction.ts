@@ -7,7 +7,7 @@ import { v } from "convex/values";
 import { components } from "./_generated/api";
 import { PersistentTextStreaming } from "@convex-dev/persistent-text-streaming";
 import { ChatAgent } from "../lib/services/agents/ChatAgent";
-import { VectorSearchHandler } from "../lib/services/agents/chat/vector-search";
+import { HybridSearchHandler } from "../lib/services/agents/chat/hybrid-search";
 import { EmbeddingService } from "../lib/services/processing/EmbeddingServiceClient";
 
 interface VectorSearchResult {
@@ -154,21 +154,46 @@ export async function streamChatResponse(
     return rows;
   };
 
-  // Initialize ChatAgent with vector search
+  // Keyword search runner using closure pattern (captures notebookIdTyped and userId)
+  const keywordSearchRunner = async (
+    query: string,
+    limit: number,
+    docIds?: string[]
+  ): Promise<any[]> => {
+    console.log("[keywordSearchRunner] executing with closure-captured context");
+
+    const results = await ctx.runQuery(internal.documents.keywordSearch, {
+      notebookId: notebookIdTyped,  // Captured from outer scope
+      userId,                        // Captured from outer scope
+      query,
+      limit,
+      documentIds: docIds as any,    // Cast for Convex Id type
+    });
+
+    console.log("[keywordSearchRunner] returned", results.length, "results");
+    return results;
+  };
+
+  // Initialize HybridSearchHandler with both vector and keyword search
   const embeddingService = new EmbeddingService(process.env.OPENAI_API_KEY || "");
-  const vectorSearch = new VectorSearchHandler(
+  const hybridSearch = new HybridSearchHandler(
     {
       vectorMatchThreshold: parseFloat(process.env.CHAT_VECTOR_MATCH_THRESHOLD ?? '0.3'),
       vectorMatchCount: parseInt(process.env.CHAT_VECTOR_MATCH_COUNT ?? '25', 10),
       rerankThreshold: parseInt(process.env.CHAT_RERANK_THRESHOLD ?? '5', 10),
       rerankTopN: parseInt(process.env.CHAT_RERANK_TOP_N ?? '15', 10),
       maxResults: parseInt(process.env.CHAT_MAX_RESULTS ?? '7', 10),
+      keywordMatchCount: parseInt(process.env.CHAT_KEYWORD_MATCH_COUNT ?? '50', 10),
+      rrfK: parseInt(process.env.CHAT_RRF_K ?? '60', 10),
+      enableHybrid: process.env.CHAT_ENABLE_HYBRID_SEARCH !== 'false',
+      hybridThreshold: parseFloat(process.env.CHAT_HYBRID_THRESHOLD ?? '0.3'),
     },
     embeddingService,
-    vectorSearchRunner
+    vectorSearchRunner,
+    keywordSearchRunner
   );
 
-  const agent = new ChatAgent({ vectorSearchHandler: vectorSearch });
+  const agent = new ChatAgent({ vectorSearchHandler: hybridSearch });
 
   let fullResponse = "";
   let references: unknown[] = [];

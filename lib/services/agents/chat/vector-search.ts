@@ -69,9 +69,9 @@ const DEFAULT_CONFIG: Required<VectorSearchConfig> = {
  * Handles vector search for the chat agent: embed query → Convex search → optional ZeroEntropy rerank.
  */
 export class VectorSearchHandler {
-  private config: Required<VectorSearchConfig>;
-  private embeddingService: EmbeddingService;
-  private vectorSearchRunner: VectorSearchRunner;
+  protected config: Required<VectorSearchConfig>;
+  protected embeddingService: EmbeddingService;
+  protected vectorSearchRunner: VectorSearchRunner;
 
   constructor(
     config?: VectorSearchConfig,
@@ -191,7 +191,7 @@ export class VectorSearchHandler {
     return finalResults;
   }
 
-  private deduplicateResults(
+  protected deduplicateResults(
     results: (VectorSearchRawResult & { similarity?: number })[]
   ): (VectorSearchRawResult & { similarity?: number })[] {
     const seen = new Set<string>();
@@ -205,7 +205,7 @@ export class VectorSearchHandler {
     return out;
   }
 
-  private async rerankResults(
+  protected async rerankResults(
     query: string,
     results: (VectorSearchRawResult & { similarity?: number })[]
   ): Promise<(VectorSearchRawResult & { similarity?: number })[]> {

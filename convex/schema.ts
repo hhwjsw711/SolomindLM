@@ -72,6 +72,10 @@ export default defineSchema({
       dimensions: 1536, // NOTE: dimensions (plural), not dimension
       vectorField: "embedding",
       filterFields: ["userId", "notebookId"],
+    })
+    .searchIndex("search_content", {
+      searchField: "content",
+      filterFields: ["userId", "notebookId"],
     }),
 
   // Reports table

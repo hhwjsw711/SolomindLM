@@ -1,10 +1,10 @@
 import { ReferenceChunk } from '@/shared/types/index';
-import { useQuery, useMutation } from 'convex/react';
+import { useQuery, useMutation, useConvexAuth } from 'convex/react';
 import { api } from '@convex/_generated/api';
 import type { Id } from '@convex/_generated/dataModel';
 import { useStream } from '@convex-dev/persistent-text-streaming/react';
 import { useRef, useState, useCallback } from 'react';
-import { useConvexAuth } from 'convex/react';
+import { useAuthToken } from '@convex-dev/auth/react';
 
 // Convex HTTP actions use the .site URL. Derive from .cloud if only VITE_CONVEX_URL is set.
 const CONVEX_SITE_URL =
@@ -206,6 +206,7 @@ export function useClearHistory(notebookId: string | null) {
 export function useSendMessageV2() {
   const sendMessageMutation = useMutation(api.messages.sendMessageOptimistic);
   const { isAuthenticated } = useConvexAuth();
+  const authToken = useAuthToken();
 
   const sendMessage = useCallback(async (
     notebookId: string,
@@ -214,6 +215,12 @@ export function useSendMessageV2() {
     documentIds?: string[]
   ) => {
     let tempMessageId: string | null = null;
+
+    // Check authentication and token availability
+    if (!isAuthenticated || !authToken) {
+      callbacks.onError('Authentication required. Please log in.');
+      return;
+    }
 
     try {
       // Step 1: Send the message with optimistic update
@@ -227,10 +234,10 @@ export function useSendMessageV2() {
       tempMessageId = result.tempMessageId;
 
       // Step 2: Get auth token for cross-origin requests
-      // With @convex-dev/auth, cookies are automatically handled by the Convex client
-      // For cross-origin requests, we rely on cookies being sent
+      // HTTP actions require JWT token via Authorization header (cookies don't work cross-origin)
       let headers: Record<string, string> = {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`,
       };
 
       // Step 3: Start streaming the response
@@ -317,7 +324,7 @@ export function useSendMessageV2() {
     } catch (error) {
       callbacks.onError(error instanceof Error ? error.message : 'Failed to send message');
     }
-  }, [sendMessageMutation]);
+  }, [sendMessageMutation, isAuthenticated, authToken]);
 
   return sendMessage;
 }
@@ -330,15 +337,22 @@ export async function sendMessage(
   notebookId: string,
   message: string,
   callbacks: SendMessageCallbacks,
+  authToken: string, // Required: JWT token for HTTP action authentication
   documentIds?: string[]
 ): Promise<void> {
+  if (!authToken) {
+    callbacks.onError('Authentication required. Please log in.');
+    return;
+  }
+
   try {
-    // With @convex-dev/auth, cookies are automatically handled
+    // HTTP actions require JWT token via Authorization header (cookies don't work cross-origin)
     const response = await fetch(CHAT_STREAM_URL, {
       method: 'POST',
       credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`,
       },
       body: JSON.stringify({
         notebookId,

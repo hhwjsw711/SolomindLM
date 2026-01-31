@@ -392,6 +392,56 @@ export const fetchChunks = internalAction({
 });
 
 /**
+ * Internal: Keyword search using full-text search index
+ */
+export const keywordSearch = internalQuery({
+  args: {
+    notebookId: v.id("notebooks"),
+    userId: v.id("users"),  // Note: Using v.id("users") from Better Auth
+    query: v.string(),
+    limit: v.optional(v.number()),
+    documentIds: v.optional(v.array(v.id("documents"))),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit ?? 50;
+
+    console.log(`[keywordSearch] query="${args.query.slice(0, 80)}..."`);
+
+    const results = await ctx.db
+      .query("documentChunks")
+      .withSearchIndex("search_content", (q) =>
+        q
+          .search("content", args.query)
+          .eq("userId", args.userId)
+          .eq("notebookId", args.notebookId)
+      )
+      .take(limit);
+
+    console.log(`[keywordSearch] raw=${results.length}`);
+
+    // FIXED: Explicit length > 0 check
+    let filtered = results;
+    if (args.documentIds && args.documentIds.length > 0) {
+      const docIdSet = new Set(
+        args.documentIds.map((id) => id.toString())
+      );
+      filtered = results.filter((r) =>
+        r.documentId !== undefined && docIdSet.has(r.documentId.toString())
+      );
+      console.log(`[keywordSearch] after filter=${filtered.length}`);
+    }
+
+    return filtered.map((r) => ({
+      _id: r._id,
+      _score: 0,
+      content: r.content,
+      chunkIndex: r.chunkIndex,
+      documentId: r.documentId,
+    }));
+  },
+});
+
+/**
  * Internal: Process a document for embedding (deprecated - use DocEmbeddingJob instead)
  * @deprecated Use internal.jobs.DocEmbeddingJob.docEmbedding instead
  */

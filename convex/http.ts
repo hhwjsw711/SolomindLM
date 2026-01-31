@@ -152,7 +152,8 @@ http.route({
 
     // Simplified auth check with Convex Auth
     const identity = await ctx.auth.getUserIdentity();
-    const userId = identity?.subject;
+    // Subject is "userId|sessionId", extract just the userId
+    const userId = identity?.subject?.split('|')[0];
 
     if (!userId) {
       return errorResponse("Please log in to use chat", 401);
