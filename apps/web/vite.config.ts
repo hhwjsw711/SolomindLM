@@ -51,6 +51,21 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5173,
       strictPort: true,
+      // SAME-DOMAIN PROXY for local development
+      // Proxies /api/* to Convex so cookies work just like in production
+      proxy: convexSiteUrl ? {
+        '/api': {
+          target: convexSiteUrl,
+          changeOrigin: true,
+          secure: true,
+          configure: (proxy, _options) => {
+            proxy.on('proxyReq', (proxyReq, _req, _res) => {
+              console.log('[Vite Proxy] Proxying:', proxyReq.path, '→', convexSiteUrl + proxyReq.path);
+            });
+            return proxy;
+          },
+        },
+      } : undefined,
     },
     resolve: {
       alias: {

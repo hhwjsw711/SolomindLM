@@ -1,28 +1,22 @@
 import { createAuthClient } from "better-auth/react";
-import {
-  convexClient,
-  crossDomainClient,
-} from "@convex-dev/better-auth/client/plugins";
+import { convexClient } from "@convex-dev/better-auth/client/plugins";
 
-// VITE_CONVEX_SITE_URL is the Convex deployment's .convex.site URL
-// Required for auth to work (e.g. https://xxx.convex.site)
-const convexSiteUrl = import.meta.env.VITE_CONVEX_SITE_URL as string;
+// SAME-DOMAIN SETUP: Auth requests go through Vercel proxy to Convex
+// Frontend: https://www.solomindlm.com
+// Auth API: https://www.solomindlm.com/api/auth/* → proxied to Convex
+//
+// This eliminates all cross-domain cookie issues - cookies just work!
 
-if (!convexSiteUrl) {
-  throw new Error(
-    "VITE_CONVEX_SITE_URL environment variable is required. " +
-    "Set it in .env.local for dev or in your hosting platform for prod."
-  );
-}
-
-export const authBaseURL = `${convexSiteUrl.replace(/\/$/, "")}/auth`;
+// Use window.location.origin so auth works on both localhost and production
+export const authBaseURL = `${window.location.origin}/api/auth`;
 
 export const authClient = createAuthClient({
   baseURL: authBaseURL,
   plugins: [
     convexClient(),
-    crossDomainClient(),
+    // NO crossDomainClient needed - same domain!
   ],
-  // Remove global fetchOptions - let crossDomainClient plugin manage credentials
-  // The plugin sets credentials: "omit" and sends cookie via Better-Auth-Cookie header
+  fetchOptions: {
+    credentials: "include", // Standard same-domain cookie handling
+  },
 });

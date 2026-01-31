@@ -56,31 +56,12 @@ const authHandler = httpAction(async (ctx, request) => {
   });
   const body = await request.text();
 
-  // Log OTT verification attempts for debugging
-  const urlObj = new URL(url);
-  if (urlObj.pathname === "/auth/cross-domain/one-time-token/verify") {
-    console.log("[AuthHandler] OTT verify request:", {
-      body: body.substring(0, 200),
-      hasBetterAuthCookie: !!headers["better-auth-cookie"] || !!headers["Better-Auth-Cookie"],
-    });
-  }
-
   const result = await ctx.runAction(internal.authHttpHandler.handle, {
     url,
     method,
     headers,
     body,
   });
-
-  // Log OTT verification responses
-  if (urlObj.pathname === "/auth/cross-domain/one-time-token/verify") {
-    console.log("[AuthHandler] OTT verify response:", {
-      status: result.status,
-      hasSetBetterAuthCookie: Object.keys(result.headers).some(k =>
-        k.toLowerCase().includes("set-better-auth-cookie")
-      ),
-    });
-  }
 
   return new Response(result.body, {
     status: result.status,
@@ -95,10 +76,9 @@ const authCors = corsRouter(http, {
     "Content-Type",
     "Authorization",
     "X-Requested-With",
-    "better-auth-cookie",
-    "Better-Auth-Cookie",
+    // SAME-DOMAIN: No custom auth headers needed
   ],
-  exposedHeaders: ["Set-Better-Auth-Cookie"],
+  exposedHeaders: [], // SAME-DOMAIN: No custom headers to expose
   browserCacheMaxAge: 0,
 });
 

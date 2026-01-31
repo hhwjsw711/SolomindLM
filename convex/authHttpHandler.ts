@@ -21,7 +21,6 @@ export const handle = internalAction({
     const isOauthCallback = url.searchParams.has("ott") || url.pathname.includes("/callback");
     const isGetSession = url.pathname === "/auth/get-session";
     const isConvexToken = url.pathname === "/auth/convex/token";
-    const isOttVerify = url.pathname === "/auth/cross-domain/one-time-token/verify";
 
     console.log("[AuthHandler] Incoming request:", {
       method: args.method,
@@ -31,48 +30,18 @@ export const handle = internalAction({
       hasOtt: url.searchParams.has("ott"),
       isGetSession,
       isConvexToken,
-      isOttVerify,
     });
 
     // Log incoming cookies for debugging
     const cookieHeader = args.headers["cookie"] || args.headers["Cookie"] || "";
-    const betterAuthCookieHeader = args.headers["better-auth-cookie"] || args.headers["Better-Auth-Cookie"] || "";
-    console.log("[AuthHandler] Cookies:", {
-      browserCookie: cookieHeader ? "Present" : "None",
-      betterAuthCookie: betterAuthCookieHeader ? "Present" : "None",
-      betterAuthCookiePreview: betterAuthCookieHeader ? betterAuthCookieHeader.substring(0, 100) : undefined,
-    });
+    console.log("[AuthHandler] Cookies:", cookieHeader ? "Present" : "None");
 
-    // CRITICAL FIX: Convert Better-Auth-Cookie header to standard Cookie header
-    // Better Auth only reads from the "cookie" header, not from custom headers
-    // The cross-domain plugin sends cookies via "Better-Auth-Cookie" header for cross-origin requests
-    // We need to convert it to the standard format that Better Auth expects
-    const requestHeaders = new Headers(args.headers);
-
-    if (betterAuthCookieHeader) {
-      // Parse the Better-Auth-Cookie header value
-      // Format: "; __Secure-better-auth.session_token=VAL; __Secure-better-auth.state=VAL"
-      const cookieValue = betterAuthCookieHeader
-        .split(';')
-        .map(c => c.trim())
-        .filter(c => c && !c.startsWith(';')) // Remove empty strings and leading semicolons
-        .join('; ');
-
-      // Combine with existing browser cookies (if any)
-      const combinedCookies = cookieHeader
-        ? `${cookieHeader}; ${cookieValue}`
-        : cookieValue;
-
-      requestHeaders.set('cookie', combinedCookies);
-      console.log("[AuthHandler] Converted Better-Auth-Cookie to Cookie header", {
-        combinedCookiesPreview: combinedCookies.substring(0, 150),
-      });
-    }
-
+    // SAME-DOMAIN: No need for custom header conversion
+    // Cookies are sent directly via the standard Cookie header
     const auth = createAuth(ctx as any);
     const request = new Request(args.url, {
       method: args.method,
-      headers: requestHeaders,
+      headers: new Headers(args.headers),
       body: args.method !== "GET" && args.method !== "HEAD" ? args.body : undefined,
     });
 
@@ -125,19 +94,6 @@ export const handle = internalAction({
       if (response.status !== 200) {
         console.log("[AuthHandler] Convex token error body:", body);
       }
-    }
-
-    // Log OTT verify response
-    if (isOttVerify) {
-      console.log("[AuthHandler] OTT verify response:", {
-        status: response.status,
-        statusText: response.statusText,
-        headers,
-        hasSetBetterAuthCookie: Object.keys(headers).some(k =>
-          k.toLowerCase().includes("set-better-auth-cookie")
-        ),
-        bodyPreview: body.substring(0, 500),
-      });
     }
 
     return { status: response.status, headers, body };

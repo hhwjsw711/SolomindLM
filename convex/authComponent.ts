@@ -1,7 +1,7 @@
 "use node";
 
 import { createClient, type GenericCtx } from "@convex-dev/better-auth";
-import { convex, crossDomain } from "@convex-dev/better-auth/plugins";
+import { convex } from "@convex-dev/better-auth/plugins";
 import { components } from "./_generated/api";
 import { DataModel } from "./_generated/dataModel";
 import { betterAuth } from "better-auth/minimal";
@@ -36,14 +36,14 @@ export function createAuth(ctx: GenericCtx<DataModel>) {
     ...options,
     database: authComponent.adapter(ctx),
     plugins: [
-      // crossDomain IS needed for local development (localhost → Convex)
-      // This allows the session to work across different origins
-      crossDomain({ siteUrl }),
+      // SAME-DOMAIN SETUP: No crossDomain plugin needed!
+      // Frontend and backend are on the same domain via Vercel/Vite proxy
+      // Cookies just work with standard Set-Cookie headers
       convex({ authConfig, options: { basePath: "/auth" } }),
     ],
     // Enable debug logging for both dev and prod to debug auth issues
     _debug: {
-      log: true,
+      log: isDev, // Only log in dev to reduce production noise
     },
   });
 }

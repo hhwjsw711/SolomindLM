@@ -101,13 +101,13 @@ export function createAuthOptions(): BetterAuthOptions {
         enabled: false, // Disable until auth is stable
       },
     },
-    // Cookie configuration for cross-origin OAuth (localhost → Convex)
+    // Cookie configuration for SAME-DOMAIN setup (via Vercel/Vite proxy)
     advanced: {
       useSecureCookies: true, // Always true for Convex (HTTPS)
-      // Critical fix for state_mismatch error: allow cookies in cross-origin context
+      // SAME-DOMAIN: Use lax for better security and compatibility
       defaultCookieAttributes: {
-        sameSite: "none", // Required for cross-origin (localhost → Convex)
-        secure: true, // Required when sameSite is "none"
+        sameSite: "lax", // "lax" works for same-domain, more secure than "none"
+        secure: true, // Required for HTTPS
         path: "/", // Make cookies available to all paths
         httpOnly: true, // Security: prevent JS access
       },
