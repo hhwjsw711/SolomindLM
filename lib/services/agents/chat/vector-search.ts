@@ -24,6 +24,7 @@ export interface VectorSearchRawResult {
   content: string;
   chunkIndex: number;
   documentId?: string;
+  sourceTitle?: string;
 }
 
 /**
@@ -163,7 +164,7 @@ export class VectorSearchHandler {
     const finalResults: ReferenceChunk[] = limited.map((r, index) => ({
       id: String(index + 1),
       sourceId: String(r._id),
-      sourceTitle: 'Document',
+      sourceTitle: r.sourceTitle ?? 'Document',
       content: r.content,
       chunkIndex: r.chunkIndex,
       similarity: r.similarity,

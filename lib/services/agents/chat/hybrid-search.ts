@@ -24,6 +24,7 @@ export interface KeywordSearchRawResult {
   content: string;
   chunkIndex: number;
   documentId?: string;
+  sourceTitle?: string;
 }
 
 /**
@@ -211,7 +212,7 @@ export class HybridSearchHandler extends VectorSearchHandler {
         return {
           id: String(index + 1),
           sourceId: String(r._id),
-          sourceTitle: 'Document',
+          sourceTitle: r.sourceTitle ?? 'Document',
           content: r.content,
           chunkIndex: r.chunkIndex,
           similarity: r._score ?? r.similarity,

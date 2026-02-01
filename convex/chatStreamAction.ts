@@ -18,6 +18,7 @@ interface VectorSearchResult {
   chunkIndex: number;
   content: string;
   embedding: number[];
+  sourceTitle: string;
 }
 
 // Get threshold from env for filtering in vectorSearchRunner
@@ -136,7 +137,7 @@ export async function streamChatResponse(
         .map((c: DocumentChunkDoc) => [c._id, c] as [Id<"documentChunks">, DocumentChunkDoc])
     );
 
-    const rows: VectorSearchResult[] = (results as VectorSearchHit[])
+    const rowsWithoutTitle: Omit<VectorSearchResult, "sourceTitle">[] = (results as VectorSearchHit[])
       .map((r: VectorSearchHit) => {
         const chunk = chunkMap.get(r._id);
         if (!chunk) return null;
@@ -150,7 +151,16 @@ export async function streamChatResponse(
           embedding: chunk.embedding ?? [],
         };
       })
-      .filter((r: VectorSearchResult | null): r is VectorSearchResult => r !== null);
+      .filter((r): r is Omit<VectorSearchResult, "sourceTitle"> => r !== null);
+
+    const documentIds = [...new Set(rowsWithoutTitle.map((r) => r.documentId))];
+    const docTitles = await ctx.runQuery(internal.documents.getDocumentsByIds, { documentIds }) as { _id: Id<"documents">; fileName: string }[];
+    const titleMap = new Map<Id<"documents">, string>(docTitles.map((d: { _id: Id<"documents">; fileName: string }) => [d._id, d.fileName]));
+
+    const rows: VectorSearchResult[] = rowsWithoutTitle.map((r) => ({
+      ...r,
+      sourceTitle: (titleMap.get(r.documentId) ?? "Document") as string,
+    }));
 
     // Filter by threshold BEFORE applying documentIds filter
     // This ensures we only use high-quality matches

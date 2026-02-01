@@ -431,12 +431,20 @@ export const keywordSearch = internalQuery({
       console.log(`[keywordSearch] after filter=${filtered.length}`);
     }
 
+    const uniqueDocIds = [...new Set(filtered.map((r) => r.documentId))];
+    const docTitleMap = new Map<typeof filtered[0]["documentId"], string>();
+    for (const id of uniqueDocIds) {
+      const doc = await ctx.db.get(id);
+      docTitleMap.set(id, doc?.fileName ?? "Document");
+    }
+
     return filtered.map((r) => ({
       _id: r._id,
       _score: 0,
       content: r.content,
       chunkIndex: r.chunkIndex,
       documentId: r.documentId,
+      sourceTitle: docTitleMap.get(r.documentId) ?? "Document",
     }));
   },
 });
@@ -482,6 +490,24 @@ export const getDocumentDetails = internalQuery({
       fileType: doc.fileType,
       fileUrl: doc.fileUrl,
     };
+  },
+});
+
+/**
+ * Internal: Get document titles by IDs (for chat reference tooltips)
+ */
+export const getDocumentsByIds = internalQuery({
+  args: {
+    documentIds: v.array(v.id("documents")),
+  },
+  handler: async (ctx, args) => {
+    const uniqueIds = [...new Set(args.documentIds)];
+    return Promise.all(
+      uniqueIds.map(async (id) => {
+        const doc = await ctx.db.get(id);
+        return { _id: id, fileName: doc?.fileName ?? "Document" };
+      })
+    );
   },
 });
 
