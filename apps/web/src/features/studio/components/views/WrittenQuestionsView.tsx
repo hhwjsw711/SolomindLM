@@ -34,12 +34,15 @@ export const WrittenQuestionsView: React.FC<WrittenQuestionsViewProps> = ({ note
   const resetAnswersMutation = useResetWrittenAnswers();
   const latestNote = useWrittenQuestionSet(note.id);
 
-  // Sync userAnswers with latestNote.userAnswers (reactive to database updates)
+  // Sync userAnswers from server only when server data actually changes (e.g. after submit/reset).
+  // Using a serialized key prevents the effect from running on every render (latestNote?.userAnswers
+  // can get a new reference each time), which would overwrite local typing with server state.
+  const serverUserAnswersKey = JSON.stringify(latestNote?.userAnswers ?? {});
   useEffect(() => {
     if (latestNote?.userAnswers) {
       setUserAnswers(latestNote.userAnswers);
     }
-  }, [latestNote?.userAnswers]);
+  }, [serverUserAnswersKey]);
 
   // Use questions from the note
   const questions = note.questions || [];
@@ -235,8 +238,8 @@ export const WrittenQuestionsView: React.FC<WrittenQuestionsViewProps> = ({ note
           <span className="text-sm font-semibold text-foreground truncate">{note.title}</span>
         </div>
       )}
-      <div className="flex-1 bg-card border-t border-border min-h-0">
-        <div className="max-w-3xl mx-auto w-full h-full p-8 md:p-12 flex flex-col">
+      <div className="flex-1 bg-card border-t border-border min-h-0 overflow-y-auto">
+        <div className="max-w-3xl mx-auto w-full min-h-full p-8 md:p-12 flex flex-col">
           {/* Review Mode Banner */}
           {reviewMode && (
             <div className="mb-6 p-4 bg-vintage-amber-50 dark:bg-vintage-amber-900/20 border border-vintage-amber-200 dark:border-vintage-amber-800 rounded-xl flex items-center gap-3">
