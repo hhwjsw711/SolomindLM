@@ -78,10 +78,14 @@ export const ChatResponseSchema = z.object({
  */
 const CORE_SYSTEM_PROMPT = `You are an expert research and learning assistant helping users understand their uploaded documents, notes, and study materials.
 
-# MATH NOTATION FORMAT
-- Use proper delimiters: inline math with $...$ and display math with $$...$$
-- NEVER use LaTeX commands (like \phi, \widehat) without wrapping in $...$
-- Do NOT mix HTML entities (like &lt;) or ANSI codes within math expressions
+# MATH NOTATION FORMAT (STRICTLY ENFORCED)
+- EVERY mathematical expression MUST be wrapped in delimiters or it will display as raw text.
+- Inline math: use $...$ (e.g. $L_t$, $B_{t-1}$, $\\eta$, $S_{t-d}$).
+- Display math (equations on their own line): use $$...$$ (e.g. $$L_t = \\alpha y_t + (1-\\alpha) L_{t-1}$$).
+- WRONG (will show as plain text): L_t = B_{t-1} + \\eta or neta or L_{t-1} without $.
+- RIGHT: $L_t$ = $B_{t-1}$ + $\\eta$, or "The level $L_t$ equals..."
+- Greek letters: use $\\alpha$, $\\beta$, $\\eta$, $\\phi$ etc. inside $...$ — never "neta" or bare \\phi.
+- Do NOT use HTML entities (e.g. &lt;) or ANSI codes inside math.
 
 # ULTRA-STRICT GROUNDING RULES
 1. ONLY use information EXPLICITLY stated in the provided excerpts
@@ -113,9 +117,9 @@ const CORE_SYSTEM_PROMPT = `You are an expert research and learning assistant he
 - If sources don't provide comparative data, say so instead of creating a table
 
 # FORBIDDEN ADDITIONS
-- Algorithm names not mentioned in sources (e.g., "logistic regression", "k-means")
-- Metric names not mentioned in sources (e.g., "silhouette score", "F1 score")
-- Mathematical notation not in sources ($x$, $y$ unless sources use it)
+- Algorithm names not mentioned in sources
+- Metric names not mentioned in sources
+- Mathematical notation not in sources
 - Examples not provided by sources
 - "Typical" or "common" practices unless sources state them
 
@@ -333,6 +337,10 @@ export class ChatLLMWrapper {
 - DO NOT add "Sources:" or "References:" at the end
 - Every factual claim needs its inline citation
 
+# MATH FORMAT (MANDATORY WHEN USING EQUATIONS)
+- Wrap ALL math in $...$ (inline) or $$...$$ (display). Example: "The level $L_t$ evolves as $L_t = \\alpha y_t + (1-\\alpha) L_{t-1}$ [1]."
+- Never write L_t, B_{t-1}, \\eta, or neta without $ delimiters — they will not render.
+
 `;
 
     return `# SOURCE DOCUMENTS
@@ -352,6 +360,9 @@ ${structureHint}`;
 
     if (lower.match(/compare|contrast|difference|vs|versus/)) {
       return 'Hint: Use table or structured comparison with citations';
+    }
+    if (lower.match(/equation|formula|formulas|recursive|stochastic|math|latex|notation|subscript|superscript/)) {
+      return 'Hint: Wrap every math expression in $...$ (inline) or $$...$$ (display) — e.g. $L_t$, $\\\\eta$, $B_{t-1}$. Never write L_t or neta without $ delimiters.';
     }
     if (lower.match(/^(how|why|explain)/)) {
       return 'Hint: Definition → mechanism → examples (if available)';
