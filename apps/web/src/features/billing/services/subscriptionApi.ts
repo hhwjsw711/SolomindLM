@@ -24,13 +24,46 @@ export function useSubscriptionStatus(): SubscriptionStatusResponse {
     };
   }
 
+  // Backend stores period start/end in milliseconds (Stripe seconds * 1000).
+  const periodEndMs = subscription.currentPeriodEnd;
+  let periodEndDate: Date | null =
+    typeof periodEndMs === 'number' && Number.isFinite(periodEndMs) && periodEndMs > 0
+      ? new Date(periodEndMs)
+      : null;
+  // Fallback: if end is missing (e.g. old record), derive from period start + interval
+  if (!periodEndDate || !Number.isFinite(periodEndDate.getTime())) {
+    const periodStartMs = subscription.currentPeriodStart;
+    let startMs = typeof periodStartMs === 'number' && Number.isFinite(periodStartMs) && periodStartMs > 0
+      ? periodStartMs
+      : (subscription as { createdAt?: number }).createdAt;
+    if (typeof startMs === 'number' && Number.isFinite(startMs) && startMs > 0) {
+      const start = new Date(startMs);
+      const interval = (subscription.interval as string) || 'month';
+      const end = new Date(start);
+      if (interval === 'year') {
+        end.setFullYear(end.getFullYear() + 1);
+      } else {
+        end.setMonth(end.getMonth() + 1);
+      }
+      periodEndDate = end;
+    }
+  }
+  let currentPeriodEndIso: string | null = null;
+  if (periodEndDate && Number.isFinite(periodEndDate.getTime())) {
+    try {
+      currentPeriodEndIso = periodEndDate.toISOString();
+    } catch {
+      currentPeriodEndIso = null;
+    }
+  }
+
   return {
     hasSubscription: subscription.status === 'active',
     status: subscription.status as any,
     plan: subscription.status === 'active' ? 'premium' : 'free',
     notebookLimit: subscription.status === 'active' ? 100 : 5,
     sourceLimit: subscription.status === 'active' ? 500 : 20,
-    currentPeriodEnd: new Date(subscription.currentPeriodEnd * 1000).toISOString(),
+    currentPeriodEnd: currentPeriodEndIso,
     cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
     interval: subscription.interval as SubscriptionInterval,
     amount: subscription.amount,

@@ -101,11 +101,19 @@ export const BillingPage: React.FC<BillingPageProps> = ({ onBack }) => {
                     <h2 className="text-2xl font-serif font-bold mb-1 text-foreground">
                       Pro Plan
                     </h2>
-                    <p className="text-muted-foreground mb-4">
+                    <p className="text-muted-foreground mb-1">
                       {status.interval === 'month' ? 'Monthly' : 'Yearly'} billing
                     </p>
+                    {status.currentPeriodEnd && (
+                      <p className="text-sm text-muted-foreground">
+                        {status.cancelAtPeriodEnd ? 'Access until ' : 'Renews on '}
+                        {new Date(status.currentPeriodEnd).toLocaleDateString(undefined, {
+                          dateStyle: 'long',
+                        })}
+                      </p>
+                    )}
                     {status.cancelAtPeriodEnd && (
-                      <p className="text-sm text-orange-500 font-medium">
+                      <p className="text-sm text-orange-500 font-medium mt-2">
                         ⚠️ Cancels at the end of your billing period
                       </p>
                     )}
@@ -122,11 +130,6 @@ export const BillingPage: React.FC<BillingPageProps> = ({ onBack }) => {
                       <p className="text-success-foreground font-medium capitalize">
                         ✓ {status.status}
                       </p>
-                      {status.currentPeriodEnd && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Renews {new Date(status.currentPeriodEnd).toLocaleDateString()}
-                        </p>
-                      )}
                     </div>
                   </div>
                 </div>

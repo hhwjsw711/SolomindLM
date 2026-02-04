@@ -1,5 +1,6 @@
 "use node";
 
+import Stripe from "stripe";
 import { v } from "convex/values";
 import { action, ActionCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
@@ -11,9 +12,49 @@ import type { Doc } from "./_generated/dataModel";
 // Initialize Stripe client
 const stripeClient = new StripeSubscriptions(components.stripe, {});
 
+function getStripeClient(): Stripe {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) throw new Error("STRIPE_SECRET_KEY is not set");
+  return new Stripe(key, { apiVersion: "2026-01-28.clover" });
+}
+
 // ============ Stripe Actions (using Stripe Component) ============
 
 type Subscription = Doc<"stripeSubscriptions"> | null;
+
+/**
+ * Check that Stripe-related environment variables are set (for debugging/setup).
+ * Returns booleans only; does not expose secret values.
+ * Call from Convex Dashboard → Functions or from a dev-only UI.
+ */
+export const checkStripeConfig = action({
+  args: {},
+  returns: v.object({
+    stripeSecretKeySet: v.boolean(),
+    stripeWebhookSecretSet: v.boolean(),
+    monthlyPriceIdSet: v.boolean(),
+    yearlyPriceIdSet: v.boolean(),
+    allSet: v.boolean(),
+  }),
+  handler: async () => {
+    const stripeSecretKeySet = !!process.env.STRIPE_SECRET_KEY;
+    const stripeWebhookSecretSet = !!process.env.STRIPE_WEBHOOK_SECRET;
+    const monthlyPriceIdSet = !!process.env.STRIPE_PRO_MONTHLY_PRICE_ID;
+    const yearlyPriceIdSet = !!process.env.STRIPE_PRO_YEARLY_PRICE_ID;
+    const allSet =
+      stripeSecretKeySet &&
+      stripeWebhookSecretSet &&
+      monthlyPriceIdSet &&
+      yearlyPriceIdSet;
+    return {
+      stripeSecretKeySet,
+      stripeWebhookSecretSet,
+      monthlyPriceIdSet,
+      yearlyPriceIdSet,
+      allSet,
+    };
+  },
+});
 
 /**
  * Create a Stripe Checkout session for a new subscription
@@ -32,33 +73,76 @@ export const createCheckoutSession = action({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("No identity found");
 
-    // Get or create Stripe customer
-    const customer = await stripeClient.getOrCreateCustomer(ctx, {
-      userId: userId,
-      email: identity.email ?? undefined,
-      name: identity.name ?? undefined,
-    });
-
-    // Determine price ID based on interval
-    const priceId = args.interval === "month"
-      ? process.env.STRIPE_PRO_MONTHLY_PRICE_ID
-      : process.env.STRIPE_PRO_YEARLY_PRICE_ID;
+    // Determine price ID based on interval (check before calling Stripe)
+    const rawPriceId =
+      args.interval === "month"
+        ? process.env.STRIPE_PRO_MONTHLY_PRICE_ID
+        : process.env.STRIPE_PRO_YEARLY_PRICE_ID;
+    const priceId = rawPriceId?.trim();
 
     if (!priceId) {
-      throw new Error(`Stripe price ID not found for interval: ${args.interval}`);
+      const varName =
+        args.interval === "month"
+          ? "STRIPE_PRO_MONTHLY_PRICE_ID"
+          : "STRIPE_PRO_YEARLY_PRICE_ID";
+      throw new Error(
+        `Stripe price ID not configured. Set ${varName} in Convex Dashboard → Settings → Environment Variables (use a Stripe Price ID e.g. price_xxx).`
+      );
     }
 
-    // Create checkout session
-    const session = await stripeClient.createCheckoutSession(ctx, {
-      priceId,
-      customerId: customer.customerId,
-      mode: "subscription",
-      successUrl: args.successUrl,
-      cancelUrl: args.cancelUrl,
-      subscriptionMetadata: { userId, interval: args.interval },
-    });
+    const createSessionWithCustomer = async (customerId: string) =>
+      stripeClient.createCheckoutSession(ctx, {
+        priceId,
+        customerId,
+        mode: "subscription",
+        successUrl: args.successUrl,
+        cancelUrl: args.cancelUrl,
+        subscriptionMetadata: { userId, interval: args.interval },
+      });
 
-    return { url: session.url, sessionId: session.sessionId };
+    try {
+      const customer = await stripeClient.getOrCreateCustomer(ctx, {
+        userId: userId,
+        email: identity.email ?? undefined,
+        name: identity.name ?? undefined,
+      });
+
+      const session = await createSessionWithCustomer(customer.customerId);
+      return { url: session.url, sessionId: session.sessionId };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+
+      // Stored customer ID is stale (e.g. after switching Stripe key/mode). Create a new customer and retry once.
+      if (message.includes("No such customer")) {
+        try {
+          const stripe = getStripeClient();
+          const newCustomer = await stripe.customers.create({
+            email: identity.email ?? undefined,
+            name: identity.name ?? undefined,
+            metadata: { convexUserId: userId },
+          });
+          const session = await createSessionWithCustomer(newCustomer.id);
+          return { url: session.url, sessionId: session.sessionId };
+        } catch (retryErr: unknown) {
+          const retryMsg = retryErr instanceof Error ? retryErr.message : String(retryErr);
+          throw new Error(
+            `Stripe customer not found and retry failed. ${retryMsg}`
+          );
+        }
+      }
+
+      // Stripe "No such price" = price ID not in this account or test/live mismatch
+      if (message.includes("No such price") || (err as { code?: string })?.code === "resource_missing") {
+        const varName =
+          args.interval === "month"
+            ? "STRIPE_PRO_MONTHLY_PRICE_ID"
+            : "STRIPE_PRO_YEARLY_PRICE_ID";
+        throw new Error(
+          `Invalid Stripe price. Update ${varName} in Convex to a Price ID from the same Stripe account and mode (test vs live) as your STRIPE_SECRET_KEY. In Stripe Dashboard → Products, copy the correct price_xxx. Stripe: ${message}`
+        );
+      }
+      throw err;
+    }
   },
 });
 

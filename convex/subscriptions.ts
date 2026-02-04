@@ -12,6 +12,7 @@ export {
   createPortalSession,
   cancelAtPeriodEnd,
   removeCancelAtPeriodEnd,
+  checkStripeConfig,
 } from "./subscriptionsActions";
 
 /**
