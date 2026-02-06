@@ -4,14 +4,9 @@
   "framework": "vite",
   "installCommand": "cd ../.. && bun install && cd apps/web && bun install",
   "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "https://tame-gecko-736.convex.site/api/:path*"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
+    { "source": "/api/:path*", "destination": "https://tame-gecko-736.convex.site/api/:path*" },
+    { "source": "/assets/:path*", "destination": "/assets/:path*" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
     {
