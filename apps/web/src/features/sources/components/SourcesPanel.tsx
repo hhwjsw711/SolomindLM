@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Source } from '@/shared/types/index';
 import { DiscoverSourcesModal } from './DiscoverSourcesModal';
 import { AddSourceModal } from './AddSourceModal';
@@ -11,7 +11,7 @@ import { SourcesPanelHeader } from './SourcesPanelHeader';
 import { useSourceUpload } from '../hooks/useSourceUpload';
 import { useSourceContent } from '../hooks/useSourceContent';
 import { useSourceSearch } from '../hooks/useSourceSearch';
-import { useDocumentContent } from '../services/documentsApi';
+import { useDocumentContent, useDocument } from '../services/documentsApi';
 import { useConfirmDialog } from '@/shared/ui/ConfirmDialog';
 
 interface SourcesPanelProps {
@@ -78,15 +78,22 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
   const documentContent = useDocumentContent(
     viewingSource && viewingSource.status === 'completed' ? viewingSourceId : null
   );
+  const viewingDocument = useDocument(viewingSourceId);
+
+  // Refs to avoid effect depending on sourceContent (which is a new object every render and would cause infinite loop)
+  const onContentUpdateRef = useRef(sourceContent.onContentUpdate);
+  const onLoadingStartRef = useRef(sourceContent.onLoadingStart);
+  onContentUpdateRef.current = sourceContent.onContentUpdate;
+  onLoadingStartRef.current = sourceContent.onLoadingStart;
 
   // Update content cache when documentContent changes
   useEffect(() => {
     if (viewingSourceId && documentContent?.content) {
-      sourceContent.onContentUpdate(viewingSourceId, documentContent.content);
+      onContentUpdateRef.current(viewingSourceId, documentContent.content);
     } else if (viewingSourceId && viewingSource?.status === 'completed' && documentContent === undefined) {
-      sourceContent.onLoadingStart(viewingSourceId);
+      onLoadingStartRef.current(viewingSourceId);
     }
-  }, [viewingSourceId, documentContent, viewingSource?.status, sourceContent]);
+  }, [viewingSourceId, documentContent, viewingSource?.status]);
 
   const { confirm, ConfirmDialogComponent } = useConfirmDialog();
 
@@ -259,6 +266,7 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
               source={viewingSource}
               onToggle={handleToggleSource}
               content={markdownContent}
+              pdfStorageId={viewingSource.type === 'PDF' ? viewingDocument?.storageId : undefined}
               isLoading={sourceContent.isLoading(viewingSourceId ?? '')}
               error={
                 sourceContent.hasError(viewingSourceId ?? '')

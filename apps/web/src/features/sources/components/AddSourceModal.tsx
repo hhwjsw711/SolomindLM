@@ -46,13 +46,23 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
   fileInputRef,
   onFileSelect,
 }) => {
-  // Reset dragging state when modal closes
+  // Keep ref to latest onDragLeave so we don't need it in the effect deps (avoids infinite loop:
+  // onDragLeave is recreated each render, so [isOpen, onDragLeave] would retrigger after setState).
+  const onDragLeaveRef = useRef(onDragLeave);
+  onDragLeaveRef.current = onDragLeave;
+
+  // Reset dragging state when modal closes (run only when isOpen changes, not when callback identity changes).
   useEffect(() => {
     if (!isOpen) {
-      // Reset isDragging via callback
-      onDragLeave({ preventDefault: () => {}, stopPropagation: () => {}, currentTarget: document.createElement('div'), relatedTarget: null } as unknown as React.DragEvent<HTMLDivElement>);
+      const syntheticEvent = {
+        preventDefault: () => {},
+        stopPropagation: () => {},
+        currentTarget: document.createElement('div'),
+        relatedTarget: null,
+      } as unknown as React.DragEvent<HTMLDivElement>;
+      onDragLeaveRef.current(syntheticEvent);
     }
-  }, [isOpen, onDragLeave]);
+  }, [isOpen]);
 
   const canUpload = Boolean(userId && noteId && sourcesCount < MAX_SOURCES);
   const showAuthWarning = !userId || !noteId;

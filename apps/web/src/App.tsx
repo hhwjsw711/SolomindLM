@@ -65,6 +65,8 @@ function documentToSource(doc: any): Source {
     type = 'WEB';
   } else if (doc.fileType === 'url') {
     type = 'WEB';
+  } else if (doc.fileType === 'text') {
+    type = 'TXT';
   } else if (doc.fileType === 'file') {
     // Extract extension from fileName
     const ext = doc.fileName.split('.').pop()?.toLowerCase() || '';
@@ -91,18 +93,30 @@ function documentToSource(doc: any): Source {
       case 'bmp':
       case 'svg':
       case 'avif': type = 'IMG'; break;
-      default: type = 'PDF';
+      default: type = 'DOC'; // unknown or no extension (e.g. renamed file) — avoid mislabeling as PDF
     }
   }
 
+  // Display title: strip extension for files so list shows "Report" not "Report.pdf"
+  const displayTitle =
+    doc.fileType === 'file' && doc.fileName && doc.fileName.includes('.')
+      ? doc.fileName.replace(/\.[^/.]+$/, '')
+      : doc.fileName;
+
+  const url =
+    doc.fileType === 'url' || doc.fileType === 'youtube'
+      ? (doc.fileUrl as string | undefined)
+      : undefined;
+
   return {
     id: doc._id,
-    title: doc.fileName,
+    title: displayTitle,
     type,
     date: new Date(doc.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     selected: true,
     content: '',
     status: doc.status,
+    url,
   };
 }
 
@@ -253,11 +267,11 @@ const AppContent: React.FC = () => {
     }
   }, [urlNotebookId, notebookList]);
 
-  // Sync sources with documents from Convex (updates when documents change, including status)
+  // Sync sources with documents from Convex (updates when documents change, including status and title)
   useEffect(() => {
-    // Check if documents actually changed by comparing IDs AND statuses
-    const currentSignature = documents.map(d => `${d._id}:${d.status}`).join(',');
-    const prevSignature = prevDocumentsRef.current.map(d => `${d._id}:${d.status}`).join(',');
+    // Include fileName in signature so title updates from DocEmbeddingJob (e.g. YouTube placeholder -> real title) trigger a re-sync
+    const currentSignature = documents.map(d => `${d._id}:${d.status}:${d.fileName}`).join(',');
+    const prevSignature = prevDocumentsRef.current.map(d => `${d._id}:${d.status}:${d.fileName}`).join(',');
 
     if (currentSignature !== prevSignature) {
       // Preserve selection state when updating

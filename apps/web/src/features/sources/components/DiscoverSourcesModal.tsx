@@ -93,6 +93,7 @@ export const DiscoverSourcesModal: React.FC<DiscoverSourcesModalProps> = ({
         date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         selected: true,
         status: 'pending',
+        url: result.url,
       };
 
       onAddSource(newSource);

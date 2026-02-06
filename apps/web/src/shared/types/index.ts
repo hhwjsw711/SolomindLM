@@ -8,6 +8,8 @@ export interface Source {
   selected: boolean;
   content?: string;
   status?: 'pending' | 'processing' | 'completed' | 'failed';
+  /** Original URL for WEB sources (url or youtube); used to open in new tab */
+  url?: string;
 }
 
 export interface ReferenceChunk {

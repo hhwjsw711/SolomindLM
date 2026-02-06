@@ -56,6 +56,7 @@ export const docEmbedding = internalAction({
       });
 
       let extractedText = '';
+      let extractedTitle: string | undefined;
 
       // Step 1: Extraction
       console.log('[DocEmbedding] Step 1: Extracting content...');
@@ -64,8 +65,10 @@ export const docEmbedding = internalAction({
       const supadataLoader = new SupadataLoaderService();
 
       if (docDetails.fileType === 'youtube') {
-        // For YouTube, use the fileUrl as the source
-        extractedText = await supadataLoader.loadTranscript(docDetails.fileUrl || '');
+        const meta = await supadataLoader.loadTranscriptWithMeta(docDetails.fileUrl || '');
+        extractedText = meta.content;
+        if (meta.title?.trim()) extractedTitle = meta.title.trim();
+        // When transcript has no title we use the videoId fallback in Step 3 (no metadata API call)
       } else if (docDetails.fileType === 'text') {
         // Text is already extracted, stored in metadata
         extractedText = docDetails.fileUrl || ''; // fileUrl contains the text for type 'text'
@@ -108,7 +111,9 @@ export const docEmbedding = internalAction({
           }
         }
       } else if (docDetails.fileType === 'url') {
-        extractedText = await supadataLoader.loadWebPage(docDetails.fileUrl || '');
+        const meta = await supadataLoader.loadWebPageWithMeta(docDetails.fileUrl || '');
+        extractedText = meta.content;
+        if (meta.title?.trim()) extractedTitle = meta.title.trim();
       }
 
       if (!extractedText || extractedText.trim().length === 0) {
@@ -134,25 +139,21 @@ export const docEmbedding = internalAction({
       let title: string;
 
       if (docDetails.fileType === 'file') {
-        // Use the file name (remove extension)
-        const fileName = docDetails.fileName || '';
-        title = fileName.replace(/\.[^/.]+$/, '');
+        // Keep full file name (with extension) so the UI can show correct type (PDF, DOCX, etc.)
+        title = docDetails.fileName || '';
       } else if (docDetails.fileType === 'url') {
-        // For URLs, use the hostname
-        try {
-          const url = new URL(docDetails.fileUrl || '');
-          title = url.hostname;
-        } catch {
-          title = docDetails.fileUrl || 'Web Page';
-        }
+        title = extractedTitle || (() => {
+          try {
+            return new URL(docDetails.fileUrl || '').hostname;
+          } catch {
+            return docDetails.fileUrl || 'Web Page';
+          }
+        })();
       } else if (docDetails.fileType === 'youtube') {
-        // For YouTube, use the video ID or URL
-        const match = (docDetails.fileUrl || '').match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
-        if (match) {
-          title = `YouTube: ${match[1]}`;
-        } else {
-          title = 'YouTube Video';
-        }
+        title = extractedTitle || (() => {
+          const match = (docDetails.fileUrl || '').match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+          return match ? `YouTube: ${match[1]}` : 'YouTube Video';
+        })();
       } else {
         // For text input
         title = 'Pasted Text';

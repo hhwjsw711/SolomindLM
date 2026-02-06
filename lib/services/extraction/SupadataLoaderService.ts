@@ -94,34 +94,8 @@ export class SupadataLoaderService {
     console.log(`[Supadata] Fetching transcript for: ${url} (lang: ${lang})`);
 
     const fetchOne = async (): Promise<string> => {
-      try {
-        const transcriptResult = await this.supadata.transcript({
-          url,
-          lang,
-          text: true, // Return plain text instead of timestamped chunks
-          mode: 'auto', // 'native', 'auto', or 'generate'
-        });
-
-        // Check if we got a transcript directly or a job ID for async processing
-        if ('jobId' in transcriptResult) {
-          // For large files, we need to poll for results
-          console.log(`[Supadata] Started transcript job: ${transcriptResult.jobId}`);
-          return this.stripMedia(await this.pollForTranscript(transcriptResult.jobId));
-        } else {
-          // For smaller files, we get the transcript directly
-          const text = typeof transcriptResult === 'string'
-            ? transcriptResult
-            : JSON.stringify(transcriptResult);
-          console.log(`[Supadata] Successfully fetched transcript (${text.length} chars)`);
-          return this.stripMedia(text);
-        }
-      } catch (e) {
-        if (e instanceof SupadataError) {
-          console.error(`[Supadata] Error (${e.error}): ${e.message}`);
-          throw new Error(`Failed to fetch transcript: ${e.message}`);
-        }
-        throw e;
-      }
+      const { content } = await this.loadTranscriptWithMetaInternal(url, lang);
+      return content;
     };
 
     // Retry on rate limit (e.g. "Limit Exceeded") when multiple transcripts are fetched at once
@@ -137,23 +111,78 @@ export class SupadataLoaderService {
   }
 
   /**
+   * Get transcript plus video title when available. Used by DocEmbeddingJob for display names.
+   */
+  async loadTranscriptWithMeta(url: string, lang = 'en'): Promise<{ title: string; content: string }> {
+    const validation = validateUrl(url);
+    if (!validation.valid) {
+      throw new Error(`Invalid URL: ${validation.error}`);
+    }
+    return invokeWithRetry(
+      () => this.loadTranscriptWithMetaInternal(url, lang),
+      {
+        maxAttempts: 5,
+        baseDelayMs: 2000,
+        jitter: true,
+        retryableErrors: (err) =>
+          /limit exceeded|rate limit|too many requests|429/i.test(err.message),
+        onRetry: (attempt, error, delayMs) =>
+          console.warn(`[Supadata] Rate limited, retry ${attempt} in ${delayMs}ms: ${error.message}`),
+      },
+      'loadTranscriptWithMeta'
+    );
+  }
+
+  private async loadTranscriptWithMetaInternal(url: string, lang: string): Promise<{ title: string; content: string }> {
+    const transcriptResult = await this.supadata.transcript({
+      url,
+      lang,
+      text: true,
+      mode: 'auto',
+    });
+
+    if ('jobId' in transcriptResult) {
+      console.log(`[Supadata] Started transcript job: ${(transcriptResult as { jobId: string }).jobId}`);
+      return this.pollForTranscriptWithMeta((transcriptResult as { jobId: string }).jobId);
+    }
+
+    const result = transcriptResult as string | { content?: string; title?: string };
+    const title = typeof result === 'object' && result && 'title' in result ? (result.title ?? '') : '';
+    const text = typeof result === 'string'
+      ? result
+      : (result?.content ?? JSON.stringify(result ?? ''));
+    console.log(`[Supadata] Successfully fetched transcript (${text.length} chars)`);
+    return { title, content: this.stripMedia(text) };
+  }
+
+  /**
    * Poll for async transcript job completion
    */
   private async pollForTranscript(jobId: string, maxAttempts = 30): Promise<string> {
+    const { content } = await this.pollForTranscriptWithMeta(jobId, maxAttempts);
+    return content;
+  }
+
+  /**
+   * Poll for async transcript job completion; returns title when available from API
+   */
+  private async pollForTranscriptWithMeta(jobId: string, maxAttempts = 30): Promise<{ title: string; content: string }> {
     console.log(`[Supadata] Polling for job ${jobId}...`);
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       const jobResult = await this.supadata.transcript.getJobStatus(jobId);
 
       if (jobResult.status === 'completed') {
-        const content = jobResult.result?.content;
+        const result = jobResult.result as { content?: string; title?: string } | undefined;
+        const content = result?.content;
+        const title = (result as { title?: string } | undefined)?.title ?? '';
         const text = typeof content === 'string'
           ? content
-          : JSON.stringify(content);
+          : JSON.stringify(content ?? '');
         console.log(`[Supadata] Job completed (${text.length} chars)`);
-        return text; // stripMedia is called by the caller (loadTranscript)
+        return { title, content: this.stripMedia(text) };
       } else if (jobResult.status === 'failed') {
-        throw new Error(`Transcript job failed: ${jobResult.error?.message || 'Unknown error'}`);
+        throw new Error(`Transcript job failed: ${(jobResult as { error?: { message?: string } }).error?.message || 'Unknown error'}`);
       }
 
       // Job is still 'queued' or 'active', wait and retry
@@ -171,7 +200,14 @@ export class SupadataLoaderService {
    * @returns Plain text content of the page
    */
   async loadWebPage(url: string): Promise<string> {
-    // Validate URL to prevent SSRF attacks
+    const { content } = await this.loadWebPageWithMeta(url);
+    return content;
+  }
+
+  /**
+   * Scrape a web page and extract text content plus page title when available
+   */
+  async loadWebPageWithMeta(url: string): Promise<{ title: string; content: string }> {
     const validation = validateUrl(url);
     if (!validation.valid) {
       throw new Error(`Invalid URL: ${validation.error}`);
@@ -180,14 +216,12 @@ export class SupadataLoaderService {
     console.log(`[Supadata] Scraping web page: ${url}`);
 
     try {
-      const scrapeResult = await this.supadata.web.scrape(url);
-
-      // Extract text content from the scrape result
+      const scrapeResult = await this.supadata.web.scrape(url) as { content?: string; title?: string };
       const text = scrapeResult.content || '';
+      const title = scrapeResult.title ?? '';
       const cleanedText = this.stripMedia(text);
       console.log(`[Supadata] Successfully scraped page (${text.length} chars, ${cleanedText.length} after cleaning)`);
-      return cleanedText;
-
+      return { title, content: cleanedText };
     } catch (e) {
       if (e instanceof SupadataError) {
         console.error(`[Supadata] Error (${e.error}): ${e.message}`);

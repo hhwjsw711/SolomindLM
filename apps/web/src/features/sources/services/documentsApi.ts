@@ -133,6 +133,14 @@ export function useDocumentContent(documentId: string | null) {
 }
 
 /**
+ * Get a signed URL for a document's stored file (e.g. PDF). Call the returned
+ * function with storageId to get a URL, or use the hook pattern with effect.
+ */
+export function useGetSignedUrl() {
+  return useMutation(api.documents.getSignedUrl);
+}
+
+/**
  * Discover web sources using Tavily Search API
  */
 export function useDiscoverSources() {
