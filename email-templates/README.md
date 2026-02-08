@@ -1,6 +1,6 @@
 # SolomindLM Email Templates
 
-Professional, conversion-optimized email templates for authentication (Better Auth), designed to match SolomindLM's warm, vintage aesthetic and drive user engagement.
+Professional, conversion-optimized email templates for authentication (@convex-dev/auth), designed to match SolomindLM's warm, vintage aesthetic and drive user engagement.
 
 ## 📧 Templates Included
 
@@ -189,7 +189,7 @@ To add the SolomindLM logo or other images:
 
 ## 📚 Resources
 
-- [Better Auth documentation](https://www.better-auth.com/docs) (if using Better Auth)
+- [@convex-dev/auth documentation](https://docs.convex.dev/auth)
 - Your auth provider's email template and variable reference
 - [Email Client Compatibility Guide](https://www.caniemail.com/)
 

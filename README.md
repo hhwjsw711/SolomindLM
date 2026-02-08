@@ -69,19 +69,15 @@ SolomindLM/
 │           │   ├── notebooks/      # Notebook management
 │           │   ├── sources/        # Source discovery and management
 │           │   └── studio/         # AI generation tools (reports, flashcards, quizzes, etc.)
-│           └── shared/
-│               └── types/          # Shared TypeScript types
+│           └── shared/             # Shared utilities (SEO, types, etc.)
 ├── convex/                         # Convex backend
 │   ├── auth/                       # Authentication configuration
 │   ├── jobs/                       # Generation jobs (reports, flashcards, quizzes, etc.)
+│   ├── lib/                        # AI agents and processing utilities
 │   ├── storage/                    # Vector store, chat history
 │   └── *.ts                        # Functions, schema, mutations
-├── lib/                            # Shared agents & utilities (used by Convex)
-│   └── services/
-│       ├── agents/                 # AI agents for different content types
-│       ├── processing/             # Content processing utilities
-│       └── shared/                 # Common agent utilities
-├── bun.lockb
+├── email-templates/                # Auth email templates
+├── bun.lock
 └── package.json                    # Workspace configuration
 ```
 
