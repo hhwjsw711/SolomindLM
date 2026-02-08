@@ -41,6 +41,8 @@ import type * as lib_extraction_SupadataLoaderService from "../lib/extraction/Su
 import type * as lib_extractors from "../lib/extractors.js";
 import type * as lib_limits from "../lib/limits.js";
 import type * as lib_llm from "../lib/llm.js";
+import type * as lib_processing_EmbeddingServiceClient from "../lib/processing/EmbeddingServiceClient.js";
+import type * as lib_processing_TextSplitterService from "../lib/processing/TextSplitterService.js";
 import type * as messages from "../messages.js";
 import type * as mindmaps from "../mindmaps.js";
 import type * as notebooks from "../notebooks.js";
@@ -102,6 +104,8 @@ declare const fullApi: ApiFromModules<{
   "lib/extractors": typeof lib_extractors;
   "lib/limits": typeof lib_limits;
   "lib/llm": typeof lib_llm;
+  "lib/processing/EmbeddingServiceClient": typeof lib_processing_EmbeddingServiceClient;
+  "lib/processing/TextSplitterService": typeof lib_processing_TextSplitterService;
   messages: typeof messages;
   mindmaps: typeof mindmaps;
   notebooks: typeof notebooks;

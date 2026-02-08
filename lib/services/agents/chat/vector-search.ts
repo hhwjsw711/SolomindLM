@@ -9,7 +9,7 @@
 
 import { env } from '../../../helpers/env';
 import type { ReferenceChunk } from '../../storage/ChatHistoryService.js';
-import type { EmbeddingService } from '../../processing/EmbeddingServiceClient.js';
+import type { EmbeddingService } from '../../../../convex/lib/processing/EmbeddingServiceClient.js';
 
 // Re-export ReferenceChunk for other modules
 export type { ReferenceChunk };
@@ -114,15 +114,7 @@ export class VectorSearchHandler {
 
     console.log(`[VectorSearch] Raw results from runner: ${raw.length}`);
 
-    // If no results, try without documentIds filter (if provided)
-    if (raw.length === 0 && documentIds?.length) {
-      console.log('[VectorSearch] No results with documentIds filter, retrying without filter');
-      raw = await this.vectorSearchRunner(
-        queryEmbedding,
-        this.config.vectorMatchCount,
-        undefined
-      );
-    }
+    // No fallback: respect the user's document selection strictly
 
     const withScore = raw.map((r) => ({
       ...r,
@@ -146,14 +138,7 @@ export class VectorSearchHandler {
     );
     console.log(`[VectorSearch] After threshold: ${filtered.length} results`);
 
-    // Fallback: If no results and we have raw results, try with a much lower threshold
-    if (filtered.length === 0 && raw.length > 0) {
-      const fallbackThreshold = 0.0; // Accept any results
-      filtered = withScore.filter(
-        (r) => (r.similarity ?? 0) >= fallbackThreshold
-      );
-      console.log(`[VectorSearch] Fallback with threshold ${fallbackThreshold}: ${filtered.length} results`);
-    }
+    // No threshold fallback when documentIds are strictly enforced
 
     const deduped = this.deduplicateResults(filtered);
     console.log(`[VectorSearch] After dedup: ${deduped.length}`);
@@ -173,19 +158,36 @@ export class VectorSearchHandler {
     console.log(`[VectorSearch] final: ${finalResults.length} results`);
 
     if (finalResults.length === 0) {
-      if (raw.length === 0) {
-        throw new Error(
-          `No results found. No chunks found for this notebook. Please check that documents have been processed and embeddings have been generated.`
-        );
+      if (documentIds?.length) {
+        // User selected specific documents but no relevant content was found
+        if (raw.length === 0) {
+          throw new Error(
+            `No results found in your selected documents. The selected documents don't contain any content matching your query. Try selecting different documents or rephrasing your question.`
+          );
+        } else {
+          const scores = raw.map((r) => r._score ?? 0);
+          const maxScore = Math.max(...scores);
+          throw new Error(
+            `No results found in your selected documents. Found ${raw.length} chunks but all scores are below threshold. ` +
+            `Max score: ${maxScore.toFixed(4)}, Threshold: ${this.config.vectorMatchThreshold}. ` +
+            `The selected documents may not contain relevant information for your query.`
+          );
+        }
       } else {
-        // Provide more details about the scores
-        const scores = raw.map((r) => r._score ?? 0);
-        const maxScore = Math.max(...scores);
-        throw new Error(
-          `No results found. Found ${raw.length} chunks but all scores are below threshold. ` +
-          `Max score: ${maxScore.toFixed(4)}, Threshold: ${this.config.vectorMatchThreshold}. ` +
-          `This may indicate an issue with embedding quality or document processing.`
-        );
+        // No document filter - general error
+        if (raw.length === 0) {
+          throw new Error(
+            `No results found. No chunks found for this notebook. Please check that documents have been processed and embeddings have been generated.`
+          );
+        } else {
+          const scores = raw.map((r) => r._score ?? 0);
+          const maxScore = Math.max(...scores);
+          throw new Error(
+            `No results found. Found ${raw.length} chunks but all scores are below threshold. ` +
+            `Max score: ${maxScore.toFixed(4)}, Threshold: ${this.config.vectorMatchThreshold}. ` +
+            `This may indicate an issue with embedding quality or document processing.`
+          );
+        }
       }
     }
 

@@ -17,7 +17,7 @@ import { env } from '../../helpers/env';
 import { VectorSearchHandler } from './chat/vector-search.js';
 import { ChatLLMWrapper, type ChatResponse } from './chat/llm-wrapper.js';
 import { validateGrounding, isArtifactContent, validateSemanticGrounding } from './chat/grounding-validator.js';
-import { EmbeddingService } from '../processing/EmbeddingServiceClient.js';
+import { EmbeddingService } from '../../../convex/lib/processing/EmbeddingServiceClient.js';
 
 // ============================================================
 // Types

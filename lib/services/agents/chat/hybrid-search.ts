@@ -6,7 +6,7 @@
  */
 
 import type { ReferenceChunk } from '../../storage/ChatHistoryService.js';
-import type { EmbeddingService } from '../../processing/EmbeddingServiceClient.js';
+import type { EmbeddingService } from '../../../../convex/lib/processing/EmbeddingServiceClient.js';
 import {
   VectorSearchHandler,
   VectorSearchRunner,
@@ -172,11 +172,7 @@ export class HybridSearchHandler extends VectorSearchHandler {
       const overlap = vectorResults.length + keywordResults.length;
       console.log(`[HybridSearch] vector=${vectorResults.length}, keyword=${keywordResults.length}`);
 
-      // Quality-based fallback
-      if (vectorResults.length < 3 && keywordResults.length < 3) {
-        console.warn('[HybridSearch] Both retrievers returned <3 results, fallback to vector-only');
-        return (await super.search(userId, noteId, query, documentIds)) as HybridReferenceChunk[];
-      }
+      // No fallback: respect the user's document selection strictly
 
       // RRF fusion
       const fused = reciprocalRankFusion(
@@ -236,8 +232,8 @@ export class HybridSearchHandler extends VectorSearchHandler {
 
       return finalResults;
     } catch (error: any) {
-      console.warn('[HybridSearch] Error:', error.message, 'fallback to vector-only');
-      return (await super.search(userId, noteId, query, documentIds)) as HybridReferenceChunk[];
+      // Re-throw error instead of falling back
+      throw error;
     }
   }
 

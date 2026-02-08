@@ -4,7 +4,7 @@ import { v } from 'convex/values';
 import { internal } from '../_generated/api';
 import { MistralOCRService } from '../lib/extraction/MistralOCRService';
 import { SupadataLoaderService } from '../lib/extraction/SupadataLoaderService';
-import { TextSplitterService } from '../../lib/services/processing/TextSplitterService';
+import { TextSplitterService } from '../lib/processing/TextSplitterService';
 
 // File extensions that require OCR processing
 const OCR_FILE_EXTENSIONS = [

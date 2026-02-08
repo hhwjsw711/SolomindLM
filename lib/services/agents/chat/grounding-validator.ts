@@ -7,7 +7,7 @@
  */
 
 import type { ReferenceChunk } from '../../storage/ChatHistoryService.js';
-import type { EmbeddingService } from '../../processing/EmbeddingServiceClient.js';
+import type { EmbeddingService } from '../../../../convex/lib/processing/EmbeddingServiceClient.js';
 
 // ============================================================
 // Types

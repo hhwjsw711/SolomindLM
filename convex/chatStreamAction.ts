@@ -8,7 +8,7 @@ import { components } from "./_generated/api";
 import { PersistentTextStreaming } from "@convex-dev/persistent-text-streaming";
 import { ChatAgent } from "../lib/services/agents/ChatAgent";
 import { HybridSearchHandler } from "../lib/services/agents/chat/hybrid-search";
-import { EmbeddingService } from "../lib/services/processing/EmbeddingServiceClient";
+import { EmbeddingService } from "./lib/processing/EmbeddingServiceClient";
 
 interface VectorSearchResult {
   _id: Id<"documentChunks">;
@@ -197,17 +197,11 @@ export async function streamChatResponse(
       }
     }
 
-    // Then apply documentIds filter if provided
+    // Then apply documentIds filter if provided (strict - no fallback)
     if (docIds?.length) {
       const docIdSet = new Set(docIds);
       const filteredByDoc = thresholded.filter((r) => docIdSet.has(r.documentId));
       console.log(`[vectorSearchRunner] After documentIds filter: ${filteredByDoc.length} results`);
-      // If we have very few results after filtering, try again without threshold but keep document filter
-      if (filteredByDoc.length < 3 && thresholded.length >= 3) {
-        console.warn(`[vectorSearchRunner] Only ${filteredByDoc.length} results from selected documents pass threshold. Using all thresholded results for better coverage.`);
-        // Don't filter by docIds, use thresholded results instead
-        return thresholded.slice(0, limit);
-      }
       return filteredByDoc.slice(0, limit);
     }
     return thresholded.slice(0, limit);
