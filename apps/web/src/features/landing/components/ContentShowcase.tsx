@@ -28,18 +28,18 @@ export const ContentShowcase: React.FC = () => {
           </p>
         </div>
 
-        {/* Format Pills */}
-        <div className="flex flex-wrap gap-4 justify-center">
+        {/* Format cards – 3×2 grid of rounded rectangles */}
+        <div className="grid grid-cols-3 gap-3 sm:gap-4 max-w-3xl mx-auto">
           {LANDING_CONTENT.contentShowcase.formats.map((format) => {
             const Icon = getIconForFormat(format.icon);
 
             return (
               <div
                 key={format.name}
-                className="px-6 py-3 rounded-full bg-card border border-border shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2"
+                className="rounded-xl px-4 py-2.5 sm:px-4 sm:py-3 bg-card border border-border shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-1.5 min-h-0"
               >
-                <Icon className="w-5 h-5 text-primary" />
-                <span className="font-medium text-foreground">{format.name}</span>
+                <Icon className="w-5 h-5 shrink-0 text-primary" />
+                <span className="font-medium text-foreground text-center">{format.name}</span>
               </div>
             );
           })}

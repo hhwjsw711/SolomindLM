@@ -48,35 +48,44 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onGetStarted }) => {
   }, [displayText, isDeleting, currentPlaceholderIndex]);
 
   return (
-        <section className="relative flex flex-col items-center px-6 pt-40 pb-40 overflow-hidden">
-      {/* Animated mesh gradient background */}
-      <div className="absolute inset-0 pointer-events-none" aria-hidden>
+        <section className="relative flex flex-col items-center px-6 sm:px-8 lg:px-12 pt-44 sm:pt-52 pb-44 sm:pb-52 overflow-hidden">
+      {/* Animated mesh gradient background – full-width glow, smooth bottom fade */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden>
         <div
-          className="absolute inset-0 animate-mesh-gradient opacity-[0.4]"
+          className="absolute inset-0 opacity-[0.4]"
           style={{
             background: `
               radial-gradient(ellipse 80% 50% at 20% 40%, rgba(249, 115, 22, 0.15), transparent),
-              radial-gradient(ellipse 60% 40% at 80% 60%, rgba(251, 191, 36, 0.12), transparent),
+              radial-gradient(ellipse 90% 55% at 85% 55%, rgba(251, 191, 36, 0.12), transparent),
+              radial-gradient(ellipse 100% 70% at 100% 50%, rgba(251, 113, 133, 0.08), transparent),
               radial-gradient(ellipse 50% 60% at 50% 80%, rgba(251, 113, 133, 0.1), transparent)
             `
           }}
         />
         <div
-          className="absolute inset-0 animate-mesh-gradient opacity-[0.35]"
+          className="absolute inset-0 opacity-[0.35]"
           style={{
-            animationDelay: '-6s',
             background: `
               radial-gradient(ellipse 70% 50% at 70% 30%, rgba(251, 113, 133, 0.12), transparent),
+              radial-gradient(ellipse 80% 50% at 95% 60%, rgba(249, 115, 22, 0.08), transparent),
               radial-gradient(ellipse 50% 60% at 30% 70%, rgba(249, 115, 22, 0.1), transparent)
             `
           }}
         />
         <div className="absolute inset-0 bg-background/15" aria-hidden />
+        {/* Soft fade into next section – no hard bottom border */}
+        <div
+          className="absolute inset-x-0 bottom-0 h-2/3 pointer-events-none"
+          style={{
+            background: 'linear-gradient(to bottom, transparent 0%, transparent 35%, var(--background) 100%)'
+          }}
+          aria-hidden
+        />
       </div>
 
-      <div className="relative z-10 max-w-[1500px] w-full mx-auto text-center space-y-24 px-4">
-        {/* Headline + tagline with tight gap */}
-        <div className="space-y-4">
+      <div className="relative z-10 max-w-[1500px] w-full mx-auto text-center space-y-28 sm:space-y-32 px-4 sm:px-6">
+        {/* Headline + tagline */}
+        <div className="space-y-5 sm:space-y-6">
           <h1 className="text-6xl md:text-8xl font-sans font-extrabold text-foreground tracking-tight" style={{ lineHeight: '1.1' }}>
             Learn{' '}
             <span style={{
@@ -95,13 +104,13 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onGetStarted }) => {
 
         {/* CTA Search Bar - Redesigned */}
         <div 
-          className="group/bar relative max-w-2xl mx-auto animate-in fade-in delay-300 transition-[transform] duration-300 ease-out hover:scale-[1.02]"
+          className="group/bar relative w-full max-w-3xl mx-auto min-h-[136px] sm:min-h-[144px] animate-in fade-in delay-300 transition-[transform] duration-300 ease-out hover:scale-[1.02]"
           onClick={onGetStarted}
           onMouseEnter={() => setIsFocused(true)}
           onMouseLeave={() => setIsFocused(false)}
           style={{ transform: isFocused ? 'scale(1.02)' : undefined }}
         >
-          {/* Focus/hover glow - palette-colored */}
+          {/* Focus/hover glow - palette-colored; size fixed by wrapper min-height + w-full */}
           <div className={`absolute -inset-3 rounded-2xl transition-all duration-500 ${
             isFocused 
               ? 'bg-gradient-to-r from-orange-400/50 via-amber-400/45 to-rose-400/50 blur-2xl opacity-100' 
@@ -109,54 +118,49 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onGetStarted }) => {
           }`} aria-hidden />
 
           <div
-            className={`hero-search-glass relative rounded-2xl overflow-hidden cursor-pointer group border border-white/20 hover:border-primary/40 transition-all duration-300 ease-out ${
+            className={`hero-search-glass relative rounded-2xl overflow-hidden cursor-pointer group border border-white/20 hover:border-primary/40 transition-all duration-300 ease-out h-[136px] sm:h-[144px] min-w-0 flex flex-col ${
               isFocused ? 'scale-[1.02] ring-2 ring-primary/30' : 'hover:ring-2 hover:ring-primary/20'
             }`}
             style={isFocused ? { boxShadow: '0 20px 60px rgba(0,0,0,0.08), 0 0 0 1px rgba(255,255,255,0.5), 0 0 40px rgba(249,115,22,0.15), 0 0 80px rgba(251,191,36,0.1)' } : undefined}
           >
-            {/* Top: prompt row - single line on all viewports */}
-            <div className="flex flex-nowrap items-center gap-2 sm:gap-4 px-3 sm:px-5 py-6">
-              {/* Search icon */}
-              <div className={`flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300 ${
-                isFocused 
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary'
-              }`}>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="11" cy="11" r="8" />
-                  <path d="m21 21-4.35-4.35" />
-                </svg>
+            {/* Placeholder at top - fixed height row so bar size never changes */}
+            <div className="flex flex-col flex-1 min-h-0">
+              <div className="flex-1 flex items-center gap-1.5 pt-5 sm:pt-6 px-4 sm:px-6 min-h-0 min-w-0">
+                <span className={`text-base sm:text-lg font-medium truncate text-left transition-colors duration-300 ${
+                  isFocused ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'
+                }`}>
+                  {displayText}
+                </span>
+                <span className={`flex-shrink-0 w-0.5 h-4 rounded-full transition-opacity duration-200 ${
+                  isFocused || !displayText ? 'opacity-100' : 'opacity-0'
+                } bg-primary animate-cursor-blink`} aria-hidden />
               </div>
-
-              <div className="flex-1 min-w-0 text-left overflow-hidden">
-                <div className="flex items-center gap-1.5 flex-nowrap min-w-0">
-                  <span className={`text-base md:text-lg font-medium transition-colors duration-300 truncate ${
-                    isFocused ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'
-                  }`}>
-                    {displayText}
-                  </span>
-                  <span className={`flex-shrink-0 w-0.5 h-4 rounded-full transition-opacity duration-200 ${
-                    isFocused || !displayText ? 'opacity-100' : 'opacity-0'
-                  } bg-primary animate-cursor-blink`} aria-hidden />
+              {/* Bottom row: + icon, spacer, Plan button, sound icon, send button (fake, no handlers) */}
+              <div className="flex flex-nowrap items-center gap-2 sm:gap-4 px-4 sm:px-6 pt-8 sm:pt-10 pb-5 sm:pb-6">
+                <div className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-300 ${
+                  isFocused ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary'
+                }`} aria-hidden>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
                 </div>
-              </div>
-
-              {/* Go button - pill, hover scale */}
-              <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ease-out hover:scale-[1.02] active:scale-[0.98] ${
-                isFocused 
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'bg-muted text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground'
-              }`}>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M5 12h14M12 5l7 7-7 7" />
-                </svg>
+                <div className="flex-1 min-w-0" />
+                <div className="flex-shrink-0 flex items-center gap-2">
+                  <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ease-out ${
+                    isFocused ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground'
+                  }`} aria-hidden>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 19V5M5 12l7-7 7 7" />
+                    </svg>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Product Preview / Visual Proof Area */}
-        <div className="pt-16 animate-in fade-in duration-1000 delay-500">
+        <div className="pt-20 sm:pt-24 animate-in fade-in duration-1000 delay-500">
           <div className="relative max-w-[1500px] w-full mx-auto">
             {/* Glow Effect */}
             <div className="absolute -inset-4 bg-gradient-to-r from-orange-500/20 via-amber-500/20 to-rose-500/20 rounded-3xl blur-2xl"></div>

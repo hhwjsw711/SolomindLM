@@ -48,14 +48,14 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({ onGetStarted
     >
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex items-center justify-between h-16 md:h-20">
-          {/* Logo */}
+          {/* Logo – same size as app Header */}
           <div className="flex items-center gap-3">
             <img
               src="/SolomindLM_logo.png"
               alt="SolomindLM"
-              className="w-6 h-6 md:w-8 md:h-8"
+              className="w-8 h-8 shrink-0 object-contain"
             />
-            <span className="text-xl md:text-2xl font-bold text-foreground">
+            <span className="text-xl font-sans font-bold text-foreground tracking-tight">
               SolomindLM
             </span>
           </div>

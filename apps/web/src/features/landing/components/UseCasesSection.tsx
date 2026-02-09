@@ -63,10 +63,10 @@ const useCases: UseCase[] = [
 
 export const UseCasesSection: React.FC = () => {
   return (
-    <section id="use-cases" className="py-32 px-6">
+    <section id="use-cases" className="py-24 px-6">
       <div className="max-w-[1500px] w-full mx-auto">
         {/* Section Header */}
-        <div className="text-center mb-20">
+        <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-sans font-bold text-foreground mb-4">
             Built for Every Learner
           </h2>
@@ -75,39 +75,33 @@ export const UseCasesSection: React.FC = () => {
           </p>
         </div>
 
-        {/* Use Cases Grid - 2 columns, more spacing */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10">
+        {/* Use Cases Grid - 3 cols on lg, tighter spacing */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
           {useCases.map((useCase, index) => {
             const Icon = useCase.icon;
             return (
               <div
                 key={index}
-                className="group bg-card rounded-2xl p-8 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+                className="group bg-card rounded-xl p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300"
               >
-                {/* Icon - no container, larger, floats above */}
-                <div className="mb-5 -mt-1">
+                <div className="mb-3">
                   <Icon
-                    className={`w-11 h-11 ${useCase.color} group-hover:scale-110 transition-transform duration-300`}
+                    className={`w-8 h-8 ${useCase.color} group-hover:scale-105 transition-transform duration-300`}
                     strokeWidth={1.5}
                   />
                 </div>
 
-                {/* Title - 18–20px */}
-                <h3 className="text-lg font-sans font-bold text-foreground mb-3">
+                <h3 className="text-base font-sans font-bold text-foreground mb-2">
                   {useCase.title}
                 </h3>
 
-                {/* Description - 14px, weight 400, line-height 1.6–1.7 */}
-                <p className="text-sm text-muted-foreground font-normal leading-[1.65] mb-5">
+                <p className="text-sm text-muted-foreground font-normal leading-[1.6] mb-3">
                   {useCase.description}
                 </p>
 
-                {/* Example - left border accent only, minimal label */}
-                <div className={`mt-6 pt-6 border-t border-border/60`}>
-                  <div
-                    className={`pl-4 border-l-2 ${useCase.borderColor} py-1.5`}
-                  >
-                    <p className="text-sm text-foreground/90 font-normal leading-[1.65]">
+                <div className={`mt-4 pt-4 border-t border-border/60`}>
+                  <div className={`pl-3 border-l-2 ${useCase.borderColor} py-1`}>
+                    <p className="text-xs text-foreground/90 font-normal leading-[1.55]">
                       {useCase.example}
                     </p>
                   </div>

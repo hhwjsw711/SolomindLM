@@ -83,7 +83,7 @@ export const Header: React.FC<HeaderProps> = ({ title, onRename, isHome, onLogoC
           <img
             src="/SolomindLM_logo.png"
             alt="SolomindLM Logo"
-            className="w-full h-full object-contain"
+            className="w-8 h-8 object-contain"
             onError={(e) => {
               // Fallback to 'N' if image doesn't exist
               const target = e.target as HTMLImageElement;

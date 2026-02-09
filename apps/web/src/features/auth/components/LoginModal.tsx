@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { User, Loader2, X } from "lucide-react";
 import { useAuth } from "@/features/auth/AuthContext";
 import { Button } from "@/shared/components/ui/button";
@@ -112,7 +112,14 @@ export function LoginModal({ onClose, authError }: LoginModalProps) {
 
           <div className="text-center pt-4 border-t border-border">
             <p className="text-xs text-muted-foreground font-serif">
-              By signing in, you agree to our Terms of Service and Privacy Policy
+              By signing in, you agree to our{" "}
+              <Link to="/terms" className="text-primary hover:underline underline-offset-2">
+                Terms of Service
+              </Link>{" "}
+              and{" "}
+              <Link to="/privacy" className="text-primary hover:underline underline-offset-2">
+                Privacy Policy
+              </Link>
             </p>
           </div>
         </div>
