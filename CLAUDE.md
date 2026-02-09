@@ -47,9 +47,12 @@ bun run convex:env:push:dry    # Dry run for env push
 - Stripe SDK for payments
 
 **Feature organization:**
+- `features/audio/` - Audio overview generation
 - `features/auth/` - Authentication with @convex-dev/auth
 - `features/billing/` - Stripe subscription management
 - `features/chat/` - RAG chat with citations & streaming
+- `features/landing/` - Landing page
+- `features/legal/` - Legal pages (terms, privacy)
 - `features/notebooks/` - Notebook management
 - `features/sources/` - Source discovery and management
 - `features/studio/` - AI generation tools (reports, flashcards, quizzes, mind maps, audio, slides, spreadsheets)
@@ -75,10 +78,11 @@ bun run convex:env:push:dry    # Dry run for env push
 - `reports`, `audioOverviews`, `flashcards`, `quizzes` - Generated content
 
 **Directory structure:**
-- `auth/` - Authentication configuration
-- `jobs/` - Background generation jobs
+- `jobs/` - Background generation jobs (10 job types: reports, flashcards, quizzes, mind maps, audio, slides, spreadsheets, written questions, doc embedding)
+- `lib/` - AI agents and processing utilities
+- `model/` - Data models
 - `storage/` - Vector store, chat history
-- `*.ts` - Functions, schema, mutations
+- `*.ts` - Functions, schema, mutations, auth config
 
 ### AI Services Integration
 
@@ -114,3 +118,19 @@ bun run convex:env:push:dry    # Dry run for env push
 **Required env variables:**
 - `CONVEX_DEPLOYMENT` - Convex deployment URL
 - AI service keys (Qwen, Mistral, Tavily, Supadata, Eleven Labs)
+
+## Git Workflow
+
+**Branching:** GitHub Flow - feature branches → PR to main
+- Main branch is protected (requires PR + CI checks)
+- Branch prefixes: `feature/`, `fix/`, `refactor/`, `docs/`, `chore/`
+- Commit format: `feat:`, `fix:`, `refactor:`, `docs:`, `chore:`
+- Use squash merge for clean history
+
+**CI:** Runs on push to `main` and PRs - Build (Web), Type Check
+
+## Gotchas
+
+- **No linting/tests configured** - Typecheck is the primary validation
+- **Port management:** `bun run dev:web` automatically kills existing processes on port 5173 via kill-port script
+- **Convex URLs:** Dev and prod use different deployment URLs - ensure `.env.local` uses dev URLs locally, while production hosting (Vercel) uses prod URLs
