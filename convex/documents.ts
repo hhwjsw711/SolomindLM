@@ -323,6 +323,34 @@ export const updateTitle = internalMutation({
 });
 
 /**
+ * Internal: Update document-level metadata
+ */
+export const updateMetadata = internalMutation({
+  args: {
+    documentId: v.id("documents"),
+    metadata: v.object({
+      wordCount: v.optional(v.number()),
+      estimatedReadingTimeMinutes: v.optional(v.number()),
+      totalPages: v.optional(v.number()),
+      totalChunks: v.optional(v.number()),
+      hasCodeBlocks: v.optional(v.boolean()),
+      hasMathNotation: v.optional(v.boolean()),
+      hasTables: v.optional(v.boolean()),
+      hasImages: v.optional(v.boolean()),
+      language: v.optional(v.string()),
+      documentStructure: v.optional(v.union(v.literal("flat"), v.literal("hierarchical"))),
+      maxHeadingLevel: v.optional(v.number()),
+    }),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.documentId, {
+      ...args.metadata,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+/**
  * Internal: Patch document with partial updates
  */
 export const patch = internalMutation({
@@ -473,6 +501,25 @@ export const keywordSearch = internalQuery({
       chunkIndex: r.chunkIndex,
       documentId: r.documentId,
       sourceTitle: docTitleMap.get(r.documentId) ?? "Document",
+      // Include chunk metadata for enhanced RAG context
+      metadata: {
+        totalChunks: r.totalChunks,
+        relativePosition: r.relativePosition,
+        chunkLengthChars: r.chunkLengthChars,
+        wordCount: r.wordCount,
+        sentenceCount: r.sentenceCount,
+        pageNumber: r.pageNumber,
+        sectionTitle: r.sectionTitle,
+        sectionLevel: r.sectionLevel,
+        headingPath: r.headingPath,
+        previousChunkPreview: r.previousChunkPreview,
+        nextChunkPreview: r.nextChunkPreview,
+        hasCodeBlock: r.hasCodeBlock,
+        hasMathNotation: r.hasMathNotation,
+        hasTable: r.hasTable,
+        hasBulletList: r.hasBulletList,
+        hasNumberedList: r.hasNumberedList,
+      },
     }));
   },
 });
@@ -518,7 +565,7 @@ export const getDocumentsByIds = internalQuery({
 });
 
 /**
- * Internal: Store a document chunk with embedding
+ * Internal: Store a document chunk with embedding and metadata
  */
 export const storeChunk = internalMutation({
   args: {
@@ -528,9 +575,27 @@ export const storeChunk = internalMutation({
     content: v.string(),
     chunkIndex: v.number(),
     embedding: v.array(v.float64()),
+    metadata: v.optional(v.object({
+      totalChunks: v.optional(v.number()),
+      relativePosition: v.optional(v.number()),
+      chunkLengthChars: v.optional(v.number()),
+      wordCount: v.optional(v.number()),
+      sentenceCount: v.optional(v.number()),
+      pageNumber: v.optional(v.number()),
+      sectionTitle: v.optional(v.string()),
+      sectionLevel: v.optional(v.number()),
+      headingPath: v.optional(v.array(v.string())),
+      previousChunkPreview: v.optional(v.string()),
+      nextChunkPreview: v.optional(v.string()),
+      hasCodeBlock: v.optional(v.boolean()),
+      hasMathNotation: v.optional(v.boolean()),
+      hasTable: v.optional(v.boolean()),
+      hasBulletList: v.optional(v.boolean()),
+      hasNumberedList: v.optional(v.boolean()),
+    })),
   },
   handler: async (ctx, args) => {
-    await ctx.db.insert('documentChunks', {
+    const chunkData: any = {
       documentId: args.documentId,
       userId: args.userId,
       notebookId: args.notebookId,
@@ -538,7 +603,29 @@ export const storeChunk = internalMutation({
       chunkIndex: args.chunkIndex,
       embedding: args.embedding,
       createdAt: Date.now(),
-    });
+    };
+
+    // Add metadata fields if provided
+    if (args.metadata) {
+      chunkData.totalChunks = args.metadata.totalChunks;
+      chunkData.relativePosition = args.metadata.relativePosition;
+      chunkData.chunkLengthChars = args.metadata.chunkLengthChars;
+      chunkData.wordCount = args.metadata.wordCount;
+      chunkData.sentenceCount = args.metadata.sentenceCount;
+      chunkData.pageNumber = args.metadata.pageNumber;
+      chunkData.sectionTitle = args.metadata.sectionTitle;
+      chunkData.sectionLevel = args.metadata.sectionLevel;
+      chunkData.headingPath = args.metadata.headingPath;
+      chunkData.previousChunkPreview = args.metadata.previousChunkPreview;
+      chunkData.nextChunkPreview = args.metadata.nextChunkPreview;
+      chunkData.hasCodeBlock = args.metadata.hasCodeBlock;
+      chunkData.hasMathNotation = args.metadata.hasMathNotation;
+      chunkData.hasTable = args.metadata.hasTable;
+      chunkData.hasBulletList = args.metadata.hasBulletList;
+      chunkData.hasNumberedList = args.metadata.hasNumberedList;
+    }
+
+    await ctx.db.insert('documentChunks', chunkData);
   },
 });
 

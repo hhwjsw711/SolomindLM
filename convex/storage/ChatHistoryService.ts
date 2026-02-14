@@ -7,6 +7,29 @@ import { internal } from '../_generated/api';
 // Types
 // ============================================================
 
+/**
+ * Chunk-level metadata for RAG context.
+ * Extracted during chunking and used for retrieval context.
+ */
+export interface ChunkMetadata {
+  totalChunks?: number;
+  relativePosition?: number;
+  chunkLengthChars?: number;
+  wordCount?: number;
+  sentenceCount?: number;
+  pageNumber?: number | null;
+  sectionTitle?: string | null;
+  sectionLevel?: number | null;
+  headingPath?: string[];
+  previousChunkPreview?: string | null;
+  nextChunkPreview?: string | null;
+  hasCodeBlock?: boolean;
+  hasMathNotation?: boolean;
+  hasTable?: boolean;
+  hasBulletList?: boolean;
+  hasNumberedList?: boolean;
+}
+
 export interface ReferenceChunk {
   id: string;
   sourceId: string;
@@ -17,6 +40,8 @@ export interface ReferenceChunk {
   rrfScore?: number;
   vectorRank?: number;
   keywordRank?: number;
+  // Chunk metadata for enhanced context
+  metadata?: ChunkMetadata;
 }
 
 // ============================================================

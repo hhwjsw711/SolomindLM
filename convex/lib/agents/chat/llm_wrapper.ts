@@ -80,22 +80,17 @@ const CORE_SYSTEM_PROMPT = `You are an expert research and learning assistant he
 
 # MATH NOTATION FORMAT (STRICTLY ENFORCED)
 - EVERY mathematical expression MUST be wrapped in delimiters or it will display as raw text.
-- Inline math: use $...$ (e.g. $L_t$, $B_{t-1}$, $\\eta$, $S_{t-d}$).
-- Display math (equations on their own line): use $$...$$ (e.g. $$L_t = \\alpha y_t + (1-\\alpha) L_{t-1}$$).
-- WRONG (will show as plain text): L_t = B_{t-1} + \\eta or neta or L_{t-1} without $.
-- RIGHT: $L_t$ = $B_{t-1}$ + $\\eta$, or "The level $L_t$ equals..."
-- Greek letters: use $\\alpha$, $\\beta$, $\\eta$, $\\phi$ etc. inside $...$ — never "neta" or bare \\phi.
+- Inline math: use $...$ (e.g. $x$, $\alpha$, $f(x)$).
+- Display math (equations on their own line): use $$...$$ (e.g. $$y = mx + b$$).
+- Greek letters: use $\alpha$, $\beta$, $\gamma$ etc. inside $...$ — never "alpha" or bare letters.
 - Do NOT use HTML entities (e.g. &lt;) or ANSI codes inside math.
 
-# PRIORITIZATION FOR COMPARISON QUESTIONS
-When asked to compare, contrast, or explain differences between methods/models/approaches:
-1. **Mathematical differences** (HIGHEST) - How do formulas, equations, or forecast rules differ?
-2. **Practical differences** (HIGH) - Data requirements, constraints, use cases
-3. **Behavioral differences** (MEDIUM) - How do coefficients, parameters, or outputs behave?
-4. **Theoretical differences** (MEDIUM) - Model equivalence, stochastic properties, ARIMA relationships
-5. **Examples from sources** (INCLUDE IF PRESENT) - Specific numerical examples, case studies
-
-IMPORTANT: If sources mention theoretical distinctions (e.g., "does not work for the multiplicative case", "no additive innovation"), include these prominently.
+# RESPONSE STRUCTURE GUIDANCE
+When answering complex questions (comparisons, explanations, discussions):
+1. Use clear section headers (###) for major topics
+2. Cover ALL relevant aspects present in the source documents
+3. Include a summary table or bullet points for comparisons
+4. Prioritize completeness - don't skip important topics from the sources
 
 # ULTRA-STRICT GROUNDING RULES
 1. ONLY use information EXPLICITLY stated in the provided excerpts
@@ -127,11 +122,10 @@ IMPORTANT: If sources mention theoretical distinctions (e.g., "does not work for
 - If sources don't provide comparative data, say so instead of creating a table
 
 # FORBIDDEN ADDITIONS
-- Algorithm names not mentioned in sources
-- Metric names not mentioned in sources
-- Mathematical notation not in sources
+- Names/terms not mentioned in sources
 - Examples not provided by sources
 - "Typical" or "common" practices unless sources state them
+- Diagrams or concepts not in sources
 
 # PARAPHRASING RULES
 When paraphrasing, stay VERY close to original wording:
@@ -303,32 +297,80 @@ export class ChatLLMWrapper {
 
   /**
    * Builds grounding prompt optimized for research/learning contexts.
-   * Removed duplicate instructions that are already in system prompt.
+   * Enhanced with chunk metadata for better context awareness.
    */
   private buildGroundingPrompt(
     chunks: ReferenceChunk[],
     userMessage: string,
     conversationHistory: Array<{ role: string; content: string }>
   ): string {
-    // Simplified chunk formatting (removed excessive metadata)
+    // Enhanced chunk formatting with metadata
     const formattedChunks = chunks
       .map((chunk, index) => {
+        const meta = chunk.metadata;
         const docType = this.inferDocumentType(chunk.sourceTitle);
         const typeLabel = docType ? ` (${docType})` : '';
 
+        // Build hierarchical context header
+        let contextHeader = `[${index + 1}] From "${chunk.sourceTitle}"${typeLabel}`;
+
+        // Add section hierarchy if available
+        if (meta?.headingPath && meta.headingPath.length > 0) {
+          contextHeader += ` > ${meta.headingPath.join(' > ')}`;
+        } else if (meta?.sectionTitle) {
+          contextHeader += ` > ${meta.sectionTitle}`;
+        }
+
+        // Add position context
+        const positionInfo: string[] = [];
+        if (meta?.pageNumber !== undefined && meta.pageNumber !== null) {
+          positionInfo.push(`Page ${meta.pageNumber}`);
+        }
+        if (meta?.relativePosition !== undefined) {
+          const position = meta.relativePosition < 0.33 ? 'Beginning' :
+                           meta.relativePosition < 0.67 ? 'Middle' : 'End';
+          positionInfo.push(`${position} of document`);
+        }
+        if (positionInfo.length > 0) {
+          contextHeader += ` (${positionInfo.join(', ')})`;
+        }
+
+        // Add content characteristics
+        const characteristics: string[] = [];
+        if (meta?.hasCodeBlock) characteristics.push('Contains code');
+        if (meta?.hasMathNotation) characteristics.push('Contains formulas');
+        if (meta?.hasTable) characteristics.push('Contains table');
+        if (characteristics.length > 0) {
+          contextHeader += `\n[${characteristics.join(', ')}]`;
+        }
+
         // SANITIZE: Remove existing bracketed numbers from content to prevent LLM confusion
-        // The source document may contain [81], [77], etc. which the LLM mistakenly uses as citations
-        // We completely remove them rather than wrapping them, as the LLM may still copy the numbers
         const sanitizedContent = chunk.content.replace(/\[\d+\]/g, '');
 
-        const formatted = `[${index + 1}] From "${chunk.sourceTitle}"${typeLabel}:\n${sanitizedContent}`;
-        // Log each chunk for debugging citation issues
+        // Add neighboring context for continuity
+        let contentWithContext = '';
+
+        if (meta?.previousChunkPreview) {
+          contentWithContext += `...${meta.previousChunkPreview}\n\n`;
+        }
+
+        contentWithContext += sanitizedContent;
+
+        if (meta?.nextChunkPreview) {
+          contentWithContext += `\n\n${meta.nextChunkPreview}...`;
+        }
+
+        const formatted = `${contextHeader}:\n${contentWithContext}`;
+
+        // Log each chunk for debugging
         console.log(`[ChatLLMWrapper] Chunk [${index + 1}] (db chunkIndex=${chunk.chunkIndex}):`, {
           sourceTitle: chunk.sourceTitle,
+          sectionTitle: meta?.sectionTitle,
+          headingPath: meta?.headingPath,
+          relativePosition: meta?.relativePosition,
           contentPreview: sanitizedContent.slice(0, 200),
-          originalHadBrackets: /\[\d+\]/.test(chunk.content),
-          bracketsRemoved: (chunk.content.match(/\[\d+\]/g) || []).length,
         });
+
         return formatted;
       })
       .join('\n\n---\n\n');
@@ -390,33 +432,38 @@ ${structureHint}`;
   private getStructureHint(query: string): string {
     const lower = query.toLowerCase();
 
-    // Enhanced comparison/difference hints with structured guidance
+    // General comparison/difference hints - works for any domain
     if (lower.match(/compare|contrast|difference|differ|vs|versus/)) {
-      return `Hint: Structure your response with numbered sections:
-1. **Mathematical Structure** - How do the formulas/forecast equations differ?
-2. **Component Updates** - How do the recursion/update equations differ?
-3. **Coefficient Behavior** - How do the estimated parameters behave differently?
-4. **Data Requirements** - What constraints exist for each approach?
-5. **Theoretical Basis** - Are there stochastic model differences or equivalences?
+      return `Hint: Structure your comparison with clear sections:
+1. **Core Definition** - What is each thing?
+2. **Key Differences** - How do they fundamentally differ?
+3. **Characteristics/Properties** - What are their distinct features?
+4. **Use Cases/Context** - When is each appropriate?
+5. **Relationships** - How do they relate to each other?
 
 Include a summary table at the end comparing key features.
 Do not write block paragraphs for comparisons.`;
     }
 
-    if (lower.match(/equation|formula|formulas|recursive|stochastic|math|latex|notation|subscript|superscript/)) {
+    if (lower.match(/equation|formula|formulas|math|latex|notation|subscript|superscript/)) {
       return 'Hint: Wrap every math expression in $...$ (inline) or $$...$$ (display). Do not use plain text for variables (e.g., write $x$, not x).';
     }
 
     if (lower.match(/^(how|why|explain)/)) {
-      return 'Hint: Definition → mechanism → examples (if available). Do not provide generic examples not in sources.';
+      return 'Hint: Definition → mechanism/process → examples (if available in sources). Do not provide generic examples not in sources.';
     }
 
     if (lower.match(/summarize|overview|main points|key takeaways/)) {
-      return 'Hint: Main themes → agreements/disagreements → gaps.';
+      return 'Hint: Main themes → key findings → gaps or questions.';
     }
 
-    // Detect multi-part questions that benefit from structure
-    if (lower.match(/what are the|list|enumerate|types of|kinds of/)) {
+    // General "discuss" or "describe" questions - encourage comprehensive coverage
+    if (lower.match(/^discuss|describe|overview of|types of|kinds of|what are/)) {
+      return 'Hint: Cover ALL major aspects mentioned in the sources. Use sections or lists for clarity. Check that you have not skipped important topics present in the documents.';
+    }
+
+    // List/enumeration questions
+    if (lower.match(/list|enumerate/)) {
       return 'Hint: Use numbered or bulleted lists for clarity. Include citations after each item.';
     }
 

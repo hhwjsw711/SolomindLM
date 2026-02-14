@@ -98,7 +98,9 @@ import type * as lib_grading_WrittenQuestionsGradingService from "../lib/grading
 import type * as lib_helpers_env from "../lib/helpers/env.js";
 import type * as lib_limits from "../lib/limits.js";
 import type * as lib_llm from "../lib/llm.js";
+import type * as lib_processing_DocumentMetadataExtractor from "../lib/processing/DocumentMetadataExtractor.js";
 import type * as lib_processing_EmbeddingServiceClient from "../lib/processing/EmbeddingServiceClient.js";
+import type * as lib_processing_StructuralChunker from "../lib/processing/StructuralChunker.js";
 import type * as lib_processing_TextSplitterService from "../lib/processing/TextSplitterService.js";
 import type * as lib_utils_urlValidation from "../lib/utils/urlValidation.js";
 import type * as messages from "../messages.js";
@@ -232,7 +234,9 @@ declare const fullApi: ApiFromModules<{
   "lib/helpers/env": typeof lib_helpers_env;
   "lib/limits": typeof lib_limits;
   "lib/llm": typeof lib_llm;
+  "lib/processing/DocumentMetadataExtractor": typeof lib_processing_DocumentMetadataExtractor;
   "lib/processing/EmbeddingServiceClient": typeof lib_processing_EmbeddingServiceClient;
+  "lib/processing/StructuralChunker": typeof lib_processing_StructuralChunker;
   "lib/processing/TextSplitterService": typeof lib_processing_TextSplitterService;
   "lib/utils/urlValidation": typeof lib_utils_urlValidation;
   messages: typeof messages;

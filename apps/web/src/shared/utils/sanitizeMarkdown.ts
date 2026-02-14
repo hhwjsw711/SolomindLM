@@ -11,11 +11,30 @@ function stripAnsiCodes(text: string): string {
 }
 
 /**
+ * Restores angle brackets inside LaTeX math blocks after DOMPurify sanitization.
+ * DOMPurify escapes < and > to &lt; and &gt;, which breaks LaTeX like 0 < \theta < 1.
+ * This only unescapes inside $...$ and $$...$$ so that KaTeX receives valid input.
+ */
+export function restoreAngleBracketsInMath(content: string): string {
+  let out = content;
+  // Display math: $$...$$
+  out = out.replace(/\$\$([\s\S]*?)\$\$/g, (_, math) =>
+    '$$' + math.replace(/&lt;/g, '<').replace(/&gt;/g, '>') + '$$'
+  );
+  // Inline math: $...$ (single $ not part of $$)
+  out = out.replace(/(?<!\$)\$(?!\$)([^$]*?)\$(?<!\$)(?!\$)/g, (_, math) =>
+    '$' + math.replace(/&lt;/g, '<').replace(/&gt;/g, '>') + '$'
+  );
+  return out;
+}
+
+/**
  * Sanitizes markdown content using DOMPurify before rendering with ReactMarkdown.
  * This prevents XSS attacks while allowing safe markdown elements.
  *
  * Note: This sanitizes the markdown SOURCE text, not the rendered HTML.
  * ReactMarkdown will parse the sanitized markdown and render it safely.
+ * Angle brackets inside math blocks are restored so LaTeX (e.g. 0 < \theta < 1) renders correctly.
  */
 export function sanitizeMarkdown(content: string): string {
   // First strip ANSI codes that can cause KaTeX parse errors
@@ -24,12 +43,14 @@ export function sanitizeMarkdown(content: string): string {
   // DOMPurify sanitizes HTML, but we're using it on markdown source text
   // This strips any HTML tags that might be embedded in the markdown
   // ReactMarkdown will then parse the clean markdown and render it
-  return DOMPurify.sanitize(withoutAnsi, {
+  const sanitized = DOMPurify.sanitize(withoutAnsi, {
     // Allow only safe text content - no HTML tags in markdown source
     ALLOWED_TAGS: [], // Empty array means no HTML tags allowed in markdown source
     ALLOWED_ATTR: [],
     KEEP_CONTENT: true, // Keep the text content
   });
+
+  return restoreAngleBracketsInMath(sanitized);
 }
 
 /**

@@ -5,7 +5,7 @@
  * TYPE-SAFE: No "use node" directive - this is a library file.
  */
 
-import type { ReferenceChunk } from '../../../storage/ChatHistoryService';
+import type { ReferenceChunk, ChunkMetadata } from '../../../storage/ChatHistoryService';
 import type { EmbeddingService } from '../../processing/EmbeddingServiceClient';
 import {
   VectorSearchHandler,
@@ -25,6 +25,8 @@ export interface KeywordSearchRawResult {
   chunkIndex: number;
   documentId?: string;
   sourceTitle?: string;
+  // Chunk metadata for enhanced RAG context
+  metadata?: ChunkMetadata;
 }
 
 /**
@@ -204,7 +206,7 @@ export class HybridSearchHandler extends VectorSearchHandler {
 
       const finalResults: HybridReferenceChunk[] = limited.map((r, index) => {
         const key = `${r._id}-${r.chunkIndex}`;
-        const metadata = rrfMetadataMap.get(key);
+        const rrfMeta = rrfMetadataMap.get(key);
         return {
           id: String(index + 1),
           sourceId: String(r._id),
@@ -212,9 +214,11 @@ export class HybridSearchHandler extends VectorSearchHandler {
           content: r.content,
           chunkIndex: r.chunkIndex,
           similarity: r._score ?? r.similarity,
-          rrfScore: metadata?.rrfScore,
-          vectorRank: metadata?.vectorRank,
-          keywordRank: metadata?.keywordRank,
+          rrfScore: rrfMeta?.rrfScore,
+          vectorRank: rrfMeta?.vectorRank,
+          keywordRank: rrfMeta?.keywordRank,
+          // Include chunk metadata
+          metadata: r.metadata,
         };
       });
 

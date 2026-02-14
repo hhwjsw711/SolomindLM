@@ -4,7 +4,15 @@ import { v } from 'convex/values';
 import { internal } from '../_generated/api';
 import { MistralOCRService } from '../lib/extraction/MistralOCRService';
 import { SupadataLoaderService } from '../lib/extraction/SupadataLoaderService';
-import { TextSplitterService } from '../lib/processing/TextSplitterService';
+import {
+  extractDocumentMetadata,
+  getFileExtension,
+  type DocumentMetadata,
+} from '../lib/processing/DocumentMetadataExtractor';
+import {
+  StructuralChunker,
+  type ChunkWithMetadata,
+} from '../lib/processing/StructuralChunker';
 
 // File extensions that require OCR processing
 const OCR_FILE_EXTENSIONS = [
@@ -129,10 +137,22 @@ export const docEmbedding = internalAction({
 
       console.log(`[DocEmbedding] Extracted ${extractedText.length} characters`);
 
-      // Step 2: Split text (LangChain RecursiveCharacterTextSplitter + js-tiktoken)
-      console.log('[DocEmbedding] Step 2: Splitting text into chunks...');
-      const chunks = await TextSplitterService.splitText(extractedText, 1000, 200);
-      console.log(`[DocEmbedding] Split into ${chunks.length} chunks`);
+      // Step 2: Extract document-level metadata and split text with structural context
+      console.log('[DocEmbedding] Step 2: Extracting metadata and splitting text...');
+
+      const fileExtension = getFileExtension(docDetails.fileName);
+      const docMetadata = extractDocumentMetadata(extractedText, fileExtension);
+      console.log('[DocEmbedding] Document metadata:', {
+        wordCount: docMetadata.wordCount,
+        readingTime: docMetadata.estimatedReadingTimeMinutes,
+        structure: docMetadata.documentStructure,
+        language: docMetadata.language,
+      });
+
+      // Use structural chunker for enhanced metadata
+      const chunker = new StructuralChunker();
+      const chunksWithMetadata = await chunker.chunk(extractedText, 1000, 200);
+      console.log(`[DocEmbedding] Split into ${chunksWithMetadata.length} chunks with metadata`);
 
       // Step 3: Set title from source
       console.log('[DocEmbedding] Step 3: Setting title from source...');
@@ -166,24 +186,61 @@ export const docEmbedding = internalAction({
         title,
       });
 
+      // Store document-level metadata
+      await ctx.runMutation(internal.documents.updateMetadata, {
+        documentId,
+        metadata: {
+          wordCount: docMetadata.wordCount,
+          estimatedReadingTimeMinutes: docMetadata.estimatedReadingTimeMinutes,
+          totalPages: docMetadata.totalPages ?? undefined,
+          totalChunks: chunksWithMetadata.length,
+          hasCodeBlocks: docMetadata.hasCodeBlocks,
+          hasMathNotation: docMetadata.hasMathNotation,
+          hasTables: docMetadata.hasTables,
+          hasImages: docMetadata.hasImages,
+          language: docMetadata.language,
+          documentStructure: docMetadata.documentStructure,
+          maxHeadingLevel: docMetadata.maxHeadingLevel,
+        },
+      });
+
       // Step 4: Generate embeddings via shared lib (uses OpenAI; cacheable per chunk)
       console.log('[DocEmbedding] Step 4: Generating embeddings...');
 
       const embeddingVectors = await Promise.all(
-        chunks.map((text) =>
-          ctx.runAction(internal.lib.embeddings.generateEmbeddingInternal, { text })
+        chunksWithMetadata.map((chunk) =>
+          ctx.runAction(internal.lib.embeddings.generateEmbeddingInternal, { text: chunk.content })
         )
       );
 
-      // Store chunks with embeddings
-      for (let i = 0; i < chunks.length; i++) {
+      // Store chunks with embeddings and metadata
+      for (let i = 0; i < chunksWithMetadata.length; i++) {
+        const chunk = chunksWithMetadata[i];
         await ctx.runMutation(internal.documents.storeChunk, {
           documentId,
           userId: userId as any,
           notebookId,
-          content: chunks[i],
-          chunkIndex: i,
+          content: chunk.content,
+          chunkIndex: chunk.metadata.chunkIndex,
           embedding: embeddingVectors[i],
+          metadata: {
+            totalChunks: chunk.metadata.totalChunks ?? undefined,
+            relativePosition: chunk.metadata.relativePosition ?? undefined,
+            chunkLengthChars: chunk.metadata.chunkLengthChars ?? undefined,
+            wordCount: chunk.metadata.wordCount ?? undefined,
+            sentenceCount: chunk.metadata.sentenceCount ?? undefined,
+            pageNumber: chunk.metadata.pageNumber ?? undefined,
+            sectionTitle: chunk.metadata.sectionTitle ?? undefined,
+            sectionLevel: chunk.metadata.sectionLevel ?? undefined,
+            headingPath: chunk.metadata.headingPath ?? undefined,
+            previousChunkPreview: chunk.metadata.previousChunkPreview ?? undefined,
+            nextChunkPreview: chunk.metadata.nextChunkPreview ?? undefined,
+            hasCodeBlock: chunk.metadata.hasCodeBlock ?? undefined,
+            hasMathNotation: chunk.metadata.hasMathNotation ?? undefined,
+            hasTable: chunk.metadata.hasTable ?? undefined,
+            hasBulletList: chunk.metadata.hasBulletList ?? undefined,
+            hasNumberedList: chunk.metadata.hasNumberedList ?? undefined,
+          },
         });
       }
 

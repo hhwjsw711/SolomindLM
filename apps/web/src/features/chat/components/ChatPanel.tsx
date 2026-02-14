@@ -7,6 +7,7 @@ import { Message, Note } from '@/shared/types/index';
 import { sanitizeMarkdown } from '@/shared/utils';
 import { useToast } from '@/shared/contexts/ToastContext';
 import { exportAsMarkdown } from '../utils/exportChat';
+import { replaceCitationMarkersOutsideMath } from '../utils/citationMarkers';
 import { useSaveChat } from '../services/userNotesApi';
 
 const MarkdownRenderer = lazy(() =>
@@ -314,11 +315,11 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     // Handle references that might be an object instead of array
     const refsArray = Array.isArray(references) ? references : [];
 
-    // Convert citation markers [1] to inline code markers `CITE:1` for ReactMarkdown to process
-    const processedContent = sanitizedContent.replace(/\[(\d+)\]/g, '`CITE:$1`');
+    // Convert citation markers [1] to inline code markers `CITE:1` only outside math (so LaTeX like [1, 0] is unchanged)
+    const processedContent = replaceCitationMarkersOutsideMath(sanitizedContent);
 
     return (
-      <div className="font-serif text-base leading-relaxed space-y-2">
+      <div className="prose font-serif text-base leading-relaxed space-y-2 max-w-none">
         <Suspense fallback={<div className="animate-pulse h-4 bg-secondary/30 rounded w-full" />}>
           <MarkdownRenderer
             components={{

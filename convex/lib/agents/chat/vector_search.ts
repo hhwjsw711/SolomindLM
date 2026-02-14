@@ -8,7 +8,7 @@
  */
 
 import { env } from '../../helpers/env';
-import type { ReferenceChunk } from '../../../storage/ChatHistoryService';
+import type { ReferenceChunk, ChunkMetadata } from '../../../storage/ChatHistoryService';
 import type { EmbeddingService } from '../../processing/EmbeddingServiceClient';
 
 // Re-export ReferenceChunk for other modules
@@ -25,6 +25,8 @@ export interface VectorSearchRawResult {
   chunkIndex: number;
   documentId?: string;
   sourceTitle?: string;
+  // Chunk metadata for enhanced RAG context
+  metadata?: ChunkMetadata;
 }
 
 /**
@@ -153,6 +155,8 @@ export class VectorSearchHandler {
       content: r.content,
       chunkIndex: r.chunkIndex,
       similarity: r.similarity,
+      // Include chunk metadata
+      metadata: r.metadata,
     }));
 
     console.log(`[VectorSearch] final: ${finalResults.length} results`);

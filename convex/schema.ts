@@ -49,6 +49,18 @@ export default defineSchema({
     status: v.string(), // 'pending' | 'processing' | 'completed' | 'failed'
     error: v.optional(v.string()),
     metadata: v.optional(v.any()),
+    // Document-level metadata (extracted during processing)
+    wordCount: v.optional(v.number()),
+    estimatedReadingTimeMinutes: v.optional(v.number()),
+    totalPages: v.optional(v.number()),
+    totalChunks: v.optional(v.number()),
+    hasCodeBlocks: v.optional(v.boolean()),
+    hasMathNotation: v.optional(v.boolean()),
+    hasTables: v.optional(v.boolean()),
+    hasImages: v.optional(v.boolean()),
+    language: v.optional(v.string()),
+    documentStructure: v.optional(v.union(v.literal("flat"), v.literal("hierarchical"))),
+    maxHeadingLevel: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -65,6 +77,23 @@ export default defineSchema({
     chunkIndex: v.number(),
     embedding: v.optional(v.array(v.float64())),
     metadata: v.optional(v.any()),
+    // Chunk-level metadata (extracted during chunking)
+    totalChunks: v.optional(v.number()),
+    relativePosition: v.optional(v.number()),
+    chunkLengthChars: v.optional(v.number()),
+    wordCount: v.optional(v.number()),
+    sentenceCount: v.optional(v.number()),
+    pageNumber: v.optional(v.number()),
+    sectionTitle: v.optional(v.string()),
+    sectionLevel: v.optional(v.number()),
+    headingPath: v.optional(v.array(v.string())),
+    previousChunkPreview: v.optional(v.string()),
+    nextChunkPreview: v.optional(v.string()),
+    hasCodeBlock: v.optional(v.boolean()),
+    hasMathNotation: v.optional(v.boolean()),
+    hasTable: v.optional(v.boolean()),
+    hasBulletList: v.optional(v.boolean()),
+    hasNumberedList: v.optional(v.boolean()),
     createdAt: v.number(),
   })
     .index("by_document", ["documentId"])

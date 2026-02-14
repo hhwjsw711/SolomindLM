@@ -10,6 +10,8 @@ import { ChatAgent } from "./lib/agents/ChatAgent";
 import { HybridSearchHandler } from "./lib/agents/chat/hybrid_search.js";
 import { EmbeddingService } from "./lib/processing/EmbeddingServiceClient";
 
+import type { ChunkMetadata } from "./storage/ChatHistoryService";
+
 interface VectorSearchResult {
   _id: Id<"documentChunks">;
   _score: number;
@@ -19,6 +21,8 @@ interface VectorSearchResult {
   content: string;
   embedding: number[];
   sourceTitle: string;
+  // Chunk metadata for enhanced RAG context
+  metadata?: ChunkMetadata;
 }
 
 // Get threshold from env for filtering in vectorSearchRunner
@@ -143,21 +147,50 @@ export async function streamChatResponse(
         .map((c: DocumentChunkDoc) => [c._id, c] as [Id<"documentChunks">, DocumentChunkDoc])
     );
 
-    const rowsWithoutTitle: Omit<VectorSearchResult, "sourceTitle">[] = (results as VectorSearchHit[])
-      .map((r: VectorSearchHit) => {
-        const chunk = chunkMap.get(r._id);
-        if (!chunk) return null;
-        return {
-          _id: r._id,
-          _score: r._score ?? 0,
-          documentId: chunk.documentId,
-          notebookId: chunk.notebookId,
-          chunkIndex: chunk.chunkIndex,
-          content: chunk.content,
-          embedding: chunk.embedding ?? [],
-        };
-      })
-      .filter((r): r is Omit<VectorSearchResult, "sourceTitle"> => r !== null);
+    // Build results with metadata
+    const rowsWithoutTitle: Array<{
+      _id: Id<"documentChunks">;
+      _score: number;
+      documentId: Id<"documents">;
+      notebookId: Id<"notebooks">;
+      chunkIndex: number;
+      content: string;
+      embedding: number[];
+      metadata?: ChunkMetadata;
+    }> = [];
+
+    for (const r of (results as VectorSearchHit[])) {
+      const chunk = chunkMap.get(r._id);
+      if (!chunk) continue;
+
+      rowsWithoutTitle.push({
+        _id: r._id,
+        _score: r._score ?? 0,
+        documentId: chunk.documentId,
+        notebookId: chunk.notebookId,
+        chunkIndex: chunk.chunkIndex,
+        content: chunk.content,
+        embedding: chunk.embedding ?? [],
+        metadata: {
+          totalChunks: chunk.totalChunks ?? undefined,
+          relativePosition: chunk.relativePosition ?? undefined,
+          chunkLengthChars: chunk.chunkLengthChars ?? undefined,
+          wordCount: chunk.wordCount ?? undefined,
+          sentenceCount: chunk.sentenceCount ?? undefined,
+          pageNumber: chunk.pageNumber ?? undefined,
+          sectionTitle: chunk.sectionTitle ?? undefined,
+          sectionLevel: chunk.sectionLevel ?? undefined,
+          headingPath: chunk.headingPath ?? undefined,
+          previousChunkPreview: chunk.previousChunkPreview ?? undefined,
+          nextChunkPreview: chunk.nextChunkPreview ?? undefined,
+          hasCodeBlock: chunk.hasCodeBlock ?? undefined,
+          hasMathNotation: chunk.hasMathNotation ?? undefined,
+          hasTable: chunk.hasTable ?? undefined,
+          hasBulletList: chunk.hasBulletList ?? undefined,
+          hasNumberedList: chunk.hasNumberedList ?? undefined,
+        },
+      });
+    }
 
     const documentIds = [...new Set(rowsWithoutTitle.map((r) => r.documentId))];
     const docTitles = await ctx.runQuery(internal.documents.getDocumentsByIds, { documentIds }) as { _id: Id<"documents">; fileName: string }[];
