@@ -261,6 +261,10 @@
     --shadow-2xl: 2px 3px 5px 0px hsl(35 30% 10% / 0.30);
   }
 
+  html {
+    font-size: 14px;
+  }
+
   body {
     background-color: var(--background);
     color: var(--foreground);

@@ -45,9 +45,9 @@ export const SourceListItem: React.FC<SourceListItemProps> = ({
   };
 
   const getIcon = () => {
-    if (source.type === 'WEB') return <Globe className="w-4 h-4" />;
-    if (source.type === 'IMG') return <File className="w-4 h-4" />;
-    return <FileText className="w-4 h-4" />;
+    if (source.type === 'WEB') return <Globe className="w-5 h-5" />;
+    if (source.type === 'IMG') return <File className="w-5 h-5" />;
+    return <FileText className="w-5 h-5" />;
   };
 
   return (
@@ -55,7 +55,7 @@ export const SourceListItem: React.FC<SourceListItemProps> = ({
       className={`group flex flex-col bg-card border border-border rounded-lg hover:shadow-md transition-all cursor-pointer overflow-visible relative ${isMenuOpen ? 'z-[200]' : ''}`}
       onClick={() => canClick && onView(source.id)}
     >
-      <div className="flex items-center gap-2 p-2">
+      <div className="flex items-center gap-2 py-2.5 px-2.5">
         <div className="text-muted-foreground shrink-0 flex items-center justify-center">
           {getIcon()}
         </div>

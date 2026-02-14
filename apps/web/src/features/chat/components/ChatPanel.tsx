@@ -450,7 +450,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     return (
       <div className={`group/message flex flex-col ${isUser ? 'items-end' : 'items-start'} gap-1`} data-message-id={message.id}>
         {isUser ? (
-          <div className="flex flex-row items-start gap-2 max-w-[85%]">
+          <div className="flex flex-row items-start gap-2 max-w-[60%]">
             <div className="shrink-0 pt-4">
               <ActionBar />
             </div>
@@ -467,7 +467,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                 <span className="animate-pulse">{getStatusMessage(message.status)}</span>
               </div>
             )}
-            <div className="w-full max-w-[88%] font-serif text-lg leading-relaxed text-foreground">
+            <div className="w-full max-w-[60%] font-serif text-lg leading-relaxed text-foreground">
               {renderMessageWithReferences(message.id, message.content, message.references)}
               <div className="flex justify-start mt-3">
                 <ActionBar />

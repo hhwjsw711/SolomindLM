@@ -87,6 +87,16 @@ const CORE_SYSTEM_PROMPT = `You are an expert research and learning assistant he
 - Greek letters: use $\\alpha$, $\\beta$, $\\eta$, $\\phi$ etc. inside $...$ — never "neta" or bare \\phi.
 - Do NOT use HTML entities (e.g. &lt;) or ANSI codes inside math.
 
+# PRIORITIZATION FOR COMPARISON QUESTIONS
+When asked to compare, contrast, or explain differences between methods/models/approaches:
+1. **Mathematical differences** (HIGHEST) - How do formulas, equations, or forecast rules differ?
+2. **Practical differences** (HIGH) - Data requirements, constraints, use cases
+3. **Behavioral differences** (MEDIUM) - How do coefficients, parameters, or outputs behave?
+4. **Theoretical differences** (MEDIUM) - Model equivalence, stochastic properties, ARIMA relationships
+5. **Examples from sources** (INCLUDE IF PRESENT) - Specific numerical examples, case studies
+
+IMPORTANT: If sources mention theoretical distinctions (e.g., "does not work for the multiplicative case", "no additive innovation"), include these prominently.
+
 # ULTRA-STRICT GROUNDING RULES
 1. ONLY use information EXPLICITLY stated in the provided excerpts
 2. Do NOT add examples, algorithm names, or technical terms not present in sources
@@ -355,6 +365,13 @@ export class ChatLLMWrapper {
 - Wrap ALL math in $...$ (inline) or $$...$$ (display). Example: "The level $L_t$ evolves as $L_t = \\alpha y_t + (1-\\alpha) L_{t-1}$ [1]."
 - Never write L_t, B_{t-1}, \\eta, or neta without $ delimiters — they will not render.
 
+# RESPONSE FORMATTING (MANDATORY)
+- Use **bold** for key terms when introducing concepts
+- Use ### headers for major sections in comparison/explanation responses
+- Use markdown tables for side-by-side comparisons when appropriate
+- Use numbered lists for sequential steps or ordered items
+- Use bullet points for unordered lists of features/properties
+
 `;
 
     return `# SOURCE DOCUMENTS
@@ -373,17 +390,34 @@ ${structureHint}`;
   private getStructureHint(query: string): string {
     const lower = query.toLowerCase();
 
-    if (lower.match(/compare|contrast|difference|vs|versus/)) {
-      return 'Hint: Use table or structured comparison with citations. Do not write block paragraphs for comparisons.';
+    // Enhanced comparison/difference hints with structured guidance
+    if (lower.match(/compare|contrast|difference|differ|vs|versus/)) {
+      return `Hint: Structure your response with numbered sections:
+1. **Mathematical Structure** - How do the formulas/forecast equations differ?
+2. **Component Updates** - How do the recursion/update equations differ?
+3. **Coefficient Behavior** - How do the estimated parameters behave differently?
+4. **Data Requirements** - What constraints exist for each approach?
+5. **Theoretical Basis** - Are there stochastic model differences or equivalences?
+
+Include a summary table at the end comparing key features.
+Do not write block paragraphs for comparisons.`;
     }
+
     if (lower.match(/equation|formula|formulas|recursive|stochastic|math|latex|notation|subscript|superscript/)) {
       return 'Hint: Wrap every math expression in $...$ (inline) or $$...$$ (display). Do not use plain text for variables (e.g., write $x$, not x).';
     }
+
     if (lower.match(/^(how|why|explain)/)) {
       return 'Hint: Definition → mechanism → examples (if available). Do not provide generic examples not in sources.';
     }
+
     if (lower.match(/summarize|overview|main points|key takeaways/)) {
       return 'Hint: Main themes → agreements/disagreements → gaps.';
+    }
+
+    // Detect multi-part questions that benefit from structure
+    if (lower.match(/what are the|list|enumerate|types of|kinds of/)) {
+      return 'Hint: Use numbered or bulleted lists for clarity. Include citations after each item.';
     }
 
     return '';
