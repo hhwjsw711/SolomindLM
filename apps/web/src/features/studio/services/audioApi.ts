@@ -53,7 +53,7 @@ function getPreviewText(status: string): string {
  */
 export function useAudioOverviews(notebookId: string | null) {
   const audioOverviews = useQuery(
-    api.audioOverviews.list,
+    api.studio.audio.index.list,
     notebookId ? { notebookId: notebookId as Id<'notebooks'> } : 'skip'
   );
   return audioOverviews?.map(mapAudioOverviewToNote) ?? [];
@@ -64,7 +64,7 @@ export function useAudioOverviews(notebookId: string | null) {
  */
 export function useAudioOverview(audioOverviewId: string | null) {
   const audioOverview = useQuery(
-    api.audioOverviews.get,
+    api.studio.audio.index.get,
     audioOverviewId ? { id: audioOverviewId as Id<'audioOverviews'> } : 'skip'
   );
   return audioOverview ? mapAudioOverviewToNote(audioOverview) : null;
@@ -74,7 +74,7 @@ export function useAudioOverview(audioOverviewId: string | null) {
  * Create a new audio overview and queue generation
  */
 export function useCreateAudioOverview() {
-  const generate = useMutation(api.audioOverviews.generateAudioOverview);
+  const generate = useMutation(api.studio.audio.index.generateAudioOverview);
 
   return async (params: CreateAudioOverviewParams): Promise<CreateAudioOverviewResponse> => {
     const result = await generate({
@@ -95,7 +95,7 @@ export function useCreateAudioOverview() {
  * Update an audio overview
  */
 export function useUpdateAudioOverview() {
-  const update = useMutation(api.audioOverviews.update);
+  const update = useMutation(api.studio.audio.index.update);
 
   return async (audioOverviewId: string, updates: Partial<Pick<AudioOverviewNote, 'transcript' | 'audioUrl' | 'title' | 'metadata'>>) => {
     return await update({
@@ -109,7 +109,7 @@ export function useUpdateAudioOverview() {
  * Delete an audio overview by ID
  */
 export function useDeleteAudioOverview() {
-  const remove = useMutation(api.audioOverviews.remove);
+  const remove = useMutation(api.studio.audio.index.remove);
 
   return async (audioOverviewId: string) => {
     await remove({ id: audioOverviewId as Id<'audioOverviews'> });

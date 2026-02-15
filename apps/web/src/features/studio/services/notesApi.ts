@@ -266,7 +266,7 @@ export function useNotes(
   types?: string[]
 ): Note[] {
   const notes = useQuery(
-    api.notes.listAllByNotebook,
+    api.notes.index.listAllByNotebook,
     notebookId
       ? { notebookId: notebookId as Id<'notebooks'>, types }
       : 'skip'
@@ -282,7 +282,7 @@ export function useNotes(
  */
 export function useNoteCounts(notebookId: string | null) {
   return useQuery(
-    api.notes.countByType,
+    api.notes.index.countByType,
     notebookId ? { notebookId: notebookId as Id<'notebooks'> } : 'skip'
   );
 }
@@ -292,7 +292,7 @@ export function useNoteCounts(notebookId: string | null) {
  */
 export function useNote(type: string, noteId: string | null) {
   const note = useQuery(
-    api.notes.getById,
+    api.notes.index.getById,
     noteId && type
       ? { type, id: noteId as any }
       : 'skip'
@@ -305,7 +305,7 @@ export function useNote(type: string, noteId: string | null) {
  */
 export function useNotesLoading(notebookId: string | null): boolean {
   const notes = useQuery(
-    api.notes.listAllByNotebook,
+    api.notes.index.listAllByNotebook,
     notebookId
       ? { notebookId: notebookId as Id<'notebooks'> }
       : 'skip'

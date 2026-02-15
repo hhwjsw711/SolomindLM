@@ -87,7 +87,7 @@ function mapWrittenQuestionsToNote(dbWQ: any): WrittenQuestionsNote {
  */
 export function useWrittenQuestions(notebookId: string | null) {
   const writtenQuestions = useQuery(
-    api.writtenQuestions.list,
+    api.studio.writtenQuestions.index.list,
     notebookId ? { notebookId: notebookId as Id<'notebooks'> } : 'skip'
   );
   return writtenQuestions?.map(mapWrittenQuestionsToNote);
@@ -98,7 +98,7 @@ export function useWrittenQuestions(notebookId: string | null) {
  */
 export function useWrittenQuestionSet(id: string | null) {
   const wq = useQuery(
-    api.writtenQuestions.get,
+    api.studio.writtenQuestions.index.get,
     id ? { id: id as Id<'writtenQuestions'> } : 'skip'
   );
   return wq ? mapWrittenQuestionsToNote(wq) : null;
@@ -108,7 +108,7 @@ export function useWrittenQuestionSet(id: string | null) {
  * Create new written questions and queue generation
  */
 export function useCreateWrittenQuestions() {
-  const schedule = useAction(api.contentGeneration.scheduleWrittenQuestions);
+  const schedule = useAction(api.studio._shared.scheduleWrittenQuestions);
 
   return async (params: CreateWrittenQuestionsParams): Promise<CreateWrittenQuestionsResponse> => {
     const result = await schedule({
@@ -132,24 +132,24 @@ export function useCreateWrittenQuestions() {
  * Rename written questions by ID with optimistic update
  */
 export function useRenameWrittenQuestions() {
-  const update = useMutation(api.writtenQuestions.update).withOptimisticUpdate((localStore, args) => {
+  const update = useMutation(api.studio.writtenQuestions.index.update).withOptimisticUpdate((localStore, args) => {
     const { id, title } = args;
 
     // Read the current written questions to get its notebookId
-    const wq = localStore.getQuery(api.writtenQuestions.get, { id });
+    const wq = localStore.getQuery(api.studio.writtenQuestions.index.get, { id });
     if (wq) {
       // Update detail view
       localStore.setQuery(
-        api.writtenQuestions.get,
+        api.studio.writtenQuestions.index.get,
         { id },
         { ...wq, title }
       );
 
       // Update list view using the notebookId from the item
-      const listResult = localStore.getQuery(api.writtenQuestions.list, { notebookId: wq.notebookId });
+      const listResult = localStore.getQuery(api.studio.writtenQuestions.index.list, { notebookId: wq.notebookId });
       if (listResult) {
         localStore.setQuery(
-          api.writtenQuestions.list,
+          api.studio.writtenQuestions.index.list,
           { notebookId: wq.notebookId },
           listResult.map((item: { _id: string; [key: string]: unknown }) =>
             item._id === id
@@ -173,15 +173,15 @@ export function useRenameWrittenQuestions() {
  * Delete written questions by ID with optimistic update
  */
 export function useDeleteWrittenQuestions() {
-  const remove = useMutation(api.writtenQuestions.remove).withOptimisticUpdate((localStore, args) => {
+  const remove = useMutation(api.studio.writtenQuestions.index.remove).withOptimisticUpdate((localStore, args) => {
     // Read the current written questions to get its notebookId
-    const wq = localStore.getQuery(api.writtenQuestions.get, { id: args.writtenQuestionId });
+    const wq = localStore.getQuery(api.studio.writtenQuestions.index.get, { id: args.writtenQuestionId });
     if (wq) {
       // Update list view using the notebookId from the item
-      const listResult = localStore.getQuery(api.writtenQuestions.list, { notebookId: wq.notebookId });
+      const listResult = localStore.getQuery(api.studio.writtenQuestions.index.list, { notebookId: wq.notebookId });
       if (listResult) {
         localStore.setQuery(
-          api.writtenQuestions.list,
+          api.studio.writtenQuestions.index.list,
           { notebookId: wq.notebookId },
           listResult.filter((item: { _id: string }) => item._id !== args.writtenQuestionId)
         );
@@ -189,7 +189,7 @@ export function useDeleteWrittenQuestions() {
     }
 
     // Clear detail view
-    localStore.setQuery(api.writtenQuestions.get, { id: args.writtenQuestionId }, null);
+    localStore.setQuery(api.studio.writtenQuestions.index.get, { id: args.writtenQuestionId }, null);
   });
 
   return async (id: string) => {
@@ -216,7 +216,7 @@ export function useSubmitWrittenAnswer() {
  * Reset all answers for a written questions set
  */
 export function useResetWrittenAnswers() {
-  const update = useMutation(api.writtenQuestions.update);
+  const update = useMutation(api.studio.writtenQuestions.index.update);
 
   return async (id: string) => {
     return await update({
@@ -259,7 +259,7 @@ export function useGradedResult(writtenQuestionsId: string | null, questionId: s
  * Note: Does NOT use optimistic updates to avoid interfering with questions state
  */
 export function useUpdateWrittenQuestionsProgress(writtenQuestionsId: string | null, currentIndex: number) {
-  const update = useMutation(api.writtenQuestions.update);
+  const update = useMutation(api.studio.writtenQuestions.index.update);
 
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 

@@ -37,7 +37,7 @@ function mapDatabaseNoteToUserNote(dbNote: any): UserNote {
  */
 export function useUserNotes(notebookId: string | null) {
   const notes = useQuery(
-    api.userNotes.list,
+    api.notes.userNotes.list,
     notebookId ? { notebookId: notebookId as Id<'notebooks'> } : 'skip'
   );
   return notes?.map(mapDatabaseNoteToUserNote);
@@ -48,7 +48,7 @@ export function useUserNotes(notebookId: string | null) {
  */
 export function useUserNote(noteId: string | null) {
   const note = useQuery(
-    api.userNotes.get,
+    api.notes.userNotes.get,
     noteId ? { id: noteId as Id<'notes'> } : 'skip'
   );
   return note ? mapDatabaseNoteToUserNote(note) : null;
@@ -58,7 +58,7 @@ export function useUserNote(noteId: string | null) {
  * Save a chat conversation as a note with AI-generated title
  */
 export function useSaveChat() {
-  const saveChat = useAction(api.userNotes.saveChat);
+  const saveChat = useAction(api.notes.userNotes.saveChat);
 
   return async (params: {
     notebookId: string;
@@ -81,25 +81,25 @@ export function useSaveChat() {
  * Update a note (title or content) with optimistic update
  */
 export function useUpdateUserNote() {
-  const update = useMutation(api.userNotes.update).withOptimisticUpdate((localStore, args) => {
+  const update = useMutation(api.notes.userNotes.update).withOptimisticUpdate((localStore, args) => {
     const { id, title, content } = args;
 
     // Read the current note
-    const note = localStore.getQuery(api.userNotes.get, { id });
+    const note = localStore.getQuery(api.notes.userNotes.get, { id });
     if (note) {
       const updates: Record<string, unknown> = {};
       if (title !== undefined) updates.title = title;
       if (content !== undefined) updates.content = content;
       if (Object.keys(updates).length > 0) {
-        localStore.setQuery(api.userNotes.get, { id }, { ...note, ...updates });
+        localStore.setQuery(api.notes.userNotes.get, { id }, { ...note, ...updates });
       }
 
       // Update list view when title changes
       if (title !== undefined) {
-        const listResult = localStore.getQuery(api.userNotes.list, { notebookId: note.notebookId });
+        const listResult = localStore.getQuery(api.notes.userNotes.list, { notebookId: note.notebookId });
         if (listResult) {
           localStore.setQuery(
-            api.userNotes.list,
+            api.notes.userNotes.list,
             { notebookId: note.notebookId },
             listResult.map((n: { _id: string; [key: string]: unknown }) => (n._id === id ? { ...n, title } : n))
           );
@@ -120,15 +120,15 @@ export function useUpdateUserNote() {
  * Delete a note by ID with optimistic update
  */
 export function useDeleteUserNote() {
-  const remove = useMutation(api.userNotes.remove).withOptimisticUpdate((localStore, args) => {
+  const remove = useMutation(api.notes.userNotes.remove).withOptimisticUpdate((localStore, args) => {
     // Read the current note to get its notebookId
-    const note = localStore.getQuery(api.userNotes.get, { id: args.id });
+    const note = localStore.getQuery(api.notes.userNotes.get, { id: args.id });
     if (note) {
       // Update list view using the notebookId from the item
-      const listResult = localStore.getQuery(api.userNotes.list, { notebookId: note.notebookId });
+      const listResult = localStore.getQuery(api.notes.userNotes.list, { notebookId: note.notebookId });
       if (listResult) {
         localStore.setQuery(
-          api.userNotes.list,
+          api.notes.userNotes.list,
           { notebookId: note.notebookId },
           listResult.filter((n: { _id: string }) => n._id !== args.id)
         );
@@ -136,7 +136,7 @@ export function useDeleteUserNote() {
     }
 
     // Clear detail view
-    localStore.setQuery(api.userNotes.get, { id: args.id }, null);
+    localStore.setQuery(api.notes.userNotes.get, { id: args.id }, null);
   });
 
   return async (noteId: string) => {

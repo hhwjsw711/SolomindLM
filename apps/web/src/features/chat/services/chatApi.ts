@@ -142,13 +142,13 @@ export function parseStreamBody(body: string): ParsedStreamData {
 export function useChatHistory(notebookId: string | null) {
   // First get the conversation for this notebook
   const conversation = useQuery(
-    api.conversations.getOrCreate,
+    api.chat.conversations.getOrCreate,
     notebookId ? { notebookId: notebookId as Id<'notebooks'> } : 'skip'
   );
 
   // Then get messages for that conversation
   const messages = useQuery(
-    api.chat.getMessages,
+    api.chat.index.getMessages,
     conversation?._id ? { conversationId: conversation._id } : 'skip'
   );
 
@@ -178,11 +178,11 @@ export function useRenameConversation() {
 export function useClearHistory(notebookId: string | null) {
   // Get the conversation for this notebook
   const conversation = useQuery(
-    api.conversations.getOrCreate,
+    api.chat.conversations.getOrCreate,
     notebookId ? { notebookId: notebookId as Id<'notebooks'> } : 'skip'
   );
 
-  const clearMessages = useMutation(api.chat.clearMessages);
+  const clearMessages = useMutation(api.chat.index.clearMessages);
 
   return async () => {
     if (!conversation?._id) {
@@ -203,7 +203,7 @@ export function useClearHistory(notebookId: string | null) {
  * 3. Handles network failures gracefully with stream persistence
  */
 export function useSendMessage() {
-  const sendMessageMutation = useMutation(api.messages.sendMessageOptimistic);
+  const sendMessageMutation = useMutation(api.chat.messages.sendMessageOptimistic);
   const { isAuthenticated } = useConvexAuth();
   const authToken = useAuthToken();
 

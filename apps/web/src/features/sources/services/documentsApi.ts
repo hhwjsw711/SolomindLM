@@ -14,7 +14,7 @@ import { ConvexClient } from 'convex/browser';
  */
 export function useDocuments(notebookId: string | null) {
   return useQuery(
-    api.documents.list,
+    api.documents.index.list,
     notebookId ? { notebookId: notebookId as Id<'notebooks'> } : {}
   );
 }
@@ -24,7 +24,7 @@ export function useDocuments(notebookId: string | null) {
  */
 export function useDocument(id: string | null) {
   return useQuery(
-    api.documents.get,
+    api.documents.index.get,
     id ? { id: id as Id<'documents'> } : 'skip'
   );
 }
@@ -33,14 +33,14 @@ export function useDocument(id: string | null) {
  * Generate upload URL for file uploads
  */
 export function useGenerateUploadUrl() {
-  return useMutation(api.documents.generateUploadUrl);
+  return useMutation(api.documents.index.generateUploadUrl);
 }
 
 /**
  * Create (upload) a new document
  */
 export function useCreateDocument() {
-  const upload = useMutation(api.documents.upload);
+  const upload = useMutation(api.documents.index.upload);
 
   return async (data: {
     notebookId: string;
@@ -67,14 +67,14 @@ export function useCreateDocument() {
  * Update a document (rename) with optimistic update
  */
 export function useUpdateDocument() {
-  const update = useMutation(api.documents.update).withOptimisticUpdate((localStore, args) => {
+  const update = useMutation(api.documents.index.update).withOptimisticUpdate((localStore, args) => {
     const { id, title } = args;
 
     // Update list view
-    const listResult = localStore.getQuery(api.documents.list, {});
+    const listResult = localStore.getQuery(api.documents.index.list, {});
     if (listResult) {
       localStore.setQuery(
-        api.documents.list,
+        api.documents.index.list,
         {},
         listResult.map((doc: { _id: string; [key: string]: unknown }) =>
           doc._id === id
@@ -85,10 +85,10 @@ export function useUpdateDocument() {
     }
 
     // Update detail view
-    const document = localStore.getQuery(api.documents.get, { id });
+    const document = localStore.getQuery(api.documents.index.get, { id });
     if (document) {
       localStore.setQuery(
-        api.documents.get,
+        api.documents.index.get,
         { id },
         { ...document, fileName: title }
       );
@@ -104,19 +104,19 @@ export function useUpdateDocument() {
  * Delete a document with optimistic update
  */
 export function useDeleteDocument() {
-  const remove = useMutation(api.documents.remove).withOptimisticUpdate((localStore, args) => {
+  const remove = useMutation(api.documents.index.remove).withOptimisticUpdate((localStore, args) => {
     // Optimistically remove from list
-    const listResult = localStore.getQuery(api.documents.list, {});
+    const listResult = localStore.getQuery(api.documents.index.list, {});
     if (listResult) {
       localStore.setQuery(
-        api.documents.list,
+        api.documents.index.list,
         {},
         listResult.filter((doc: { _id: string }) => doc._id !== args.id)
       );
     }
 
     // Clear detail view
-    localStore.setQuery(api.documents.get, { id: args.id }, null);
+    localStore.setQuery(api.documents.index.get, { id: args.id }, null);
   });
 
   return async (id: string) => {
@@ -129,7 +129,7 @@ export function useDeleteDocument() {
  */
 export function useDocumentContent(documentId: string | null) {
   return useQuery(
-    api.documents.getContent,
+    api.documents.index.getContent,
     documentId ? { id: documentId as Id<'documents'> } : 'skip'
   );
 }
@@ -139,14 +139,14 @@ export function useDocumentContent(documentId: string | null) {
  * function with storageId to get a URL, or use the hook pattern with effect.
  */
 export function useGetSignedUrl() {
-  return useMutation(api.documents.getSignedUrl);
+  return useMutation(api.documents.index.getSignedUrl);
 }
 
 /**
  * Discover web sources using Tavily Search API
  */
 export function useDiscoverSources() {
-  const discover = useAction(api.documents.discoverSources);
+  const discover = useAction(api.documents.index.discoverSources);
 
   return async (request: DiscoveryRequest): Promise<DiscoveryResponse> => {
     const result = await discover(request);
@@ -188,8 +188,8 @@ export async function pollDocumentStatus(
  * This is a React hook that should be used in components
  */
 export function useUploadDocument() {
-  const generateUploadUrl = useMutation(api.documents.generateUploadUrl);
-  const createDocument = useMutation(api.documents.upload);
+  const generateUploadUrl = useMutation(api.documents.index.generateUploadUrl);
+  const createDocument = useMutation(api.documents.index.upload);
 
   return async (file: File, notebookId: string) => {
     // 1. Get upload URL from Convex (returns URL string)
@@ -245,7 +245,7 @@ function getConvexClient(): ConvexClient {
  */
 export async function discoverSources(request: DiscoveryRequest): Promise<DiscoveryResponse> {
   const client = getConvexClient();
-  const result = await client.action(api.documents.discoverSources, request);
+  const result = await client.action(api.documents.index.discoverSources, request);
   return { ...result, count: result.sources.length };
 }
 
@@ -259,7 +259,7 @@ export async function uploadUrl(
   type: 'url' | 'youtube'
 ): Promise<UploadResponse> {
   const client = getConvexClient();
-  const result = await client.mutation(api.documents.upload, {
+  const result = await client.mutation(api.documents.index.upload, {
     notebookId: notebookId as Id<'notebooks'>,
     type,
     source: url,
@@ -277,7 +277,7 @@ export async function uploadUrl(
  */
 export async function getDocumentContent(documentId: string): Promise<string> {
   const client = getConvexClient();
-  const result = await client.query(api.documents.getContent, {
+  const result = await client.query(api.documents.index.getContent, {
     id: documentId as Id<'documents'>,
   });
   return result.content;
@@ -292,7 +292,7 @@ export async function uploadText(
   text: string
 ): Promise<UploadResponse> {
   const client = getConvexClient();
-  const result = await client.mutation(api.documents.upload, {
+  const result = await client.mutation(api.documents.index.upload, {
     notebookId: notebookId as Id<'notebooks'>,
     type: 'text',
     source: text,

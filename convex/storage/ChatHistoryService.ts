@@ -151,7 +151,7 @@ export const getConversationWithMessages = internalAction({
 
     // Get conversation details (internal, no auth)
     const conversation: Doc<'conversations'> | null = await ctx.runQuery(
-      internal.conversations.getInternal,
+      internal.chat.conversations.getInternal,
       { conversationId }
     );
 

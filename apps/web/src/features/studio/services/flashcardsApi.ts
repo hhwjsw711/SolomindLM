@@ -63,7 +63,7 @@ function mapFlashcardToNote(dbFlashcard: any): FlashcardNote {
  */
 export function useFlashcards(notebookId: string | null) {
   const flashcards = useQuery(
-    api.flashcards.list,
+    api.studio.flashcards.index.list,
     notebookId ? { notebookId: notebookId as Id<'notebooks'> } : 'skip'
   );
   return flashcards?.map(mapFlashcardToNote);
@@ -74,7 +74,7 @@ export function useFlashcards(notebookId: string | null) {
  */
 export function useFlashcard(flashcardId: string | null) {
   const flashcard = useQuery(
-    api.flashcards.get,
+    api.studio.flashcards.index.get,
     flashcardId ? { id: flashcardId as Id<'flashcards'> } : 'skip'
   );
   return flashcard ? mapFlashcardToNote(flashcard) : null;
@@ -84,7 +84,7 @@ export function useFlashcard(flashcardId: string | null) {
  * Create a new flashcard set and queue generation
  */
 export function useCreateFlashcards() {
-  const schedule = useAction(api.contentGeneration.scheduleFlashcards);
+  const schedule = useAction(api.studio._shared.scheduleFlashcards);
 
   return async (params: CreateFlashcardsParams): Promise<CreateFlashcardsResponse> => {
     const result = await schedule({
@@ -107,24 +107,24 @@ export function useCreateFlashcards() {
  * Rename a flashcard set by ID with optimistic update
  */
 export function useRenameFlashcards() {
-  const update = useMutation(api.flashcards.update).withOptimisticUpdate((localStore, args) => {
+  const update = useMutation(api.studio.flashcards.index.update).withOptimisticUpdate((localStore, args) => {
     const { id, title } = args;
 
     // Read the current flashcard to get its notebookId
-    const flashcard = localStore.getQuery(api.flashcards.get, { id });
+    const flashcard = localStore.getQuery(api.studio.flashcards.index.get, { id });
     if (flashcard) {
       // Update detail view
       localStore.setQuery(
-        api.flashcards.get,
+        api.studio.flashcards.index.get,
         { id },
         { ...flashcard, title }
       );
 
       // Update list view using the notebookId from the item
-      const listResult = localStore.getQuery(api.flashcards.list, { notebookId: flashcard.notebookId });
+      const listResult = localStore.getQuery(api.studio.flashcards.index.list, { notebookId: flashcard.notebookId });
       if (listResult) {
         localStore.setQuery(
-          api.flashcards.list,
+          api.studio.flashcards.index.list,
           { notebookId: flashcard.notebookId },
           listResult.map((fc: { _id: string; [key: string]: unknown }) =>
             fc._id === id
@@ -148,15 +148,15 @@ export function useRenameFlashcards() {
  * Delete a flashcard set by ID with optimistic update
  */
 export function useDeleteFlashcards() {
-  const remove = useMutation(api.flashcards.remove).withOptimisticUpdate((localStore, args) => {
+  const remove = useMutation(api.studio.flashcards.index.remove).withOptimisticUpdate((localStore, args) => {
     // Read the current flashcard to get its notebookId
-    const flashcard = localStore.getQuery(api.flashcards.get, { id: args.id });
+    const flashcard = localStore.getQuery(api.studio.flashcards.index.get, { id: args.id });
     if (flashcard) {
       // Update list view using the notebookId from the item
-      const listResult = localStore.getQuery(api.flashcards.list, { notebookId: flashcard.notebookId });
+      const listResult = localStore.getQuery(api.studio.flashcards.index.list, { notebookId: flashcard.notebookId });
       if (listResult) {
         localStore.setQuery(
-          api.flashcards.list,
+          api.studio.flashcards.index.list,
           { notebookId: flashcard.notebookId },
           listResult.filter((fc: { _id: string }) => fc._id !== args.id)
         );
@@ -164,7 +164,7 @@ export function useDeleteFlashcards() {
     }
 
     // Clear detail view
-    localStore.setQuery(api.flashcards.get, { id: args.id }, null);
+    localStore.setQuery(api.studio.flashcards.index.get, { id: args.id }, null);
   });
 
   return async (flashcardId: string) => {
@@ -177,7 +177,7 @@ export function useDeleteFlashcards() {
  * Note: Does NOT use optimistic updates to avoid interfering with flashcard state
  */
 export function useUpdateFlashcardProgress(flashcardId: string | null, currentIndex: number) {
-  const update = useMutation(api.flashcards.update);
+  const update = useMutation(api.studio.flashcards.index.update);
 
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
@@ -290,7 +290,7 @@ function getConvexClient(): ConvexClient {
  */
 export async function getFlashcard(flashcardId: string): Promise<FlashcardNote> {
   const client = getConvexClient();
-  const dbFlashcard = await client.query(api.flashcards.get, {
+  const dbFlashcard = await client.query(api.studio.flashcards.index.get, {
     id: flashcardId as Id<'flashcards'>
   });
   if (!dbFlashcard) {
@@ -304,7 +304,7 @@ export async function getFlashcard(flashcardId: string): Promise<FlashcardNote> 
  */
 export async function renameFlashcard(flashcardId: string, newTitle: string): Promise<void> {
   const client = getConvexClient();
-  await client.mutation(api.flashcards.update, {
+  await client.mutation(api.studio.flashcards.index.update, {
     id: flashcardId as Id<'flashcards'>,
     title: newTitle,
   });
@@ -315,7 +315,7 @@ export async function renameFlashcard(flashcardId: string, newTitle: string): Pr
  */
 export async function deleteFlashcard(flashcardId: string): Promise<void> {
   const client = getConvexClient();
-  await client.mutation(api.flashcards.remove, {
+  await client.mutation(api.studio.flashcards.index.remove, {
     id: flashcardId as Id<'flashcards'>
   });
 }
@@ -325,7 +325,7 @@ export async function deleteFlashcard(flashcardId: string): Promise<void> {
  */
 export async function getFlashcards(notebookId: string): Promise<FlashcardNote[]> {
   const client = getConvexClient();
-  const dbFlashcards = await client.query(api.flashcards.list, {
+  const dbFlashcards = await client.query(api.studio.flashcards.index.list, {
     notebookId: notebookId as Id<'notebooks'>
   });
   return dbFlashcards?.map(mapFlashcardToNote) ?? [];

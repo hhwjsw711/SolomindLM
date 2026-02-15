@@ -98,7 +98,7 @@ function mapSlideDeckToNote(dbSlideDeck: any): SlideDeckNote {
  */
 export function useSlideDecks(notebookId: string | null) {
   const slideDecks = useQuery(
-    api.slides.list,
+    api.studio.slides.index.list,
     notebookId ? { notebookId: notebookId as Id<'notebooks'> } : 'skip'
   );
   return slideDecks?.map(mapSlideDeckToNote);
@@ -109,7 +109,7 @@ export function useSlideDecks(notebookId: string | null) {
  */
 export function useSlideDeck(slideDeckId: string | null) {
   const slideDeck = useQuery(
-    api.slides.get,
+    api.studio.slides.index.get,
     slideDeckId ? { id: slideDeckId as Id<'slides'> } : 'skip'
   );
   return slideDeck ? mapSlideDeckToNote(slideDeck) : null;
@@ -119,7 +119,7 @@ export function useSlideDeck(slideDeckId: string | null) {
  * Create a new slide deck and queue generation
  */
 export function useCreateSlideDeck() {
-  const generate = useMutation(api.slides.generateSlideDeck);
+  const generate = useMutation(api.studio.slides.index.generateSlideDeck);
 
   return async (params: CreateSlideDeckParams): Promise<CreateSlideDeckResponse> => {
     const result = await generate({
@@ -141,24 +141,24 @@ export function useCreateSlideDeck() {
  * Rename a slide deck by ID with optimistic update
  */
 export function useRenameSlideDeck() {
-  const update = useMutation(api.slides.update).withOptimisticUpdate((localStore, args) => {
+  const update = useMutation(api.studio.slides.index.update).withOptimisticUpdate((localStore, args) => {
     const { id, title } = args;
 
     // Read the current slide deck to get its notebookId
-    const slideDeck = localStore.getQuery(api.slides.get, { id });
+    const slideDeck = localStore.getQuery(api.studio.slides.index.get, { id });
     if (slideDeck) {
       // Update detail view
       localStore.setQuery(
-        api.slides.get,
+        api.studio.slides.index.get,
         { id },
         { ...slideDeck, title }
       );
 
       // Update list view using the notebookId from the item
-      const listResult = localStore.getQuery(api.slides.list, { notebookId: slideDeck.notebookId });
+      const listResult = localStore.getQuery(api.studio.slides.index.list, { notebookId: slideDeck.notebookId });
       if (listResult) {
         localStore.setQuery(
-          api.slides.list,
+          api.studio.slides.index.list,
           { notebookId: slideDeck.notebookId },
           listResult.map((sd: { _id: string; [key: string]: unknown }) =>
             sd._id === id
@@ -182,15 +182,15 @@ export function useRenameSlideDeck() {
  * Delete a slide deck by ID with optimistic update
  */
 export function useDeleteSlideDeck() {
-  const remove = useMutation(api.slides.remove).withOptimisticUpdate((localStore, args) => {
+  const remove = useMutation(api.studio.slides.index.remove).withOptimisticUpdate((localStore, args) => {
     // Read the current slide deck to get its notebookId
-    const slideDeck = localStore.getQuery(api.slides.get, { id: args.id });
+    const slideDeck = localStore.getQuery(api.studio.slides.index.get, { id: args.id });
     if (slideDeck) {
       // Update list view using the notebookId from the item
-      const listResult = localStore.getQuery(api.slides.list, { notebookId: slideDeck.notebookId });
+      const listResult = localStore.getQuery(api.studio.slides.index.list, { notebookId: slideDeck.notebookId });
       if (listResult) {
         localStore.setQuery(
-          api.slides.list,
+          api.studio.slides.index.list,
           { notebookId: slideDeck.notebookId },
           listResult.filter((sd: { _id: string }) => sd._id !== args.id)
         );
@@ -198,7 +198,7 @@ export function useDeleteSlideDeck() {
     }
 
     // Clear detail view
-    localStore.setQuery(api.slides.get, { id: args.id }, null);
+    localStore.setQuery(api.studio.slides.index.get, { id: args.id }, null);
   });
 
   return async (slideDeckId: string) => {

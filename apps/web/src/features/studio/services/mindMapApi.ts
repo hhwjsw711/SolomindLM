@@ -75,7 +75,7 @@ function mapMindMapToNote(dbMindMap: any): MindMapNote {
  */
 export function useMindMaps(notebookId: string | null) {
   const mindMaps = useQuery(
-    api.mindmaps.list,
+    api.studio.mindmaps.index.list,
     notebookId ? { notebookId: notebookId as Id<'notebooks'> } : 'skip'
   );
   return mindMaps?.map(mapMindMapToNote);
@@ -86,7 +86,7 @@ export function useMindMaps(notebookId: string | null) {
  */
 export function useMindMap(mindMapId: string | null) {
   const mindMap = useQuery(
-    api.mindmaps.get,
+    api.studio.mindmaps.index.get,
     mindMapId ? { id: mindMapId as Id<'mindmaps'> } : 'skip'
   );
   return mindMap ? mapMindMapToNote(mindMap) : null;
@@ -96,7 +96,7 @@ export function useMindMap(mindMapId: string | null) {
  * Create a new mind map and queue generation
  */
 export function useCreateMindMap() {
-  const generate = useMutation(api.mindmaps.generateMindMap);
+  const generate = useMutation(api.studio.mindmaps.index.generateMindMap);
 
   return async (params: CreateMindMapParams): Promise<CreateMindMapResponse> => {
     const result = await generate({
@@ -117,24 +117,24 @@ export function useCreateMindMap() {
  * Rename a mind map by ID with optimistic update
  */
 export function useRenameMindMap() {
-  const update = useMutation(api.mindmaps.update).withOptimisticUpdate((localStore, args) => {
+  const update = useMutation(api.studio.mindmaps.index.update).withOptimisticUpdate((localStore, args) => {
     const { id, title } = args;
 
     // Read the current mind map to get its notebookId
-    const mindMap = localStore.getQuery(api.mindmaps.get, { id });
+    const mindMap = localStore.getQuery(api.studio.mindmaps.index.get, { id });
     if (mindMap) {
       // Update detail view
       localStore.setQuery(
-        api.mindmaps.get,
+        api.studio.mindmaps.index.get,
         { id },
         { ...mindMap, title }
       );
 
       // Update list view using the notebookId from the item
-      const listResult = localStore.getQuery(api.mindmaps.list, { notebookId: mindMap.notebookId });
+      const listResult = localStore.getQuery(api.studio.mindmaps.index.list, { notebookId: mindMap.notebookId });
       if (listResult) {
         localStore.setQuery(
-          api.mindmaps.list,
+          api.studio.mindmaps.index.list,
           { notebookId: mindMap.notebookId },
           listResult.map((mm: { _id: string; [key: string]: unknown }) =>
             mm._id === id
@@ -158,15 +158,15 @@ export function useRenameMindMap() {
  * Delete a mind map by ID with optimistic update
  */
 export function useDeleteMindMap() {
-  const remove = useMutation(api.mindmaps.remove).withOptimisticUpdate((localStore, args) => {
+  const remove = useMutation(api.studio.mindmaps.index.remove).withOptimisticUpdate((localStore, args) => {
     // Read the current mind map to get its notebookId
-    const mindMap = localStore.getQuery(api.mindmaps.get, { id: args.id });
+    const mindMap = localStore.getQuery(api.studio.mindmaps.index.get, { id: args.id });
     if (mindMap) {
       // Update list view using the notebookId from the item
-      const listResult = localStore.getQuery(api.mindmaps.list, { notebookId: mindMap.notebookId });
+      const listResult = localStore.getQuery(api.studio.mindmaps.index.list, { notebookId: mindMap.notebookId });
       if (listResult) {
         localStore.setQuery(
-          api.mindmaps.list,
+          api.studio.mindmaps.index.list,
           { notebookId: mindMap.notebookId },
           listResult.filter((mm: { _id: string }) => mm._id !== args.id)
         );
@@ -174,7 +174,7 @@ export function useDeleteMindMap() {
     }
 
     // Clear detail view
-    localStore.setQuery(api.mindmaps.get, { id: args.id }, null);
+    localStore.setQuery(api.studio.mindmaps.index.get, { id: args.id }, null);
   });
 
   return async (mindMapId: string) => {

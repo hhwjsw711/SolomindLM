@@ -90,13 +90,15 @@ bun run convex:env:push:dry    # Dry run for env push
 - `cacheVersions`, `cacheMetrics` - Agent cache invalidation tracking
 
 **Directory structure:**
-- `jobs/` - Background generation jobs (10 job types: reports, flashcards, quizzes, mind maps, audio, slides, spreadsheets, written questions, doc embedding)
-- `lib/` - AI agents and processing utilities
-- `lib/agents/` - LangGraph-based agents (one per generation type: `*Graph.ts`)
-- `lib/agents/shared/` - Shared utilities: LLM factory, retry, timeout, validation, sanitization
-- `model/` - Data models
+- `_agents/` - LangGraph-based agents (underscore = excluded from API). Subdirs per type: `chat/`, `report/`, `flashcard/`, etc.
+- `_agents/_shared/` - Shared utilities: LLM factory, retry, timeout, validation, sanitization
+- `_lib/` - Core utilities (errors, limits, env helpers)
+- `_model/` - Data models (underscore = excluded from API)
+- `_services/` - External service integrations: `ai/`, `search/`, `extraction/`, `processing/`, `grading/`, `cache/`
+- `auth/`, `notebooks/`, `folders/`, `documents/`, `chat/`, `notes/`, `billing/` - Domain function directories
+- `studio/` - Content generation: `reports/`, `flashcards/`, `quizzes/`, `mindmaps/`, `audio/`, `slides/`, `spreadsheets/`, `writtenQuestions/`
 - `storage/` - Vector store, chat history
-- `*.ts` - Functions, schema, mutations, auth config
+- `*.ts` - Functions, schema, mutations, auth config (root level)
 
 ### AI Services Integration
 
@@ -147,6 +149,9 @@ bun run convex:env:push:dry    # Dry run for env push
 
 ## Gotchas
 
+- **Convex directory structure** - Directories with `_` prefix are excluded from API generation. Functions in `convex/domain/index.ts` become `api.domain.index.*`
+- **Auth file location** - `@convex-dev/auth` requires `convex/auth.ts` at root level, not in a subdirectory
+- **Vite cache** - After changing API paths, clear Vite cache: `rm -rf apps/web/node_modules/.vite` and hard refresh browser (Ctrl+Shift+R)
 - **No linting/tests configured** - Typecheck is the primary validation
 - **Port management:** `bun run dev:web` automatically kills existing processes on port 5173 via kill-port script
 - **Convex URLs:** Dev and prod use different deployment URLs - ensure `.env.local` uses dev URLs locally, while production hosting (Vercel) uses prod URLs

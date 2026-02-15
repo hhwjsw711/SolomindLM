@@ -10,7 +10,7 @@ import { api } from '@convex/_generated/api';
  * Get subscription status for current user
  */
 export function useSubscriptionStatus(): SubscriptionStatusResponse {
-  const subscription = useQuery(api.subscriptions.getCurrent);
+  const subscription = useQuery(api.billing.index.getCurrent);
 
   if (!subscription) {
     return {
@@ -73,7 +73,7 @@ export function useSubscriptionStatus(): SubscriptionStatusResponse {
  * Create a Stripe Checkout session
  */
 export function useCreateCheckout() {
-  const create = useAction(api.subscriptions.createCheckoutSession);
+  const create = useAction(api.billing.index.createCheckoutSession);
 
   return async (
     interval: 'month' | 'year',
@@ -97,7 +97,7 @@ export function useCreateCheckout() {
  * Cancel subscription at period end
  */
 export function useCancelSubscription() {
-  const cancel = useAction(api.subscriptions.cancelAtPeriodEnd);
+  const cancel = useAction(api.billing.index.cancelAtPeriodEnd);
 
   return async () => {
     return await cancel({});
@@ -108,7 +108,7 @@ export function useCancelSubscription() {
  * Reactivate subscription (if canceled but still active)
  */
 export function useReactivateSubscription() {
-  const reactivate = useAction(api.subscriptions.removeCancelAtPeriodEnd);
+  const reactivate = useAction(api.billing.index.removeCancelAtPeriodEnd);
 
   return async () => {
     return await reactivate({});
@@ -119,7 +119,7 @@ export function useReactivateSubscription() {
  * Create customer portal session
  */
 export function useCreatePortalSession() {
-  const create = useAction(api.subscriptions.createPortalSession);
+  const create = useAction(api.billing.index.createPortalSession);
 
   return async (returnUrl: string): Promise<{ url: string }> => {
     const result = await create({ returnUrl });
@@ -131,7 +131,7 @@ export function useCreatePortalSession() {
  * Check if user is subscribed (convenience hook)
  */
 export function useIsSubscribed(): boolean {
-  const subscription = useQuery(api.subscriptions.getCurrent);
+  const subscription = useQuery(api.billing.index.getCurrent);
   return subscription?.status === 'active' || false;
 }
 
@@ -139,7 +139,7 @@ export function useIsSubscribed(): boolean {
  * Get limits for current user (convenience hook)
  */
 export function useUserLimits() {
-  const subscription = useQuery(api.subscriptions.getCurrent);
+  const subscription = useQuery(api.billing.index.getCurrent);
 
   if (subscription?.status === 'active') {
     return {

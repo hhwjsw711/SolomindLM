@@ -26,7 +26,7 @@ export function ProtectedRoute({ children, requireNotebookAccess = false }: Prot
 
   // Check notebook ownership if required
   const notebook = useQuery(
-    api.notebooks.get,
+    api.notebooks.index.get,
     notebookId ? { id: notebookId as any } : "skip"
   );
 

@@ -7,7 +7,7 @@ import { api } from "@convex/_generated/api";
  * Returns undefined while loading, empty array when loaded but no results
  */
 export function useFolders() {
-  return useQuery(api.folders.list);
+  return useQuery(api.folders.index.list);
 }
 
 /**
@@ -15,7 +15,7 @@ export function useFolders() {
  */
 export function useFolder(id: string | null) {
   return useQuery(
-    api.folders.get,
+    api.folders.index.get,
     id ? { id: id as any } : "skip"
   );
 }
@@ -26,7 +26,7 @@ export function useFolder(id: string | null) {
  */
 export function useFolderNotebooks(folderId: string | null) {
   return useQuery(
-    api.folders.getNotebooks,
+    api.folders.index.getNotebooks,
     folderId ? { folderId: folderId as any } : "skip"
   );
 }
@@ -35,7 +35,7 @@ export function useFolderNotebooks(folderId: string | null) {
  * Create a new folder with optimistic update
  */
 export function useCreateFolder() {
-  const create = useMutation(api.folders.create).withOptimisticUpdate((localStore, args) => {
+  const create = useMutation(api.folders.index.create).withOptimisticUpdate((localStore, args) => {
     const tempId = `temp-${Date.now()}` as Id<"folders">;
     const now = Date.now();
 
@@ -51,9 +51,9 @@ export function useCreateFolder() {
     };
 
     // Optimistically add to list
-    const folders = localStore.getQuery(api.folders.list);
+    const folders = localStore.getQuery(api.folders.index.list);
     if (folders) {
-      localStore.setQuery(api.folders.list, {}, [...folders, newFolder]);
+      localStore.setQuery(api.folders.index.list, {}, [...folders, newFolder]);
     }
   });
 
@@ -71,15 +71,15 @@ export function useCreateFolder() {
  * Update a folder with optimistic update
  */
 export function useUpdateFolder() {
-  const update = useMutation(api.folders.update).withOptimisticUpdate((localStore, args) => {
+  const update = useMutation(api.folders.index.update).withOptimisticUpdate((localStore, args) => {
     const { id, name, description, color, icon } = args;
     const now = Date.now();
 
     // Update list view
-    const folders = localStore.getQuery(api.folders.list);
+    const folders = localStore.getQuery(api.folders.index.list);
     if (folders) {
       localStore.setQuery(
-        api.folders.list,
+        api.folders.index.list,
         {},
         folders.map((folder: { id: string; [key: string]: unknown }) =>
           folder.id === id
@@ -97,10 +97,10 @@ export function useUpdateFolder() {
     }
 
     // Update detail view
-    const folder = localStore.getQuery(api.folders.get, { id });
+    const folder = localStore.getQuery(api.folders.index.get, { id });
     if (folder) {
       localStore.setQuery(
-        api.folders.get,
+        api.folders.index.get,
         { id },
         {
           ...folder,
@@ -131,19 +131,19 @@ export function useUpdateFolder() {
  * Delete a folder with optimistic update
  */
 export function useDeleteFolder() {
-  const remove = useMutation(api.folders.remove).withOptimisticUpdate((localStore, args) => {
+  const remove = useMutation(api.folders.index.remove).withOptimisticUpdate((localStore, args) => {
     // Optimistically remove from list
-    const folders = localStore.getQuery(api.folders.list);
+    const folders = localStore.getQuery(api.folders.index.list);
     if (folders) {
       localStore.setQuery(
-        api.folders.list,
+        api.folders.index.list,
         {},
         folders.filter((folder: { id: string }) => folder.id !== args.id)
       );
     }
 
     // Clear detail view
-    localStore.setQuery(api.folders.get, { id: args.id }, null);
+    localStore.setQuery(api.folders.index.get, { id: args.id }, null);
   });
 
   return async (id: string) => {

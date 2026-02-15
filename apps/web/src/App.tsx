@@ -130,13 +130,13 @@ const AppContent: React.FC = () => {
   const notebooks = useNotebooks();
   const folders = useFolders();
   const documents = useQuery(
-    api.documents.list,
+    api.documents.index.list,
     activeNotebookId && activeNotebookId !== 'new'
       ? { notebookId: activeNotebookId as Id<'notebooks'> }
       : 'skip'
   ) ?? [];
   const messages = useQuery(
-    api.messages.listByNotebook,
+    api.chat.messages.listByNotebook,
     activeNotebookId && activeNotebookId !== 'new'
       ? { notebookId: activeNotebookId as Id<'notebooks'> }
       : 'skip'
@@ -156,7 +156,7 @@ const AppContent: React.FC = () => {
   useCreateDocument();
   const updateDocument = useUpdateDocument();
   const deleteDocumentMutation = useDeleteDocument();
-  const clearChatHistoryMutation = useMutation(api.messages.clearHistory);
+  const clearChatHistoryMutation = useMutation(api.chat.messages.clearHistory);
 
   // Studio note update/delete (reports, flashcards, quizzes, etc.)
   const updateReport = useUpdateReport();

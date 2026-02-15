@@ -93,7 +93,7 @@ function mapQuizToNote(dbQuiz: any): QuizNote {
  */
 export function useQuizzes(notebookId: string | null) {
   const quizzes = useQuery(
-    api.quizzes.list,
+    api.studio.quizzes.index.list,
     notebookId ? { notebookId: notebookId as Id<'notebooks'> } : 'skip'
   );
   return quizzes?.map(mapQuizToNote);
@@ -104,7 +104,7 @@ export function useQuizzes(notebookId: string | null) {
  */
 export function useQuiz(quizId: string | null) {
   const quiz = useQuery(
-    api.quizzes.get,
+    api.studio.quizzes.index.get,
     quizId ? { id: quizId as Id<'quizzes'> } : 'skip'
   );
   return quiz ? mapQuizToNote(quiz) : null;
@@ -114,7 +114,7 @@ export function useQuiz(quizId: string | null) {
  * Create a new quiz and queue generation
  */
 export function useCreateQuiz() {
-  const schedule = useAction(api.contentGeneration.scheduleQuiz);
+  const schedule = useAction(api.studio._shared.scheduleQuiz);
 
   return async (params: CreateQuizParams): Promise<CreateQuizResponse> => {
     const result = await schedule({
@@ -137,17 +137,17 @@ export function useCreateQuiz() {
  * Rename a quiz by ID with optimistic update
  */
 export function useRenameQuiz() {
-  const update = useMutation(api.quizzes.update).withOptimisticUpdate((localStore, args) => {
+  const update = useMutation(api.studio.quizzes.index.update).withOptimisticUpdate((localStore, args) => {
     const { id, title } = args;
 
     // Get current quiz (has notebookId for list query)
-    const quiz = localStore.getQuery(api.quizzes.get, { id });
+    const quiz = localStore.getQuery(api.studio.quizzes.index.get, { id });
     if (quiz) {
       // Update list view
-      const listResult = localStore.getQuery(api.quizzes.list, { notebookId: quiz.notebookId });
+      const listResult = localStore.getQuery(api.studio.quizzes.index.list, { notebookId: quiz.notebookId });
       if (listResult) {
         localStore.setQuery(
-          api.quizzes.list,
+          api.studio.quizzes.index.list,
           { notebookId: quiz.notebookId },
           listResult.map((q: { _id: string; [key: string]: unknown }) =>
             q._id === id
@@ -159,7 +159,7 @@ export function useRenameQuiz() {
 
       // Update detail view
       localStore.setQuery(
-        api.quizzes.get,
+        api.studio.quizzes.index.get,
         { id },
         { ...quiz, title }
       );
@@ -178,13 +178,13 @@ export function useRenameQuiz() {
  * Delete a quiz by ID with optimistic update
  */
 export function useDeleteQuiz() {
-  const remove = useMutation(api.quizzes.remove).withOptimisticUpdate((localStore, args) => {
-    const quiz = localStore.getQuery(api.quizzes.get, { id: args.id });
+  const remove = useMutation(api.studio.quizzes.index.remove).withOptimisticUpdate((localStore, args) => {
+    const quiz = localStore.getQuery(api.studio.quizzes.index.get, { id: args.id });
     if (quiz) {
-      const listResult = localStore.getQuery(api.quizzes.list, { notebookId: quiz.notebookId });
+      const listResult = localStore.getQuery(api.studio.quizzes.index.list, { notebookId: quiz.notebookId });
       if (listResult) {
         localStore.setQuery(
-          api.quizzes.list,
+          api.studio.quizzes.index.list,
           { notebookId: quiz.notebookId },
           listResult.filter((q: { _id: string }) => q._id !== args.id)
         );
@@ -192,7 +192,7 @@ export function useDeleteQuiz() {
     }
 
     // Clear detail view
-    localStore.setQuery(api.quizzes.get, { id: args.id }, null);
+    localStore.setQuery(api.studio.quizzes.index.get, { id: args.id }, null);
   });
 
   return async (quizId: string) => {
@@ -204,7 +204,7 @@ export function useDeleteQuiz() {
  * Submit an answer for a quiz question
  */
 export function useSubmitQuizAnswer() {
-  const submitAnswer = useMutation(api.quizzes.submitAnswer);
+  const submitAnswer = useMutation(api.studio.quizzes.index.submitAnswer);
 
   return async (quizId: string, questionIndex: number, selectedOption: number) => {
     return await submitAnswer({
@@ -219,7 +219,7 @@ export function useSubmitQuizAnswer() {
  * Reset all answers for a quiz
  */
 export function useResetQuizAnswers() {
-  const update = useMutation(api.quizzes.update);
+  const update = useMutation(api.studio.quizzes.index.update);
 
   return async (quizId: string) => {
     return await update({
@@ -237,7 +237,7 @@ export function useResetQuizAnswers() {
  * Note: Does NOT use optimistic updates to avoid interfering with quiz state
  */
 export function useUpdateQuizProgress(quizId: string | null, currentIndex: number) {
-  const update = useMutation(api.quizzes.update);
+  const update = useMutation(api.studio.quizzes.index.update);
 
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 

@@ -79,7 +79,7 @@ http.route({
     }
 
     try {
-      await ctx.runAction(internal.stripeWebhook.handleWebhook, {
+      await ctx.runAction(internal.billing.webhook.handleWebhook, {
         signature,
         payload,
       });
@@ -209,7 +209,7 @@ http.route({
       console.log("[Chat] Created stream:", streamId);
 
       // Conversation and user message already added by client via sendMessageOptimistic
-      const conversationId = await ctx.runMutation(internal.chat.ensureConversation, {
+      const conversationId = await ctx.runMutation(internal.chat.index.ensureConversation, {
         notebookId: notebookId as any,
         userId: userId as any,
       });
@@ -219,7 +219,7 @@ http.route({
       // client by polling getStreamText and writing to the HTTP response. We do not use
       // streaming.stream() because after our streamWriter returns the component tries to
       // flush pending with addChunk, but the stream is already "done" → timeout error.
-      await ctx.scheduler.runAfter(0, internal.chatStreamAction.runWithStreamId, {
+      await ctx.scheduler.runAfter(0, internal.chat.stream.runWithStreamId, {
         streamId,
         userId,
         notebookId,

@@ -26,8 +26,8 @@
     "noFallthroughCasesInSwitch": true,
 
     /* Path aliases */
-    "baseUrl": ".",
     "paths": {
+      "*": ["./*"],
       "@/*": ["./src/*"],
       "@convex/*": ["../../convex/*"],
       "@convex/_generated/api": ["./src/convex-generated-api.d.ts"],

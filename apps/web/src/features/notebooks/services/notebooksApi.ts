@@ -12,7 +12,7 @@ import type { Id } from "@convex/_generated/dataModel";
  * Returns undefined while loading, empty array when loaded but no results
  */
 export function useNotebooks() {
-  return useQuery(api.notebooks.list);
+  return useQuery(api.notebooks.index.list);
 }
 
 /**
@@ -21,7 +21,7 @@ export function useNotebooks() {
  */
 export function useNotebook(id: string | null) {
   return useQuery(
-    api.notebooks.get,
+    api.notebooks.index.get,
     id ? { id: id as any } : "skip"
   );
 }
@@ -30,7 +30,7 @@ export function useNotebook(id: string | null) {
  * Create a new notebook with optimistic update
  */
 export function useCreateNotebook() {
-  const create = useMutation(api.notebooks.create).withOptimisticUpdate((localStore, args) => {
+  const create = useMutation(api.notebooks.index.create).withOptimisticUpdate((localStore, args) => {
     // Generate a temporary ID for the optimistic update
     const tempId = `temp-${Date.now()}` as Id<"notebooks">;
     const now = Date.now();
@@ -53,9 +53,9 @@ export function useCreateNotebook() {
     };
 
     // Optimistically add to list
-    const notebooks = localStore.getQuery(api.notebooks.list);
+    const notebooks = localStore.getQuery(api.notebooks.index.list);
     if (notebooks) {
-      localStore.setQuery(api.notebooks.list, {}, [newNotebook, ...notebooks]);
+      localStore.setQuery(api.notebooks.index.list, {}, [newNotebook, ...notebooks]);
     }
   });
 
@@ -76,15 +76,15 @@ export function useCreateNotebook() {
  * Update a notebook with optimistic update
  */
 export function useUpdateNotebook() {
-  const update = useMutation(api.notebooks.update).withOptimisticUpdate((localStore, args) => {
+  const update = useMutation(api.notebooks.index.update).withOptimisticUpdate((localStore, args) => {
     const { id, title, coverColor, icon, isFeatured, folderId } = args;
     const now = Date.now();
 
     // Update list view
-    const notebooks = localStore.getQuery(api.notebooks.list);
+    const notebooks = localStore.getQuery(api.notebooks.index.list);
     if (notebooks) {
       localStore.setQuery(
-        api.notebooks.list,
+        api.notebooks.index.list,
         {},
         notebooks.map((nb: { id: string; [key: string]: unknown }) =>
           nb.id === id
@@ -108,10 +108,10 @@ export function useUpdateNotebook() {
     }
 
     // Update detail view
-    const notebook = localStore.getQuery(api.notebooks.get, { id });
+    const notebook = localStore.getQuery(api.notebooks.index.get, { id });
     if (notebook) {
       localStore.setQuery(
-        api.notebooks.get,
+        api.notebooks.index.get,
         { id },
         {
           ...notebook,
@@ -153,19 +153,19 @@ export function useUpdateNotebook() {
  * Delete a notebook with optimistic update
  */
 export function useDeleteNotebook() {
-  const remove = useMutation(api.notebooks.remove).withOptimisticUpdate((localStore, args) => {
+  const remove = useMutation(api.notebooks.index.remove).withOptimisticUpdate((localStore, args) => {
     // Optimistically remove from list
-    const notebooks = localStore.getQuery(api.notebooks.list);
+    const notebooks = localStore.getQuery(api.notebooks.index.list);
     if (notebooks) {
       localStore.setQuery(
-        api.notebooks.list,
+        api.notebooks.index.list,
         {},
         notebooks.filter((nb: { id: string }) => nb.id !== args.id)
       );
     }
 
     // Clear detail view
-    localStore.setQuery(api.notebooks.get, { id: args.id }, null);
+    localStore.setQuery(api.notebooks.index.get, { id: args.id }, null);
   });
 
   return async (id: string) => {
@@ -178,7 +178,7 @@ export function useDeleteNotebook() {
  */
 export function useNotebookReports(notebookId: string | null) {
   return useQuery(
-    api.notebooks.getReports,
+    api.notebooks.index.getReports,
     notebookId ? { notebookId: notebookId as any } : "skip"
   );
 }
