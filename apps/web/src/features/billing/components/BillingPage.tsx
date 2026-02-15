@@ -1,7 +1,6 @@
 import React from 'react';
 import { Check } from 'lucide-react';
 import { useSubscriptionStatus, useCreateCheckout, useCancelSubscription } from '../services/subscriptionApi';
-import type { SubscriptionStatusResponse } from '../types';
 import { useConfirmDialog } from '@/shared/ui/ConfirmDialog';
 
 interface BillingPageProps {

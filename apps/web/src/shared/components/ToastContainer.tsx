@@ -1,6 +1,5 @@
-import React from 'react';
 import { X } from 'lucide-react';
-import { useToast, Toast } from '../contexts/ToastContext';
+import { useToast } from '../contexts/ToastContext';
 
 const toastStyles = {
   success: 'bg-green-500 border-green-600 text-white',

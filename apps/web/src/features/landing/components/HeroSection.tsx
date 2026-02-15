@@ -83,7 +83,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onGetStarted }) => {
         />
       </div>
 
-      <div className="relative z-10 max-w-[1500px] w-full mx-auto text-center space-y-28 sm:space-y-32 px-4 sm:px-6">
+      <div className="relative z-10 max-w-[1500px] w-full mx-auto text-center space-y-36 sm:space-y-40 px-4 sm:px-6">
         {/* Headline + tagline */}
         <div className="space-y-5 sm:space-y-6">
           <h1 className="text-6xl md:text-8xl font-sans font-extrabold text-foreground tracking-tight" style={{ lineHeight: '1.1' }}>

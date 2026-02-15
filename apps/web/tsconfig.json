@@ -20,9 +20,9 @@
     "allowSyntheticDefaultImports": true,
 
     /* Linting */
-    "strict": false,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
 
     /* Path aliases */
@@ -30,6 +30,8 @@
     "paths": {
       "@/*": ["./src/*"],
       "@convex/*": ["../../convex/*"],
+      "@convex/_generated/api": ["./src/convex-generated-api.d.ts"],
+      "@convex/_generated/dataModel": ["./src/convex-generated-dataModel.d.ts"],
       "react-router-dom": ["./src/react-router-dom.d.ts"]
     }
   },

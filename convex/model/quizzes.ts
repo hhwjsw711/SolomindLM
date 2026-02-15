@@ -125,6 +125,20 @@ export async function patchQuiz(
   quizId: Id<"quizzes">,
   patch: Record<string, unknown>
 ): Promise<void> {
+  // If updating metadata, merge with existing metadata instead of replacing
+  if (patch.metadata) {
+    const existing = await getQuiz(ctx, quizId);
+    if (existing) {
+      patch = {
+        ...patch,
+        metadata: {
+          ...(existing.metadata as Record<string, unknown> ?? {}),
+          ...(patch.metadata as Record<string, unknown>),
+        },
+      };
+    }
+  }
+
   await ctx.db.patch("quizzes", quizId, {
     ...patch,
     updatedAt: Date.now(),

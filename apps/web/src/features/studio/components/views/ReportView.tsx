@@ -38,7 +38,9 @@ export const ReportView: React.FC<ReportViewProps> = ({ note, onBack }) => {
                  <div className="flex-1">
                    <p className="text-sm font-medium text-destructive">Report generation failed</p>
                    <p className="text-xs text-destructive/70 mt-1">
-                     {note.metadata?.error || 'An unknown error occurred'}
+                     {typeof note.metadata?.error === 'object'
+                       ? (note.metadata.error as { message?: string }).message || 'An unknown error occurred'
+                       : note.metadata?.error || 'An unknown error occurred'}
                    </p>
                  </div>
                </div>
@@ -53,7 +55,7 @@ export const ReportView: React.FC<ReportViewProps> = ({ note, onBack }) => {
                               <MarkdownRenderer
                                   components={{
                                       img: () => null,
-                                      a: ({ node, children, ...props }) => <span className="text-foreground">{children}</span>,
+                                      a: ({ children }) => <span className="text-foreground">{children}</span>,
                                       video: () => null,
                                       audio: () => null,
                                       iframe: () => null,

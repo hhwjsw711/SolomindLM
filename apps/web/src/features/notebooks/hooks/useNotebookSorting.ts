@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { NotebookItem } from '@/shared/types/index';
 
 export type SortOption = 'date' | 'title';

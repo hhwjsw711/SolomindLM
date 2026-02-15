@@ -12,6 +12,7 @@ import {
   VectorSearchRunner,
   VectorSearchRawResult,
   VectorSearchConfig,
+  RerankFunction,
 } from './vector_search.js';
 
 // ============================================================
@@ -140,9 +141,10 @@ export class HybridSearchHandler extends VectorSearchHandler {
     config?: HybridSearchConfig,
     embeddingService?: EmbeddingService,
     vectorSearchRunner?: VectorSearchRunner,
-    keywordSearchRunner?: KeywordSearchRunner
+    keywordSearchRunner?: KeywordSearchRunner,
+    rerankFn?: RerankFunction
   ) {
-    super(config, embeddingService, vectorSearchRunner);
+    super(config, embeddingService, vectorSearchRunner, rerankFn);
     this.hybridConfig = { ...DEFAULT_HYBRID_CONFIG, ...config };
     this.keywordSearchRunner = keywordSearchRunner ?? (null as any);
   }

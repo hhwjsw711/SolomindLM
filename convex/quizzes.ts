@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query, internalMutation } from "./_generated/server";
+import { mutation, query, internalMutation, internalQuery } from "./_generated/server";
 import { getAuthUserId } from "./auth";
 import * as Notebooks from "./model/notebooks";
 import * as Quizzes from "./model/quizzes";
@@ -86,6 +86,16 @@ export const createInternal = internalMutation({
       questionsData: args.questionsData,
       metadata: args.metadata,
     });
+  },
+});
+
+/**
+ * Internal: Get a quiz by ID (for use by jobs)
+ */
+export const getInternal = internalQuery({
+  args: { id: v.id("quizzes") },
+  handler: async (ctx, args) => {
+    return await Quizzes.getQuiz(ctx, args.id);
   },
 });
 

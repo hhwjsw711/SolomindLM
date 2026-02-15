@@ -46,7 +46,7 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({ onGetStarted
           : 'bg-transparent'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-6">
+      <div className="max-w-7xl mx-auto px-8 md:px-12">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo – same size as app Header */}
           <div className="flex items-center gap-3">

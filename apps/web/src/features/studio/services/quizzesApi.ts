@@ -1,4 +1,4 @@
-import type { Note, QuizQuestion, QuizNote } from '@/shared/types/index';
+import type { QuizQuestion, QuizNote } from '@/shared/types/index';
 import { useQuery, useMutation, useAction } from 'convex/react';
 import { api } from '@convex/_generated/api';
 import type { Id } from '@convex/_generated/dataModel';
@@ -149,7 +149,7 @@ export function useRenameQuiz() {
         localStore.setQuery(
           api.quizzes.list,
           { notebookId: quiz.notebookId },
-          listResult.map(q =>
+          listResult.map((q: { _id: string; [key: string]: unknown }) =>
             q._id === id
               ? { ...q, title }
               : q
@@ -186,7 +186,7 @@ export function useDeleteQuiz() {
         localStore.setQuery(
           api.quizzes.list,
           { notebookId: quiz.notebookId },
-          listResult.filter(q => q._id !== args.id)
+          listResult.filter((q: { _id: string }) => q._id !== args.id)
         );
       }
     }

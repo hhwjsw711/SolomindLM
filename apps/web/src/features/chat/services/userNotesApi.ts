@@ -1,4 +1,4 @@
-import type { Note, UserNote } from '@/shared/types/index';
+import type { UserNote } from '@/shared/types/index';
 import { useQuery, useMutation, useAction } from 'convex/react';
 import { api } from '@convex/_generated/api';
 import type { Id } from '@convex/_generated/dataModel';
@@ -101,7 +101,7 @@ export function useUpdateUserNote() {
           localStore.setQuery(
             api.userNotes.list,
             { notebookId: note.notebookId },
-            listResult.map(n => (n._id === id ? { ...n, title } : n))
+            listResult.map((n: { _id: string; [key: string]: unknown }) => (n._id === id ? { ...n, title } : n))
           );
         }
       }
@@ -130,7 +130,7 @@ export function useDeleteUserNote() {
         localStore.setQuery(
           api.userNotes.list,
           { notebookId: note.notebookId },
-          listResult.filter(n => n._id !== args.id)
+          listResult.filter((n: { _id: string }) => n._id !== args.id)
         );
       }
     }

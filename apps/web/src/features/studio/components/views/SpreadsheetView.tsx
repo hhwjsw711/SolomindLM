@@ -59,7 +59,7 @@ interface SpreadsheetTableProps {
   noteTitle: string;
 }
 
-const SpreadsheetTable: React.FC<SpreadsheetTableProps> = ({ content, noteTitle }) => {
+const SpreadsheetTable: React.FC<SpreadsheetTableProps> = ({ content, noteTitle: _noteTitle }) => {
   const rows = parseCSV(content);
 
   // Handle empty or error CSV
@@ -160,7 +160,9 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({ note, onBack }
             <div className="flex-1">
               <p className="text-sm font-medium text-destructive">Spreadsheet generation failed</p>
               <p className="text-xs text-destructive/70 mt-1">
-                {note.metadata?.error || 'An unknown error occurred'}
+                {typeof note.metadata?.error === 'object'
+                  ? (note.metadata.error as { message?: string }).message || 'An unknown error occurred'
+                  : note.metadata?.error || 'An unknown error occurred'}
               </p>
             </div>
           </div>

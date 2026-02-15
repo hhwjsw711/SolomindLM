@@ -1,5 +1,41 @@
 import { STUDIO_TOOLS } from '@/shared/constants';
 
+export interface FAQItem {
+  question: string;
+  answer: string;
+}
+
+export const LANDING_FAQS: FAQItem[] = [
+  {
+    question: "How accurate is the AI-generated content?",
+    answer: "All generated content is grounded directly in your uploaded sources—whether it's a PDF, article, or video—rather than relying solely on general knowledge. This means the chances of AI hallucinations are extremely low, ensuring the flashcards, quizzes, and summaries accurately reflect your original materials."
+  },
+  {
+    question: "What languages are supported?",
+    answer: "Currently, we're focusing on English content with full official support. We're actively working on expanding to other popular languages including Spanish, French, German, Chinese, Japanese, and Korean. Coming soon, you'll be able to process content in one language and generate study materials in another."
+  },
+  {
+    question: "Can I export my flashcards and study materials?",
+    answer: "Yes! You can export your flashcards to Anki, Quizlet, as CSV files. Mind maps can be exported as images or in Markdown format. Audio overviews can be downloaded as MP3 files."
+  },
+  {
+    question: "How is my data used and protected?",
+    answer: "Your privacy is our priority. Uploaded content is encrypted and used only to generate your study materials. We don't use your data to train our models without explicit permission. We're GDPR compliant and never sell your data to third parties."
+  },
+  {
+    question: "Is there a limit on how much I can upload?",
+    answer: "The free plan includes 20 notebooks per account with up to 20 sources per notebook. Pro plans offer 200 notebooks per account with up to 100 sources per notebook. Each plan also includes daily limits on AI-generated content. Check our pricing section for details."
+  },
+  {
+    question: "What makes SolomindLM different from Quizlet or Anki?",
+    answer: "Unlike Quizlet or Anki which require manual content creation, SolomindLM uses AI to automatically generate study materials from any content source. Simply upload a PDF, video, or article, and get flashcards, quizzes, and mind maps instantly—saving you hours of manual work."
+  },
+  {
+    question: "How long does it take to generate study materials?",
+    answer: "Most documents are processed in under 60 seconds. A 20-page PDF typically takes about 30 seconds to generate comprehensive flashcards, quizzes, and summaries."
+  }
+];
+
 const LANDING_TOOLS = [
   { id: 'rag', label: 'Grounded RAG System', iconName: 'Brain', color: 'text-violet-600' },
   ...STUDIO_TOOLS,

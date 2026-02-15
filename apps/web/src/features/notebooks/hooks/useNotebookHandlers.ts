@@ -23,8 +23,8 @@ export interface UseNotebookHandlersReturn {
 }
 
 export function useNotebookHandlers({
-  onUpdateNotebook,
-  onDeleteNotebook,
+  onUpdateNotebook: _onUpdateNotebook,
+  onDeleteNotebook: _onDeleteNotebook,
 }: UseNotebookHandlersProps): UseNotebookHandlersReturn {
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [customizingId, setCustomizingId] = useState<string | null>(null);

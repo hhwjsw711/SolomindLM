@@ -2,24 +2,87 @@
 /**
  * Structured logging utility for LLM agent operations.
  *
- * Provides consistent, JSON-structured logging with timestamps
- * and context for production observability and debugging.
+ * Provides consistent, JSON-structured logging with timestamps,
+ * correlation IDs, and context for production observability and debugging.
  */
 
+
 /**
- * Log context interface.
- * All logs include agent name, phase, and timestamp.
- * Additional context can be added via index signature.
+ * Job types supported by the logging system.
  */
-export interface LogContext {
-  /** Agent name (e.g., 'ReportGraph', 'FlashcardGraph') */
-  agent: string;
-  /** Operation phase (e.g., 'map_process', 'reduce', 'collapse') */
+export type JobType =
+  | 'report'
+  | 'flashcard'
+  | 'quiz'
+  | 'mindmap'
+  | 'audio'
+  | 'slides'
+  | 'spreadsheet'
+  | 'written_questions'
+  | 'document_embedding';
+
+/**
+ * Error types for classification.
+ */
+export type JobErrorType =
+  | 'llm_timeout'
+  | 'llm_error'
+  | 'embedding_failure'
+  | 'parsing_error'
+  | 'rate_limit'
+  | 'extraction_failure'
+  | 'storage_error'
+  | 'validation_error'
+  | 'unknown';
+
+/**
+ * Structured error metadata for database storage.
+ */
+export interface JobErrorMetadata {
+  type: JobErrorType;
   phase: string;
-  /** ISO 8601 timestamp (auto-generated if not provided) */
-  timestamp?: string;
-  /** Additional context properties */
-  [key: string]: any;
+  message: string;
+  retryable: boolean;
+  timestamp: number;
+  stackTrace?: string;
+}
+
+/**
+ * Log context interface for job logging.
+ */
+export interface JobLogContext {
+  /** Job type identifier */
+  jobType: JobType;
+  /** Job document ID */
+  jobId: string;
+  /** Notebook ID (optional) */
+  notebookId?: string;
+  /** User ID (optional) */
+  userId?: string;
+}
+
+/**
+ * Internal log entry structure.
+ */
+interface LogEntry {
+  timestamp: string;
+  level: LogLevel;
+  jobType: JobType;
+  jobId: string;
+  phase: string;
+  event: LogEvent;
+  message?: string;
+  durationMs?: number;
+  metadata?: Record<string, unknown>;
+  error?: {
+    type: JobErrorType;
+    message: string;
+    retryable: boolean;
+    stackTrace?: string;
+  };
+  correlationId?: string;
+  notebookId?: string;
+  userId?: string;
 }
 
 /**
@@ -33,12 +96,463 @@ export enum LogLevel {
 }
 
 /**
- * Creates a log entry with timestamp and consistent structure.
+ * Log event types for categorization.
+ */
+export type LogEvent =
+  | 'job_start'
+  | 'job_complete'
+  | 'job_error'
+  | 'phase_start'
+  | 'phase_complete'
+  | 'phase_error'
+  | 'phase_transition'
+  | 'info'
+  | 'warn';
+
+/**
+ * Legacy Log context interface (deprecated, use JobLogContext).
+ * All logs include agent name, phase, and timestamp.
+ * Additional context can be added via index signature.
+ * @deprecated Use createJobLogger instead
+ */
+export interface LogContext {
+  /** Agent name (e.g., 'ReportGraph', 'FlashcardGraph') */
+  agent: string;
+  /** Operation phase (e.g., 'map_process', 'reduce', 'collapse') */
+  phase: string;
+  /** ISO 8601 timestamp (auto-generated if not provided) */
+  timestamp?: string;
+  /** Additional context properties */
+  [key: string]: any;
+}
+
+/**
+ * Generate a correlation ID for distributed tracing.
+ */
+function generateCorrelationId(): string {
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).substring(2, 8);
+  return `${timestamp}-${random}`;
+}
+
+/**
+ * Classify error type from error object.
+ */
+export function classifyError(error: Error | unknown): JobErrorType {
+  if (!(error instanceof Error)) {
+    return 'unknown';
+  }
+
+  const message = error.message.toLowerCase();
+  const name = error.name.toLowerCase();
+
+  // Timeout errors
+  if (
+    message.includes('timeout') ||
+    message.includes('timed out') ||
+    message.includes('524') ||
+    message.includes('504')
+  ) {
+    return 'llm_timeout';
+  }
+
+  // Rate limiting
+  if (
+    message.includes('rate limit') ||
+    message.includes('429') ||
+    message.includes('too many requests')
+  ) {
+    return 'rate_limit';
+  }
+
+  // LLM errors
+  if (
+    name.includes('llm') ||
+    message.includes('llm') ||
+    message.includes('model') ||
+    message.includes('openai') ||
+    message.includes('together') ||
+    message.includes('api key')
+  ) {
+    return 'llm_error';
+  }
+
+  // Embedding errors
+  if (
+    message.includes('embedding') ||
+    message.includes('vector') ||
+    message.includes('dimension')
+  ) {
+    return 'embedding_failure';
+  }
+
+  // Parsing errors
+  if (
+    name.includes('syntax') ||
+    name.includes('parse') ||
+    message.includes('json') ||
+    message.includes('parse') ||
+    message.includes('invalid') ||
+    message.includes('malformed')
+  ) {
+    return 'parsing_error';
+  }
+
+  // Extraction errors
+  if (
+    message.includes('ocr') ||
+    message.includes('extract') ||
+    message.includes('transcript')
+  ) {
+    return 'extraction_failure';
+  }
+
+  // Storage errors
+  if (
+    message.includes('storage') ||
+    message.includes('upload') ||
+    message.includes('download')
+  ) {
+    return 'storage_error';
+  }
+
+  // Validation errors
+  if (
+    name.includes('validation') ||
+    name.includes('type') ||
+    message.includes('invalid') ||
+    message.includes('required')
+  ) {
+    return 'validation_error';
+  }
+
+  return 'unknown';
+}
+
+/**
+ * Determine if an error is retryable.
+ */
+export function isRetryableError(errorType: JobErrorType): boolean {
+  const retryableTypes: JobErrorType[] = [
+    'llm_timeout',
+    'rate_limit',
+    'storage_error',
+    'extraction_failure',
+  ];
+  return retryableTypes.includes(errorType);
+}
+
+/**
+ * Create structured error metadata from an error.
+ */
+export function createErrorMetadata(
+  error: Error | unknown,
+  phase: string
+): JobErrorMetadata {
+  const type = classifyError(error);
+  const message =
+    error instanceof Error ? error.message : String(error);
+
+  // Truncate message to 500 chars for storage
+  const truncatedMessage =
+    message.length > 500 ? message.substring(0, 500) + '...' : message;
+
+  // Get stack trace (first 5 lines)
+  let stackTrace: string | undefined;
+  if (error instanceof Error && error.stack) {
+    stackTrace = error.stack.split('\n').slice(0, 5).join('\n');
+  }
+
+  return {
+    type,
+    phase,
+    message: truncatedMessage,
+    retryable: isRetryableError(type),
+    timestamp: Date.now(),
+    stackTrace,
+  };
+}
+
+/**
+ * Serialize log entry to JSON.
+ */
+function serializeLogEntry(entry: LogEntry): string {
+  return JSON.stringify(entry);
+}
+
+/**
+ * Output log entry to console.
+ */
+function outputLog(entry: LogEntry): void {
+  const json = serializeLogEntry(entry);
+
+  switch (entry.level) {
+    case LogLevel.ERROR:
+      console.error(json);
+      break;
+    case LogLevel.WARN:
+      console.warn(json);
+      break;
+    case LogLevel.DEBUG:
+      console.debug(json);
+      break;
+    default:
+      console.log(json);
+  }
+}
+
+/**
+ * Job Logger instance returned by createJobLogger.
+ */
+export interface JobLogger {
+  /** Job context */
+  context: JobLogContext;
+  /** Correlation ID for this job */
+  correlationId: string;
+
+  /** Log job start */
+  jobStart: (meta?: Record<string, unknown>) => void;
+  /** Log job completion */
+  jobComplete: (meta?: Record<string, unknown>) => void;
+  /** Log job error */
+  jobError: (error: Error | unknown, meta?: Record<string, unknown>) => void;
+
+  /** Log phase start */
+  phaseStart: (phase: string, meta?: Record<string, unknown>) => void;
+  /** Log phase completion */
+  phaseComplete: (phase: string, meta?: Record<string, unknown>) => void;
+  /** Log phase error */
+  phaseError: (phase: string, error: Error | unknown, meta?: Record<string, unknown>) => void;
+  /** Log phase transition */
+  phaseTransition: (fromPhase: string, toPhase: string, meta?: Record<string, unknown>) => void;
+
+  /** Log info message */
+  info: (message: string, meta?: Record<string, unknown>) => void;
+  /** Log warning message */
+  warn: (message: string, meta?: Record<string, unknown>) => void;
+  /** Log error message (without phase context) */
+  error: (message: string, error: Error | unknown, meta?: Record<string, unknown>) => void;
+  /** Log debug message */
+  debug: (message: string, meta?: Record<string, unknown>) => void;
+
+  /** Create a timer for measuring duration */
+  createTimer: () => { end: () => number };
+  /** Create a child logger with additional context */
+  child: (additionalContext: Partial<JobLogContext>) => JobLogger;
+}
+
+/**
+ * Create a job logger with structured logging.
  *
- * @param context - Log context
- * @param level - Log level
- * @param message - Optional message
- * @returns Formatted log entry object
+ * @param context - Job context including jobType, jobId, notebookId, userId
+ * @returns JobLogger instance with phase-aware logging methods
+ *
+ * @example
+ * ```typescript
+ * const logger = createJobLogger({
+ *   jobType: 'report',
+ *   jobId: reportId,
+ *   notebookId,
+ *   userId
+ * });
+ *
+ * logger.jobStart({ docCount: documentIds.length });
+ *
+ * logger.phaseStart('document_retrieval');
+ * const documents = await retrieveDocuments(ctx, documentIds);
+ * logger.phaseComplete('document_retrieval', { chunkCount: 45 });
+ *
+ * logger.phaseStart('llm_generation', { model: 'qwen3-80b' });
+ * try {
+ *   const result = await generateWithLLM(prompt);
+ *   logger.phaseComplete('llm_generation', { tokensUsed: usage });
+ * } catch (error) {
+ *   logger.phaseError('llm_generation', error, { retryCount: 2 });
+ *   throw error;
+ * }
+ *
+ * logger.jobComplete({ contentLength: content.length });
+ * ```
+ */
+export function createJobLogger(context: JobLogContext): JobLogger {
+  const correlationId = generateCorrelationId();
+
+  const createEntry = (
+    level: LogLevel,
+    phase: string,
+    event: LogEvent,
+    message?: string,
+    meta?: Record<string, unknown>,
+    errorInfo?: LogEntry['error']
+  ): LogEntry => ({
+    timestamp: new Date().toISOString(),
+    level,
+    jobType: context.jobType,
+    jobId: context.jobId,
+    phase,
+    event,
+    correlationId,
+    notebookId: context.notebookId,
+    userId: context.userId,
+    ...(message && { message }),
+    ...(meta && { metadata: meta }),
+    ...(errorInfo && { error: errorInfo }),
+  });
+
+  return {
+    context,
+    correlationId,
+
+    jobStart: (meta?: Record<string, unknown>) => {
+      const entry = createEntry(
+        LogLevel.INFO,
+        'init',
+        'job_start',
+        `Starting ${context.jobType} job`,
+        meta
+      );
+      outputLog(entry);
+    },
+
+    jobComplete: (meta?: Record<string, unknown>) => {
+      const entry = createEntry(
+        LogLevel.INFO,
+        'complete',
+        'job_complete',
+        `${context.jobType} job completed successfully`,
+        meta
+      );
+      outputLog(entry);
+    },
+
+    jobError: (error: Error | unknown, meta?: Record<string, unknown>) => {
+      const errorMeta = createErrorMetadata(error, 'job');
+      const entry = createEntry(
+        LogLevel.ERROR,
+        'error',
+        'job_error',
+        `${context.jobType} job failed: ${errorMeta.message}`,
+        meta,
+        {
+          type: errorMeta.type,
+          message: errorMeta.message,
+          retryable: errorMeta.retryable,
+          stackTrace: errorMeta.stackTrace,
+        }
+      );
+      outputLog(entry);
+    },
+
+    phaseStart: (phase: string, meta?: Record<string, unknown>) => {
+      const entry = createEntry(
+        LogLevel.INFO,
+        phase,
+        'phase_start',
+        `Starting phase: ${phase}`,
+        meta
+      );
+      outputLog(entry);
+    },
+
+    phaseComplete: (phase: string, meta?: Record<string, unknown>) => {
+      const entry = createEntry(
+        LogLevel.INFO,
+        phase,
+        'phase_complete',
+        `Completed phase: ${phase}`,
+        meta
+      );
+      outputLog(entry);
+    },
+
+    phaseError: (phase: string, error: Error | unknown, meta?: Record<string, unknown>) => {
+      const errorMeta = createErrorMetadata(error, phase);
+      const entry = createEntry(
+        LogLevel.ERROR,
+        phase,
+        'phase_error',
+        `Error in phase ${phase}: ${errorMeta.message}`,
+        meta,
+        {
+          type: errorMeta.type,
+          message: errorMeta.message,
+          retryable: errorMeta.retryable,
+          stackTrace: errorMeta.stackTrace,
+        }
+      );
+      outputLog(entry);
+    },
+
+    phaseTransition: (fromPhase: string, toPhase: string, meta?: Record<string, unknown>) => {
+      const entry = createEntry(
+        LogLevel.INFO,
+        toPhase,
+        'phase_transition',
+        `Transitioning from ${fromPhase} to ${toPhase}`,
+        { fromPhase, toPhase, ...meta }
+      );
+      outputLog(entry);
+    },
+
+    info: (message: string, meta?: Record<string, unknown>) => {
+      const entry = createEntry(LogLevel.INFO, 'general', 'info', message, meta);
+      outputLog(entry);
+    },
+
+    warn: (message: string, meta?: Record<string, unknown>) => {
+      const entry = createEntry(LogLevel.WARN, 'general', 'warn', message, meta);
+      outputLog(entry);
+    },
+
+    error: (message: string, error: Error | unknown, meta?: Record<string, unknown>) => {
+      const errorMeta = createErrorMetadata(error, 'general');
+      const entry = createEntry(
+        LogLevel.ERROR,
+        'general',
+        'info',
+        message,
+        meta,
+        {
+          type: errorMeta.type,
+          message: errorMeta.message,
+          retryable: errorMeta.retryable,
+          stackTrace: errorMeta.stackTrace,
+        }
+      );
+      outputLog(entry);
+    },
+
+    debug: (message: string, meta?: Record<string, unknown>) => {
+      const isDebug = process.env.NODE_ENV === 'development' || process.env.DEBUG === 'true';
+      if (!isDebug) return;
+
+      const entry = createEntry(LogLevel.DEBUG, 'general', 'info', message, meta);
+      outputLog(entry);
+    },
+
+    createTimer: () => {
+      const startTime = Date.now();
+      return {
+        end: () => Date.now() - startTime,
+      };
+    },
+
+    child: (additionalContext: Partial<JobLogContext>) => {
+      return createJobLogger({
+        ...context,
+        ...additionalContext,
+      });
+    },
+  };
+}
+
+// ============================================================
+// Legacy functions (preserved for backward compatibility)
+// ============================================================
+
+/**
+ * Creates a log entry with timestamp and consistent structure.
+ * @deprecated Use createJobLogger instead
  */
 function createLogEntry(
   context: LogContext,
@@ -59,19 +573,7 @@ function createLogEntry(
 
 /**
  * Logs an informational message.
- *
- * @param context - Log context
- * @param message - Optional message
- *
- * @example
- * ```typescript
- * logInfo({
- *   agent: 'FlashcardGraph',
- *   phase: 'map_process',
- *   chunkIndex: 5,
- *   chunkLength: 15000
- * }, 'Processing chunk');
- * ```
+ * @deprecated Use createJobLogger instead
  */
 export function logInfo(context: LogContext, message?: string): void {
   const entry = createLogEntry(context, LogLevel.INFO, message);
@@ -80,18 +582,7 @@ export function logInfo(context: LogContext, message?: string): void {
 
 /**
  * Logs a warning message.
- *
- * @param context - Log context
- * @param message - Optional message
- *
- * @example
- * ```typescript
- * logWarn({
- *   agent: 'QuizGraph',
- *   phase: 'reduce',
- *   questionCount: 8
- * }, 'Generated fewer questions than target');
- * ```
+ * @deprecated Use createJobLogger instead
  */
 export function logWarn(context: LogContext, message?: string): void {
   const entry = createLogEntry(context, LogLevel.WARN, message);
@@ -100,18 +591,7 @@ export function logWarn(context: LogContext, message?: string): void {
 
 /**
  * Logs an error message with error details.
- *
- * @param context - Log context (can include error or string error)
- * @param error - Error object or string message
- *
- * @example
- * ```typescript
- * logError({
- *   agent: 'FlashcardGraph',
- *   phase: 'map_process',
- *   chunkIndex: 3
- * }, new Error('LLM timeout'));
- * ```
+ * @deprecated Use createJobLogger instead
  */
 export function logError(context: LogContext, error: Error | string): void {
   const errorDetails =
@@ -119,7 +599,7 @@ export function logError(context: LogContext, error: Error | string): void {
       ? {
           name: error.name,
           message: error.message,
-          stack: error.stack?.split('\n').slice(0, 3).join('\n'), // First 3 lines
+          stack: error.stack?.split('\n').slice(0, 3).join('\n'),
         }
       : { message: error };
 
@@ -129,18 +609,7 @@ export function logError(context: LogContext, error: Error | string): void {
 
 /**
  * Logs a debug message (only in development/debug mode).
- *
- * @param context - Log context
- * @param message - Optional message
- *
- * @example
- * ```typescript
- * logDebug({
- *   agent: 'MindMapGraph',
- *   phase: 'parse_tree',
- *   treeDepth: 5
- * }, 'Parsed tree structure');
- * ```
+ * @deprecated Use createJobLogger instead
  */
 export function logDebug(context: LogContext, message?: string): void {
   const isDebug = process.env.NODE_ENV === 'development' || process.env.DEBUG === 'true';
@@ -152,18 +621,7 @@ export function logDebug(context: LogContext, message?: string): void {
 
 /**
  * Logs the start of a phase with visual separator.
- *
- * @param context - Log context
- *
- * @example
- * ```typescript
- * logPhaseStart({
- *   agent: 'FlashcardGraph',
- *   phase: 'map_process',
- *   chunkIndex: 1
- * });
- * // Output: ===== MAP_PROCESS PHASE =====
- * ```
+ * @deprecated Use createJobLogger instead
  */
 export function logPhaseStart(context: LogContext): void {
   console.log(`\n${'='.repeat(80)}`);
@@ -176,20 +634,7 @@ export function logPhaseStart(context: LogContext): void {
 
 /**
  * Logs the completion of a phase with timing and results.
- *
- * @param context - Log context (should include processingTimeMs if timing is needed)
- * @param result - Optional result data to include in log
- *
- * @example
- * ```typescript
- * logPhaseComplete({
- *   agent: 'FlashcardGraph',
- *   phase: 'map_process',
- *   chunkIndex: 1,
- *   processingTimeMs: 1250,
- *   cardsGenerated: 5
- * });
- * ```
+ * @deprecated Use createJobLogger instead
  */
 export function logPhaseComplete(context: LogContext, result?: any): void {
   const entry = createLogEntry(
@@ -207,18 +652,7 @@ export function logPhaseComplete(context: LogContext, result?: any): void {
 
 /**
  * Logs a phase transition between operations.
- *
- * @param fromPhase - Source phase
- * @param toPhase - Destination phase
- * @param context - Log context
- *
- * @example
- * ```typescript
- * logPhaseTransition('map_process', 'collapse', {
- *   agent: 'FlashcardGraph',
- *   mapOutputsCount: 10
- * });
- * ```
+ * @deprecated Use createJobLogger instead
  */
 export function logPhaseTransition(
   fromPhase: string,
@@ -236,16 +670,7 @@ export function logPhaseTransition(
 
 /**
  * Creates a performance timer for measuring operation duration.
- *
- * @returns Timer object with start/end methods
- *
- * @example
- * ```typescript
- * const timer = createTimer();
- * // ... do work ...
- * const elapsed = timer.end();
- * logInfo({ agent: 'FlashcardGraph', phase: 'test', processingTimeMs: elapsed });
- * ```
+ * @deprecated Use logger.createTimer() from createJobLogger instead
  */
 export function createTimer(): {
   end: () => number;
@@ -259,18 +684,7 @@ export function createTimer(): {
 
 /**
  * Logs with a visual separator banner for important events.
- *
- * @param context - Log context
- * @param title - Banner title
- * @param style - Banner style character (default: '=')
- *
- * @example
- * ```typescript
- * logBanner({
- *   agent: 'FlashcardGraph',
- *   phase: 'generation_complete'
- * }, 'GENERATION COMPLETE', '=');
- * ```
+ * @deprecated Use createJobLogger instead
  */
 export function logBanner(context: LogContext, title: string, style: string = '='): void {
   const bannerLine = style.repeat(80);
@@ -284,17 +698,7 @@ export function logBanner(context: LogContext, title: string, style: string = '=
 
 /**
  * Creates a child logger with preset context.
- * Useful for creating phase-specific loggers.
- *
- * @param parentContext - Parent context to inherit
- * @returns Child logger functions with preset context
- *
- * @example
- * ```typescript
- * const mapLogger = createChildLogger({ agent: 'FlashcardGraph', phase: 'map_process' });
- * mapLogger.info({ chunkIndex: 5 }, 'Processing chunk');
- * // Output includes agent, phase, chunkIndex
- * ```
+ * @deprecated Use logger.child() from createJobLogger instead
  */
 export function createChildLogger(
   parentContext: Omit<LogContext, 'timestamp'>
@@ -322,18 +726,7 @@ export function createChildLogger(
 
 /**
  * Batch logs multiple entries as a single JSON array.
- * Useful for structured logging systems.
- *
- * @param entries - Array of log contexts
- * @param level - Log level for all entries
- *
- * @example
- * ```typescript
- * logBatch([
- *   { agent: 'FlashcardGraph', phase: 'chunk_1', processingTimeMs: 1000 },
- *   { agent: 'FlashcardGraph', phase: 'chunk_2', processingTimeMs: 1200 },
- * ], LogLevel.INFO);
- * ```
+ * @deprecated Use createJobLogger instead
  */
 export function logBatch(entries: LogContext[], level: LogLevel = LogLevel.INFO): void {
   const batchEntries = entries.map(entry => createLogEntry(entry, level));

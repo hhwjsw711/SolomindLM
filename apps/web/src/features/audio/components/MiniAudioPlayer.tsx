@@ -13,7 +13,7 @@ interface MiniAudioPlayerProps {
 export const MiniAudioPlayer: React.FC<MiniAudioPlayerProps> = ({
   audioUrl,
   title = 'Audio Overview',
-  transcript,
+  transcript: _transcript,
   isVisible,
   onClose,
   onExpand,

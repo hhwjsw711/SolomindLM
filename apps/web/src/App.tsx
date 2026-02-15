@@ -4,7 +4,7 @@ import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@convex/_generated/api';
-import { Id } from '@convex/_generated/dataModel';
+import { Id, type Doc } from '@convex/_generated/dataModel';
 import { Header } from './shared/ui/Header';
 import { SourcesPanel } from './features/sources/components/SourcesPanel';
 import { ChatPanel } from './features/chat/components/ChatPanel';
@@ -37,22 +37,9 @@ import { useNotebooks, useCreateNotebook, useUpdateNotebook, useDeleteNotebook }
 import { useFolders, useCreateFolder, useUpdateFolder, useDeleteFolder } from './features/notebooks/services/foldersApi';
 import { useGenerateUploadUrl, useCreateDocument, useUpdateDocument, useDeleteDocument } from './features/sources/services/documentsApi';
 import { useSubscriptionStatus } from './features/billing/services/subscriptionApi';
-import { useSendMessage, type SendMessageCallbacks } from './features/chat/services/chatApi';
+import { useSendMessage } from './features/chat/services/chatApi';
 import { useLimitErrorToast } from './shared/hooks/useLimitErrorToast';
 import 'mind-elixir/style.css';
-
-// ============================================================
-// Types for Optimistic Chat
-// ============================================================
-
-interface OptimisticMessage {
-  id: string;
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-  createdAt: number;
-  references?: unknown[];
-  isOptimistic?: true;
-}
 
 const MIN_PANEL_WIDTH = 220;
 const getMaxPanelWidth = () => Math.min(window.innerWidth * 0.7, 1400);
@@ -165,8 +152,8 @@ const AppContent: React.FC = () => {
   const createFolder = useCreateFolder();
   const updateFolder = useUpdateFolder();
   const deleteFolder = useDeleteFolder();
-  const generateUploadUrl = useGenerateUploadUrl();
-  const createDocument = useCreateDocument();
+  useGenerateUploadUrl();
+  useCreateDocument();
   const updateDocument = useUpdateDocument();
   const deleteDocumentMutation = useDeleteDocument();
   const clearChatHistoryMutation = useMutation(api.messages.clearHistory);
@@ -255,8 +242,8 @@ const AppContent: React.FC = () => {
 
   // Filter notebooks for home page (notebooks may be undefined while loading)
   const notebookList = notebooks ?? [];
-  const featuredNotebooks = useMemo(() => notebookList.filter(nb => nb.isFeatured), [notebookList]);
-  const recentNotebooks = useMemo(() => notebookList.filter(nb => !nb.isFeatured), [notebookList]);
+  const featuredNotebooks = useMemo(() => notebookList.filter((nb: NotebookItem) => nb.isFeatured), [notebookList]);
+  const recentNotebooks = useMemo(() => notebookList.filter((nb: NotebookItem) => !nb.isFeatured), [notebookList]);
 
   // Resize State
   const [leftWidth, setLeftWidth] = useState(360);
@@ -280,7 +267,7 @@ const AppContent: React.FC = () => {
   // Update notebook title when the notebook changes
   useEffect(() => {
     if (urlNotebookId && notebookList.length > 0) {
-      const notebook = notebookList.find(nb => nb.id === urlNotebookId);
+      const notebook = notebookList.find((nb: NotebookItem) => nb.id === urlNotebookId);
       if (notebook) {
         setNotebookTitle(notebook.title);
       }
@@ -290,15 +277,15 @@ const AppContent: React.FC = () => {
   // Sync sources with documents from Convex (updates when documents change, including status and title)
   useEffect(() => {
     // Include fileName in signature so title updates from DocEmbeddingJob (e.g. YouTube placeholder -> real title) trigger a re-sync
-    const currentSignature = documents.map(d => `${d._id}:${d.status}:${d.fileName}`).join(',');
-    const prevSignature = prevDocumentsRef.current.map(d => `${d._id}:${d.status}:${d.fileName}`).join(',');
+    const currentSignature = documents.map((d: Doc<'documents'>) => `${d._id}:${d.status}:${d.fileName}`).join(',');
+    const prevSignature = prevDocumentsRef.current.map((d: Doc<'documents'>) => `${d._id}:${d.status}:${d.fileName}`).join(',');
 
     if (currentSignature !== prevSignature) {
       // Preserve selection state when updating
       setSources(prev => {
         const newSources = documents.map(documentToSource);
         // Merge selection state from previous sources
-        return newSources.map(source => ({
+        return newSources.map((source: Source) => ({
           ...source,
           selected: prev.find(s => s.id === source.id)?.selected ?? true,
         }));
@@ -387,11 +374,11 @@ const AppContent: React.FC = () => {
 
   // Chat list: DB messages + in-flight streaming assistant message so tokens appear as they arrive
   const chatDisplayMessages = useMemo((): Message[] => {
-    const list: Message[] = messages.map((msg) => ({
+    const list: Message[] = messages.map((msg: Doc<'messages'>) => ({
       id: msg._id,
       role: msg.role as 'user' | 'assistant',
       content: msg.content,
-      timestamp: new Date(msg.createdAt),
+      timestamp: new Date(msg.createdAt as number),
       references: msg.references,
     }));
     if (streamingContent) {
@@ -462,7 +449,7 @@ const AppContent: React.FC = () => {
     }
   };
 
-  const handleUpdateNoteFull = (id: string, note: Note) => {
+  const handleUpdateNoteFull = (_id: string, _note: Note) => {
     // Notes will be automatically updated via Convex query reactivity
   };
 
@@ -511,7 +498,7 @@ const AppContent: React.FC = () => {
     }
   };
 
-  const handleAddNote = (note: Note) => {
+  const handleAddNote = (_note: Note) => {
     // Notes will be automatically added via Convex query reactivity
   };
 

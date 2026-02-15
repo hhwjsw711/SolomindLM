@@ -76,7 +76,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({ onGetStarted }) 
       : pricingPlans.filter((p) => p.billingKey === 'free' || p.billingKey === 'monthly');
 
   return (
-    <section id="pricing" className="py-28 px-6 relative">
+    <section id="pricing" className="py-32 md:py-40 px-6 relative">
       {/* Subtle ambient glow behind cards */}
       <div
         className="absolute inset-0 pointer-events-none max-w-4xl mx-auto top-1/2 -translate-y-1/2 h-[420px] opacity-[0.07]"

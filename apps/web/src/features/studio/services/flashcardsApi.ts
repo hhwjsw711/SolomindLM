@@ -1,4 +1,4 @@
-import type { Note, Flashcard, FlashcardNote } from '@/shared/types/index';
+import type { Flashcard, FlashcardNote } from '@/shared/types/index';
 import { useQuery, useMutation, useAction } from 'convex/react';
 import { api } from '@convex/_generated/api';
 import type { Id } from '@convex/_generated/dataModel';
@@ -126,7 +126,7 @@ export function useRenameFlashcards() {
         localStore.setQuery(
           api.flashcards.list,
           { notebookId: flashcard.notebookId },
-          listResult.map(fc =>
+          listResult.map((fc: { _id: string; [key: string]: unknown }) =>
             fc._id === id
               ? { ...fc, title }
               : fc
@@ -158,7 +158,7 @@ export function useDeleteFlashcards() {
         localStore.setQuery(
           api.flashcards.list,
           { notebookId: flashcard.notebookId },
-          listResult.filter(fc => fc._id !== args.id)
+          listResult.filter((fc: { _id: string }) => fc._id !== args.id)
         );
       }
     }
@@ -234,7 +234,7 @@ export async function pollFlashcardStatus(
  * Export a flashcard set as CSV
  * This is handled client-side now since we have the flashcard data
  */
-export async function exportFlashcardsCSV(flashcardId: string, title: string, flashcards: Flashcard[]): Promise<void> {
+export async function exportFlashcardsCSV(_flashcardId: string, title: string, flashcards: Flashcard[]): Promise<void> {
   if (flashcards.length === 0) {
     throw new Error('No flashcards to export');
   }

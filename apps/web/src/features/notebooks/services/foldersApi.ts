@@ -1,5 +1,3 @@
-import type { FolderItem } from "@/shared/types/index";
-import type { NotebookItem } from "@/shared/types/index";
 import type { Id } from "@convex/_generated/dataModel";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
@@ -83,7 +81,7 @@ export function useUpdateFolder() {
       localStore.setQuery(
         api.folders.list,
         {},
-        folders.map(folder =>
+        folders.map((folder: { id: string; [key: string]: unknown }) =>
           folder.id === id
             ? {
                 ...folder,
@@ -140,7 +138,7 @@ export function useDeleteFolder() {
       localStore.setQuery(
         api.folders.list,
         {},
-        folders.filter(folder => folder.id !== args.id)
+        folders.filter((folder: { id: string }) => folder.id !== args.id)
       );
     }
 

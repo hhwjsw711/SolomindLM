@@ -11,6 +11,7 @@
 import type * as audioOverviews from "../audioOverviews.js";
 import type * as auth from "../auth.js";
 import type * as cache from "../cache.js";
+import type * as cacheMetrics from "../cacheMetrics.js";
 import type * as chat from "../chat.js";
 import type * as chatStreamAction from "../chatStreamAction.js";
 import type * as contentGeneration from "../contentGeneration.js";
@@ -45,6 +46,7 @@ import type * as lib_agents_audio_overview_state from "../lib/agents/audio_overv
 import type * as lib_agents_chat_grounding_validator from "../lib/agents/chat/grounding_validator.js";
 import type * as lib_agents_chat_hybrid_search from "../lib/agents/chat/hybrid_search.js";
 import type * as lib_agents_chat_llm_wrapper from "../lib/agents/chat/llm_wrapper.js";
+import type * as lib_agents_chat_rerankCache from "../lib/agents/chat/rerankCache.js";
 import type * as lib_agents_chat_vector_search from "../lib/agents/chat/vector_search.js";
 import type * as lib_agents_flashcard_nodes from "../lib/agents/flashcard/nodes.js";
 import type * as lib_agents_flashcard_prompts from "../lib/agents/flashcard/prompts.js";
@@ -58,6 +60,7 @@ import type * as lib_agents_quiz_state from "../lib/agents/quiz/state.js";
 import type * as lib_agents_report_nodes from "../lib/agents/report/nodes.js";
 import type * as lib_agents_report_prompts from "../lib/agents/report/prompts.js";
 import type * as lib_agents_report_state from "../lib/agents/report/state.js";
+import type * as lib_agents_shared_cachedLlm from "../lib/agents/shared/cachedLlm.js";
 import type * as lib_agents_shared_chunk_helper_factory from "../lib/agents/shared/chunk_helper_factory.js";
 import type * as lib_agents_shared_chunk_operations from "../lib/agents/shared/chunk_operations.js";
 import type * as lib_agents_shared_concurrency from "../lib/agents/shared/concurrency.js";
@@ -86,6 +89,7 @@ import type * as lib_agents_written_questions_nodes from "../lib/agents/written_
 import type * as lib_agents_written_questions_prompts from "../lib/agents/written_questions/prompts.js";
 import type * as lib_agents_written_questions_state from "../lib/agents/written_questions/state.js";
 import type * as lib_cache from "../lib/cache.js";
+import type * as lib_cacheCrypto from "../lib/cacheCrypto.js";
 import type * as lib_cacheMetrics from "../lib/cacheMetrics.js";
 import type * as lib_cachedAgent from "../lib/cachedAgent.js";
 import type * as lib_discovery_TavilySearchService from "../lib/discovery/TavilySearchService.js";
@@ -147,6 +151,7 @@ declare const fullApi: ApiFromModules<{
   audioOverviews: typeof audioOverviews;
   auth: typeof auth;
   cache: typeof cache;
+  cacheMetrics: typeof cacheMetrics;
   chat: typeof chat;
   chatStreamAction: typeof chatStreamAction;
   contentGeneration: typeof contentGeneration;
@@ -181,6 +186,7 @@ declare const fullApi: ApiFromModules<{
   "lib/agents/chat/grounding_validator": typeof lib_agents_chat_grounding_validator;
   "lib/agents/chat/hybrid_search": typeof lib_agents_chat_hybrid_search;
   "lib/agents/chat/llm_wrapper": typeof lib_agents_chat_llm_wrapper;
+  "lib/agents/chat/rerankCache": typeof lib_agents_chat_rerankCache;
   "lib/agents/chat/vector_search": typeof lib_agents_chat_vector_search;
   "lib/agents/flashcard/nodes": typeof lib_agents_flashcard_nodes;
   "lib/agents/flashcard/prompts": typeof lib_agents_flashcard_prompts;
@@ -194,6 +200,7 @@ declare const fullApi: ApiFromModules<{
   "lib/agents/report/nodes": typeof lib_agents_report_nodes;
   "lib/agents/report/prompts": typeof lib_agents_report_prompts;
   "lib/agents/report/state": typeof lib_agents_report_state;
+  "lib/agents/shared/cachedLlm": typeof lib_agents_shared_cachedLlm;
   "lib/agents/shared/chunk_helper_factory": typeof lib_agents_shared_chunk_helper_factory;
   "lib/agents/shared/chunk_operations": typeof lib_agents_shared_chunk_operations;
   "lib/agents/shared/concurrency": typeof lib_agents_shared_concurrency;
@@ -222,6 +229,7 @@ declare const fullApi: ApiFromModules<{
   "lib/agents/written_questions/prompts": typeof lib_agents_written_questions_prompts;
   "lib/agents/written_questions/state": typeof lib_agents_written_questions_state;
   "lib/cache": typeof lib_cache;
+  "lib/cacheCrypto": typeof lib_cacheCrypto;
   "lib/cacheMetrics": typeof lib_cacheMetrics;
   "lib/cachedAgent": typeof lib_cachedAgent;
   "lib/discovery/TavilySearchService": typeof lib_discovery_TavilySearchService;

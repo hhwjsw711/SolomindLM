@@ -29,7 +29,7 @@ interface NoteListViewProps {
 export const NoteListView: React.FC<NoteListViewProps> = ({
   tools,
   notes,
-  activeNoteId,
+  activeNoteId: _activeNoteId,
   width,
   onToolClick,
   onNoteClick,

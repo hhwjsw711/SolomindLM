@@ -48,7 +48,7 @@ interface UseNoteActionsResult {
  */
 export const useNoteActions = ({
   activeNote,
-  notes,
+  notes: _notes,
   onUpdateNote,
   onDeleteNote,
   confirm,

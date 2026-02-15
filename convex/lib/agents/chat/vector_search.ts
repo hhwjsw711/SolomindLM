@@ -56,6 +56,14 @@ export interface VectorSearchResult extends ReferenceChunk {
   similarity?: number;
 }
 
+/**
+ * Reranking function type for dependency injection (supports caching)
+ */
+export type RerankFunction = (
+  query: string,
+  documents: Array<{ id: string; content: string }>
+) => Promise<Array<{ id: string; content: string; score?: number }>>;
+
 const DEFAULT_CONFIG: Required<VectorSearchConfig> = {
   vectorMatchThreshold: 0.3,
   vectorMatchCount: 25,
@@ -75,15 +83,18 @@ export class VectorSearchHandler {
   protected config: Required<VectorSearchConfig>;
   protected embeddingService: EmbeddingService;
   protected vectorSearchRunner: VectorSearchRunner;
+  protected rerankFn?: RerankFunction;
 
   constructor(
     config?: VectorSearchConfig,
     embeddingService?: EmbeddingService,
-    vectorSearchRunner?: VectorSearchRunner
+    vectorSearchRunner?: VectorSearchRunner,
+    rerankFn?: RerankFunction
   ) {
     this.config = { ...DEFAULT_CONFIG, ...config };
     this.embeddingService = embeddingService ?? (null as any);
     this.vectorSearchRunner = vectorSearchRunner ?? (null as any);
+    this.rerankFn = rerankFn;
   }
 
   /**
@@ -217,7 +228,6 @@ export class VectorSearchHandler {
     results: (VectorSearchRawResult & { similarity?: number })[]
   ): Promise<(VectorSearchRawResult & { similarity?: number })[]> {
     const key = env.ZEROENTROPY_API_KEY;
-    const model = env.ZEROENTROPY_RERANK_MODEL || 'zerank-2';
     if (!key || results.length <= this.config.rerankThreshold) {
       console.log(
         `[VectorSearch] Skipping reranking: key=${!!key}, results=${results.length}`
@@ -225,6 +235,50 @@ export class VectorSearchHandler {
       return results;
     }
 
+    // If a cached reranking function is provided, use it
+    if (this.rerankFn) {
+      console.log(`[VectorSearch] Using cached reranking function`);
+      try {
+        const documents = results.map((r) => ({
+          id: r._id,
+          content: r.content,
+        }));
+
+        const rerankedDocs = await this.rerankFn(query, documents);
+
+        const reranked: (VectorSearchRawResult & { similarity?: number })[] = [];
+        const seen = new Set<string>();
+
+        // Add reranked results in order
+        for (const doc of rerankedDocs) {
+          const original = results.find((r) => r._id === doc.id);
+          if (original && !seen.has(original._id)) {
+            reranked.push({
+              ...original,
+              similarity: doc.score ?? original.similarity,
+            });
+            seen.add(original._id);
+          }
+        }
+
+        // Add any documents not in reranked results (preserving original order)
+        for (const r of results) {
+          if (!seen.has(r._id)) {
+            reranked.push(r);
+            seen.add(r._id);
+          }
+        }
+
+        console.log(`[VectorSearch] Reranked ${reranked.length} documents (cached)`);
+        return reranked;
+      } catch (err: any) {
+        console.error('[VectorSearch] Cached rerank failed, falling back:', err?.message);
+        // Fall through to direct API call
+      }
+    }
+
+    // Direct API call (original implementation)
+    const model = env.ZEROENTROPY_RERANK_MODEL || 'zerank-2';
     const maxRetries = 3;
     const baseDelay = 1000;
 

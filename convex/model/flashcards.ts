@@ -125,6 +125,20 @@ export async function patchFlashcard(
   flashcardId: Id<"flashcards">,
   patch: Record<string, unknown>
 ): Promise<void> {
+  // If updating metadata, merge with existing metadata instead of replacing
+  if (patch.metadata) {
+    const existing = await getFlashcard(ctx, flashcardId);
+    if (existing) {
+      patch = {
+        ...patch,
+        metadata: {
+          ...(existing.metadata as Record<string, unknown> ?? {}),
+          ...(patch.metadata as Record<string, unknown>),
+        },
+      };
+    }
+  }
+
   await ctx.db.patch("flashcards", flashcardId, {
     ...patch,
     updatedAt: Date.now(),

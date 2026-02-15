@@ -135,4 +135,7 @@ export const env = {
   // ZeroEntropy (reranking)
   ZEROENTROPY_API_KEY: process.env.ZEROENTROPY_API_KEY || '',
   ZEROENTROPY_RERANK_MODEL: process.env.ZEROENTROPY_RERANK_MODEL || 'zerank-2',
+
+  // Convex deployment info
+  CONVEX_CLOUD_URL: process.env.CONVEX_CLOUD_URL || '',
 };

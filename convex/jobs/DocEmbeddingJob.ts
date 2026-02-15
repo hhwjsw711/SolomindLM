@@ -13,6 +13,7 @@ import {
   StructuralChunker,
   type ChunkWithMetadata,
 } from '../lib/processing/StructuralChunker';
+import { createJobLogger, createErrorMetadata } from '../lib/agents/shared/logging';
 
 // File extensions that require OCR processing
 const OCR_FILE_EXTENSIONS = [
@@ -49,37 +50,65 @@ export const docEmbedding = internalAction({
 
     const { documentId, userId, notebookId } = args;
 
-    console.log('[DocEmbedding] Processing document:', documentId);
+    // Initialize structured logger
+    const logger = createJobLogger({
+      jobType: 'document_embedding',
+      jobId: documentId,
+      notebookId,
+      userId,
+    });
+
+    logger.jobStart();
+
+    let currentPhase = 'initializing';
 
     try {
-      // Update status to processing
+      // Phase: Initializing
+      logger.phaseStart('initializing');
       await ctx.runMutation(internal.documents.updateStatus, {
         documentId,
         status: 'processing',
       });
+      logger.phaseComplete('initializing');
+
+      // Phase: Loading document
+      logger.phaseStart('loading_document');
+      currentPhase = 'loading_document';
 
       // Get document details
       const docDetails = await ctx.runQuery(internal.documents.getDocumentDetails, {
         documentId,
       });
 
+      logger.phaseComplete('loading_document', {
+        fileType: docDetails.fileType,
+        fileName: docDetails.fileName,
+      });
+
       let extractedText = '';
       let extractedTitle: string | undefined;
 
-      // Step 1: Extraction
-      console.log('[DocEmbedding] Step 1: Extracting content...');
+      // Phase: Extraction
+      logger.phaseStart('extraction');
+      currentPhase = 'extraction';
 
       const mistralOCR = new MistralOCRService(process.env.MISTRAL_API_KEY || '');
       const supadataLoader = new SupadataLoaderService();
 
       if (docDetails.fileType === 'youtube') {
+        logger.info('Extracting YouTube transcript');
         const meta = await supadataLoader.loadTranscriptWithMeta(docDetails.fileUrl || '');
         extractedText = meta.content;
         if (meta.title?.trim()) extractedTitle = meta.title.trim();
-        // When transcript has no title we use the videoId fallback in Step 3 (no metadata API call)
+        logger.phaseComplete('extraction', {
+          contentLength: extractedText.length,
+          title: extractedTitle,
+        });
       } else if (docDetails.fileType === 'text') {
+        logger.info('Processing pasted text');
         // Text is already extracted, stored in metadata
         extractedText = docDetails.fileUrl || ''; // fileUrl contains the text for type 'text'
+        logger.phaseComplete('extraction', { contentLength: extractedText.length });
       } else if (docDetails.fileType === 'file') {
         if (!docDetails.storageId && !docDetails.fileUrl) {
           throw new Error('File storage ID or URL not found for document: ' + documentId);
@@ -87,7 +116,9 @@ export const docEmbedding = internalAction({
 
         // Check if file needs OCR or can be read directly as text
         if (needsOCR(docDetails.fileName)) {
-          console.log(`[DocEmbedding] File '${docDetails.fileName}' requires OCR processing`);
+          logger.info('Processing file with OCR', {
+            fileName: docDetails.fileName,
+          });
 
           // Get file URL from Convex storage
           let fileUrl = docDetails.fileUrl;
@@ -101,8 +132,14 @@ export const docEmbedding = internalAction({
           }
 
           extractedText = await mistralOCR.processDocument(fileUrl);
+          logger.phaseComplete('extraction', {
+            contentLength: extractedText.length,
+            method: 'OCR',
+          });
         } else {
-          console.log(`[DocEmbedding] File '${docDetails.fileName}' is plaintext, reading directly (no OCR)`);
+          logger.info('Processing plaintext file', {
+            fileName: docDetails.fileName,
+          });
 
           // For text files, read from storage or URL
           if (docDetails.storageId) {
@@ -117,11 +154,20 @@ export const docEmbedding = internalAction({
             // This is a placeholder - implement URL fetching if needed
             extractedText = '';
           }
+          logger.phaseComplete('extraction', {
+            contentLength: extractedText.length,
+            method: 'direct_read',
+          });
         }
       } else if (docDetails.fileType === 'url') {
+        logger.info('Extracting web page content');
         const meta = await supadataLoader.loadWebPageWithMeta(docDetails.fileUrl || '');
         extractedText = meta.content;
         if (meta.title?.trim()) extractedTitle = meta.title.trim();
+        logger.phaseComplete('extraction', {
+          contentLength: extractedText.length,
+          title: extractedTitle,
+        });
       }
 
       if (!extractedText || extractedText.trim().length === 0) {
@@ -132,17 +178,20 @@ export const docEmbedding = internalAction({
       const originalLength = extractedText.length;
       extractedText = extractedText.replace(/\u0000/g, '');
       if (originalLength !== extractedText.length) {
-        console.warn(`[DocEmbedding] Removed ${originalLength - extractedText.length} null byte(s)`);
+        logger.warn('Removed null bytes from text', {
+          bytesRemoved: originalLength - extractedText.length,
+        });
       }
 
-      console.log(`[DocEmbedding] Extracted ${extractedText.length} characters`);
+      logger.info('Text extraction complete', { contentLength: extractedText.length });
 
-      // Step 2: Extract document-level metadata and split text with structural context
-      console.log('[DocEmbedding] Step 2: Extracting metadata and splitting text...');
+      // Phase: Chunking
+      logger.phaseStart('chunking');
+      currentPhase = 'chunking';
 
       const fileExtension = getFileExtension(docDetails.fileName);
       const docMetadata = extractDocumentMetadata(extractedText, fileExtension);
-      console.log('[DocEmbedding] Document metadata:', {
+      logger.info('Document metadata extracted', {
         wordCount: docMetadata.wordCount,
         readingTime: docMetadata.estimatedReadingTimeMinutes,
         structure: docMetadata.documentStructure,
@@ -152,10 +201,13 @@ export const docEmbedding = internalAction({
       // Use structural chunker for enhanced metadata
       const chunker = new StructuralChunker();
       const chunksWithMetadata = await chunker.chunk(extractedText, 1000, 200);
-      console.log(`[DocEmbedding] Split into ${chunksWithMetadata.length} chunks with metadata`);
 
-      // Step 3: Set title from source
-      console.log('[DocEmbedding] Step 3: Setting title from source...');
+      logger.phaseComplete('chunking', { chunkCount: chunksWithMetadata.length });
+
+      // Phase: Setting title
+      logger.phaseStart('setting_title');
+      currentPhase = 'setting_title';
+
       let title: string;
 
       if (docDetails.fileType === 'file') {
@@ -179,7 +231,7 @@ export const docEmbedding = internalAction({
         title = 'Pasted Text';
       }
 
-      console.log(`[DocEmbedding] Set title: ${title}`);
+      logger.info('Title set', { title });
 
       await ctx.runMutation(internal.documents.updateTitle, {
         documentId,
@@ -204,14 +256,30 @@ export const docEmbedding = internalAction({
         },
       });
 
-      // Step 4: Generate embeddings via shared lib (uses OpenAI; cacheable per chunk)
-      console.log('[DocEmbedding] Step 4: Generating embeddings...');
+      logger.phaseComplete('setting_title');
 
+      // Phase: Embedding
+      logger.phaseStart('embedding');
+      currentPhase = 'embedding';
+
+      const embeddingTimer = logger.createTimer();
+
+      // Generate embeddings via shared lib (uses OpenAI; cacheable per chunk)
       const embeddingVectors = await Promise.all(
         chunksWithMetadata.map((chunk) =>
           ctx.runAction(internal.lib.embeddings.generateEmbeddingInternal, { text: chunk.content })
         )
       );
+
+      const embeddingDuration = embeddingTimer.end();
+      logger.phaseComplete('embedding', {
+        chunkCount: chunksWithMetadata.length,
+        durationMs: embeddingDuration,
+      });
+
+      // Phase: Storing chunks
+      logger.phaseStart('storing_chunks');
+      currentPhase = 'storing_chunks';
 
       // Store chunks with embeddings and metadata
       for (let i = 0; i < chunksWithMetadata.length; i++) {
@@ -244,7 +312,7 @@ export const docEmbedding = internalAction({
         });
       }
 
-      console.log('[DocEmbedding] Embeddings generated and stored');
+      logger.phaseComplete('storing_chunks', { chunksStored: chunksWithMetadata.length });
 
       // Update status to completed
       await ctx.runMutation(internal.documents.updateStatus, {
@@ -252,9 +320,19 @@ export const docEmbedding = internalAction({
         status: 'completed',
       });
 
-      console.log(`[DocEmbedding] Document ${documentId} processed successfully`);
+      logger.jobComplete({
+        title,
+        chunkCount: chunksWithMetadata.length,
+        wordCount: docMetadata.wordCount,
+      });
     } catch (error) {
-      console.error('[DocEmbedding] Error processing document:', documentId, error);
+      const errorMeta = createErrorMetadata(error, currentPhase);
+
+      logger.jobError(error, {
+        phase: currentPhase,
+        errorType: errorMeta.type,
+        retryable: errorMeta.retryable,
+      });
 
       // Mark as failed
       await ctx.runMutation(internal.documents.updateStatus, {
@@ -267,7 +345,12 @@ export const docEmbedding = internalAction({
         documentId,
         patch: {
           metadata: {
-            error: error instanceof Error ? error.message : 'Unknown error',
+            error: errorMeta.message,
+            errorPhase: currentPhase,
+            errorType: errorMeta.type,
+            retryable: errorMeta.retryable,
+            failedAt: Date.now(),
+            stack: errorMeta.stackTrace,
           },
         },
       });

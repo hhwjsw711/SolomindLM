@@ -8,6 +8,7 @@ import { components } from "./_generated/api";
 import { PersistentTextStreaming } from "@convex-dev/persistent-text-streaming";
 import { ChatAgent } from "./lib/agents/ChatAgent";
 import { HybridSearchHandler } from "./lib/agents/chat/hybrid_search.js";
+import { cachedRerank, RerankDocument } from "./lib/agents/chat/rerankCache.js";
 import { EmbeddingService } from "./lib/processing/EmbeddingServiceClient";
 
 import type { ChunkMetadata } from "./storage/ChatHistoryService";
@@ -262,6 +263,16 @@ export async function streamChatResponse(
 
   // Initialize HybridSearchHandler with both vector and keyword search
   const embeddingService = new EmbeddingService(process.env.OPENAI_API_KEY || "");
+
+  // Create rerank function closure that matches RerankFunction signature
+  // The closure captures `ctx` from the outer scope
+  const rerankFn = async (
+    query: string,
+    documents: Array<{ id: string; content: string }>
+  ): Promise<Array<{ id: string; content: string; score?: number }>> => {
+    return cachedRerank(ctx, query, documents as RerankDocument[], "zerank-2", 15);
+  };
+  
   const hybridSearch = new HybridSearchHandler(
     {
       vectorMatchThreshold: parseFloat(process.env.CHAT_VECTOR_MATCH_THRESHOLD ?? '0.3'),
@@ -276,7 +287,8 @@ export async function streamChatResponse(
     },
     embeddingService,
     vectorSearchRunner,
-    keywordSearchRunner
+    keywordSearchRunner,
+    rerankFn
   );
 
   const agent = new ChatAgent({ vectorSearchHandler: hybridSearch });

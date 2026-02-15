@@ -17,7 +17,7 @@ interface UseSourceUploadResult {
   // State
   isUploading: boolean;
   isDragging: boolean;
-  fileInputRef: React.RefObject<HTMLInputElement>;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
 
   // File upload handlers
   handleFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;

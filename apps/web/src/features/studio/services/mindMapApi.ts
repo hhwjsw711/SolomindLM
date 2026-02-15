@@ -1,4 +1,4 @@
-import type { Note, MindMapNote } from '@/shared/types/index';
+import type { MindMapNote } from '@/shared/types/index';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@convex/_generated/api';
 import type { Id } from '@convex/_generated/dataModel';
@@ -13,6 +13,20 @@ export interface CreateMindMapResponse {
   mindMapId: string;
   status: string;
   mindmap: MindMapNote;
+}
+
+function normalizeMindMapNodeData(rawData: any, fallbackTitle: string) {
+  const maybeWrapped = rawData?.nodeData?.nodeData ?? rawData?.nodeData ?? rawData;
+  const normalized = (maybeWrapped && typeof maybeWrapped === 'object') ? { ...maybeWrapped } : {};
+
+  if (typeof normalized.topic !== 'string' || normalized.topic.trim().length === 0) {
+    normalized.topic = fallbackTitle || 'Mind Map';
+  }
+  if (typeof normalized.id !== 'string' || normalized.id.trim().length === 0) {
+    normalized.id = 'root';
+  }
+
+  return { nodeData: normalized };
 }
 
 /**
@@ -33,14 +47,15 @@ function mapMindMapToNote(dbMindMap: any): MindMapNote {
   }
 
   // Parse data if it's a string
-  let mindMapData = dbMindMap.data;
+  let rawMindMapData = dbMindMap.data;
   if (typeof dbMindMap.data === 'string') {
     try {
-      mindMapData = JSON.parse(dbMindMap.data);
+      rawMindMapData = JSON.parse(dbMindMap.data);
     } catch {
-      mindMapData = { nodes: [], edges: [] };
+      rawMindMapData = null;
     }
   }
+  const mindMapData = normalizeMindMapNodeData(rawMindMapData, dbMindMap.title);
 
   return {
     id: dbMindMap._id,
@@ -121,7 +136,7 @@ export function useRenameMindMap() {
         localStore.setQuery(
           api.mindmaps.list,
           { notebookId: mindMap.notebookId },
-          listResult.map(mm =>
+          listResult.map((mm: { _id: string; [key: string]: unknown }) =>
             mm._id === id
               ? { ...mm, title }
               : mm
@@ -153,7 +168,7 @@ export function useDeleteMindMap() {
         localStore.setQuery(
           api.mindmaps.list,
           { notebookId: mindMap.notebookId },
-          listResult.filter(mm => mm._id !== args.id)
+          listResult.filter((mm: { _id: string }) => mm._id !== args.id)
         );
       }
     }

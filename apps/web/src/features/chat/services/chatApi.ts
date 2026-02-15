@@ -2,8 +2,7 @@ import { ReferenceChunk } from '@/shared/types/index';
 import { useQuery, useMutation, useConvexAuth } from 'convex/react';
 import { api } from '@convex/_generated/api';
 import type { Id } from '@convex/_generated/dataModel';
-import { useStream } from '@convex-dev/persistent-text-streaming/react';
-import { useRef, useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { useAuthToken } from '@convex-dev/auth/react';
 
 // Convex HTTP actions use the .site URL. Derive from .cloud if only VITE_CONVEX_URL is set.
@@ -168,7 +167,7 @@ export function useChatHistory(notebookId: string | null) {
  */
 export function useRenameConversation() {
   // TODO: Implement updateTitle mutation in convex/chat.ts
-  return async (conversationId: string, title: string) => {
+  return async (_conversationId: string, _title: string) => {
     throw new Error('Rename conversation is not yet implemented');
   };
 }
@@ -232,6 +231,7 @@ export function useSendMessage() {
       });
 
       tempMessageId = result.tempMessageId;
+      void tempMessageId; // Reserved for optimistic UI; satisfy noUnusedLocals
 
       // Step 2: Get auth token for cross-origin requests
       // HTTP actions require JWT token via Authorization header (cookies don't work cross-origin)

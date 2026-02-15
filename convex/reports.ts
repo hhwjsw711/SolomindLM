@@ -1,8 +1,18 @@
 import { v } from "convex/values";
-import { mutation, query, internalMutation } from "./_generated/server";
+import { mutation, query, internalMutation, internalQuery } from "./_generated/server";
 import { getAuthUserId } from "./auth";
 import * as Notebooks from "./model/notebooks";
 import * as Reports from "./model/reports";
+
+/**
+ * Internal: Get a report by ID (for use by jobs)
+ */
+export const getInternal = internalQuery({
+  args: { id: v.id("reports") },
+  handler: async (ctx, args) => {
+    return await Reports.getReport(ctx, args.id);
+  },
+});
 
 /**
  * List all reports for a notebook

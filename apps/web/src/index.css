@@ -669,7 +669,7 @@
   margin-bottom: 0.75em;
 }
 
-.prose max-w-none {
+.prose.max-w-none {
   max-width: none;
 }
 
@@ -815,4 +815,45 @@ input.pdf-zoom-range::-moz-range-thumb {
     rgba(255, 255, 255, 0.12) 1.5px,
     transparent 1.5px
   );
+}
+
+/* Mind map: ensure every node is rendered as a boxed card */
+.mind-map-container me-tpc,
+.mind-map-container .topic {
+  background-color: #ffffff !important;
+  border: 1px solid #dadce0 !important;
+  border-radius: 8px !important;
+  padding: 8px 14px !important;
+  color: #2f3136 !important;
+}
+
+.mind-map-container me-root > me-tpc,
+.mind-map-container .topic[data-nodeid="root"] {
+  border-radius: 12px !important;
+  font-weight: 600 !important;
+  color: #1f1f1f !important;
+}
+
+/* Mind map: keep all connector edges visually consistent */
+.mind-map-container svg path,
+.mind-map-container .map-canvas path {
+  stroke: #9aa0a6 !important;
+  stroke-width: 1.6px !important;
+}
+
+/* Keep selected links neutral too (no blue highlight) */
+.mind-map-container svg path.selected,
+.mind-map-container .map-canvas path.selected {
+  stroke: #7b8189 !important;
+}
+
+/* Mind map: never show drag selection marquee on left drag */
+.mind-map-container .map-select,
+.mind-map-container .selection-box,
+.mind-map-container .selection-rect,
+.mind-map-container .select-rectangle,
+.mind-map-container .selection-area {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }

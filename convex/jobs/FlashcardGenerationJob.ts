@@ -1,46 +1,125 @@
 "use node";
+/**
+ * FlashcardGenerationJob - Multi-Phase Architecture
+ *
+ * Breaks flashcard generation into separate scheduled actions to avoid
+ * Cloudflare 524 timeouts. Each phase runs in its own action with
+ * its own timeout window.
+ *
+ * Phases:
+ * 1. flashcardGeneration (entry) - Load docs, pack chunks, schedule map tasks
+ * 2. processFlashcardMapChunk - Generate flashcards for one chunk
+ * 3. finalizeFlashcardPhase - Combine flashcards, generate title, save
+ */
+
 import { internalAction } from '../_generated/server';
 import { v } from 'convex/values';
 import { internal } from '../_generated/api';
-import { FlashcardGraph } from '../lib/agents/FlashcardGraph';
-import { createCachedAction } from '../lib/cachedAgent';
-import { CACHE_TTL } from '../lib/cache';
+import { packChunks, validateChunks } from '../lib/agents/FlashcardGraph';
 import { env } from '../lib/helpers/env';
+import {
+  createJobLogger,
+  createErrorMetadata,
+} from '../lib/agents/shared/logging';
+import { ChatTogetherAI } from '@langchain/community/chat_models/togetherai';
+import { HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { z } from 'zod';
+import {
+  MAP_SYSTEM_PROMPT,
+  REDUCE_SYSTEM_PROMPT,
+  getMapPrompt,
+  getReducePrompt,
+} from '../lib/agents/flashcard/prompts';
+import { FlashcardArraySchema, type Flashcard, type FlashcardResponse } from '../lib/agents/flashcard/prompts';
+import {
+  invokeWithTimeout,
+  invokeWithRetry,
+  sanitizeUserInput,
+  createLangSmithRunConfig,
+} from '../lib/agents/shared/index';
+
+// Interface for the structured LLM to avoid deep type instantiation
+interface FlashcardOutputInvoker {
+  invoke(messages: Array<SystemMessage | HumanMessage>): Promise<FlashcardResponse>;
+}
+
+// Helper function to create a structured LLM without triggering deep type instantiation
+function createStructuredLLM(llm: ChatTogetherAI, schema: z.ZodTypeAny): FlashcardOutputInvoker {
+  // @ts-ignore - Type instantiation is excessively deep with LangChain's withStructuredOutput
+  return llm.withStructuredOutput(schema, {
+    name: 'flashcard_array',
+  });
+}
 
 // ============================================================
-// 1. Extract core generation logic into cacheable action
+// CONFIGURATION
 // ============================================================
-export const generateFlashcardsInternal = internalAction({
-  args: {
-    chunks: v.array(v.string()),
-    cardCount: v.number(),
-    difficulty: v.string(),
-    topic: v.optional(v.string()),
-  },
-  handler: async (ctx, { chunks, cardCount, difficulty, topic }) => {
-    const agent = new FlashcardGraph(env.TOGETHER_AI_API_KEY, env.FAST_LLM, env.SMART_LLM);
-    const graph = agent.buildGraph();
-    const result = await graph.invoke({
-      chunks,
-      cardCount,
-      difficulty,
-      topic,
-    });
-    return result.finalOutput || [];
-  },
-});
+
+const CONFIG = {
+  MAP_CHUNK_SIZE_TOKENS: parseInt(env.FLASHCARD_MAP_CHUNK_TOKENS || '7500', 10),
+  PER_CHUNK_TIMEOUT_MS: 90000, // 90 seconds per chunk (under 100s Cloudflare limit)
+  REDUCE_TIMEOUT_MS: 90000, // 90 seconds for reduce
+  REDUCE_MAX_TOKENS: parseInt(env.FLASHCARD_REDUCE_MAX_TOKENS || '32000', 10),
+  MIN_CARDS_PER_CHUNK: 2,
+  BUFFER_MULTIPLIER: 1.5,
+  MAX_CARDS_PER_CHUNK: 30,
+} as const;
 
 // ============================================================
-// 2. Create cached version with ActionCache
+// HELPER: Create structured LLM for map phase
 // ============================================================
-const flashcardCache = createCachedAction(
-  internal.jobs.FlashcardGenerationJob.generateFlashcardsInternal,
-  { ttl: CACHE_TTL.agent, name: "flashcardV1" }
-);
+
+function createMapLLM(): ChatTogetherAI {
+  return new ChatTogetherAI({
+    apiKey: env.TOGETHER_AI_API_KEY,
+    model: env.FAST_LLM,
+    temperature: 0.3,
+    timeout: CONFIG.PER_CHUNK_TIMEOUT_MS,
+  });
+}
+
+function createReduceLLM(): ChatTogetherAI {
+  return new ChatTogetherAI({
+    apiKey: env.TOGETHER_AI_API_KEY,
+    model: env.SMART_LLM,
+    temperature: 0.3,
+    timeout: CONFIG.REDUCE_TIMEOUT_MS,
+    maxTokens: CONFIG.REDUCE_MAX_TOKENS,
+  });
+}
 
 // ============================================================
-// 3. Main job uses cached action
+// TEXT CLEANING UTILITIES
 // ============================================================
+
+function cleanFrontText(front: string): string {
+  let cleaned = front.trim();
+  cleaned = cleaned.replace(/\\"/g, '"');
+  cleaned = cleaned.replace(/\s*[*_~]{1,2}\s*$/, '');
+  cleaned = cleaned.replace(/\s*\d+\.\s*$/, '');
+  cleaned = cleaned.trim();
+  cleaned = cleaned.replace(/\*\*\s*\*/g, '**');
+  cleaned = cleaned.replace(/\*\s*\*/g, '**');
+  cleaned = cleaned.replace(/^[\s\-•*]\*/, '');
+  return cleaned.trim();
+}
+
+function cleanBackText(back: string): string {
+  let cleaned = back.trim();
+  cleaned = cleaned.replace(/\\"/g, '"');
+  cleaned = cleaned.replace(/\s*\d+\.\s*$/, '');
+  cleaned = cleaned.replace(/\s*[*_~]{1,2}\s*$/, '');
+  cleaned = cleaned.replace(/"\./g, '".');
+  cleaned = cleaned.replace(/\.\./g, '.');
+  cleaned = cleaned.replace(/[,;:\s]+$/, '');
+  cleaned = cleaned.replace(/\s{2,}/g, ' ');
+  return cleaned.trim();
+}
+
+// ============================================================
+// PHASE 1: Initialize & Schedule Map Tasks
+// ============================================================
+
 export const flashcardGeneration = internalAction({
   args: {
     flashcardId: v.id('flashcards'),
@@ -56,14 +135,24 @@ export const flashcardGeneration = internalAction({
 
     const { flashcardId, userId, notebookId, documentIds, cardCount, difficulty, topic } = args;
 
-    console.log('[FlashcardGenerationJob] Starting:', {
-      flashcardId,
+    // Initialize structured logger
+    const logger = createJobLogger({
+      jobType: 'flashcard',
+      jobId: flashcardId,
+      notebookId,
+      userId,
+    });
+
+    logger.jobStart({
       cardCount,
       difficulty,
+      topic,
+      docCount: documentIds.length,
     });
 
     try {
-      // Update status to generating - initial phase
+      // Phase: Initializing
+      logger.phaseStart('initializing', { progress: 5 });
       await ctx.runMutation(internal.jobs.helpers.updateFlashcardStatus, {
         flashcardId,
         status: 'generating',
@@ -73,8 +162,10 @@ export const flashcardGeneration = internalAction({
           currentStep: 'Initializing...',
         },
       });
+      logger.phaseComplete('initializing');
 
-      // Update: Loading documents
+      // Phase: Loading documents
+      logger.phaseStart('loading_documents', { progress: 15, docCount: documentIds.length });
       await ctx.runMutation(internal.jobs.helpers.updateFlashcardStatus, {
         flashcardId,
         status: 'generating',
@@ -85,98 +176,479 @@ export const flashcardGeneration = internalAction({
         },
       });
 
-      // Get document chunks (full objects from DB)
+      // Get document chunks
       const chunkObjects = await ctx.runAction(internal.documents.fetchChunks, {
         documentIds,
       });
 
-      // Extract content strings for the agent (validator expects v.array(v.string()))
-      const chunks = chunkObjects.map((chunk: { content: string }) => chunk.content);
+      // Extract content from chunk objects
+      const rawChunks = chunkObjects.map((chunk: any) => chunk.content);
 
-      // Update: Analyzing content
-      await ctx.runMutation(internal.jobs.helpers.updateFlashcardStatus, {
+      logger.phaseComplete('loading_documents', { chunkCount: rawChunks.length });
+
+      // Validate and pack chunks
+      const validatedChunks = validateChunks(rawChunks);
+      const packedChunks = packChunks(validatedChunks, CONFIG.MAP_CHUNK_SIZE_TOKENS);
+
+      console.log(`[FlashcardJob] Packed ${rawChunks.length} chunks into ${packedChunks.length} map tasks`);
+
+      if (packedChunks.length === 0) {
+        throw new Error('No valid chunks to process');
+      }
+
+      // Calculate cards per chunk
+      const cardsPerChunk = Math.max(
+        CONFIG.MIN_CARDS_PER_CHUNK,
+        Math.min(
+          CONFIG.MAX_CARDS_PER_CHUNK,
+          Math.ceil(cardCount / packedChunks.length * CONFIG.BUFFER_MULTIPLIER)
+        )
+      );
+
+      console.log(`[FlashcardJob] Cards per chunk: ${cardsPerChunk}`);
+
+      // Initialize map phase metadata
+      await ctx.runMutation(internal.jobs.helpers.initFlashcardMapPhase, {
         flashcardId,
-        status: 'generating',
-        metadata: {
-          phase: 'analyzing_content',
-          progress: 30,
-          currentStep: 'Analyzing content...',
-        },
-      });
-
-      // Update: Generating flashcards
-      await ctx.runMutation(internal.jobs.helpers.updateFlashcardStatus, {
-        flashcardId,
-        status: 'generating',
-        metadata: {
-          phase: 'generating_flashcards',
-          progress: 50,
-          currentStep: 'Generating flashcards...',
-        },
-      });
-
-      // ============================================================
-      // USE CACHED INVOCATION - This is where the magic happens
-      // ============================================================
-      const flashcards = (await flashcardCache.fetch(ctx, {
-        chunks,
+        totalMapTasks: packedChunks.length,
         cardCount,
         difficulty,
         topic,
-      })) as any[];
+      });
 
-      // Update: Finalizing
+      // Schedule each map task as a separate action
+      for (let i = 0; i < packedChunks.length; i++) {
+        await ctx.scheduler.runAfter(0, internal.jobs.FlashcardGenerationJob.processFlashcardMapChunk, {
+          flashcardId,
+          userId,
+          notebookId,
+          chunkIndex: i,
+          totalChunks: packedChunks.length,
+          chunk: packedChunks[i],
+          cardCount,
+          cardsPerChunk,
+          difficulty,
+          topic,
+        });
+        console.log(`[FlashcardJob] Scheduled map task ${i + 1}/${packedChunks.length}`);
+      }
+
+      logger.info('Map phase initialized', {
+        totalMapTasks: packedChunks.length,
+        chunkSizes: packedChunks.map(c => c.length),
+        cardsPerChunk,
+      });
+
+    } catch (error) {
+      const errorMeta = createErrorMetadata(error, 'initializing');
+
+      logger.jobError(error, {
+        phase: 'initializing',
+        errorType: errorMeta.type,
+        retryable: errorMeta.retryable,
+      });
+
+      await ctx.runMutation(internal.jobs.helpers.markFlashcardFailed, {
+        flashcardId,
+        error: errorMeta.message,
+        metadata: {
+          phase: 'failed',
+          progress: 0,
+          failedAt: Date.now(),
+          errorPhase: 'initializing',
+          errorType: errorMeta.type,
+          retryable: errorMeta.retryable,
+          stack: errorMeta.stackTrace,
+        },
+      });
+
+      throw error;
+    }
+  },
+});
+
+// ============================================================
+// PHASE 2: Process Individual Map Chunk
+// ============================================================
+
+export const processFlashcardMapChunk = internalAction({
+  args: {
+    flashcardId: v.id('flashcards'),
+    userId: v.string(),
+    notebookId: v.id('notebooks'),
+    chunkIndex: v.number(),
+    totalChunks: v.number(),
+    chunk: v.string(),
+    cardCount: v.number(),
+    cardsPerChunk: v.number(),
+    difficulty: v.string(),
+    topic: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    "use node";
+
+    const { flashcardId, userId, notebookId, chunkIndex, totalChunks, chunk, cardCount, cardsPerChunk, difficulty, topic } = args;
+
+    const logger = createJobLogger({
+      jobType: 'flashcard',
+      jobId: flashcardId,
+      notebookId,
+      userId,
+    });
+
+    const chunkId = `[Chunk ${chunkIndex + 1}/${totalChunks}]`;
+    console.log(`[FlashcardJob] ${chunkId} Starting map processing`);
+
+    try {
+      // Check if flashcard still exists
+      const flashcard = await ctx.runQuery(internal.flashcards.getInternal, { id: flashcardId });
+      if (!flashcard) {
+        console.log(`[FlashcardJob] ${chunkId} Flashcard deleted, skipping`);
+        return;
+      }
+
+      // Process with LLM using structured output
+      const llm = createMapLLM();
+      const structuredLLM = createStructuredLLM(llm, FlashcardArraySchema);
+
+      const sanitizedTopic = topic ? sanitizeUserInput(topic) : undefined;
+      const prompt = getMapPrompt({ chunk, cardCount, cardsPerChunk, difficulty, topic: sanitizedTopic });
+
+      console.log(`[FlashcardJob] ${chunkId} Calling LLM (${prompt.length} chars)`);
+
+      const startTime = Date.now();
+      const response = await invokeWithRetry(
+        () => invokeWithTimeout(
+          () => (structuredLLM as any).invoke([
+            new SystemMessage(MAP_SYSTEM_PROMPT),
+            new HumanMessage(prompt),
+          ], createLangSmithRunConfig({
+            runName: 'FlashcardJob.MapProcess',
+            tags: ['agent', 'flashcard', 'map'],
+            metadata: {
+              chunkIndex,
+              cardCount,
+              difficulty,
+              topic: topic || 'none',
+            },
+          })),
+          CONFIG.PER_CHUNK_TIMEOUT_MS,
+          'FlashcardMap'
+        ),
+        {
+          maxAttempts: 3,
+          baseDelayMs: 1000,
+          onRetry: (attempt, error) => {
+            console.log(`[FlashcardJob] ${chunkId} Retry attempt ${attempt}/3: ${error.message}`);
+          },
+        },
+        'FlashcardMap'
+      );
+
+      const elapsed = Date.now() - startTime;
+      console.log(`[FlashcardJob] ${chunkId} LLM completed in ${elapsed}ms`);
+
+      // Clean flashcard text
+      const flashcards = (response as FlashcardResponse).flashcards;
+      const cleanedFlashcards = flashcards.map((card: Flashcard) => ({
+        front: cleanFrontText(card.front),
+        back: cleanBackText(card.back),
+        topic: card.topic,
+      }));
+
+      // Store result
+      const result = {
+        flashcards: cleanedFlashcards,
+        processingTimeMs: elapsed,
+      };
+
+      await ctx.runMutation(internal.jobs.helpers.storeFlashcardMapResult, {
+        flashcardId,
+        chunkIndex,
+        result: JSON.stringify(result),
+      });
+
+      logger.info(`Map chunk completed`, {
+        chunkIndex,
+        elapsed,
+        flashcardsGenerated: cleanedFlashcards.length,
+      });
+
+      // Check if all maps are complete
+      const updatedFlashcard = await ctx.runQuery(internal.flashcards.getInternal, { id: flashcardId });
+      if (!updatedFlashcard) return;
+
+      const completedMaps = updatedFlashcard.metadata?.mapResults
+        ? Object.keys(updatedFlashcard.metadata.mapResults).length
+        : 0;
+      const totalMaps = updatedFlashcard.metadata?.totalMapTasks || totalChunks;
+
+      console.log(`[FlashcardJob] Map progress: ${completedMaps}/${totalMaps}`);
+
+      if (completedMaps >= totalMaps) {
+        console.log(`[FlashcardJob] All map tasks complete, scheduling finalization`);
+        await ctx.scheduler.runAfter(0, internal.jobs.FlashcardGenerationJob.finalizeFlashcardPhase, {
+          flashcardId,
+          userId,
+          notebookId,
+          cardCount,
+          difficulty,
+          topic,
+        });
+      }
+
+    } catch (error) {
+      const errorMeta = createErrorMetadata(error, 'map_processing');
+
+      console.error(`[FlashcardJob] ${chunkId} FAILED:`, errorMeta.message);
+
+      // Store error result
+      await ctx.runMutation(internal.jobs.helpers.storeFlashcardMapResult, {
+        flashcardId,
+        chunkIndex,
+        result: JSON.stringify({
+          _error: true,
+          errorMessage: errorMeta.message,
+          isTimeout: errorMeta.type === 'llm_timeout',
+          flashcards: [],
+        }),
+      });
+
+      logger.warn(`Map chunk failed`, {
+        chunkIndex,
+        error: errorMeta.message,
+        errorType: errorMeta.type,
+      });
+
+      // Check if we should still proceed with partial results
+      const flashcard = await ctx.runQuery(internal.flashcards.getInternal, { id: flashcardId });
+      if (!flashcard) return;
+
+      const completedMaps = flashcard.metadata?.mapResults
+        ? Object.keys(flashcard.metadata.mapResults).length
+        : 0;
+      const totalMaps = flashcard.metadata?.totalMapTasks || totalChunks;
+      const failedMaps = flashcard.metadata?.mapResults
+        ? Object.values(flashcard.metadata.mapResults).filter(
+            (r: any) => {
+              try {
+                const parsed = JSON.parse(r as string);
+                return parsed._error;
+              } catch {
+                return false;
+              }
+            }
+          ).length
+        : 0;
+
+      if (completedMaps >= totalMaps) {
+        const successCount = totalMaps - failedMaps;
+        console.log(`[FlashcardJob] All tasks done. Success: ${successCount}/${totalMaps}`);
+
+        if (successCount > 0) {
+          await ctx.scheduler.runAfter(0, internal.jobs.FlashcardGenerationJob.finalizeFlashcardPhase, {
+            flashcardId,
+            userId,
+            notebookId,
+            cardCount,
+            difficulty,
+            topic,
+          });
+        } else {
+          await ctx.runMutation(internal.jobs.helpers.markFlashcardFailed, {
+            flashcardId,
+            error: 'All map tasks failed',
+            metadata: {
+              phase: 'failed',
+              errorPhase: 'map_processing',
+              errorType: 'llm_failure',
+              failedAt: Date.now(),
+            },
+          });
+        }
+      }
+    }
+  },
+});
+
+// ============================================================
+// PHASE 3: Finalize (Reduce + Save)
+// ============================================================
+
+export const finalizeFlashcardPhase = internalAction({
+  args: {
+    flashcardId: v.id('flashcards'),
+    userId: v.string(),
+    notebookId: v.id('notebooks'),
+    cardCount: v.number(),
+    difficulty: v.string(),
+    topic: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    "use node";
+
+    const { flashcardId, userId, notebookId, cardCount, difficulty, topic } = args;
+
+    const logger = createJobLogger({
+      jobType: 'flashcard',
+      jobId: flashcardId,
+      notebookId,
+      userId,
+    });
+
+    logger.info('Starting finalization phase');
+
+    try {
+      // Get flashcard with map results
+      const flashcard = await ctx.runQuery(internal.flashcards.getInternal, { id: flashcardId });
+      if (!flashcard) {
+        console.log('[FlashcardJob] Flashcard deleted during finalization');
+        return;
+      }
+
+      const mapResults = flashcard.metadata?.mapResults as Record<string, string> || {};
+
+      // Separate successful and failed results
+      const allFlashcards: Flashcard[] = [];
+      const failedCount = { count: 0 };
+
+      for (const [idx, resultJson] of Object.entries(mapResults)) {
+        try {
+          const parsed = JSON.parse(resultJson);
+          if (parsed._error) {
+            failedCount.count++;
+          } else if (parsed.flashcards && Array.isArray(parsed.flashcards)) {
+            allFlashcards.push(...parsed.flashcards);
+          }
+        } catch {
+          failedCount.count++;
+        }
+      }
+
+      console.log(`[FlashcardJob] Finalization: ${allFlashcards.length} flashcards collected, ${failedCount.count} failed chunks`);
+
+      if (allFlashcards.length === 0) {
+        throw new Error('No successful flashcards generated from any chunk');
+      }
+
+      // Update status
       await ctx.runMutation(internal.jobs.helpers.updateFlashcardStatus, {
         flashcardId,
         status: 'generating',
         metadata: {
-          phase: 'finalizing',
-          progress: 90,
-          currentStep: 'Finalizing...',
+          phase: 'reducing',
+          progress: 70,
+          currentStep: 'Selecting best flashcards...',
         },
       });
 
-      // Generate title from first chunk
+      // Reduce phase with LLM - select and refine flashcards
+      const llm = createReduceLLM();
+      const structuredLLM = createStructuredLLM(llm, FlashcardArraySchema);
+
+      // Format flashcards for reduce prompt
+      const flashcardsText = allFlashcards
+        .map((card, index) => `${index + 1}. Q: ${card.front}\n   A: ${card.back}`)
+        .join('\n\n');
+
+      const sanitizedTopic = topic ? sanitizeUserInput(topic) : undefined;
+      const prompt = getReducePrompt({
+        content: flashcardsText,
+        cardCount,
+        difficulty,
+        topic: sanitizedTopic,
+      });
+
+      console.log(`[FlashcardJob] Reduce prompt: ${prompt.length} chars`);
+
+      const startTime = Date.now();
+      const response = await invokeWithRetry(
+        () => invokeWithTimeout(
+          () => (structuredLLM as any).invoke([
+            new SystemMessage(REDUCE_SYSTEM_PROMPT),
+            new HumanMessage(prompt),
+          ], createLangSmithRunConfig({
+            runName: 'FlashcardJob.Reduce',
+            tags: ['agent', 'flashcard', 'reduce'],
+            metadata: {
+              cardCount,
+              difficulty,
+              topic: topic || 'none',
+              inputCards: allFlashcards.length,
+            },
+          })),
+          CONFIG.REDUCE_TIMEOUT_MS,
+          'FlashcardReduce'
+        ),
+        {
+          maxAttempts: 2,
+          baseDelayMs: 1000,
+        },
+        'FlashcardReduce'
+      );
+
+      const elapsed = Date.now() - startTime;
+      let finalFlashcards = (response as FlashcardResponse).flashcards;
+
+      console.log(`[FlashcardJob] Reduce completed in ${elapsed}ms, output: ${finalFlashcards.length} cards`);
+
+      // Ensure we don't exceed target count
+      if (finalFlashcards.length > cardCount) {
+        finalFlashcards = finalFlashcards.slice(0, cardCount);
+      }
+
+      // Generate title
       let title = 'Flashcards';
-      if (chunks.length > 0) {
-        try {
-          title = await ctx.runAction(internal.titleGenerator.generateTitle, {
-            chunk: chunks[0],
-          });
-        } catch (error) {
-          console.error('[FlashcardGenerationJob] Title generation failed:', error);
-          // Fall back to default title
-          title = 'Flashcards';
-        }
+      try {
+        title = await ctx.runAction(internal.titleGenerator.generateTitle, {
+          chunk: flashcardsText.substring(0, 2000),
+        });
+      } catch (e) {
+        console.log('[FlashcardJob] Title generation failed, using default');
       }
 
       // Save results
       await ctx.runMutation(internal.jobs.helpers.saveFlashcardResults, {
         flashcardId,
-        flashcards,
+        flashcards: finalFlashcards,
         metadata: {
           title,
-          cardCount: flashcards.length,
+          cardCount: finalFlashcards.length,
           phase: 'completed',
           progress: 100,
           completedAt: Date.now(),
+          mapSuccessCount: Object.keys(mapResults).length - failedCount.count,
+          mapFailedCount: failedCount.count,
         },
       });
 
-      console.log('[FlashcardGenerationJob] Completed:', {
-        flashcardId,
-        cardCount: flashcards.length,
-      });
-    } catch (error) {
-      console.error('[FlashcardGenerationJob] Error:', error);
+      // Clear intermediate data
+      await ctx.runMutation(internal.jobs.helpers.clearFlashcardMapData, { flashcardId });
 
-      // Mark as failed
+      logger.jobComplete({
+        cardsGenerated: finalFlashcards.length,
+        title,
+        mapSuccess: Object.keys(mapResults).length - failedCount.count,
+        mapFailed: failedCount.count,
+      });
+
+    } catch (error) {
+      const errorMeta = createErrorMetadata(error, 'finalization');
+
+      logger.jobError(error, {
+        phase: 'finalization',
+        errorType: errorMeta.type,
+        retryable: errorMeta.retryable,
+      });
+
       await ctx.runMutation(internal.jobs.helpers.markFlashcardFailed, {
         flashcardId,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: errorMeta.message,
         metadata: {
           phase: 'failed',
-          progress: 0,
+          errorPhase: 'finalization',
+          errorType: errorMeta.type,
+          retryable: errorMeta.retryable,
           failedAt: Date.now(),
         },
       });

@@ -248,7 +248,7 @@ export const QuizView: React.FC<QuizViewProps> = ({ note, onNoteUpdate, onBack }
                             <MarkdownRenderer
                                 components={{
                                     img: () => null,
-                                    a: ({ node, children, ...props }) => <span className="text-foreground">{children}</span>,
+                                    a: ({ children }) => <span className="text-foreground">{children}</span>,
                                     video: () => null,
                                     audio: () => null,
                                     iframe: () => null,
@@ -295,7 +295,7 @@ export const QuizView: React.FC<QuizViewProps> = ({ note, onNoteUpdate, onBack }
                                             <MarkdownRenderer
                                                 components={{
                                                     img: () => null,
-                                                    a: ({ node, children, ...props }) => <span className="text-foreground">{children}</span>,
+                                                    a: ({ children }) => <span className="text-foreground">{children}</span>,
                                                     video: () => null,
                                                     audio: () => null,
                                                     iframe: () => null,
@@ -331,7 +331,7 @@ export const QuizView: React.FC<QuizViewProps> = ({ note, onNoteUpdate, onBack }
                                             <MarkdownRenderer
                                                 components={{
                                                     img: () => null,
-                                                    a: ({ node, children, ...props }) => <span className="text-vintage-blue-700 dark:text-vintage-blue-700">{children}</span>,
+                                                    a: ({ children }) => <span className="text-vintage-blue-700 dark:text-vintage-blue-700">{children}</span>,
                                                     video: () => null,
                                                     audio: () => null,
                                                     iframe: () => null,

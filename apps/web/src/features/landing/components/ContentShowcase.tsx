@@ -16,7 +16,7 @@ export const ContentShowcase: React.FC = () => {
   };
 
   return (
-    <section className="py-32 px-6">
+    <section className="py-32 md:py-40 px-6">
       <div className="max-w-[1500px] w-full mx-auto">
         {/* Section Header */}
         <div className="text-center mb-20">

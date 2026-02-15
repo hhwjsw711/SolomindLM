@@ -32,7 +32,7 @@ export const NoteItem: React.FC<NoteItemProps> = ({
   onEditTitleChange,
   onEditStart,
   onEditSave,
-  onEditCancel,
+  onEditCancel: _onEditCancel,
   onEditKeyDown,
   onClick,
   onDelete,

@@ -48,7 +48,7 @@ export const RecentSection: React.FC<RecentSectionProps> = ({
   onDeleteFolder,
   setFolderActiveMenuId,
   // Sorting
-  getSortedNotebooks,
+  getSortedNotebooks: _getSortedNotebooks,
 }) => {
   // Filter notebooks without folders for main display
   const notebooksWithoutFolder = recentNotebooks.filter(nb => !nb.folderId);

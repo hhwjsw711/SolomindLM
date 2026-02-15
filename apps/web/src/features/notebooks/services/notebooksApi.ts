@@ -2,7 +2,6 @@ import type { NotebookItem } from "@/shared/types/index";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
-import type { Doc } from "@convex/_generated/dataModel";
 
 // ============================================================
 // Hooks (for use in React components)
@@ -87,7 +86,7 @@ export function useUpdateNotebook() {
       localStore.setQuery(
         api.notebooks.list,
         {},
-        notebooks.map(nb =>
+        notebooks.map((nb: { id: string; [key: string]: unknown }) =>
           nb.id === id
             ? {
                 ...nb,
@@ -161,7 +160,7 @@ export function useDeleteNotebook() {
       localStore.setQuery(
         api.notebooks.list,
         {},
-        notebooks.filter(nb => nb.id !== args.id)
+        notebooks.filter((nb: { id: string }) => nb.id !== args.id)
       );
     }
 
@@ -192,7 +191,7 @@ export function useNotebookReports(notebookId: string | null) {
  * Get notebooks for a folder (imperative version)
  * @deprecated Use useFolderNotebooks hook instead
  */
-export async function fetchFolderNotebooks(folderId: string): Promise<NotebookItem[]> {
+export async function fetchFolderNotebooks(_folderId: string): Promise<NotebookItem[]> {
   // This is a placeholder - the actual implementation would use the Convex API
   // For now, return empty array since hooks should be used instead
   console.warn('fetchFolderNotebooks is deprecated. Use useFolderNotebooks hook instead.');

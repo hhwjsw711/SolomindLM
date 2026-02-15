@@ -631,7 +631,7 @@ export const storeChunk = internalMutation({
 
 /**
  * Discover web sources using Tavily Search API
- * This is an action because it makes external API calls
+ * This is a cached action to reduce API costs and improve latency
  */
 export const discoverSources = action({
   args: {

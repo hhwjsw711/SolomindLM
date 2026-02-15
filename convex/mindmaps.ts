@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query, internalMutation } from "./_generated/server";
+import { mutation, query, internalMutation, internalQuery } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { getAuthUserId } from "./auth";
 import * as Notebooks from "./model/notebooks";
@@ -34,6 +34,16 @@ export const get = query({
     }
 
     return mindmap;
+  },
+});
+
+/**
+ * Internal: Get a mindmap by ID (for use by jobs)
+ */
+export const getInternal = internalQuery({
+  args: { id: v.id("mindmaps") },
+  handler: async (ctx, args) => {
+    return await Mindmaps.getMindmap(ctx, args.id);
   },
 });
 

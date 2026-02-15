@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   XCircle,
-  Loader2,
   ZoomIn,
   ZoomOut,
   Maximize2,
@@ -17,10 +16,36 @@ export interface MindMapViewProps {
   onBack?: () => void;
 }
 
+function sanitizeNodeTree(node: any, fallbackTopic: string, isRoot = false): any {
+  if (!node || typeof node !== 'object') {
+    return {
+      id: isRoot ? 'root' : `node-${Math.random().toString(36).slice(2, 9)}`,
+      topic: isRoot ? fallbackTopic : 'Untitled',
+      children: [],
+    };
+  }
+
+  const rawTopic = typeof node.topic === 'string' ? node.topic : '';
+  const topic = rawTopic.trim().length > 0 ? rawTopic : (isRoot ? fallbackTopic : 'Untitled');
+  const id = typeof node.id === 'string' && node.id.trim().length > 0
+    ? node.id
+    : (isRoot ? 'root' : `node-${Math.random().toString(36).slice(2, 9)}`);
+
+  const children = Array.isArray(node.children)
+    ? node.children.map((child: any) => sanitizeNodeTree(child, fallbackTopic, false))
+    : [];
+
+  return {
+    ...node,
+    id,
+    topic,
+    children,
+  };
+}
+
 export const MindMapView: React.FC<MindMapViewProps> = ({ note, isExpanded = false, onToggleExpanded, onBack }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mindRef = useRef<any>(null);
-  const [renderKey, setRenderKey] = useState(0);
   const [scale, setScale] = useState(1);
   const mindMapData = note.mindMapData;
 
@@ -35,8 +60,16 @@ export const MindMapView: React.FC<MindMapViewProps> = ({ note, isExpanded = fal
 
     // Dynamic import Mind Elixir
     import('mind-elixir').then(({ default: MindElixir }) => {
+      const el = containerRef.current;
+      if (!el) return;
+      const sanitizedRoot = sanitizeNodeTree(
+        mindMapData?.nodeData,
+        (note.title && note.title.trim()) || 'Mind Map',
+        true
+      );
+
       const options = {
-        el: containerRef.current,
+        el,
         direction: MindElixir.RIGHT, // Right-growing tree (Left-to-Right)
         draggable: true,
         contextMenu: false, // Disable right-click context menu
@@ -46,12 +79,13 @@ export const MindMapView: React.FC<MindMapViewProps> = ({ note, isExpanded = fal
         locale: 'en' as any,
         overflowHidden: false,
         mainLinkStyle: 2,
-        mouseSelectionButton: -1 as any, // Disable left-click selection
+        // Keep drag-to-pan on left mouse; marquee selection only on right mouse.
+        mouseSelectionButton: 2 as any,
         before: {
-          insertSibling(el: any, obj: any) {
+          insertSibling(_el: any, _obj: any) {
             return true;
           },
-          async addChild(el: any, obj: any) {
+          async addChild(_el: any, _obj: any) {
             return true;
           },
         },
@@ -77,102 +111,19 @@ export const MindMapView: React.FC<MindMapViewProps> = ({ note, isExpanded = fal
       };
 
       const mind = new MindElixir(options);
-      mind.init({ nodeData: mindMapData.nodeData });
+      mind.init({ nodeData: sanitizedRoot });
       mindRef.current = mind;
 
-      // Disable context menu on the container
-      if (containerRef.current) {
-        containerRef.current.addEventListener('contextmenu', (e) => {
-          e.preventDefault();
-          return false;
-        });
-
-        // Prevent selection rectangle on mouse drag
-        const preventSelection = (e: MouseEvent) => {
-          // Prevent default drag selection behavior
-          if (e.buttons === 1) { // Left mouse button
-            e.preventDefault();
-          }
-        };
-
-        // Prevent selection start
-        const preventSelectionStart = (e: Event) => {
-          e.preventDefault();
-          e.stopPropagation();
-          return false;
-        };
-
-        containerRef.current.addEventListener('mousedown', preventSelection, { passive: false });
-        containerRef.current.addEventListener('selectstart', preventSelectionStart, { passive: false });
-        containerRef.current.addEventListener('dragstart', (e) => e.preventDefault(), { passive: false });
-
-        // Remove any selection rectangles that might be created
-        const removeSelectionRectangles = () => {
-          if (!containerRef.current) return;
-          const selectors = [
-            '.map-select',
-            '.select-rectangle',
-            '.selection-box',
-            '.selection-rect',
-            '[class*="selection"]',
-            '[class*="select-rect"]',
-          ];
-          selectors.forEach(selector => {
-            const elements = containerRef.current!.querySelectorAll(selector);
-            elements.forEach(el => {
-              (el as HTMLElement).style.display = 'none';
-              (el as HTMLElement).style.visibility = 'hidden';
-              (el as HTMLElement).style.opacity = '0';
-            });
-          });
-        };
-
-        // Use MutationObserver to catch dynamically added selection elements
-        const observer = new MutationObserver(removeSelectionRectangles);
-        observer.observe(containerRef.current, { childList: true, subtree: true });
-
-        // Store cleanup function
-        (containerRef.current as any)._cleanupSelection = () => {
-          containerRef.current?.removeEventListener('mousedown', preventSelection);
-          containerRef.current?.removeEventListener('selectstart', preventSelectionStart);
-          observer.disconnect();
-        };
-
-        // Initial cleanup
-        setTimeout(removeSelectionRectangles, 100);
-      }
-
-      // Collapse all nodes by default (only show root)
-      const collapseAllNodes = (mindInstance: any) => {
+      // Center map on first render so root is visible.
+      requestAnimationFrame(() => {
         try {
-          const rootNode = mindInstance.nodeData;
-          if (rootNode.children && rootNode.children.length > 0) {
-            const collapseRecursive = (node: any) => {
-              if (node.children && node.children.length > 0) {
-                // Find the DOM element for this node by ID
-                const nodeElement = containerRef.current?.querySelector(`[data-nodeid="${node.id}"]`);
-                if (nodeElement && mindInstance.expandNode) {
-                  try {
-                    mindInstance.expandNode(nodeElement, false);
-                  } catch (e) {
-                    // Silently ignore if expandNode fails
-                  }
-                }
-                // Recursively collapse children
-                node.children.forEach((child: any) => collapseRecursive(child));
-              }
-            };
-            rootNode.children.forEach((child: any) => collapseRecursive(child));
+          if (typeof mind.toCenter === 'function') {
+            mind.toCenter();
           }
-        } catch (e) {
-          // Silently ignore collapse errors
+        } catch {
+          // Ignore non-critical centering errors.
         }
-      };
-
-      // Collapse all nodes after a brief delay to ensure DOM is ready
-      setTimeout(() => {
-        collapseAllNodes(mind);
-      }, 150);
+      });
 
       // Set initial scale
       setScale(mind.scaleVal || 1);
@@ -191,10 +142,7 @@ export const MindMapView: React.FC<MindMapViewProps> = ({ note, isExpanded = fal
       }, 100); // Poll every 100ms
 
       if (containerRef.current) {
-        // Store cleanup function to clear the interval
-        const originalCleanup = (containerRef.current as any)._cleanupSelection;
         (containerRef.current as any)._cleanupSelection = () => {
-          if (originalCleanup) originalCleanup();
           clearInterval(pollInterval);
         };
       }
@@ -210,7 +158,7 @@ export const MindMapView: React.FC<MindMapViewProps> = ({ note, isExpanded = fal
         mindRef.current = null;
       }
     };
-  }, [mindMapData, renderKey]);
+  }, [mindMapData]);
 
   // Control functions
   const handleZoomIn = () => {
@@ -230,10 +178,6 @@ export const MindMapView: React.FC<MindMapViewProps> = ({ note, isExpanded = fal
   };
 
   // Generating/loading state
-  const isGenerating = note.status === 'generating' ||
-                       note.metadata?.phase === 'mapping' ||
-                       note.metadata?.phase === 'collapsing' ||
-                       note.metadata?.phase === 'reducing';
   const isFailed = note.status === 'failed';
 
   if (isFailed) {
@@ -245,7 +189,9 @@ export const MindMapView: React.FC<MindMapViewProps> = ({ note, isExpanded = fal
             <div className="flex-1">
               <p className="text-sm font-medium text-destructive">Mind map generation failed</p>
               <p className="text-xs text-destructive/70 mt-1">
-                {note.metadata?.error || 'An unknown error occurred'}
+                {typeof note.metadata?.error === 'object'
+                  ? (note.metadata.error as { message?: string }).message || 'An unknown error occurred'
+                  : note.metadata?.error || 'An unknown error occurred'}
               </p>
             </div>
           </div>
@@ -274,7 +220,7 @@ export const MindMapView: React.FC<MindMapViewProps> = ({ note, isExpanded = fal
   return (
     <div className={containerClasses}>
       {/* Custom Control Bar */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card/30">
+      <div className="relative z-30 shrink-0 flex items-center justify-between px-4 py-3 border-b border-border bg-card/85 backdrop-blur supports-backdrop-filter:bg-card/75">
         <div className="flex items-center gap-2">
           {/* Mobile Back Button */}
           {onBack && !isExpanded && (
@@ -332,8 +278,35 @@ export const MindMapView: React.FC<MindMapViewProps> = ({ note, isExpanded = fal
 
       {/* Mind Map Container */}
       <div className="flex-1 relative overflow-hidden">
+        {isExpanded && (
+          <div className="absolute top-3 right-3 z-40 flex items-center gap-1 rounded-md border border-border bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/85 p-1 shadow-sm">
+            <button
+              onClick={handleZoomOut}
+              className="p-2 rounded-md hover:bg-secondary transition-colors"
+              title="Zoom Out"
+              aria-label="Zoom Out"
+            >
+              <ZoomOut className="w-4 h-4" />
+            </button>
+            <button
+              onClick={handleZoomIn}
+              className="p-2 rounded-md hover:bg-secondary transition-colors"
+              title="Zoom In"
+              aria-label="Zoom In"
+            >
+              <ZoomIn className="w-4 h-4" />
+            </button>
+            <button
+              onClick={onToggleExpanded}
+              className="p-2 rounded-md hover:bg-secondary transition-colors"
+              title="Exit Full Screen"
+              aria-label="Exit Full Screen"
+            >
+              <Minimize2 className="w-4 h-4" />
+            </button>
+          </div>
+        )}
         <div
-          key={renderKey}
           ref={containerRef}
           className="mind-map-container w-full h-full"
         />

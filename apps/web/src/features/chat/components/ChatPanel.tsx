@@ -54,7 +54,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
-  const hideTooltipTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hideTooltipTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const virtuosoRef = useRef<any>(null);
 
   const { confirm, ConfirmDialogComponent } = useConfirmDialog();
@@ -135,7 +135,6 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     
     if (!containerRect) return;
 
-    const tooltipHeight = 200;
     const spaceAbove = rect.top - containerRect.top;
     const spaceBelow = containerRect.bottom - rect.bottom;
     
@@ -313,7 +312,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     const sanitizedContent = sanitizeMarkdown(cleanContent);
 
     // Handle references that might be an object instead of array
-    const refsArray = Array.isArray(references) ? references : [];
+    Array.isArray(references) ? references : [];
 
     // Convert citation markers [1] to inline code markers `CITE:1` only outside math (so LaTeX like [1, 0] is unchanged)
     const processedContent = replaceCitationMarkersOutsideMath(sanitizedContent);
@@ -324,7 +323,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
           <MarkdownRenderer
             components={{
               img: () => null,
-              a: ({ node, children, ...props }) => <span className="text-foreground">{children}</span>,
+              a: ({ children }) => <span className="text-foreground">{children}</span>,
               video: () => null,
               audio: () => null,
               iframe: () => null,
@@ -337,7 +336,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
               p: ({ children }) => {
                 return <p className="text-base leading-relaxed">{children}</p>;
               },
-              code: ({ children, node, ...props }: any) => {
+              code: ({ children, node }: any) => {
                 // Check if this is a citation marker
                 const text = String(children);
                 // Code blocks are wrapped in pre, inline code is not
@@ -410,7 +409,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     onRefLeave: () => void;
     onCopyMessage: (message: Message) => void;
     copiedMessageId: string | null;
-  }>(({ message, onRefHover, onRefLeave, onCopyMessage, copiedMessageId }) => {
+  }>(({ message, onRefHover: _onRefHover, onRefLeave: _onRefLeave, onCopyMessage, copiedMessageId }) => {
     const isUser = message.role === 'user';
     const isCopied = copiedMessageId === message.id;
 
@@ -451,7 +450,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     return (
       <div className={`group/message flex flex-col ${isUser ? 'items-end' : 'items-start'} gap-1`} data-message-id={message.id}>
         {isUser ? (
-          <div className="flex flex-row items-start gap-2 max-w-[60%]">
+          <div className="flex flex-row items-start gap-2 max-w-[95%]">
             <div className="shrink-0 pt-4">
               <ActionBar />
             </div>
@@ -468,7 +467,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                 <span className="animate-pulse">{getStatusMessage(message.status)}</span>
               </div>
             )}
-            <div className="w-full max-w-[60%] font-serif text-lg leading-relaxed text-foreground">
+            <div className="w-full max-w-4xl font-serif text-lg leading-relaxed text-foreground">
               {renderMessageWithReferences(message.id, message.content, message.references)}
               <div className="flex justify-start mt-3">
                 <ActionBar />
@@ -576,7 +575,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
           ref={virtuosoRef}
           style={{ height: '100%' }}
           data={memoizedMessages}
-          itemContent={(index, message) => (
+          itemContent={(_index, message) => (
             <div className="px-3 py-3 sm:px-4 md:px-6">
               <MessageBubble
                 key={message.id}
@@ -665,7 +664,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
 
       {/* Input Area */}
       <div className="absolute bottom-8 left-0 right-0 px-4 flex justify-center z-20">
-        <div className="w-full max-w-3xl bg-card border-2 border-border shadow-lg rounded-2xl py-1.5 px-2 flex flex-col gap-1 relative">
+        <div className="w-full max-w-3xl xl:max-w-4xl 2xl:max-w-5xl bg-card border-2 border-border shadow-lg rounded-2xl py-1.5 px-2 flex flex-col gap-1 relative">
 
            <textarea
              ref={textareaRef}

@@ -63,26 +63,26 @@ const useCases: UseCase[] = [
 
 export const UseCasesSection: React.FC = () => {
   return (
-    <section id="use-cases" className="py-24 px-6">
+    <section id="use-cases" className="py-32 md:py-40 px-6">
       <div className="max-w-[1500px] w-full mx-auto">
         {/* Section Header */}
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-sans font-bold text-foreground mb-4">
             Built for Every Learner
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             From students to professionals, SolomindLM adapts to your learning style
           </p>
         </div>
 
         {/* Use Cases Grid - 3 cols on lg, tighter spacing */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {useCases.map((useCase, index) => {
             const Icon = useCase.icon;
             return (
               <div
                 key={index}
-                className="group bg-card rounded-xl p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300"
+                className="group bg-card rounded-xl p-12 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300"
               >
                 <div className="mb-3">
                   <Icon
@@ -91,17 +91,17 @@ export const UseCasesSection: React.FC = () => {
                   />
                 </div>
 
-                <h3 className="text-base font-sans font-bold text-foreground mb-2">
+                <h3 className="text-lg font-sans font-bold text-foreground mb-2">
                   {useCase.title}
                 </h3>
 
-                <p className="text-sm text-muted-foreground font-normal leading-[1.6] mb-3">
+                <p className="text-base text-foreground/80 font-normal leading-[1.65] mb-3">
                   {useCase.description}
                 </p>
 
                 <div className={`mt-4 pt-4 border-t border-border/60`}>
                   <div className={`pl-3 border-l-2 ${useCase.borderColor} py-1`}>
-                    <p className="text-xs text-foreground/90 font-normal leading-[1.55]">
+                    <p className="text-sm text-foreground/75 font-normal leading-[1.6]">
                       {useCase.example}
                     </p>
                   </div>

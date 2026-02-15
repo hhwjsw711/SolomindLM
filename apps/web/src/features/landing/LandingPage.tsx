@@ -14,7 +14,7 @@ import {
   generateSoftwareApplicationStructuredData,
   generateFAQStructuredData,
 } from '@/shared/seo/SEOMeta';
-import { LANDING_FAQS } from './components/FAQSection';
+import { LANDING_FAQS } from './constants';
 
 interface LandingPageProps {
   onGetStarted: () => void;

@@ -8,7 +8,7 @@ import {
   ArrowLeft,
   Download,
 } from 'lucide-react';
-import { SlideDeckNote, Slide } from '@/shared/types/index';
+import { SlideDeckNote } from '@/shared/types/index';
 
 export interface SlidesViewProps {
   note: SlideDeckNote;
@@ -16,7 +16,7 @@ export interface SlidesViewProps {
   onBack?: () => void;
 }
 
-export const SlidesView: React.FC<SlidesViewProps> = ({ note, onNoteUpdate, onBack }) => {
+export const SlidesView: React.FC<SlidesViewProps> = ({ note, onNoteUpdate: _onNoteUpdate, onBack }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showTalkingPoints, setShowTalkingPoints] = useState(false);

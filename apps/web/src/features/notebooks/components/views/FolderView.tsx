@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { ArrowLeft, LayoutGrid, List, ChevronDown, Calendar, ArrowUpAZ, CheckCircle2, Plus } from 'lucide-react';
 import { NotebookItem, FolderItem } from '@/shared/types/index';
 import { NotebookCard } from '../cards/NotebookCard';
@@ -7,7 +7,6 @@ import { useFolderNotebooks } from '../../services/foldersApi';
 import { useCreateNotebook, useUpdateNotebook } from '../../services/notebooksApi';
 import { CustomizeNotebookModal, MoveToFolderModal } from '../modals';
 import { PageSkeleton } from '@/shared/components/PageSkeleton';
-import { ItemSkeleton } from '@/shared/components/ItemSkeleton';
 
 interface FolderViewProps {
   folderId: string;
@@ -28,12 +27,12 @@ export const FolderView: React.FC<FolderViewProps> = ({
   viewMode: initialViewMode,
   onBack,
   onSelectNotebook,
-  onCreateNotebook,
+  onCreateNotebook: _onCreateNotebook,
   onUpdateNotebook,
   onDeleteNotebook,
   onMoveNotebookToFolder,
   folders = [],
-  loadFolders,
+  loadFolders: _loadFolders,
   onRequireAuth,
 }) => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(initialViewMode);
@@ -41,7 +40,7 @@ export const FolderView: React.FC<FolderViewProps> = ({
   // Use Convex hooks - undefined means loading, empty array means no results
   const folderNotebooks = useFolderNotebooks(folderId);
   const createNotebook = useCreateNotebook();
-  const updateNotebook = useUpdateNotebook();
+  useUpdateNotebook();
 
   // Find folder from props - use useMemo to avoid recalculating
   const folder = useMemo(() => {

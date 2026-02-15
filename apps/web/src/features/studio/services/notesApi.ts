@@ -1,14 +1,29 @@
 import type { Note } from '@/shared/types/index';
 import { getReportSubtitle, normalizeReportTypeId } from '@/shared/types/reportTypes';
+import { getSpreadsheetTypeLabel } from './spreadsheetsApi';
 import { useQuery } from 'convex/react';
 import { api } from '@convex/_generated/api';
 import type { Id } from '@convex/_generated/dataModel';
+
+function normalizeMindMapNodeData(rawData: any, fallbackTitle: string) {
+  const maybeWrapped = rawData?.nodeData?.nodeData ?? rawData?.nodeData ?? rawData;
+  const normalized = (maybeWrapped && typeof maybeWrapped === 'object') ? { ...maybeWrapped } : {};
+
+  if (typeof normalized.topic !== 'string' || normalized.topic.trim().length === 0) {
+    normalized.topic = fallbackTitle || 'Mind Map';
+  }
+  if (typeof normalized.id !== 'string' || normalized.id.trim().length === 0) {
+    normalized.id = 'root';
+  }
+
+  return normalized;
+}
 
 /**
  * Map a raw database note (with _type discriminator) to the frontend Note interface
  */
 function mapDatabaseNoteToNote(dbNote: any): Note {
-  const { _type, ...noteData } = dbNote;
+  const { _type } = dbNote;
 
   switch (_type) {
     case 'report':
@@ -61,12 +76,13 @@ function mapDatabaseNoteToNote(dbNote: any): Note {
       };
 
     case 'mindmap':
+      const nodeData = normalizeMindMapNodeData(dbNote.data, dbNote.title);
       return {
         id: dbNote._id,
         title: dbNote.title,
         preview: getMindMapPreview(dbNote),
         type: 'mindmap',
-        mindMapData: { nodeData: dbNote.data || { id: 'root', topic: dbNote.title, children: [] } },
+        mindMapData: { nodeData },
         content: JSON.stringify(dbNote.data),
         status: dbNote.status,
         metadata: {
@@ -165,6 +181,11 @@ function mapDatabaseNoteToNote(dbNote: any): Note {
 /**
  * Helper functions for preview text generation
  */
+function capitalizeDifficulty(difficulty: string | undefined): string {
+  const d = (difficulty || 'medium').toLowerCase();
+  return d.charAt(0).toUpperCase() + d.slice(1);
+}
+
 function getReportPreview(dbNote: any): string {
   const reportType = normalizeReportTypeId(dbNote.reportType || dbNote.metadata?.reportType || 'custom');
   const subtitle = getReportSubtitle(reportType);
@@ -175,16 +196,18 @@ function getReportPreview(dbNote: any): string {
 
 function getFlashcardPreview(dbNote: any): string {
   const count = dbNote.cardsData?.length || 0;
-  if (dbNote.status === 'generating') return `${count} Flashcards • Generating...`;
-  if (dbNote.status === 'failed') return `${count} Flashcards • Failed`;
-  return `${count} Flashcard${count !== 1 ? 's' : ''}`;
+  const difficulty = capitalizeDifficulty(dbNote.metadata?.difficulty);
+  if (dbNote.status === 'generating') return `${count} Flashcards · ${difficulty} · Generating...`;
+  if (dbNote.status === 'failed') return `${count} Flashcards · ${difficulty} · Failed`;
+  return `${count} Flashcard${count !== 1 ? 's' : ''} · ${difficulty}`;
 }
 
 function getQuizPreview(dbNote: any): string {
   const count = dbNote.questionsData?.length || 0;
-  if (dbNote.status === 'generating') return `${count} Questions • Generating...`;
-  if (dbNote.status === 'failed') return `${count} Questions • Failed`;
-  return `${count} Question${count !== 1 ? 's' : ''}`;
+  const difficulty = capitalizeDifficulty(dbNote.metadata?.difficulty);
+  if (dbNote.status === 'generating') return `${count} Questions · ${difficulty} · Generating...`;
+  if (dbNote.status === 'failed') return `${count} Questions · ${difficulty} · Failed`;
+  return `${count} Question${count !== 1 ? 's' : ''} · ${difficulty}`;
 }
 
 function getMindMapPreview(dbNote: any): string {
@@ -207,16 +230,19 @@ function getSlidesPreview(dbNote: any): string {
 }
 
 function getSpreadsheetPreview(dbNote: any): string {
-  if (dbNote.status === 'generating') return 'Spreadsheet • Generating...';
-  if (dbNote.status === 'failed') return 'Spreadsheet • Failed';
-  return 'Spreadsheet';
+  const spreadsheetType = dbNote.metadata?.spreadsheetType || 'custom';
+  const typeLabel = getSpreadsheetTypeLabel(spreadsheetType);
+  if (dbNote.status === 'generating') return `Spreadsheet • ${typeLabel} • Generating...`;
+  if (dbNote.status === 'failed') return `Spreadsheet • ${typeLabel} • Failed`;
+  return `Spreadsheet • ${typeLabel}`;
 }
 
 function getWrittenQuestionsPreview(dbNote: any): string {
   const count = dbNote.questionsData?.length || 0;
-  if (dbNote.status === 'generating') return `${count} Questions • Generating...`;
-  if (dbNote.status === 'failed') return `${count} Questions • Failed`;
-  return `${count} Question${count !== 1 ? 's' : ''}`;
+  const difficulty = capitalizeDifficulty(dbNote.metadata?.difficulty);
+  if (dbNote.status === 'generating') return `${count} Questions · ${difficulty} · Generating...`;
+  if (dbNote.status === 'failed') return `${count} Questions · ${difficulty} · Failed`;
+  return `${count} Question${count !== 1 ? 's' : ''} · ${difficulty}`;
 }
 
 function getNotePreview(dbNote: any): string {

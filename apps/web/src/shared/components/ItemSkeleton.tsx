@@ -1,5 +1,3 @@
-import React from 'react';
-
 interface ItemSkeletonProps {
   count?: number;
   viewMode?: 'grid' | 'list';

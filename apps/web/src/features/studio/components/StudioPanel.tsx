@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StudioTool, Note } from '@/shared/types/index';
-import { ConfirmDialog, useConfirmDialog } from '@/shared/ui/ConfirmDialog';
+import { useConfirmDialog } from '@/shared/ui/ConfirmDialog';
 import { CreateReportModal } from './CreateReportModal';
 import { CustomizeFlashcardsModal } from './CustomizeFlashcardsModal';
 import { CustomizeQuizModal } from './CustomizeQuizModal';
@@ -57,7 +57,7 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
   onAddNote,
   onSaveReportContent,
   width,
-  isResizing,
+  isResizing: _isResizing,
   sources = [],
   userId,
   noteId,

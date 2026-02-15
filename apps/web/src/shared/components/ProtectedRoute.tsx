@@ -1,19 +1,19 @@
-import React, { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useQuery, Authenticated, Unauthenticated, AuthLoading } from 'convex/react';
 import { api } from '@convex/_generated/api';
 import { LoginModal } from '../../features/auth/components/LoginModal';
 
 interface ProtectedRouteProps {
-  children: React.ReactNode;
+  children: ReactNode;
   requireNotebookAccess?: boolean; // If true, checks notebook ownership from URL param
 }
 
 export function ProtectedRoute({ children, requireNotebookAccess = false }: ProtectedRouteProps) {
   const location = useLocation();
 
-  // Get user from Convex (Better Auth)
-  const user = useQuery(api.auth.getCurrentUser);
+  // Get user from Convex (Better Auth) - keeps auth reactive
+  useQuery(api.auth.getCurrentUser);
 
   // Extract notebook ID from URL path if needed
   const notebookId = useMemo(() => {

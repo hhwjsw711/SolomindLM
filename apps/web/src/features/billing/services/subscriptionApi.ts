@@ -18,7 +18,7 @@ export function useSubscriptionStatus(): SubscriptionStatusResponse {
       plan: 'free',
       notebookLimit: 5,
       sourceLimit: 20,
-      currentPeriodEnd: null,
+      currentPeriodEnd: undefined,
       cancelAtPeriodEnd: false,
     };
   }
@@ -62,7 +62,7 @@ export function useSubscriptionStatus(): SubscriptionStatusResponse {
     plan: subscription.status === 'active' ? 'premium' : 'free',
     notebookLimit: subscription.status === 'active' ? 100 : 5,
     sourceLimit: subscription.status === 'active' ? 500 : 20,
-    currentPeriodEnd: currentPeriodEndIso,
+    currentPeriodEnd: currentPeriodEndIso ?? undefined,
     cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
     interval: subscription.interval as SubscriptionInterval,
     amount: subscription.amount,

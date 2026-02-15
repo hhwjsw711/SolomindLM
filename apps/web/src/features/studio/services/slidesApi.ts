@@ -1,4 +1,4 @@
-import type { Note, Slide, SlideDeckNote } from '@/shared/types/index';
+import type { Slide, SlideDeckNote } from '@/shared/types/index';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@convex/_generated/api';
 import type { Id } from '@convex/_generated/dataModel';
@@ -160,7 +160,7 @@ export function useRenameSlideDeck() {
         localStore.setQuery(
           api.slides.list,
           { notebookId: slideDeck.notebookId },
-          listResult.map(sd =>
+          listResult.map((sd: { _id: string; [key: string]: unknown }) =>
             sd._id === id
               ? { ...sd, title }
               : sd
@@ -192,7 +192,7 @@ export function useDeleteSlideDeck() {
         localStore.setQuery(
           api.slides.list,
           { notebookId: slideDeck.notebookId },
-          listResult.filter(sd => sd._id !== args.id)
+          listResult.filter((sd: { _id: string }) => sd._id !== args.id)
         );
       }
     }

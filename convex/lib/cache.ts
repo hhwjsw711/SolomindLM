@@ -1,39 +1,31 @@
-"use node";
-import { v } from "convex/values";
-import crypto from "crypto";
+/**
+ * Cache configuration and utilities
+ * This file can be imported from any Convex function (query, mutation, action)
+ */
 
 // TTL configurations (in milliseconds)
 export const CACHE_TTL = {
-  agent: 60 * 60 * 1000, // 1 hour for agent runs
+  agent: 60 * 60 * 1000,              // 1 hour for agent runs
   embedding: 7 * 24 * 60 * 60 * 1000, // 7 days for embeddings
   
+  // New TTLs (base values, jitter added at runtime)
+  rerank: 15 * 60 * 1000,             // 15 min for reranking
+  search: 60 * 60 * 1000,             // 1 hour for web search
+  documentContent: 60 * 60 * 1000,    // 1 hour for document content
+  notebookList: 5 * 60 * 1000,        // 5 min for notebook lists
+  subscription: 60 * 1000,            // 1 min for subscription status
+  generatedContent: 7 * 24 * 60 * 60 * 1000, // 7 days for LLM outputs
 } as const;
 
-/**
- * Generate a hash using SHA-256 for better distribution
- */
-export function hashInput(input: string): string {
-  return crypto.createHash("sha256").update(input).digest("hex").slice(0, 16);
-}
 
 /**
- * Generate a cache key for agent invocations
- * Format: {agentType}:{version}:{hash}
+ * Add jitter to TTL to prevent thundering herd (mass simultaneous cache expiration)
+ * @param baseTtl - Base TTL in milliseconds
+ * @param jitterPercent - Percentage of TTL to add as random jitter (default 10%)
+ * @returns TTL with random jitter applied (±jitterPercent of baseTtl)
  */
-export function generateAgentCacheKey(
-  agentType: string,
-  version: string,
-  params: Record<string, unknown>
-): string {
-  const paramsStr = JSON.stringify(params, Object.keys(params).sort());
-  const hash = hashInput(paramsStr);
-  return `${agentType}:${version}:${hash}`;
-}
-
-/**
- * Generate cache key for embeddings
- */
-export function generateEmbeddingCacheKey(text: string): string {
-  const hash = hashInput(text);
-  return `embedding:${hash}`;
+export function withJitter(baseTtl: number, jitterPercent: number = 0.1): number {
+  // Generate random jitter within ±jitterPercent
+  const jitter = baseTtl * jitterPercent * (Math.random() * 2 - 1);
+  return Math.round(baseTtl + jitter);
 }

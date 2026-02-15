@@ -1,4 +1,3 @@
-import React from 'react';
 import { Loader2, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { ProgressBar } from './ProgressBar';
 

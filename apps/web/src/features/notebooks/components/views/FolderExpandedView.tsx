@@ -17,10 +17,10 @@ interface FolderExpandedViewProps {
 }
 
 export const FolderExpandedView: React.FC<FolderExpandedViewProps> = ({
-  folder,
+  folder: _folder,
   notebooks,
   isLoading,
-  viewMode,
+  viewMode: _viewMode,
   onSelectNotebook,
   activeMenuId,
   onOpenCustomize,

@@ -1,7 +1,7 @@
 import React from 'react';
 import { MoreVertical, Settings2, Trash2, Folder, Book, BarChart3, Monitor, Search, Brain, Globe, FileText, GraduationCap, Lightbulb } from 'lucide-react';
 import { FolderItem } from '@/shared/types/index';
-import { ConfirmDialog, useConfirmDialog } from '@/shared/ui/ConfirmDialog';
+import { useConfirmDialog } from '@/shared/ui/ConfirmDialog';
 
 const IconMap: Record<string, React.FC<any>> = {
   Folder, Book, BarChart: BarChart3, Monitor, Search, Brain, Globe, FileText, GraduationCap, Lightbulb

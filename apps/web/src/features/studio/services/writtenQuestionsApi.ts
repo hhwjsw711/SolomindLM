@@ -1,4 +1,4 @@
-import type { Note, WrittenQuestion, WrittenQuestionsNote } from '@/shared/types/index';
+import type { WrittenQuestion, WrittenQuestionsNote } from '@/shared/types/index';
 import { useQuery, useMutation, useAction } from 'convex/react';
 import { api } from '@convex/_generated/api';
 import type { Id } from '@convex/_generated/dataModel';
@@ -151,7 +151,7 @@ export function useRenameWrittenQuestions() {
         localStore.setQuery(
           api.writtenQuestions.list,
           { notebookId: wq.notebookId },
-          listResult.map(item =>
+          listResult.map((item: { _id: string; [key: string]: unknown }) =>
             item._id === id
               ? { ...item, title }
               : item
@@ -183,7 +183,7 @@ export function useDeleteWrittenQuestions() {
         localStore.setQuery(
           api.writtenQuestions.list,
           { notebookId: wq.notebookId },
-          listResult.filter(item => item._id !== args.writtenQuestionId)
+          listResult.filter((item: { _id: string }) => item._id !== args.writtenQuestionId)
         );
       }
     }

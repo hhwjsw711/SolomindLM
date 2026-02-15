@@ -1,21 +1,136 @@
 "use node";
+/**
+ * AudioOverviewGenerationJob - Multi-Phase Architecture
+ *
+ * Breaks audio overview generation into separate scheduled actions to avoid
+ * Cloudflare 524 timeouts. Each phase runs in its own action with
+ * its own timeout window.
+ *
+ * Phases:
+ * 1. audioOverviewGeneration (entry) - Load docs, pack chunks, schedule map tasks
+ * 2. processAudioMapChunk - Extract dialogue beats from one chunk (parallel)
+ * 3. finalizeAudioOverviewPhase - Write script, synthesize audio, upload to storage
+ */
+
 import { internalAction } from '../_generated/server';
 import { v } from 'convex/values';
 import { internal } from '../_generated/api';
-import { AudioOverviewGraph } from '../lib/agents/AudioOverviewGraph';
 import { env } from '../lib/helpers/env';
+import {
+  createJobLogger,
+  createErrorMetadata,
+} from '../lib/agents/shared/logging';
+import { ChatTogetherAI } from '@langchain/community/chat_models/togetherai';
+import { HumanMessage, SystemMessage } from '@langchain/core/messages';
+import OpenAI from 'openai';
+import {
+  packChunks,
+  validateChunks,
+} from '../lib/agents/shared/index';
+import {
+  getMapPrompt,
+  getReducePrompt,
+  buildCoveredTopicsPrompt,
+  TARGET_LINE_COUNTS,
+  DIALOGUE_CHUNK_SIZE,
+  ESTIMATED_WORDS_PER_LINE,
+  MAP_SYSTEM_PROMPT,
+  REDUCE_SYSTEM_PROMPT,
+  EXAMPLE_EXTRACTION_SYSTEM_PROMPT,
+  type AudioType,
+  type AudioLength,
+} from '../lib/agents/audio_overview/prompts';
+import type { DialogueLine } from '../lib/agents/audio_overview/state';
+import {
+  invokeWithTimeout,
+  invokeWithRetry,
+  sanitizeUserInput,
+  createLangSmithRunConfig,
+  countTokens,
+} from '../lib/agents/shared/index';
 
-/**
- * Audio overview generation job handler
- * This is an internal action that calls the LangGraph agent
- *
- * NOTE: AudioOverviewGeneration returns audio buffers which cannot be
- * serialized by ActionCache (Convex has size limits on cached values).
- * This job remains uncached for now. To enable caching, you would need to:
- * 1. Extract transcript generation logic
- * 2. Cache that part
- * 3. Handle audio generation separately in the main job
- */
+// ============================================================
+// CONFIGURATION
+// ============================================================
+
+const CONFIG = {
+  MAP_CHUNK_SIZE_TOKENS: parseInt(env.AUDIO_MAP_CHUNK_TOKENS || '3750', 10),
+  REDUCE_CHUNK_SIZE_TOKENS: parseInt(env.AUDIO_REDUCE_CHUNK_TOKENS || '10000', 10),
+  PER_CHUNK_TIMEOUT_MS: 90000, // 90 seconds per chunk
+  REDUCE_TIMEOUT_MS: 180000, // 180 seconds for script writing
+  TTS_TIMEOUT_MS: parseInt(env.AUDIO_TTS_TIMEOUT_MS || '120000', 10),
+} as const;
+
+/** Voice configuration (OpenAI TTS-1) */
+const VOICES = {
+  host_a: env.AUDIO_VOICE_HOST_A,
+  host_b: env.AUDIO_VOICE_HOST_B,
+} as const;
+
+// ============================================================
+// HELPER: Create LLMs
+// ============================================================
+
+function createMapLLM(): ChatTogetherAI {
+  return new ChatTogetherAI({
+    apiKey: env.TOGETHER_AI_API_KEY,
+    model: env.FAST_LLM,
+    temperature: 0.3,
+    timeout: CONFIG.PER_CHUNK_TIMEOUT_MS,
+  });
+}
+
+function createReduceLLM(): ChatTogetherAI {
+  return new ChatTogetherAI({
+    apiKey: env.TOGETHER_AI_API_KEY,
+    model: env.SMART_LLM,
+    temperature: 0.6,
+    timeout: CONFIG.REDUCE_TIMEOUT_MS,
+  });
+}
+
+// ============================================================
+// HELPER: Recursive Collapse
+// ============================================================
+
+async function recursiveCollapse(outputs: string[], maxTokens: number): Promise<string[]> {
+  if (outputs.length <= 3) {
+    return outputs;
+  }
+
+  const totalTokens = outputs.reduce((sum, s) => sum + countTokens(s), 0);
+
+  if (totalTokens <= maxTokens) {
+    return outputs;
+  }
+
+  const collapsed: string[] = [];
+  let currentGroup: string[] = [];
+  let currentTokens = 0;
+
+  for (const output of outputs) {
+    const tokens = countTokens(output);
+    if (currentTokens + tokens > maxTokens && currentGroup.length > 0) {
+      collapsed.push(currentGroup.join('\n\n---\n\n'));
+      currentGroup = [output];
+      currentTokens = tokens;
+    } else {
+      currentGroup.push(output);
+      currentTokens += tokens;
+    }
+  }
+
+  if (currentGroup.length > 0) {
+    collapsed.push(currentGroup.join('\n\n---\n\n'));
+  }
+
+  return collapsed;
+}
+
+// ============================================================
+// PHASE 1: Initialize & Schedule Map Tasks
+// ============================================================
+
 export const audioOverviewGeneration = internalAction({
   args: {
     audioOverviewId: v.id('audioOverviews'),
@@ -28,74 +143,572 @@ export const audioOverviewGeneration = internalAction({
 
     const { audioOverviewId, userId, notebookId, documentIds } = args;
 
-    console.log('[AudioOverviewGenerationJob] Starting:', {
-      audioOverviewId,
+    // Initialize structured logger
+    const logger = createJobLogger({
+      jobType: 'audio',
+      jobId: audioOverviewId,
+      notebookId,
+      userId,
+    });
+
+    logger.jobStart({
+      docCount: documentIds.length,
     });
 
     try {
-      // Update status to generating
+      // Phase: Initializing
+      logger.phaseStart('initializing', { progress: 5 });
       await ctx.runMutation(internal.jobs.helpers.updateAudioOverviewStatus, {
         audioOverviewId,
         status: 'generating',
-        metadata: { phase: 'initializing' },
+        metadata: {
+          phase: 'initializing',
+          progress: 5,
+          currentStep: 'Initializing...',
+        },
+      });
+      logger.phaseComplete('initializing');
+
+      // Phase: Loading documents
+      logger.phaseStart('loading_documents', { progress: 15, docCount: documentIds.length });
+      await ctx.runMutation(internal.jobs.helpers.updateAudioOverviewStatus, {
+        audioOverviewId,
+        status: 'generating',
+        metadata: {
+          phase: 'loading_documents',
+          progress: 15,
+          currentStep: 'Loading documents...',
+        },
       });
 
-      // Initialize the agent
-      const agent = new AudioOverviewGraph(env.TOGETHER_AI_API_KEY, env.FAST_LLM, env.SMART_LLM);
-
-      // Get document chunks (full objects from DB)
+      // Get document chunks
       const chunkObjects = await ctx.runAction(internal.documents.fetchChunks, {
         documentIds,
       });
 
-      // Extract content strings for the agent (state expects chunks: string[])
-      const chunks = chunkObjects.map((chunk: { content: string }) => chunk.content);
+      // Extract content from chunk objects
+      const rawChunks = chunkObjects.map((chunk: any) => chunk.content);
 
-      // Generate audio overview using the agent
-      const graph = agent.buildGraph();
-      const result = await graph.invoke({
-        chunks,
-        onStatusUpdate: async (status: string) => {
-          console.log('[AudioOverviewGenerationJob] Status:', status);
-          await ctx.runMutation(internal.jobs.helpers.updateAudioOverviewStatus, {
-            audioOverviewId,
-            status: 'generating',
-            metadata: { phase: status },
-          });
+      logger.phaseComplete('loading_documents', { chunkCount: rawChunks.length });
+
+      // Validate and pack chunks
+      const validatedChunks = validateChunks(rawChunks, {
+        targetSize: CONFIG.MAP_CHUNK_SIZE_TOKENS,
+        minChunkLength: 50,
+        maxChunkLength: 50000,
+        agentName: 'AudioOverviewJob',
+      });
+      const packedChunks = packChunks(validatedChunks, {
+        targetSize: CONFIG.MAP_CHUNK_SIZE_TOKENS,
+        minChunkLength: 50,
+        maxChunkLength: 50000,
+        agentName: 'AudioOverviewJob',
+      });
+
+      console.log(`[AudioJob] Packed ${rawChunks.length} chunks into ${packedChunks.length} map tasks`);
+
+      if (packedChunks.length === 0) {
+        throw new Error('No valid chunks to process');
+      }
+
+      // Initialize map phase metadata
+      await ctx.runMutation(internal.jobs.helpers.initAudioOverviewMapPhase, {
+        audioOverviewId,
+        totalMapTasks: packedChunks.length,
+      });
+
+      // Schedule each map task as a separate action
+      for (let i = 0; i < packedChunks.length; i++) {
+        await ctx.scheduler.runAfter(0, internal.jobs.AudioOverviewGenerationJob.processAudioMapChunk, {
+          audioOverviewId,
+          userId,
+          notebookId,
+          chunkIndex: i,
+          totalChunks: packedChunks.length,
+          chunk: packedChunks[i],
+        });
+        console.log(`[AudioJob] Scheduled map task ${i + 1}/${packedChunks.length}`);
+      }
+
+      logger.info('Map phase initialized', {
+        totalMapTasks: packedChunks.length,
+        chunkSizes: packedChunks.map(c => c.length),
+      });
+
+    } catch (error) {
+      const errorMeta = createErrorMetadata(error, 'initializing');
+
+      logger.jobError(error, {
+        phase: 'initializing',
+        errorType: errorMeta.type,
+        retryable: errorMeta.retryable,
+      });
+
+      await ctx.runMutation(internal.jobs.helpers.markAudioOverviewFailed, {
+        audioOverviewId,
+        error: errorMeta.message,
+        metadata: {
+          phase: 'failed',
+          progress: 0,
+          failedAt: Date.now(),
+          errorPhase: 'initializing',
+          errorType: errorMeta.type,
+          retryable: errorMeta.retryable,
+          stack: errorMeta.stackTrace,
         },
       });
 
-      // Upload audio buffer to Convex storage (graph returns audioBuffer, not audioUrl)
-      if (!result.audioBuffer || result.audioBuffer.length === 0) {
-        throw new Error('No audio buffer produced by audio overview generation');
+      throw error;
+    }
+  },
+});
+
+// ============================================================
+// PHASE 2: Process Individual Map Chunk
+// ============================================================
+
+export const processAudioMapChunk = internalAction({
+  args: {
+    audioOverviewId: v.id('audioOverviews'),
+    userId: v.string(),
+    notebookId: v.id('notebooks'),
+    chunkIndex: v.number(),
+    totalChunks: v.number(),
+    chunk: v.string(),
+  },
+  handler: async (ctx, args) => {
+    "use node";
+
+    const { audioOverviewId, userId, notebookId, chunkIndex, totalChunks, chunk } = args;
+
+    const logger = createJobLogger({
+      jobType: 'audio',
+      jobId: audioOverviewId,
+      notebookId,
+      userId,
+    });
+
+    const chunkId = `[Chunk ${chunkIndex + 1}/${totalChunks}]`;
+    console.log(`[AudioJob] ${chunkId} Starting map processing`);
+
+    try {
+      // Check if audio overview still exists
+      const audioOverview = await ctx.runQuery(internal.audioOverviews.getInternal, { id: audioOverviewId });
+      if (!audioOverview) {
+        console.log(`[AudioJob] ${chunkId} Audio overview deleted, skipping`);
+        return;
       }
-      const blob = new Blob([result.audioBuffer], { type: 'audio/mpeg' });
+
+      // Process with LLM - extract dialogue beats
+      const llm = createMapLLM();
+
+      // Default to deep_dive audio type
+      const audioType: AudioType = 'deep_dive';
+      const prompt = getMapPrompt(audioType, chunk);
+
+      console.log(`[AudioJob] ${chunkId} Calling LLM (${prompt.length} chars)`);
+
+      const startTime = Date.now();
+      const response = await invokeWithRetry(
+        () => invokeWithTimeout(
+          () => (llm as any).invoke([
+            new SystemMessage(MAP_SYSTEM_PROMPT),
+            new HumanMessage(prompt),
+          ], createLangSmithRunConfig({
+            runName: 'AudioJob.ExtractBeats',
+            tags: ['agent', 'audio-overview', 'map'],
+            metadata: {
+              chunkIndex,
+              chunkLength: chunk.length,
+              audioType,
+            },
+          })),
+          CONFIG.PER_CHUNK_TIMEOUT_MS,
+          'AudioMap'
+        ),
+        {
+          maxAttempts: 3,
+          baseDelayMs: 1000,
+          onRetry: (attempt, error) => {
+            console.log(`[AudioJob] ${chunkId} Retry attempt ${attempt}/3: ${error.message}`);
+          },
+        },
+        'AudioMap'
+      );
+
+      const elapsed = Date.now() - startTime;
+      const output = String((response as any).content);
+
+      console.log(`[AudioJob] ${chunkId} LLM completed in ${elapsed}ms`);
+
+      // Store result
+      const result = {
+        beats: output,
+        processingTimeMs: elapsed,
+      };
+
+      await ctx.runMutation(internal.jobs.helpers.storeAudioOverviewMapResult, {
+        audioOverviewId,
+        chunkIndex,
+        result: JSON.stringify(result),
+      });
+
+      logger.info(`Map chunk completed`, {
+        chunkIndex,
+        elapsed,
+        outputLength: output.length,
+      });
+
+      // Check if all maps are complete
+      const updatedAudioOverview = await ctx.runQuery(internal.audioOverviews.getInternal, { id: audioOverviewId });
+      if (!updatedAudioOverview) return;
+
+      const completedMaps = updatedAudioOverview.metadata?.mapResults
+        ? Object.keys(updatedAudioOverview.metadata.mapResults).length
+        : 0;
+      const totalMaps = updatedAudioOverview.metadata?.totalMapTasks || totalChunks;
+
+      console.log(`[AudioJob] Map progress: ${completedMaps}/${totalMaps}`);
+
+      if (completedMaps >= totalMaps) {
+        console.log(`[AudioJob] All map tasks complete, scheduling finalization`);
+        await ctx.scheduler.runAfter(0, internal.jobs.AudioOverviewGenerationJob.finalizeAudioOverviewPhase, {
+          audioOverviewId,
+          userId,
+          notebookId,
+        });
+      }
+
+    } catch (error) {
+      const errorMeta = createErrorMetadata(error, 'map_processing');
+
+      console.error(`[AudioJob] ${chunkId} FAILED:`, errorMeta.message);
+
+      // Store error result
+      await ctx.runMutation(internal.jobs.helpers.storeAudioOverviewMapResult, {
+        audioOverviewId,
+        chunkIndex,
+        result: JSON.stringify({
+          _error: true,
+          errorMessage: errorMeta.message,
+          isTimeout: errorMeta.type === 'llm_timeout',
+          beats: '',
+        }),
+      });
+
+      logger.warn(`Map chunk failed`, {
+        chunkIndex,
+        error: errorMeta.message,
+        errorType: errorMeta.type,
+      });
+
+      // Check if we should still proceed with partial results
+      const audioOverview = await ctx.runQuery(internal.audioOverviews.getInternal, { id: audioOverviewId });
+      if (!audioOverview) return;
+
+      const completedMaps = audioOverview.metadata?.mapResults
+        ? Object.keys(audioOverview.metadata.mapResults).length
+        : 0;
+      const totalMaps = audioOverview.metadata?.totalMapTasks || totalChunks;
+      const failedMaps = audioOverview.metadata?.mapResults
+        ? Object.values(audioOverview.metadata.mapResults).filter(
+            (r: any) => {
+              try {
+                const parsed = JSON.parse(r as string);
+                return parsed._error;
+              } catch {
+                return false;
+              }
+            }
+          ).length
+        : 0;
+
+      if (completedMaps >= totalMaps) {
+        const successCount = totalMaps - failedMaps;
+        console.log(`[AudioJob] All tasks done. Success: ${successCount}/${totalMaps}`);
+
+        if (successCount > 0) {
+          await ctx.scheduler.runAfter(0, internal.jobs.AudioOverviewGenerationJob.finalizeAudioOverviewPhase, {
+            audioOverviewId,
+            userId,
+            notebookId,
+          });
+        } else {
+          await ctx.runMutation(internal.jobs.helpers.markAudioOverviewFailed, {
+            audioOverviewId,
+            error: 'All map tasks failed',
+            metadata: {
+              phase: 'failed',
+              errorPhase: 'map_processing',
+              errorType: 'llm_failure',
+              failedAt: Date.now(),
+            },
+          });
+        }
+      }
+    }
+  },
+});
+
+// ============================================================
+// PHASE 3: Finalize (Collapse + Write Script + Synthesize + Upload)
+// ============================================================
+
+export const finalizeAudioOverviewPhase = internalAction({
+  args: {
+    audioOverviewId: v.id('audioOverviews'),
+    userId: v.string(),
+    notebookId: v.id('notebooks'),
+  },
+  handler: async (ctx, args) => {
+    "use node";
+
+    const { audioOverviewId, userId, notebookId } = args;
+
+    const logger = createJobLogger({
+      jobType: 'audio',
+      jobId: audioOverviewId,
+      notebookId,
+      userId,
+    });
+
+    logger.info('Starting finalization phase');
+
+    try {
+      // Get audio overview with map results
+      const audioOverview = await ctx.runQuery(internal.audioOverviews.getInternal, { id: audioOverviewId });
+      if (!audioOverview) {
+        console.log('[AudioJob] Audio overview deleted during finalization');
+        return;
+      }
+
+      const mapResults = audioOverview.metadata?.mapResults as Record<string, string> || {};
+
+      // Separate successful and failed results
+      const allBeats: string[] = [];
+      const failedCount = { count: 0 };
+
+      for (const [idx, resultJson] of Object.entries(mapResults)) {
+        try {
+          const parsed = JSON.parse(resultJson);
+          if (parsed._error) {
+            failedCount.count++;
+          } else if (parsed.beats) {
+            allBeats.push(parsed.beats);
+          }
+        } catch {
+          failedCount.count++;
+        }
+      }
+
+      console.log(`[AudioJob] Finalization: ${allBeats.length} beat extractions collected, ${failedCount.count} failed chunks`);
+
+      if (allBeats.length === 0) {
+        throw new Error('No successful beat extractions from any chunk');
+      }
+
+      // Update status
+      await ctx.runMutation(internal.jobs.helpers.updateAudioOverviewStatus, {
+        audioOverviewId,
+        status: 'generating',
+        metadata: {
+          phase: 'collapsing',
+          progress: 50,
+          currentStep: 'Consolidating content...',
+        },
+      });
+
+      // Collapse outputs
+      const collapsedOutputs = await recursiveCollapse(allBeats, CONFIG.REDUCE_CHUNK_SIZE_TOKENS / 2);
+      const combined = collapsedOutputs.join('\n\n---\n\n');
+
+      console.log(`[AudioJob] Collapsed ${allBeats.length} outputs to ${collapsedOutputs.length} chunks`);
+
+      // Update status for script writing
+      await ctx.runMutation(internal.jobs.helpers.updateAudioOverviewStatus, {
+        audioOverviewId,
+        status: 'generating',
+        metadata: {
+          phase: 'writing_script',
+          progress: 55,
+          currentStep: 'Writing dialogue script...',
+        },
+      });
+
+      // Write dialogue script
+      const llm = createReduceLLM();
+      const audioType: AudioType = 'deep_dive';
+      const length: AudioLength = 'default';
+      const targetLines = TARGET_LINE_COUNTS[length];
+
+      let fullDialogueScript: DialogueLine[] = [];
+      const numChunks = Math.ceil(targetLines / DIALOGUE_CHUNK_SIZE);
+      const coveredExamples = new Set<string>();
+
+      for (let chunkIdx = 0; chunkIdx < numChunks; chunkIdx++) {
+        const linesThisChunk = Math.min(DIALOGUE_CHUNK_SIZE, targetLines - (chunkIdx * DIALOGUE_CHUNK_SIZE));
+
+        let coveredTopicsPrompt = '';
+        if (chunkIdx > 0 && coveredExamples.size > 0) {
+          coveredTopicsPrompt = buildCoveredTopicsPrompt(Array.from(coveredExamples));
+        }
+
+        const previousDialogue = chunkIdx > 0
+          ? `\n\nRECENT DIALOGUE (for continuity):\n${fullDialogueScript.slice(-4).map(l => `${l.speaker}: ${l.text}`).join('\n')}\n`
+          : '';
+
+        const chunkPrompt = getReducePrompt({
+          content: combined + previousDialogue,
+          audioType,
+          length,
+          focus: 'general overview',
+          targetLines: linesThisChunk,
+          coveredTopicsPrompt,
+        });
+
+        console.log(`[AudioJob] Writing script chunk ${chunkIdx + 1}/${numChunks}`);
+
+        const response = await invokeWithRetry(
+          () => invokeWithTimeout(
+            () => (llm as any).invoke([
+              new SystemMessage(REDUCE_SYSTEM_PROMPT),
+              new HumanMessage(chunkPrompt),
+            ], createLangSmithRunConfig({
+              runName: 'AudioJob.WriteScript',
+              tags: ['agent', 'audio-overview', 'reduce'],
+              metadata: {
+                chunkIndex: chunkIdx + 1,
+                totalChunks: numChunks,
+              },
+            })),
+            CONFIG.REDUCE_TIMEOUT_MS,
+            'AudioReduce'
+          ),
+          { maxAttempts: 2, baseDelayMs: 1000 },
+          'AudioReduce'
+        );
+
+        const responseText = String((response as any).content);
+        const jsonStart = responseText.indexOf('[');
+        const jsonEnd = responseText.lastIndexOf(']');
+
+        if (jsonStart !== -1 && jsonEnd !== -1) {
+          try {
+            const chunkDialogue = JSON.parse(responseText.substring(jsonStart, jsonEnd + 1)) as DialogueLine[];
+            if (Array.isArray(chunkDialogue) && chunkDialogue.length > 0) {
+              fullDialogueScript = fullDialogueScript.concat(chunkDialogue);
+            }
+          } catch (e) {
+            console.log(`[AudioJob] Failed to parse chunk ${chunkIdx + 1}`);
+          }
+        }
+      }
+
+      if (fullDialogueScript.length === 0) {
+        fullDialogueScript = [
+          { speaker: 'host_a', text: "I've analyzed the content you provided." },
+          { speaker: 'host_b', text: 'What did you find most interesting?' },
+          { speaker: 'host_a', text: 'There were several key points worth discussing.' },
+        ];
+      }
+
+      console.log(`[AudioJob] Generated ${fullDialogueScript.length} dialogue lines`);
+
+      // Update status for audio synthesis
+      await ctx.runMutation(internal.jobs.helpers.updateAudioOverviewStatus, {
+        audioOverviewId,
+        status: 'generating',
+        metadata: {
+          phase: 'synthesizing',
+          progress: 70,
+          currentStep: 'Synthesizing audio...',
+        },
+      });
+
+      // Synthesize audio using OpenAI TTS
+      const openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
+      const results: { index: number; buffer: Buffer | null }[] = [];
+      const BATCH_SIZE = 5;
+
+      for (let i = 0; i < fullDialogueScript.length; i += BATCH_SIZE) {
+        const batchLines = fullDialogueScript.slice(i, i + BATCH_SIZE);
+
+        const batchPromises = batchLines.map(async (line, batchIdx) => {
+          const globalIndex = i + batchIdx;
+          const voice = (line.speaker === 'host_a' ? VOICES.host_a : VOICES.host_b) as "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer";
+
+          try {
+            const mp3 = await Promise.race([
+              openai.audio.speech.create({
+                model: 'tts-1',
+                voice,
+                input: line.text,
+                response_format: 'mp3',
+              }),
+              new Promise<never>((_, reject) =>
+                setTimeout(() => reject(new Error('TTS timeout')), CONFIG.TTS_TIMEOUT_MS)
+              ),
+            ]);
+
+            const buffer = Buffer.from(await mp3.arrayBuffer());
+            return { index: globalIndex, buffer };
+          } catch (error) {
+            console.log(`[AudioJob] Failed line ${globalIndex + 1}`);
+            return { index: globalIndex, buffer: null };
+          }
+        });
+
+        const batchResults = await Promise.all(batchPromises);
+        results.push(...batchResults);
+      }
+
+      const sortedBuffers = results
+        .sort((a, b) => a.index - b.index)
+        .map(r => r.buffer)
+        .filter((b): b is Buffer => b !== null);
+
+      const successCount = sortedBuffers.length;
+
+      if (successCount < fullDialogueScript.length * 0.5) {
+        throw new Error(`Too many synthesis failures: ${successCount}/${fullDialogueScript.length}`);
+      }
+
+      const audioBuffer = Buffer.concat(sortedBuffers);
+      console.log(`[AudioJob] Audio synthesis complete: ${successCount} lines, ${audioBuffer.length} bytes`);
+
+      // Update status for uploading
+      await ctx.runMutation(internal.jobs.helpers.updateAudioOverviewStatus, {
+        audioOverviewId,
+        status: 'generating',
+        metadata: {
+          phase: 'uploading',
+          progress: 90,
+          currentStep: 'Uploading audio...',
+        },
+      });
+
+      // Upload to Convex storage
+      const blob = new Blob([audioBuffer], { type: 'audio/mpeg' });
       const storageId = await ctx.storage.store(blob);
       const audioUrl = await ctx.storage.getUrl(storageId);
+
       if (!audioUrl) {
         throw new Error('Failed to get Convex storage URL for audio');
       }
 
-      // Build transcript from dialogue script (graph returns dialogueScript, not transcript)
-      const transcript =
-        (result as { transcript?: string }).transcript ??
-        (result.dialogueScript as { text: string }[] | undefined)
-          ?.map((l) => l.text)
-          .join('\n') ??
-        '';
+      console.log(`[AudioJob] Audio uploaded: ${audioUrl}`);
 
-      // Generate title from first chunk
+      // Build transcript
+      const transcript = fullDialogueScript.map(l => l.text).join('\n');
+
+      // Generate title
       let title = 'Audio Overview';
-      if (chunks.length > 0) {
-        try {
-          title = await ctx.runAction(internal.titleGenerator.generateTitle, {
-            chunk: chunks[0],
-          });
-        } catch (error) {
-          console.error('[AudioOverviewGenerationJob] Title generation failed:', error);
-          // Fall back to default title
-          title = 'Audio Overview';
-        }
+      try {
+        title = await ctx.runAction(internal.titleGenerator.generateTitle, {
+          chunk: combined.substring(0, 2000),
+        });
+      } catch (e) {
+        console.log('[AudioJob] Title generation failed, using default');
       }
 
       // Save results
@@ -105,25 +718,43 @@ export const audioOverviewGeneration = internalAction({
         transcript,
         metadata: {
           title,
-          ...(result.metadata ?? {}),
           phase: 'completed',
+          progress: 100,
           completedAt: Date.now(),
+          mapSuccessCount: Object.keys(mapResults).length - failedCount.count,
+          mapFailedCount: failedCount.count,
+          dialogueLines: successCount,
         },
       });
 
-      console.log('[AudioOverviewGenerationJob] Completed:', {
-        audioOverviewId,
-        audioUrl,
-      });
-    } catch (error) {
-      console.error('[AudioOverviewGenerationJob] Error:', error);
+      // Clear intermediate data
+      await ctx.runMutation(internal.jobs.helpers.clearAudioOverviewMapData, { audioOverviewId });
 
-      // Mark as failed
+      logger.jobComplete({
+        title,
+        audioUrl,
+        transcriptLength: transcript.length,
+        mapSuccess: Object.keys(mapResults).length - failedCount.count,
+        mapFailed: failedCount.count,
+      });
+
+    } catch (error) {
+      const errorMeta = createErrorMetadata(error, 'finalization');
+
+      logger.jobError(error, {
+        phase: 'finalization',
+        errorType: errorMeta.type,
+        retryable: errorMeta.retryable,
+      });
+
       await ctx.runMutation(internal.jobs.helpers.markAudioOverviewFailed, {
         audioOverviewId,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: errorMeta.message,
         metadata: {
           phase: 'failed',
+          errorPhase: 'finalization',
+          errorType: errorMeta.type,
+          retryable: errorMeta.retryable,
           failedAt: Date.now(),
         },
       });

@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query, internalMutation } from "./_generated/server";
+import { mutation, query, internalMutation, internalQuery } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { getAuthUserId } from "./auth";
 import * as Notebooks from "./model/notebooks";
@@ -22,6 +22,16 @@ export const get = query({
     const spreadsheet = await Spreadsheets.getSpreadsheet(ctx, args.id);
     if (!spreadsheet || spreadsheet.userId !== userId) return null;
     return spreadsheet;
+  },
+});
+
+/**
+ * Internal: Get a spreadsheet by ID (for use by jobs)
+ */
+export const getInternal = internalQuery({
+  args: { id: v.id("spreadsheets") },
+  handler: async (ctx, args) => {
+    return await Spreadsheets.getSpreadsheet(ctx, args.id);
   },
 });
 

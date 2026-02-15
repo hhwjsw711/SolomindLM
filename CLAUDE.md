@@ -61,6 +61,7 @@ bun run convex:env:push:dry    # Dry run for env push
 - `features/notebooks/` - Notebook management
 - `features/sources/` - Source discovery and management
 - `features/studio/` - AI generation tools (reports, flashcards, quizzes, mind maps, audio, slides, spreadsheets)
+- `features/studio/components/views/` - View components for each content type (ReportView, FlashcardView, QuizView, etc.)
 
 **Path aliases (tsconfig.json):**
 - `@/*` → `./src/*`
@@ -74,6 +75,7 @@ bun run convex:env:push:dry    # Dry run for env push
 - `@convex-dev/persistent-text-streaming` - Streaming responses
 - `@convex-dev/action-cache` - Action caching
 - `@convex-dev/rate-limiter` - Rate limiting
+- `@convex-dev/workpool` - Background job scheduling
 
 **Schema key tables:**
 - `notebooks` - Research notebook containers
@@ -81,10 +83,17 @@ bun run convex:env:push:dry    # Dry run for env push
 - `documents` - Source files/URLs with status tracking
 - `documentChunks` - Vector search chunks (1536 dimensions) for RAG
 - `reports`, `audioOverviews`, `flashcards`, `quizzes` - Generated content
+- `slides`, `spreadsheets`, `writtenQuestions` - Additional generated content
+- `conversations`, `messages` - Chat history with RAG citations
+- `notes` - Saved chat conversations and manual user notes
+- `stripeSubscriptions`, `stripePaymentHistory` - Billing state
+- `cacheVersions`, `cacheMetrics` - Agent cache invalidation tracking
 
 **Directory structure:**
 - `jobs/` - Background generation jobs (10 job types: reports, flashcards, quizzes, mind maps, audio, slides, spreadsheets, written questions, doc embedding)
 - `lib/` - AI agents and processing utilities
+- `lib/agents/` - LangGraph-based agents (one per generation type: `*Graph.ts`)
+- `lib/agents/shared/` - Shared utilities: LLM factory, retry, timeout, validation, sanitization
 - `model/` - Data models
 - `storage/` - Vector store, chat history
 - `*.ts` - Functions, schema, mutations, auth config
@@ -114,6 +123,8 @@ bun run convex:env:push:dry    # Dry run for env push
 3. Streaming via persistent text streaming
 4. Content delivery when complete
 
+**Note:** Jobs are scheduled directly via `ctx.scheduler.runAfter()` from mutations, not via a jobs table.
+
 ## Environment Setup
 
 **Required:** Bun 1.2+ runtime
@@ -139,3 +150,5 @@ bun run convex:env:push:dry    # Dry run for env push
 - **No linting/tests configured** - Typecheck is the primary validation
 - **Port management:** `bun run dev:web` automatically kills existing processes on port 5173 via kill-port script
 - **Convex URLs:** Dev and prod use different deployment URLs - ensure `.env.local` uses dev URLs locally, while production hosting (Vercel) uses prod URLs
+- **TypeScript strict mode disabled** - `strict: false` in web tsconfig; rely on typecheck rather than strict null checks
+- **Agent caching** - Agent results are cached; increment version in `cacheVersions` table when prompts change to invalidate cache

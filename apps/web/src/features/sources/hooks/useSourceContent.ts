@@ -1,5 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useDocumentContent } from '../services/documentsApi';
+import { useAuth } from '@/features/auth/AuthContext';
 import { Source } from '@/shared/types';
 
 interface UseSourceContentResult {
@@ -33,6 +34,14 @@ export function useSourceContent(): UseSourceContentResult {
   const [contentCache, setContentCache] = useState<Record<string, string>>({});
   const [contentErrors, setContentErrors] = useState<Record<string, string>>({});
   const [loadingContentId, setLoadingContentId] = useState<string | null>(null);
+  const { user } = useAuth();
+
+  // Clear cache on user change for isolation
+  useEffect(() => {
+    setContentCache({});
+    setContentErrors({});
+    setLoadingContentId(null);
+  }, [user?.id]);
 
   // Normalize newlines so markdown parses correctly (e.g. \r\n -> \n; preserve structure)
   const normalizeContentNewlines = (raw: string) =>
@@ -54,7 +63,7 @@ export function useSourceContent(): UseSourceContentResult {
   };
 
   // Copy source markdown to clipboard
-  const handleCopySourceMarkdown = async (sourceId: string, sourceTitle: string) => {
+  const handleCopySourceMarkdown = async (sourceId: string, _sourceTitle: string) => {
     const markdownContent = contentCache[sourceId];
     if (!markdownContent) return;
 

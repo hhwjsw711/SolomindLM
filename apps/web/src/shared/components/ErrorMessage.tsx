@@ -1,4 +1,3 @@
-import React from 'react';
 import { AlertCircle, XCircle, RefreshCw } from 'lucide-react';
 
 interface ErrorMessageProps {

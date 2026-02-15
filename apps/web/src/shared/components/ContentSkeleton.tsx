@@ -1,5 +1,3 @@
-import React from 'react';
-
 interface ContentSkeletonProps {
   lines?: number;
   className?: string;

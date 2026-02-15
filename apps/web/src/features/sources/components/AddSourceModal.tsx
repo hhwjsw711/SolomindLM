@@ -22,14 +22,14 @@ interface AddSourceModalProps {
   userId?: string | null;
   noteId?: string | null;
   isUploading?: boolean;
-  fileInputRef?: React.RefObject<HTMLInputElement>;
+  fileInputRef?: React.RefObject<HTMLInputElement | null>;
   onFileSelect?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export const AddSourceModal: React.FC<AddSourceModalProps> = ({
   isOpen,
   onClose,
-  onFileUpload,
+  onFileUpload: _onFileUpload,
   onUrlClick,
   onSocialMediaClick,
   onTextClick,
@@ -42,7 +42,7 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
   sourcesCount,
   userId,
   noteId,
-  isUploading = false,
+  isUploading: _isUploading = false,
   fileInputRef,
   onFileSelect,
 }) => {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, XCircle, Save } from 'lucide-react';
+import { X, Save } from 'lucide-react';
 import { Note, isReportNote, isFlashcardNote, isQuizNote, isMindMapNote, isAudioNote, isWrittenQuestionsNote, isSlideDeckNote, isSpreadsheetNote, isUserNote } from '@/shared/types/index';
 import { ReportView } from './views/ReportView';
 import { FlashcardView } from './views/FlashcardView';
@@ -156,7 +156,9 @@ export const ActiveNoteView: React.FC<ActiveNoteViewProps> = ({
           <div>
             <h3 className="text-lg font-semibold text-destructive">Generation Failed</h3>
             <p className="text-sm text-muted-foreground mt-1">
-              {activeNote.metadata.error || 'An error occurred while generating the audio overview'}
+              {typeof activeNote.metadata.error === 'object'
+                ? (activeNote.metadata.error as { message?: string }).message || 'An error occurred while generating the audio overview'
+                : activeNote.metadata.error || 'An error occurred while generating the audio overview'}
             </p>
           </div>
         </div>

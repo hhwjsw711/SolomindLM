@@ -76,7 +76,7 @@ export function useUpdateDocument() {
       localStore.setQuery(
         api.documents.list,
         {},
-        listResult.map(doc =>
+        listResult.map((doc: { _id: string; [key: string]: unknown }) =>
           doc._id === id
             ? { ...doc, fileName: title }
             : doc
@@ -111,7 +111,7 @@ export function useDeleteDocument() {
       localStore.setQuery(
         api.documents.list,
         {},
-        listResult.filter(doc => doc._id !== args.id)
+        listResult.filter((doc: { _id: string }) => doc._id !== args.id)
       );
     }
 

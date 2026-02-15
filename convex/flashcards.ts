@@ -1,8 +1,18 @@
 import { v } from "convex/values";
-import { mutation, query, internalMutation } from "./_generated/server";
+import { mutation, query, internalMutation, internalQuery } from "./_generated/server";
 import { getAuthUserId } from "./auth";
 import * as Notebooks from "./model/notebooks";
 import * as Flashcards from "./model/flashcards";
+
+/**
+ * Internal: Get a flashcard set by ID (for use by jobs)
+ */
+export const getInternal = internalQuery({
+  args: { id: v.id("flashcards") },
+  handler: async (ctx, args) => {
+    return await Flashcards.getFlashcard(ctx, args.id);
+  },
+});
 
 /**
  * List all flashcards for a notebook

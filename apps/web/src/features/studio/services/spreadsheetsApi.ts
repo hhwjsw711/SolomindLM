@@ -1,4 +1,4 @@
-import type { Note, SpreadsheetNote } from '@/shared/types/index';
+import type { SpreadsheetNote } from '@/shared/types/index';
 import { useQuery, useMutation, useAction } from 'convex/react';
 import { api } from '@convex/_generated/api';
 import type { Id } from '@convex/_generated/dataModel';
@@ -144,7 +144,7 @@ export function useRenameSpreadsheet() {
         localStore.setQuery(
           api.spreadsheets.list,
           { notebookId: spreadsheet.notebookId },
-          listResult.map(ss =>
+          listResult.map((ss: { _id: string; [key: string]: unknown }) =>
             ss._id === id
               ? { ...ss, title }
               : ss
@@ -176,7 +176,7 @@ export function useDeleteSpreadsheet() {
         localStore.setQuery(
           api.spreadsheets.list,
           { notebookId: spreadsheet.notebookId },
-          listResult.filter(ss => ss._id !== args.id)
+          listResult.filter((ss: { _id: string }) => ss._id !== args.id)
         );
       }
     }

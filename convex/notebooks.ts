@@ -1,6 +1,6 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
-import type { Doc } from "./_generated/dataModel";
+import { mutation, query, internalQuery } from "./_generated/server";
+import type { Doc, Id } from "./_generated/dataModel";
 import { getAuthUserId } from "./auth";
 import { checkNotebookLimit } from "./lib/limits";
 import * as Notebooks from "./model/notebooks";
@@ -40,6 +40,23 @@ export const list = query({
     if (!userId) return [];
 
     const notebooks = await Notebooks.getUserNotebooks(ctx, userId);
+    const notebooksWithCounts = await Promise.all(
+      notebooks.map(async (notebook) => {
+        const sourceCount = await Notebooks.getDocumentCountByNotebook(ctx, notebook._id);
+        return toNotebookDTO(notebook, sourceCount);
+      })
+    );
+    return notebooksWithCounts;
+  },
+});
+
+/**
+ * Internal: Get notebooks for a specific user (for caching)
+ */
+export const listInternal = internalQuery({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const notebooks = await Notebooks.getUserNotebooks(ctx, args.userId);
     const notebooksWithCounts = await Promise.all(
       notebooks.map(async (notebook) => {
         const sourceCount = await Notebooks.getDocumentCountByNotebook(ctx, notebook._id);

@@ -50,7 +50,7 @@ export const StudioPanelHeader: React.FC<StudioPanelHeaderProps> = ({
   onDownloadUserNote,
   canCopyOrDownload,
   canCopyOrDownloadUserNote,
-  canExportFlashcards,
+  canExportFlashcards: _canExportFlashcards,
   canDownloadSpreadsheet,
   isExporting,
   isMobile,

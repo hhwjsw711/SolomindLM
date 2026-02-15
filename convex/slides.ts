@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query, internalMutation } from "./_generated/server";
+import { mutation, query, internalMutation, internalQuery } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { getAuthUserId } from "./auth";
 import { checkDailyLimit } from "./lib/limits";
@@ -24,6 +24,16 @@ export const get = query({
     const slideDeck = await Slides.getSlideDeck(ctx, args.id);
     if (!slideDeck || slideDeck.userId !== userId) return null;
     return slideDeck;
+  },
+});
+
+/**
+ * Internal: Get a slide deck by ID (for use by jobs)
+ */
+export const getInternal = internalQuery({
+  args: { id: v.id("slides") },
+  handler: async (ctx, args) => {
+    return await Slides.getSlideDeck(ctx, args.id);
   },
 });
 

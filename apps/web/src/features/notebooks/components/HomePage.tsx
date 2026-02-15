@@ -27,7 +27,7 @@ interface HomePageProps {
   onSelectFolder: (folderId: string) => void;
   onCreateNotebook: () => void;
   onUpdateNotebook: (id: string, updates: Partial<NotebookItem>) => void;
-  onDeleteNotebook: (id: string) => void;
+  onDeleteNotebook?: (id: string) => void;
   folders?: FolderItem[];
   onCreateFolder?: () => void;
   onUpdateFolder?: (id: string, updates: Partial<FolderItem>) => void;
@@ -41,11 +41,11 @@ export const HomePage: React.FC<HomePageProps> = ({
   recentNotebooks,
   onSelectNotebook,
   onSelectFolder,
-  onCreateNotebook,
+  onCreateNotebook: _onCreateNotebook,
   onUpdateNotebook,
   onDeleteNotebook,
   folders = [],
-  onCreateFolder,
+  onCreateFolder: _onCreateFolder,
   onUpdateFolder,
   onDeleteFolder,
   onMoveNotebookToFolder,
@@ -57,11 +57,13 @@ export const HomePage: React.FC<HomePageProps> = ({
   // Limit error handling
   const { handleLimitError } = useLimitErrorToast();
 
+  const deleteNotebookHandler: (id: string) => void = onDeleteNotebook ?? ((_id: string) => {});
+
   // Custom hooks for state and handlers
   const notebookHandlers = useNotebookHandlers({
     notebooks: recentNotebooks,
     onUpdateNotebook,
-    onDeleteNotebook,
+    onDeleteNotebook: deleteNotebookHandler,
   });
 
   const folderHandlers = useFolderHandlers({
@@ -71,9 +73,9 @@ export const HomePage: React.FC<HomePageProps> = ({
 
   // Convex hooks for mutations
   const createNotebookHook = useCreateNotebook();
-  const updateNotebookHook = useUpdateNotebook();
+  useUpdateNotebook();
   const createFolderHook = useCreateFolder();
-  const updateFolderHook = useUpdateFolder();
+  useUpdateFolder();
 
   // Handlers for creating notebooks and folders via modal
   const handleCreateNotebookFromModal = async (data: NotebookCreateData) => {
@@ -273,12 +275,12 @@ export const HomePage: React.FC<HomePageProps> = ({
               activeMenuId={notebookHandlers.activeMenuId}
               onOpenCustomize={notebookHandlers.openCustomize}
               onOpenMoveToFolder={notebookHandlers.openMoveToFolder}
-              onDeleteNotebook={onDeleteNotebook}
+              onDeleteNotebook={deleteNotebookHandler}
               setActiveMenuId={notebookHandlers.setActiveMenuId}
               // Folder handlers
               folderActiveMenuId={folderHandlers.folderActiveMenuId}
               onOpenFolderCustomize={folderHandlers.openFolderCustomize}
-              onDeleteFolder={onDeleteFolder}
+              onDeleteFolder={onDeleteFolder ?? ((_id: string) => {})}
               setFolderActiveMenuId={folderHandlers.setFolderActiveMenuId}
               // Sorting
               getSortedNotebooks={getSortedNotebooks}

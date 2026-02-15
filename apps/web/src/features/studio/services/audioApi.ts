@@ -1,4 +1,4 @@
-import type { Note, AudioOverviewNote } from '@/shared/types/index';
+import type { AudioOverviewNote } from '@/shared/types/index';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@convex/_generated/api';
 import type { Id } from '@convex/_generated/dataModel';

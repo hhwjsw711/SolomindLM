@@ -1,4 +1,4 @@
-import type { Note, ReportNote } from '@/shared/types/index';
+import type { ReportNote } from '@/shared/types/index';
 import { getReportSubtitle, normalizeReportTypeId } from '@/shared/types/reportTypes';
 import { useQuery, useMutation, useAction } from 'convex/react';
 import { api } from '@convex/_generated/api';
@@ -126,7 +126,7 @@ export function useUpdateReport() {
           localStore.setQuery(
             api.reports.list,
             { notebookId: report.notebookId },
-            listResult.map(r => (r._id === id ? { ...r, title } : r))
+            listResult.map((r: { _id: string; [key: string]: unknown }) => (r._id === id ? { ...r, title } : r))
           );
         }
       }
@@ -155,7 +155,7 @@ export function useDeleteReport() {
         localStore.setQuery(
           api.reports.list,
           { notebookId: report.notebookId },
-          listResult.filter(r => r._id !== args.id)
+          listResult.filter((r: { _id: string }) => r._id !== args.id)
         );
       }
     }

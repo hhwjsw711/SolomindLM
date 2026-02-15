@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query, internalMutation } from "./_generated/server";
+import { mutation, query, internalMutation, internalQuery } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { getAuthUserId } from "./auth";
 import * as WrittenQuestions from "./model/writtenQuestions";
@@ -21,6 +21,16 @@ export const get = query({
     const writtenQuestion = await WrittenQuestions.getWrittenQuestion(ctx, args.id);
     if (!writtenQuestion || writtenQuestion.userId !== userId) return null;
     return writtenQuestion;
+  },
+});
+
+/**
+ * Internal: Get written questions by ID (for use by jobs)
+ */
+export const getInternal = internalQuery({
+  args: { id: v.id("writtenQuestions") },
+  handler: async (ctx, args) => {
+    return await WrittenQuestions.getWrittenQuestion(ctx, args.id);
   },
 });
 

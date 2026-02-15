@@ -164,7 +164,7 @@ export const SourceViewer: React.FC<SourceViewerProps> = ({
                 <MarkdownRenderer
                   components={{
                     img: () => null,
-                    a: ({ node, children, ...props }) => <span className="text-foreground">{children}</span>,
+                    a: ({ children }) => <span className="text-foreground">{children}</span>,
                     video: () => null,
                     audio: () => null,
                     iframe: () => null,

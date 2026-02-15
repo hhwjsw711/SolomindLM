@@ -30,7 +30,7 @@ export const generateTitle = internalAction({
     });
 
     const promptTemplate = PromptTemplate.fromTemplate(
-      "Generate a concise, descriptive title (max 10 words) for this document chunk:\n\n{chunk}\n\nTitle:"
+      "Generate a single, concise title (max 10 words) for the following content. Output ONLY the title with no preamble, no list, no introduction, and no quotation marks.\n\nContent:\n{chunk}\n\nTitle:"
     );
 
     try {

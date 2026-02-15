@@ -38,7 +38,7 @@ export const FeaturesGrid: React.FC = () => {
     return (
       <div
         key={feature.id}
-        className="group flex-shrink-0 w-[280px] h-[220px] rounded-2xl bg-card border border-border shadow-sm p-6 flex flex-col items-center justify-center text-center mx-3"
+        className="group flex-shrink-0 w-[300px] min-h-[220px] rounded-2xl bg-card border border-border shadow-sm p-12 flex flex-col items-center justify-center text-center mx-4"
       >
         <Icon className={`w-10 h-10 flex-shrink-0 ${colorClass} mb-2 group-hover:scale-105 transition-transform duration-300`} />
         <h3 className="text-lg font-sans font-bold text-foreground mb-1 line-clamp-1">
@@ -57,7 +57,7 @@ export const FeaturesGrid: React.FC = () => {
   const marqueeClass = "[mask-image:linear-gradient(to_right,transparent,black_64px,black_calc(100%-64px),transparent)]";
 
   return (
-    <section id="features" className="py-32 px-6 overflow-hidden">
+    <section id="features" className="py-32 md:py-40 px-6 overflow-hidden">
       <div className="max-w-[1500px] w-full mx-auto">
         {/* Section Header */}
         <div className="text-center mb-16">
@@ -89,7 +89,7 @@ export const FeaturesGrid: React.FC = () => {
           gradient
           gradientColor="var(--background)"
           gradientWidth={64}
-          className={`mt-4 ${marqueeClass}`}
+          className={`mt-6 ${marqueeClass}`}
         >
           {featureCardsRow2}
         </Marquee>
