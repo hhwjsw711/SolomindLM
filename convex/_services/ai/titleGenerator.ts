@@ -4,7 +4,7 @@ import { v } from "convex/values";
 
 /**
  * Generate a title for content based on a text chunk
- * This action uses Together AI's meta-llama/Llama-3.2-3B-Instruct-Turbo model
+ * This action uses env.FAST_LLM (Together AI) with reasoning disabled.
  */
 export const generateTitle = internalAction({
   args: {
@@ -19,25 +19,22 @@ export const generateTitle = internalAction({
       throw new Error("TOGETHER_AI_API_KEY environment variable is not set");
     }
 
-    // Import the LLM classes directly to avoid circular dependencies
-    const { PromptTemplate } = await import("@langchain/core/prompts");
-    const { ChatTogetherAI } = await import("@langchain/community/chat_models/togetherai");
+    const { uncachedLlmCall } = await import("../../_agents/_shared/cachedLlm");
+    const { env } = await import("../../_lib/env");
 
-    const llm = new ChatTogetherAI({
-      apiKey,
-      model: args.model || "meta-llama/Llama-3.2-3B-Instruct-Turbo",
-      temperature: 0.3,
-    });
-
-    const promptTemplate = PromptTemplate.fromTemplate(
-      "Generate a single, concise title (max 10 words) for the following content. Output ONLY the title with no preamble, no list, no introduction, and no quotation marks.\n\nContent:\n{chunk}\n\nTitle:"
-    );
+    const model = args.model || env.FAST_LLM;
+    const prompt = `Generate a single, concise title (max 10 words) for the following content. Output ONLY the title with no preamble, no list, no introduction, and no quotation marks.\n\nContent:\n${args.chunk}\n\nTitle:`;
 
     try {
-      const prompt = await promptTemplate.format({ chunk: args.chunk });
-      const response = await llm.invoke(prompt);
-      let title = response.content.toString().trim();
-      // Remove quotation marks from the start and end of the title
+      const response = await uncachedLlmCall({
+        model,
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.3,
+        maxTokens: 30,
+        reasoningEnabled: false,
+        toolChoice: "none",
+      });
+      let title = response.content.trim();
       title = title.replace(/^["']|["']$/g, "");
       console.log("[TitleGenerator] Generated title:", title);
       return title;

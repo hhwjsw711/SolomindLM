@@ -26,7 +26,7 @@ import {
 
 // Import from local modules
 import { OverallState, type OverallStateType, type ChunkProcessState } from './state.js';
-import { MAP_PROMPTS, REDUCE_PROMPTS, MAP_SYSTEM_PROMPT, COLLAPSE_SYSTEM_PROMPT, REDUCE_SYSTEM_PROMPT } from './prompts.js';
+import { MAP_PROMPTS, REDUCE_PROMPTS, COLLAPSE_PROMPTS, MAP_SYSTEM_PROMPT, COLLAPSE_SYSTEM_PROMPT, REDUCE_SYSTEM_PROMPT } from './prompts.js';
 
 // ============================================================
 // CONFIGURATION
@@ -151,6 +151,7 @@ export class ReportGraph {
       temperature: 0.3,
       timeout: GRAPH_CONFIG.MAP_TIMEOUT_MS,
       maxTokens: parseInt(env.REPORT_MAP_MAX_OUTPUT_TOKENS || '8192', 10),
+      modelKwargs: { chat_template_kwargs: { thinking: false } },
     });
 
     // Smart model for reduce/merge phases (quality writing and synthesis)
@@ -841,7 +842,7 @@ IMPORTANT: Respond with a JSON object containing:
     console.log(`[ReportGraph] Collapse: total tokens ${totalTokens}`);
 
     console.log('[ReportGraph] Collapse: performing recursive collapse');
-    const collapsed = await this.recursiveCollapse(summaries);
+    const collapsed = await this.recursiveCollapse(summaries, state.customPrompt);
 
     // Calculate memory freed before clearing
     const mapOutputsSize = state.mapOutputs.reduce((sum, s) => sum + s.length * 2, 0);
@@ -861,7 +862,7 @@ IMPORTANT: Respond with a JSON object containing:
     };
   }
 
-  private async recursiveCollapse(summaries: string[]): Promise<string[]> {
+  private async recursiveCollapse(summaries: string[], customPrompt?: string): Promise<string[]> {
     if (summaries.length <= 3) {
       return summaries;
     }
@@ -888,24 +889,24 @@ IMPORTANT: Respond with a JSON object containing:
     const collapsed = await allWithConcurrency(
       groups.map((group, idx) => {
         console.log(`[ReportGraph] Collapsing group ${idx + 1}/${groups.length} (${group.length} summaries)`);
-        return () => this.collapseGroup(group);
+        return () => this.collapseGroup(group, customPrompt);
       }),
       concurrency
     );
 
-    return this.recursiveCollapse(collapsed);
+    return this.recursiveCollapse(collapsed, customPrompt);
   }
 
-  private async collapseGroup(group: string[]): Promise<string> {
+  private async collapseGroup(group: string[], customPrompt?: string): Promise<string> {
     const combined = group.join('\n\n---\n\n');
 
-    const prompt = `Condense these summaries while PRESERVING the structured format.
-Keep the "Main Topics:" section intact with all topic listings.
-Only condense the detailed explanations while maintaining the overall structure.
-
-${combined}
-
-CONDENSED (maintain topic structure and "Main Topics:" format):`;
+    // Use custom collapse template when customPrompt is provided, otherwise use default
+    const collapseTemplate = (customPrompt && customPrompt.trim())
+      ? COLLAPSE_PROMPTS['custom']
+      : COLLAPSE_PROMPTS['default'];
+    const prompt = collapseTemplate
+      .replace('{content}', combined)
+      .replace('{customPrompt}', this.sanitizeUserInput(customPrompt || ''));
 
     const response = await this.invokeWithRetry(
       () => this.invokeWithTimeout(

@@ -91,6 +91,7 @@ export function createLLMs(config: LLMConfig): LLMInstances {
     model: config.mapModel,
     temperature: config.temperatures?.map ?? 0.3,
     maxTokens: config.maxTokens?.map,
+    modelKwargs: { chat_template_kwargs: { thinking: false } },
   });
 
   // Smart model for reduce phase (quality synthesis, higher temp for creativity)
@@ -132,6 +133,7 @@ export function createLLM(config: Omit<LLMConfig, 'reduceModel' | 'temperatures'
     model: config.mapModel,
     temperature: config.temperatures ?? 0.3,
     maxTokens: config.maxTokens,
+    modelKwargs: { chat_template_kwargs: { thinking: false } },
   });
 }
 

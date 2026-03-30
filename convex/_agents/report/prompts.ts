@@ -131,6 +131,32 @@ METHODOLOGY:`,
 };
 
 // ============================================================
+// COLLAPSE PROMPTS
+// ============================================================
+
+export const COLLAPSE_PROMPTS: Record<string, string> = {
+  default: `Condense these summaries while PRESERVING the structured format.
+Keep the "Main Topics:" section intact with all topic listings.
+Only condense the detailed explanations while maintaining the overall structure.
+
+{content}
+
+CONDENSED (maintain topic structure and "Main Topics:" format):`,
+
+  custom: `Condense these summaries while PRESERVING the structured format.
+Keep the "Main Topics:" section intact with all topic listings.
+Only condense the detailed explanations while maintaining the overall structure.
+
+The user has a custom focus area. When condensing, prioritize content related to this focus while still preserving other topics.
+
+User's Custom Focus: "{customPrompt}"
+
+{content}
+
+CONDENSED (maintain topic structure and "Main Topics:" format, prioritize custom focus):`,
+};
+
+// ============================================================
 // REDUCE PROMPTS
 // ============================================================
 

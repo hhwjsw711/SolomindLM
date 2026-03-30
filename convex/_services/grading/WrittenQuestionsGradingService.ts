@@ -47,6 +47,7 @@ export class WrittenQuestionsGradingService {
       apiKey: env.TOGETHER_AI_API_KEY,
       model: env.SMART_LLM || env.FAST_LLM,
       temperature: 0.3, // Lower temperature for more consistent grading
+      modelKwargs: { chat_template_kwargs: { thinking: false } },
     });
   }
 

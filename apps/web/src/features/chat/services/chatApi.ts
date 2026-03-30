@@ -1,8 +1,8 @@
 import { ReferenceChunk } from '@/shared/types/index';
-import { useQuery, useMutation, useConvexAuth } from 'convex/react';
+import { useQuery, useMutation, useAction, useConvexAuth } from 'convex/react';
 import { api } from '@convex/_generated/api';
 import type { Id } from '@convex/_generated/dataModel';
-import { useCallback } from 'react';
+import { useCallback, useState, useEffect, useRef, useMemo } from 'react';
 import { useAuthToken } from '@convex-dev/auth/react';
 
 // Convex HTTP actions use the .site URL. Derive from .cloud if only VITE_CONVEX_URL is set.
@@ -298,59 +298,87 @@ export function useSendMessage() {
       let buffer = '';
       let lastProcessedLength = 0;
       let completed = false;
+      let lastReferencesJson: string | null = null;
+      let lastToolCallJson: string | null = null;
+      let lastFollowUpsJson: string | null = null;
 
-      while (true) {
-        const { done, value } = await reader.read();
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
 
-        if (value) {
-          buffer += decoder.decode(value, { stream: true });
-        }
-
-        // Parse the current buffer for metadata markers (including final chunk when done)
-        const parsed = parseStreamBody(buffer);
-
-        // Only call onToken with new text since last processed
-        if (parsed.text.length > lastProcessedLength) {
-          const newText = parsed.text.slice(lastProcessedLength);
-          callbacks.onToken(newText);
-          lastProcessedLength = parsed.text.length;
-        }
-
-        // Handle metadata
-        if (parsed.references) {
-          callbacks.onReferences(parsed.references);
-        }
-        if (parsed.status) {
-          callbacks.onStatus?.(parsed.status.status, parsed.status.message);
-        }
-        if (parsed.toolCall) {
-          callbacks.onToolCall?.(parsed.toolCall);
-        }
-        if (parsed.followUps) {
-          callbacks.onFollowUps?.(parsed.followUps);
-        }
-        if (parsed.clarification) {
-          callbacks.onClarification?.(parsed.clarification.question);
-        }
-        if (parsed.groundingCheck) {
-          console.log('[Chat] Grounding check:', parsed.groundingCheck);
-        }
-        if (parsed.error) {
-          callbacks.onError(parsed.error);
-          return;
-        }
-        if (parsed.isDone) {
-          completed = true;
-          callbacks.onComplete();
-          return;
-        }
-
-        // Stream ended: ensure we always clear loading state even if __DONE wasn't in buffer
-        if (done) {
-          if (!completed) {
-            callbacks.onComplete();
+          if (value) {
+            buffer += decoder.decode(value, { stream: true });
           }
-          break;
+
+          // Parse the current buffer for metadata markers (including final chunk when done)
+          const parsed = parseStreamBody(buffer);
+
+          // Only call onToken with new text since last processed
+          if (parsed.text.length > lastProcessedLength) {
+            const newText = parsed.text.slice(lastProcessedLength);
+            callbacks.onToken(newText);
+            lastProcessedLength = parsed.text.length;
+          }
+
+          // Handle metadata (dedupe: parseStreamBody re-scans the full buffer every chunk)
+          if (parsed.references) {
+            const j = JSON.stringify(parsed.references);
+            if (j !== lastReferencesJson) {
+              lastReferencesJson = j;
+              callbacks.onReferences(parsed.references);
+            }
+          }
+          if (parsed.status) {
+            callbacks.onStatus?.(parsed.status.status, parsed.status.message);
+          }
+          if (parsed.toolCall) {
+            const j = JSON.stringify(parsed.toolCall);
+            if (j !== lastToolCallJson) {
+              lastToolCallJson = j;
+              callbacks.onToolCall?.(parsed.toolCall);
+            }
+          }
+          if (parsed.followUps) {
+            const j = JSON.stringify(parsed.followUps);
+            if (j !== lastFollowUpsJson) {
+              lastFollowUpsJson = j;
+              callbacks.onFollowUps?.(parsed.followUps);
+            }
+          }
+          if (parsed.clarification) {
+            callbacks.onClarification?.(parsed.clarification.question);
+          }
+          if (parsed.groundingCheck) {
+            console.log('[Chat] Grounding check:', parsed.groundingCheck);
+          }
+          if (parsed.error) {
+            callbacks.onError(parsed.error);
+            break;
+          }
+          if (parsed.isDone) {
+            completed = true;
+            callbacks.onComplete();
+            try {
+              await reader.cancel();
+            } catch {
+              /* stream may already be closed */
+            }
+            break;
+          }
+
+          // Stream ended: ensure we always clear loading state even if __DONE wasn't in buffer
+          if (done) {
+            if (!completed) {
+              callbacks.onComplete();
+            }
+            break;
+          }
+        }
+      } finally {
+        try {
+          reader.releaseLock();
+        } catch {
+          /* already released or locked by cancel */
         }
       }
     } catch (error) {
@@ -372,4 +400,65 @@ export function useSetMessageFeedback() {
       setFeedback({ messageId: messageId as Id<'messages'>, feedback }),
     [setFeedback]
   );
+}
+
+interface SourceSuggestionsResult {
+  summary: string | null;
+  suggestions: string[] | null;
+  isLoading: boolean;
+}
+
+export function useSourceSuggestions(
+  notebookId: string | null,
+  documents: any[]
+): SourceSuggestionsResult {
+  const [result, setResult] = useState<SourceSuggestionsResult>({
+    summary: null,
+    suggestions: null,
+    isLoading: false,
+  });
+  const fetchedSignatureRef = useRef<string | null>(null);
+
+  const sourceSuggestions = useAction(api.chat.sourceSuggestions.getSourceSuggestions);
+
+  const documentSignature = useMemo(() => {
+    const completed = documents.filter((d: any) => d.status === "completed");
+    return completed
+      .map((d: any) => `${d._id}:${d.fileName}:${d.wordCount ?? 0}:${d.totalChunks ?? 0}`)
+      .join("|");
+  }, [documents]);
+
+  useEffect(() => {
+    if (!notebookId || !documentSignature) {
+      setResult({ summary: null, suggestions: null, isLoading: false });
+      fetchedSignatureRef.current = null;
+      return;
+    }
+
+    // Skip if already fetched this signature
+    if (fetchedSignatureRef.current === documentSignature) return;
+    fetchedSignatureRef.current = documentSignature;
+
+    let cancelled = false;
+    setResult((prev) => ({ ...prev, isLoading: true }));
+
+    sourceSuggestions({
+      notebookId: notebookId as Id<"notebooks">,
+      documentSignature,
+    }).then((data: any) => {
+      if (cancelled) return;
+      setResult({
+        summary: data?.summary ?? null,
+        suggestions: data?.suggestions ?? null,
+        isLoading: false,
+      });
+    }).catch(() => {
+      if (cancelled) return;
+      setResult({ summary: null, suggestions: null, isLoading: false });
+    });
+
+    return () => { cancelled = true; };
+  }, [notebookId, documentSignature, sourceSuggestions]);
+
+  return result;
 }

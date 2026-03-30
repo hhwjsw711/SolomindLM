@@ -29,6 +29,15 @@ export interface LLMOptions {
   temperature: number;
   maxTokens?: number;
   responseFormat?: { type: "text" | "json_object" };
+  /**
+   * Together hybrid models (e.g. Qwen3.5-9B): set false so reasoning tokens do not
+   * consume the whole `max_tokens` budget and leave `message.content` empty.
+   */
+  reasoningEnabled?: boolean;
+  /**
+   * OpenAI-style. `"none"` prevents spurious tool_calls when no tools are provided.
+   */
+  toolChoice?: "none" | "auto" | "required";
 }
 
 export interface LLMResponse {
@@ -38,6 +47,86 @@ export interface LLMResponse {
     completionTokens: number;
     totalTokens: number;
   };
+}
+
+/** Normalize OpenAI-style message.content (string or multimodal parts) to plain text. */
+function messageContentToString(message: { content?: unknown } | undefined): string {
+  const c = message?.content;
+  if (c == null) return "";
+  if (typeof c === "string") return c;
+  if (Array.isArray(c)) {
+    return c
+      .map((part: unknown) => {
+        if (typeof part === "string") return part;
+        if (
+          part &&
+          typeof part === "object" &&
+          "text" in part &&
+          typeof (part as { text: unknown }).text === "string"
+        ) {
+          return (part as { text: string }).text;
+        }
+        return "";
+      })
+      .join("");
+  }
+  return "";
+}
+
+/**
+ * Best-effort assistant text from a Together / OpenAI-style chat completion choice.
+ * Some responses use legacy `text`; hybrid models may place a JSON payload only in `reasoning`.
+ */
+function togetherChoiceAssistantText(choice: any): string {
+  if (!choice) return "";
+  const msg = choice.message;
+  if (!msg) {
+    return typeof choice.text === "string" ? choice.text : "";
+  }
+  const fromMessage = messageContentToString(msg);
+  if (fromMessage.trim()) return fromMessage;
+  if (typeof choice.text === "string" && choice.text.trim()) return choice.text;
+  const reasoning = (msg as { reasoning?: unknown }).reasoning;
+  if (typeof reasoning === "string" && reasoning.trim().startsWith("{")) {
+    return reasoning;
+  }
+  return "";
+}
+
+function logEmptyTogetherAssistant(
+  model: string,
+  choice: any,
+): void {
+  const msg = choice?.message;
+  console.warn("[Together LLM] empty assistant text", {
+    model,
+    finishReason: choice?.finish_reason,
+    messageKeys:
+      msg && typeof msg === "object" ? Object.keys(msg as object) : [],
+    refusal:
+      msg && typeof (msg as { refusal?: unknown }).refusal === "string"
+        ? (msg as { refusal: string }).refusal
+        : undefined,
+  });
+}
+
+function togetherChatRequestBody(options: LLMOptions): Record<string, unknown> {
+  const body: Record<string, unknown> = {
+    model: options.model,
+    messages: options.messages,
+    temperature: options.temperature,
+    max_tokens: options.maxTokens,
+  };
+  if (options.responseFormat) {
+    body.response_format = options.responseFormat;
+  }
+  if (options.reasoningEnabled === false) {
+    body.chat_template_kwargs = { thinking: false };
+  }
+  if (options.toolChoice !== undefined) {
+    body.tool_choice = options.toolChoice;
+  }
+  return body;
 }
 
 // ============================================================
@@ -54,6 +143,8 @@ export const llmInternal = internalAction({
     temperature: v.number(),
     maxTokens: v.optional(v.number()),
     responseFormat: v.optional(v.object({ type: v.string() })),
+    reasoningEnabled: v.optional(v.boolean()),
+    toolChoice: v.optional(v.string()),
   },
   handler: async (_, args) => {
     const apiKey = env.TOGETHER_AI_API_KEY;
@@ -67,13 +158,17 @@ export const llmInternal = internalAction({
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({
-        model: args.model,
-        messages: args.messages,
-        temperature: args.temperature,
-        max_tokens: args.maxTokens,
-        response_format: args.responseFormat,
-      }),
+      body: JSON.stringify(
+        togetherChatRequestBody({
+          model: args.model,
+          messages: args.messages as LLMMessage[],
+          temperature: args.temperature,
+          maxTokens: args.maxTokens,
+          responseFormat: args.responseFormat as LLMOptions["responseFormat"],
+          reasoningEnabled: args.reasoningEnabled,
+          toolChoice: args.toolChoice as LLMOptions["toolChoice"],
+        }),
+      ),
     });
 
     if (!response.ok) {
@@ -83,8 +178,14 @@ export const llmInternal = internalAction({
 
     const data = await response.json() as any;
 
+    const choice = data.choices?.[0];
+    const content = togetherChoiceAssistantText(choice);
+    if (!content.trim()) {
+      logEmptyTogetherAssistant(args.model, choice);
+    }
+
     return {
-      content: data.choices[0]?.message?.content ?? "",
+      content,
       usage: data.usage ? {
         promptTokens: data.usage.prompt_tokens,
         completionTokens: data.usage.completion_tokens,
@@ -137,6 +238,8 @@ export async function cachedLlmCall(
     temperature: options.temperature,
     maxTokens: options.maxTokens,
     responseFormat: options.responseFormat,
+    reasoningEnabled: options.reasoningEnabled,
+    toolChoice: options.toolChoice,
   });
 }
 
@@ -155,13 +258,7 @@ export async function uncachedLlmCall(options: LLMOptions): Promise<LLMResponse>
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
     },
-    body: JSON.stringify({
-      model: options.model,
-      messages: options.messages,
-      temperature: options.temperature,
-      max_tokens: options.maxTokens,
-      response_format: options.responseFormat,
-    }),
+    body: JSON.stringify(togetherChatRequestBody(options)),
   });
 
   if (!response.ok) {
@@ -171,8 +268,14 @@ export async function uncachedLlmCall(options: LLMOptions): Promise<LLMResponse>
 
   const data = await response.json() as any;
 
+  const choice = data.choices?.[0];
+  const content = togetherChoiceAssistantText(choice);
+  if (!content.trim()) {
+    logEmptyTogetherAssistant(options.model, choice);
+  }
+
   return {
-    content: data.choices[0]?.message?.content ?? "",
+    content,
     usage: data.usage
       ? {
           promptTokens: data.usage.prompt_tokens,

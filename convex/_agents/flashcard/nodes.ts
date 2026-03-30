@@ -457,7 +457,7 @@ async function mapProcess(
 async function collapse(
   state: OverallStateType,
   estimateTokens: (text: string) => number,
-  recursiveCollapse: (outputs: Flashcard[][]) => Promise<Flashcard[][]>
+  recursiveCollapse: (outputs: Flashcard[][], topic?: string) => Promise<Flashcard[][]>
 ): Promise<Partial<OverallStateType>> {
   // ============================================================
   // DEBUG: Collapse Phase Analysis
@@ -554,7 +554,7 @@ async function collapse(
 
   // Recursive collapse
   console.log('[FlashcardGraph] Collapse: performing recursive collapse');
-  const collapsed = await recursiveCollapse(state.mapOutputs);
+  const collapsed = await recursiveCollapse(state.mapOutputs, state.topic);
 
   // Calculate memory freed before clearing (estimate based on flashcard count)
   const totalCards = state.mapOutputs.reduce((sum, group) => sum + group.length, 0);
@@ -597,6 +597,7 @@ export class FlashcardGraph {
       apiKey,
       model: mapModel,
       temperature: 0.3, // Lower temperature for factual extraction
+      modelKwargs: { chat_template_kwargs: { thinking: false } },
     });
 
     // Smart model for reduce/collapse phases (selection and refinement)
@@ -635,7 +636,7 @@ export class FlashcardGraph {
     return `[${chunk.length} chars] "${start}..."..."${end}"`;
   }
 
-  private async recursiveCollapse(outputs: Flashcard[][]): Promise<Flashcard[][]> {
+  private async recursiveCollapse(outputs: Flashcard[][], topic?: string): Promise<Flashcard[][]> {
     // Calculate tokens by formatting as text (matches actual prompt format)
     const totalTokens = outputs.reduce(
       (sum, flashcards) => sum + this.estimateTokens(this.formatFlashcardsAsText(flashcards)),
@@ -656,7 +657,7 @@ export class FlashcardGraph {
     for (const flashcards of outputs) {
       const tokens = this.estimateTokens(this.formatFlashcardsAsText(flashcards));
       if (currentTokens + tokens > targetGroupTokens && currentGroup.length > 0) {
-        collapsed.push(await this.collapseGroup(currentGroup));
+        collapsed.push(await this.collapseGroup(currentGroup, topic));
         currentGroup = [flashcards];
         currentTokens = tokens;
       } else {
@@ -666,18 +667,18 @@ export class FlashcardGraph {
     }
 
     if (currentGroup.length > 0) {
-      collapsed.push(await this.collapseGroup(currentGroup));
+      collapsed.push(await this.collapseGroup(currentGroup, topic));
     }
 
     // Recursively check if still too large
-    return this.recursiveCollapse(collapsed);
+    return this.recursiveCollapse(collapsed, topic);
   }
 
   /**
    * Collapse a group of flashcard arrays by merging and condensing.
    * Uses structured output to ensure valid JSON output.
    */
-  private async collapseGroup(group: Flashcard[][]): Promise<Flashcard[]> {
+  private async collapseGroup(group: Flashcard[][], topic?: string): Promise<Flashcard[]> {
     // Flatten all flashcard arrays into a single array
     const allCards: Flashcard[] = [];
     for (const flashcards of group) {
@@ -704,11 +705,13 @@ export class FlashcardGraph {
       .map((card, index) => `${index + 1}. Q: ${card.front}\n   A: ${card.back}`)
       .join('\n\n');
 
+    const topicGuidance = topic ? `\n\nTopic Focus: ${topic} — prioritize cards aligned with this topic while maintaining diversity.` : '';
+
     const prompt = `You are consolidating flashcard sets. Your task is to:
 1. Remove duplicate or highly similar flashcards
 2. Keep the highest quality, most diverse set
 3. Target approximately ${Math.floor(allCards.length * 0.7)} flashcards (remove ~30%)
-
+${topicGuidance}
 Condense these flashcards while maintaining quality and diversity:
 
 ${flashcardsText}

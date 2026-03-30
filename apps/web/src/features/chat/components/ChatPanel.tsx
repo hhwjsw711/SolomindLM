@@ -35,6 +35,12 @@ interface ChatPanelProps {
   /** Optimistic UI: set when save starts, clear when save ends (success or failure). No toasts. */
   onSaveChatOptimistic?: (payload: { notebookId: string; note: Note } | null) => void;
   onSetFeedback?: (messageId: string, feedback: 'up' | 'down' | null) => void;
+  sourceCount?: number;
+  sourceSummary?: string | null;
+  suggestions?: string[] | null;
+  isLoadingSuggestions?: boolean;
+  notebookIcon?: string | null;
+  notebookCoverColor?: string | null;
 }
 
 export const ChatPanel: React.FC<ChatPanelProps> = ({
@@ -50,6 +56,12 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   notebookTitle = 'Chat',
   onSaveChatOptimistic,
   onSetFeedback,
+  sourceCount = 0,
+  sourceSummary,
+  suggestions,
+  isLoadingSuggestions,
+  notebookIcon,
+  notebookCoverColor,
 }) => {
   const [hoveredRefId, setHoveredRefId] = useState<number | null>(null);
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
@@ -331,7 +343,17 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         {/* Messages Area */}
         <div ref={messagesContainerRef} className="flex-1 overflow-hidden relative">
           {messages.length === 0 ? (
-            <ChatEmptyState onSendMessage={handleSendChip} disabled={isSending || isLoading} />
+            <ChatEmptyState
+              onSendMessage={handleSendChip}
+              disabled={isSending || isLoading}
+              sourceCount={sourceCount}
+              sourceSummary={sourceSummary}
+              suggestions={suggestions}
+              isLoadingSuggestions={isLoadingSuggestions}
+              notebookIcon={notebookIcon}
+              notebookCoverColor={notebookCoverColor}
+              notebookTitle={notebookTitle}
+            />
           ) : (
             <Virtuoso
               ref={virtuosoRef}

@@ -112,6 +112,7 @@ export class WrittenQuestionsGraph {
       model: mapModel,
       temperature: 0.3,
       maxTokens: 16000,
+      modelKwargs: { chat_template_kwargs: { thinking: false } },
     });
 
     this.smartLlm = new ChatTogetherAI({

@@ -1,5 +1,6 @@
 import React from 'react';
-import { BookOpen } from 'lucide-react';
+
+import { getNotebookLucideIcon } from '@/shared/notebook/notebookLucideIcon';
 
 const STARTER_PROMPTS = [
   'Summarize the key concepts',
@@ -11,33 +12,104 @@ const STARTER_PROMPTS = [
 interface ChatEmptyStateProps {
   onSendMessage: (text: string) => void;
   disabled?: boolean;
+  sourceCount?: number;
+  sourceSummary?: string | null;
+  suggestions?: string[] | null;
+  isLoadingSuggestions?: boolean;
+  /** Notebook customize modal icon key (e.g. Folder, Book). */
+  notebookIcon?: string | null;
+  /** Tailwind bg class from notebook (e.g. bg-vintage-amber-300); used for icon tint. */
+  notebookCoverColor?: string | null;
+  notebookTitle?: string;
 }
 
-export const ChatEmptyState: React.FC<ChatEmptyStateProps> = ({ onSendMessage, disabled }) => (
-  <div className="flex flex-col items-center justify-center h-full px-6 pb-32 gap-6 select-none">
-    <div className="flex flex-col items-center gap-3 text-center">
-      <div className="p-3 rounded-full bg-primary/10">
-        <BookOpen className="w-6 h-6 text-primary" />
+export const ChatEmptyState: React.FC<ChatEmptyStateProps> = ({
+  onSendMessage,
+  disabled,
+  sourceCount = 0,
+  sourceSummary,
+  suggestions,
+  isLoadingSuggestions,
+  notebookIcon,
+  notebookCoverColor,
+  notebookTitle,
+}) => {
+  const hasSources = sourceCount > 0;
+  const displaySuggestions =
+    hasSources && suggestions?.length ? suggestions : STARTER_PROMPTS;
+  const NotebookGlyph = getNotebookLucideIcon(notebookIcon);
+  const iconTintClass = notebookCoverColor?.length
+    ? notebookCoverColor.replace('bg-', 'text-')
+    : 'text-primary';
+  const iconBgClass = notebookCoverColor?.length
+    ? notebookCoverColor.replace('-300', '-50').replace('-400', '-50').replace('-600', '-100')
+    : 'bg-primary/10';
+  const heading =
+    notebookTitle?.trim() ||
+    (hasSources ? 'What would you like to know?' : 'Ask anything about your sources');
+
+  return (
+    <div className="flex h-full min-h-0 flex-col items-center justify-center gap-10 bg-background px-6 pb-28 select-none">
+
+      {/* Header */}
+      <div className="flex w-full max-w-xl flex-col items-center gap-5 text-center">
+        {/* Icon */}
+        <div className={`flex size-16 items-center justify-center rounded-2xl ${iconBgClass} ring-1 ring-border shadow-sm`} aria-hidden>
+          <NotebookGlyph className={`size-8 ${iconTintClass}`} strokeWidth={1.6} />
+        </div>
+
+        {/* Heading */}
+        <h2 className="font-serif text-pretty text-2xl font-semibold tracking-tight text-foreground sm:text-3xl sm:leading-tight">
+          {heading}
+        </h2>
+
+        {/* Sub-copy */}
+        {hasSources && sourceSummary ? (
+          <p className="font-serif text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg max-w-sm">
+            {sourceSummary}
+          </p>
+        ) : !hasSources ? (
+          <p className="font-serif text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg max-w-sm">
+            Upload documents or add URLs, then ask questions — I'll answer with citations.
+          </p>
+        ) : null}
       </div>
-      <h2 className="font-sans font-semibold text-lg text-foreground">
-        Ask anything about your sources
-      </h2>
-      <p className="text-sm text-muted-foreground max-w-xs">
-        I'll search your uploaded documents and answer with citations.
-      </p>
+
+      {/* Divider */}
+      <div className="flex w-full max-w-xl items-center gap-3">
+        <div className="h-px flex-1 bg-border" />
+        <span className="shrink-0 text-xs font-medium tracking-widest text-muted-foreground uppercase">
+          Try asking
+        </span>
+        <div className="h-px flex-1 bg-border" />
+      </div>
+
+      {/* Suggestion chips */}
+      <div className="flex w-full max-w-xl flex-wrap justify-center gap-2.5">
+        {isLoadingSuggestions ? (
+          <>
+            {[38, 52, 44, 48].map((w, i) => (
+              <div
+                key={i}
+                className="h-10 animate-pulse rounded-full border border-border bg-muted/70"
+                style={{ width: `${w}%` }}
+              />
+            ))}
+          </>
+        ) : (
+          displaySuggestions.map((prompt) => (
+            <button
+              key={prompt}
+              type="button"
+              disabled={disabled}
+              onClick={() => onSendMessage(prompt)}
+              className="inline-flex items-center rounded-full border border-border bg-card px-4 py-2 font-serif text-sm leading-relaxed text-foreground shadow-sm transition-colors hover:bg-accent hover:border-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50"
+            >
+              {prompt}
+            </button>
+          ))
+        )}
+      </div>
     </div>
-    <div className="flex flex-wrap gap-2 justify-center max-w-md">
-      {STARTER_PROMPTS.map((prompt) => (
-        <button
-          key={prompt}
-          type="button"
-          disabled={disabled}
-          onClick={() => onSendMessage(prompt)}
-          className="px-4 py-2 rounded-full border border-border bg-card hover:bg-accent text-sm text-foreground transition-colors font-sans disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {prompt}
-        </button>
-      ))}
-    </div>
-  </div>
-);
+  );
+};

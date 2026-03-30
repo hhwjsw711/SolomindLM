@@ -67,10 +67,12 @@ const DEFAULT_HYBRID_CONFIG: Required<HybridSearchConfig> = {
   rerankThreshold: 5,
   rerankTopN: 15,
   maxResults: 7,
-  keywordMatchCount: 50,
+  keywordMatchCount: 25,
   rrfK: 60,
   enableHybrid: true,
-  hybridThreshold: 0.3,
+  // RRF scores are bounded by 1/(k+1) ≈ 0.016 (single list) to 2/(k+1) ≈ 0.033 (both lists).
+  // A threshold of 0.012 keeps chunks that appear in at least one list near the top.
+  hybridThreshold: 0.012,
 };
 
 // ============================================================

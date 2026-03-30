@@ -110,6 +110,7 @@ export class SpreadsheetGraph {
       temperature: 0.3,
       timeout: GRAPH_CONFIG.MAP_TIMEOUT_MS,
       maxTokens: parseInt(env.SPREADSHEET_MAP_MAX_OUTPUT_TOKENS || '4096', 10),
+      modelKwargs: { chat_template_kwargs: { thinking: false } },
     });
 
     // Smart model for collapse/reduce phases (consolidation and CSV generation)

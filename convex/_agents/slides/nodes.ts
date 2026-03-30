@@ -408,6 +408,7 @@ export class SlideDeckGraph {
       model: fastModel,
       temperature: 0.4,
       maxTokens: GRAPH_CONFIG.MAX_TOKENS,
+      modelKwargs: { chat_template_kwargs: { thinking: false } },
     });
 
     // Smart LLM for reduce phases - complex reasoning and prompt generation
@@ -632,7 +633,7 @@ export class SlideDeckGraph {
       selectedCandidates.slice(0, targetSlideCount).map((candidate, index) => {
         return async () => {
           try {
-            const refinePrompt = getRefineSlidePrompt(candidate, index + 1, state.slideType);
+            const refinePrompt = getRefineSlidePrompt(candidate, index + 1, state.slideType, state.customPrompt);
 
             // Use SMART_LLM for refinement (complex prompt generation task)
             const refinedSlideRaw = await invokeWithRetry(
@@ -1202,6 +1203,7 @@ export class SlideDeckGraph {
         maxSlides,
         slideType: state.slideType,
         deckLength: state.deckLength,
+        customPrompt: state.customPrompt,
       });
 
       const response: SlideSelectionResponse = await invokeWithRetry(

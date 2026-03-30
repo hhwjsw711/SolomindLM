@@ -9,8 +9,8 @@ export const env = {
 
   // Together AI
   TOGETHER_AI_API_KEY: process.env.TOGETHER_AI_API_KEY || '',
-  FAST_LLM: process.env.FAST_LLM || 'mistralai/Mistral-Small-24B-Instruct-2501',
-  SMART_LLM: process.env.SMART_LLM || 'Qwen/Qwen3-Next-80B-A3B-Instruct',
+  FAST_LLM: process.env.FAST_LLM || 'Qwen/Qwen3.5-9B',
+  SMART_LLM: process.env.SMART_LLM || 'openai/gpt-oss-120b',
 
   // Tavily (web search)
   TAVILY_API_KEY: process.env.TAVILY_API_KEY || '',
@@ -124,13 +124,13 @@ export const env = {
   CHAT_VECTOR_MATCH_COUNT: process.env.CHAT_VECTOR_MATCH_COUNT ?? '25',
   CHAT_RERANK_THRESHOLD: process.env.CHAT_RERANK_THRESHOLD ?? '10',
   CHAT_RERANK_TOP_N: process.env.CHAT_RERANK_TOP_N ?? '7',
-  CHAT_MAX_RESULTS: process.env.CHAT_MAX_RESULTS ?? '5',
+  CHAT_MAX_RESULTS: process.env.CHAT_MAX_RESULTS ?? '7',
 
   // Hybrid Search (NEW)
   CHAT_ENABLE_HYBRID_SEARCH: process.env.CHAT_ENABLE_HYBRID_SEARCH ?? 'true',
   CHAT_KEYWORD_MATCH_COUNT: process.env.CHAT_KEYWORD_MATCH_COUNT ?? '50',
   CHAT_RRF_K: process.env.CHAT_RRF_K ?? '60',
-  CHAT_HYBRID_THRESHOLD: process.env.CHAT_HYBRID_THRESHOLD ?? '0.3',
+  CHAT_HYBRID_THRESHOLD: process.env.CHAT_HYBRID_THRESHOLD ?? '0.012',
 
   // ZeroEntropy (reranking)
   ZEROENTROPY_API_KEY: process.env.ZEROENTROPY_API_KEY || '',

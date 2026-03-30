@@ -44,6 +44,7 @@ import type * as _agents_chat_grounding_validator from "../_agents/chat/groundin
 import type * as _agents_chat_hybrid_search from "../_agents/chat/hybrid_search.js";
 import type * as _agents_chat_llm_wrapper from "../_agents/chat/llm_wrapper.js";
 import type * as _agents_chat_rerankCache from "../_agents/chat/rerankCache.js";
+import type * as _agents_chat_sourceSuggestions from "../_agents/chat/sourceSuggestions.js";
 import type * as _agents_chat_vector_search from "../_agents/chat/vector_search.js";
 import type * as _agents_flashcard_nodes from "../_agents/flashcard/nodes.js";
 import type * as _agents_flashcard_prompts from "../_agents/flashcard/prompts.js";
@@ -84,7 +85,6 @@ import type * as _model_slides from "../_model/slides.js";
 import type * as _model_spreadsheets from "../_model/spreadsheets.js";
 import type * as _model_writtenQuestions from "../_model/writtenQuestions.js";
 import type * as _services_ai_embeddings from "../_services/ai/embeddings.js";
-import type * as _services_ai_llm from "../_services/ai/llm.js";
 import type * as _services_ai_titleGenerator from "../_services/ai/titleGenerator.js";
 import type * as _services_cache_cache from "../_services/cache/cache.js";
 import type * as _services_cache_cacheCrypto from "../_services/cache/cacheCrypto.js";
@@ -106,6 +106,7 @@ import type * as billing_webhook from "../billing/webhook.js";
 import type * as chat_conversations from "../chat/conversations.js";
 import type * as chat_index from "../chat/index.js";
 import type * as chat_messages from "../chat/messages.js";
+import type * as chat_sourceSuggestions from "../chat/sourceSuggestions.js";
 import type * as chat_stream from "../chat/stream.js";
 import type * as documents_embeddingJob from "../documents/embeddingJob.js";
 import type * as documents_embeddings from "../documents/embeddings.js";
@@ -182,6 +183,7 @@ declare const fullApi: ApiFromModules<{
   "_agents/chat/hybrid_search": typeof _agents_chat_hybrid_search;
   "_agents/chat/llm_wrapper": typeof _agents_chat_llm_wrapper;
   "_agents/chat/rerankCache": typeof _agents_chat_rerankCache;
+  "_agents/chat/sourceSuggestions": typeof _agents_chat_sourceSuggestions;
   "_agents/chat/vector_search": typeof _agents_chat_vector_search;
   "_agents/flashcard/nodes": typeof _agents_flashcard_nodes;
   "_agents/flashcard/prompts": typeof _agents_flashcard_prompts;
@@ -222,7 +224,6 @@ declare const fullApi: ApiFromModules<{
   "_model/spreadsheets": typeof _model_spreadsheets;
   "_model/writtenQuestions": typeof _model_writtenQuestions;
   "_services/ai/embeddings": typeof _services_ai_embeddings;
-  "_services/ai/llm": typeof _services_ai_llm;
   "_services/ai/titleGenerator": typeof _services_ai_titleGenerator;
   "_services/cache/cache": typeof _services_cache_cache;
   "_services/cache/cacheCrypto": typeof _services_cache_cacheCrypto;
@@ -244,6 +245,7 @@ declare const fullApi: ApiFromModules<{
   "chat/conversations": typeof chat_conversations;
   "chat/index": typeof chat_index;
   "chat/messages": typeof chat_messages;
+  "chat/sourceSuggestions": typeof chat_sourceSuggestions;
   "chat/stream": typeof chat_stream;
   "documents/embeddingJob": typeof documents_embeddingJob;
   "documents/embeddings": typeof documents_embeddings;

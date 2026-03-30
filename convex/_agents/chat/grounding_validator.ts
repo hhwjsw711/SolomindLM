@@ -52,29 +52,6 @@ function truncateForEmbedding(text: string): string {
 }
 
 /**
- * Splits text into sentences using Intl.Segmenter for proper boundary detection.
- * Handles edge cases like "e.g.", "Fig. 1", "Mr. Smith", "approx. 3.5", etc.
- *
- * @param text - The text to split into sentences
- * @param minLength - Minimum sentence length to include (default: 20)
- * @returns Array of sentence strings
- */
-function splitIntoSentences(text: string, minLength: number = 20): string[] {
-  // Use Intl.Segmenter for proper sentence boundary detection
-  const segmenter = new Intl.Segmenter('en', { granularity: 'sentence' });
-  const segments = segmenter.segment(text);
-
-  const sentences: string[] = [];
-  for (const segment of segments) {
-    if (segment.segment.trim().length >= minLength) {
-      sentences.push(segment.segment.trim());
-    }
-  }
-
-  return sentences;
-}
-
-/**
  * Phrases that indicate uncertainty and should trigger warnings.
  */
 const UNCERTAIN_PHRASES = [
@@ -151,18 +128,18 @@ export function validateGrounding(
     }
   }
 
-  // Check if very few sources were used (less than 30% - warning level)
-  // If only 3 of 7 sources are relevant, LLM should only cite those 3
-  if (sources.length > 3 && seenIds.size < Math.ceil(sources.length * 0.3)) {
-    issues.push(
-      `Warning: Only ${seenIds.size} of ${sources.length} sources were cited (consider reviewing relevance)`
-    );
-  }
+  // Low citation coverage is a warning only, not a hard grounding failure.
+  // The LLM correctly ignores irrelevant chunks, so don't penalise it for citing fewer sources.
+  const lowCoverage = sources.length > 3 && seenIds.size < Math.ceil(sources.length * 0.3);
 
   return {
+    // Only fail on hard issues (no citations, invalid IDs, uncertain language).
+    // Low coverage is informational and must not trigger a costly retry.
     isGrounded: issues.length === 0,
     missingCitations: citations.length === 0,
-    issues,
+    issues: lowCoverage
+      ? [...issues, `Note: Only ${seenIds.size} of ${sources.length} sources cited`]
+      : issues,
   };
 }
 
@@ -249,21 +226,18 @@ function cosineSimilarity(vec1: number[], vec2: number[]): number {
 }
 
 /**
- * Validates semantic grounding by checking if cited content actually supports the claims.
- * Uses embedding similarity to verify that claims are grounded in their cited sources.
+ * Validates semantic grounding with a single whole-response similarity check.
+ *
+ * Instead of embedding every sentence (expensive: ~N*2 API calls), we embed:
+ *   - The full response text (once)
+ *   - The combined cited source content (once)
+ * and compute one cosine similarity. This cuts embedding cost from O(sentences)
+ * to O(1) — 2 API calls instead of ~60.
  *
  * @param response - The response text to validate
  * @param sources - The source chunks that were used
  * @param embeddingService - Embedding service for computing similarities
  * @returns Promise resolving to grounding validation result
- *
- * @example
- * ```typescript
- * const validation = await validateSemanticGrounding(responseText, sourceChunks, embeddingService);
- * if (!validation.isGrounded) {
- *   console.warn('Semantic grounding issues:', validation.issues);
- * }
- * ```
  */
 export async function validateSemanticGrounding(
   response: string,
@@ -271,64 +245,60 @@ export async function validateSemanticGrounding(
   embeddingService: EmbeddingService
 ): Promise<GroundingValidationResult> {
   const issues: string[] = [];
+
+  // Determine which sources are actually cited in the response
   const citationPattern = /\[(\d+)\]/g;
+  const citedIds = [...response.matchAll(citationPattern)]
+    .map((m) => parseInt(m[1]))
+    .filter((id) => id >= 1 && id <= sources.length);
 
-  // Split response into sentences using Intl.Segmenter for proper boundary detection
-  // This handles edge cases like "e.g.", "Fig. 1", "Mr. Smith", "approx. 3.5", etc.
-  const sentences = splitIntoSentences(response, 20);
+  const uniqueCitedIds = [...new Set(citedIds)];
 
-  console.log(`[SemanticGrounding] Validating ${sentences.length} sentences against ${sources.length} sources`);
+  // If there are no citations at all, semantic grounding can't be assessed
+  if (uniqueCitedIds.length === 0) {
+    return { isGrounded: true, missingCitations: false, issues: [] };
+  }
 
-  for (const sentence of sentences) {
-    // Find citations in this sentence
-    const citationMatches = [...sentence.matchAll(citationPattern)];
-    if (citationMatches.length === 0) continue;
+  // Build combined source text from cited chunks only (up to 3000 chars per chunk)
+  const citedSourceText = uniqueCitedIds
+    .map((id) => sources[id - 1]?.content?.slice(0, 3000))
+    .filter(Boolean)
+    .join('\n\n');
 
-    // Extract cited source IDs (1-indexed)
-    const citedIds = citationMatches.map((c) => parseInt(c[1])).filter((id) => id >= 1 && id <= sources.length);
+  if (!citedSourceText) {
+    return { isGrounded: true, missingCitations: false, issues: [] };
+  }
 
-    if (citedIds.length === 0) {
-      issues.push(`Sentence cites invalid source IDs: "${sentence.slice(0, 50)}..."`);
-      continue;
+  // Strip citation markers from response for cleaner embedding
+  const cleanResponse = response.replace(/\[\d+\]/g, '').trim();
+
+  console.log(
+    `[SemanticGrounding] Whole-response check: ${uniqueCitedIds.length} cited sources, ` +
+    `response=${cleanResponse.length} chars, sources=${citedSourceText.length} chars`
+  );
+
+  try {
+    const [responseEmbed, sourceEmbed] = await Promise.all([
+      embeddingService.embedText(truncateForEmbedding(cleanResponse)),
+      embeddingService.embedText(truncateForEmbedding(citedSourceText)),
+    ]);
+
+    const similarity = cosineSimilarity(responseEmbed, sourceEmbed);
+    console.log(`[SemanticGrounding] Whole-response similarity: ${similarity.toFixed(3)} (threshold: ${GROUNDING_THRESHOLD})`);
+
+    if (similarity < GROUNDING_THRESHOLD) {
+      issues.push(
+        `Response may not be grounded in cited sources (similarity: ${similarity.toFixed(2)}, threshold: ${GROUNDING_THRESHOLD})`
+      );
     }
-
-    // Get the cited source content (truncate to first 1000 chars per chunk for efficiency)
-    const citedContent = citedIds
-      .map((id) => sources[id - 1]?.content?.slice(0, 1000))
-      .filter(Boolean)
-      .join(' ');
-
-    if (!citedContent) {
-      issues.push(`Sentence cites sources with no content: "${sentence.slice(0, 50)}..."`);
-      continue;
-    }
-
-    try {
-      // Compute embedding similarity to verify claim is grounded.
-      // Truncate to stay under model context limit (8192 tokens).
-      const sentenceTrunc = truncateForEmbedding(sentence);
-      const citedTrunc = truncateForEmbedding(citedContent);
-      const sentenceEmbed = await embeddingService.embedText(sentenceTrunc);
-      const sourceEmbed = await embeddingService.embedText(citedTrunc);
-
-      const similarity = cosineSimilarity(sentenceEmbed, sourceEmbed);
-
-      if (similarity < GROUNDING_THRESHOLD) {
-        issues.push(
-          `Sentence "${sentence.slice(0, 60)}..." cites sources [${citedIds.join(', ')}] but claim may not be grounded (similarity: ${similarity.toFixed(2)})`
-        );
-      } else {
-        console.log(`[SemanticGrounding] Sentence validated (similarity: ${similarity.toFixed(2)})`);
-      }
-    } catch (error) {
-      console.error('[SemanticGrounding] Embedding computation failed:', error);
-      // Don't fail validation on embedding errors, just log and continue
-    }
+  } catch (error) {
+    console.error('[SemanticGrounding] Embedding computation failed:', error);
+    // Don't fail validation on embedding errors
   }
 
   return {
     isGrounded: issues.length === 0,
-    missingCitations: false, // Semantic validation doesn't check for missing citations
+    missingCitations: false,
     issues,
   };
 }

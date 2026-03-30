@@ -111,6 +111,7 @@ export class MindMapGraph {
       model: mapModel,
       temperature: 0.1,
       maxTokens: 8000,
+      modelKwargs: { chat_template_kwargs: { thinking: false } },
     });
 
     this.smartLlm = new ChatTogetherAI({

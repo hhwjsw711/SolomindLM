@@ -10,6 +10,7 @@ import { ChatAgent } from "../_agents/ChatAgent";
 import { HybridSearchHandler } from "../_agents/chat/hybrid_search.js";
 import { cachedRerank, RerankDocument } from "../_agents/chat/rerankCache.js";
 import { EmbeddingService } from "../_services/processing/EmbeddingServiceClient";
+import { env } from "../_lib/env";
 
 import type { ChunkMetadata } from "../storage/ChatHistoryService";
 
@@ -275,15 +276,15 @@ export async function streamChatResponse(
   
   const hybridSearch = new HybridSearchHandler(
     {
-      vectorMatchThreshold: parseFloat(process.env.CHAT_VECTOR_MATCH_THRESHOLD ?? '0.3'),
-      vectorMatchCount: parseInt(process.env.CHAT_VECTOR_MATCH_COUNT ?? '25', 10),
-      rerankThreshold: parseInt(process.env.CHAT_RERANK_THRESHOLD ?? '5', 10),
-      rerankTopN: parseInt(process.env.CHAT_RERANK_TOP_N ?? '15', 10),
-      maxResults: parseInt(process.env.CHAT_MAX_RESULTS ?? '7', 10),
-      keywordMatchCount: parseInt(process.env.CHAT_KEYWORD_MATCH_COUNT ?? '50', 10),
-      rrfK: parseInt(process.env.CHAT_RRF_K ?? '60', 10),
-      enableHybrid: process.env.CHAT_ENABLE_HYBRID_SEARCH !== 'false',
-      hybridThreshold: parseFloat(process.env.CHAT_HYBRID_THRESHOLD ?? '0.3'),
+      vectorMatchThreshold: parseFloat(env.CHAT_VECTOR_MATCH_THRESHOLD),
+      vectorMatchCount: parseInt(env.CHAT_VECTOR_MATCH_COUNT, 10),
+      rerankThreshold: parseInt(env.CHAT_RERANK_THRESHOLD, 10),
+      rerankTopN: parseInt(env.CHAT_RERANK_TOP_N, 10),
+      maxResults: parseInt(env.CHAT_MAX_RESULTS, 10),
+      keywordMatchCount: parseInt(env.CHAT_KEYWORD_MATCH_COUNT, 10),
+      rrfK: parseInt(env.CHAT_RRF_K, 10),
+      enableHybrid: env.CHAT_ENABLE_HYBRID_SEARCH !== 'false',
+      hybridThreshold: parseFloat(env.CHAT_HYBRID_THRESHOLD),
     },
     embeddingService,
     vectorSearchRunner,
@@ -341,13 +342,24 @@ export async function streamChatResponse(
     await chunkAppender(`\n__ERROR:${JSON.stringify({ message: error instanceof Error ? error.message : "Unknown error" })}\n`);
   }
 
-  // Store final assistant message in database
-  await ctx.runMutation(internal.chat.index.addMessage, {
+  // Store final assistant message in database only if the conversation still has messages.
+  // If the user cleared chat history while generation was in-flight (scheduled jobs survive
+  // page reloads and are retried by Convex), skip persisting to avoid an orphaned assistant
+  // message appearing without a corresponding user prompt.
+  const { messages: existingMessages } = await ctx.runQuery(internal.chat.index.getMessagesInternal, {
     conversationId,
-    role: "assistant",
-    content: fullResponse,
-    references,
+    limit: 1,
   });
+  if (existingMessages.length > 0 && fullResponse.trim()) {
+    await ctx.runMutation(internal.chat.index.addMessage, {
+      conversationId,
+      role: "assistant",
+      content: fullResponse,
+      references,
+    });
+  } else if (existingMessages.length === 0) {
+    console.warn("[ChatStream] Conversation was cleared during generation — skipping assistant message storage.");
+  }
 
   console.log("[ChatStream] Stream complete:", streamId);
 

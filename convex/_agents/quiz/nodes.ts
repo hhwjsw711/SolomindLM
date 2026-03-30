@@ -117,6 +117,7 @@ export class QuizGraph {
       model: mapModel,
       temperature: 0.4,
       maxTokens: GRAPH_CONFIG.MAP_MAX_TOKENS,
+      modelKwargs: { chat_template_kwargs: { thinking: false } },
     });
 
     this.smartLlm = new ChatTogetherAI({

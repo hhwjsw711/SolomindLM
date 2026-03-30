@@ -138,7 +138,7 @@ export async function extractBeats(
   // Sanitize user input (focus)
   const sanitizedFocus = focus ? sanitizeUserInput(focus) : undefined;
 
-  const prompt = getMapPrompt(audioType, chunk);
+  const prompt = getMapPrompt(audioType, chunk, sanitizedFocus);
 
   logInfo({
     agent: 'AudioOverviewGraph',
@@ -551,6 +551,7 @@ export class AudioOverviewGraph {
       apiKey,
       model: mapModel,
       temperature: 0.3,
+      modelKwargs: { chat_template_kwargs: { thinking: false } },
     });
 
     this.smartLlm = new ChatTogetherAI({

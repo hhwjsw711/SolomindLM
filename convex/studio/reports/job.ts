@@ -63,6 +63,7 @@ function createMapLLM(): ChatTogetherAI {
     temperature: 0.3,
     timeout: CONFIG.PER_CHUNK_TIMEOUT_MS,
     maxTokens: parseInt(env.REPORT_MAP_MAX_OUTPUT_TOKENS || '8192', 10),
+    modelKwargs: { chat_template_kwargs: { thinking: false } },
   });
 }
 

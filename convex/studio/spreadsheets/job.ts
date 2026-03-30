@@ -61,6 +61,7 @@ function createMapLLM(): ChatTogetherAI {
     model: env.FAST_LLM,
     temperature: 0.3,
     timeout: CONFIG.PER_CHUNK_TIMEOUT_MS,
+    modelKwargs: { chat_template_kwargs: { thinking: false } },
     maxTokens: parseInt(env.SPREADSHEET_MAP_MAX_OUTPUT_TOKENS || '4096', 10),
   });
 }

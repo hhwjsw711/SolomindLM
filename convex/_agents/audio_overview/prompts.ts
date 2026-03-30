@@ -223,9 +223,10 @@ Generate the dialogue script as a JSON array. Output ONLY the JSON, no markdown 
 /**
  * Gets the map prompt for a specific audio type.
  */
-export function getMapPrompt(audioType: AudioType, chunk: string): string {
+export function getMapPrompt(audioType: AudioType, chunk: string, focus?: string): string {
   const promptTemplate = MAP_PROMPTS[audioType] || MAP_PROMPTS.deep_dive;
-  return promptTemplate.replace('{chunk}', chunk);
+  const focusLine = focus ? `\n\nFOCUS AREA: Prioritize content related to: "${focus}"` : '';
+  return promptTemplate.replace('{chunk}', chunk) + focusLine;
 }
 
 /**

@@ -37,7 +37,7 @@ import { useNotebooks, useCreateNotebook, useUpdateNotebook, useDeleteNotebook }
 import { useFolders, useCreateFolder, useUpdateFolder, useDeleteFolder } from './features/notebooks/services/foldersApi';
 import { useGenerateUploadUrl, useCreateDocument, useUpdateDocument, useDeleteDocument } from './features/sources/services/documentsApi';
 import { useSubscriptionStatus } from './features/billing/services/subscriptionApi';
-import { useSendMessage, useSetMessageFeedback } from './features/chat/services/chatApi';
+import { useSendMessage, useSetMessageFeedback, useSourceSuggestions } from './features/chat/services/chatApi';
 import { useLimitErrorToast } from './shared/hooks/useLimitErrorToast';
 import 'mind-elixir/style.css';
 
@@ -217,6 +217,11 @@ const AppContent: React.FC = () => {
   const [streamingToolCalls, setStreamingToolCalls] = useState<import('./shared/types/index').MessageToolCall[]>([]);
   const [lastAssistantFollowUps, setLastAssistantFollowUps] = useState<string[] | null>(null);
   const messagesLengthWhenStreamCompleteRef = useRef(0);
+  /** Latest messages for stream callbacks (avoids stale closure on `messages.length`). */
+  const messagesRef = useRef(messages);
+  messagesRef.current = messages;
+  /** Wall-clock ms when current stream started; used to detect stuck UI after DB already has the reply. */
+  const streamStartedAtRef = useRef<number | null>(null);
 
   // Mini Audio Player state
   const [miniPlayerVisible, setMiniPlayerVisible] = useState(false);
@@ -243,10 +248,24 @@ const AppContent: React.FC = () => {
   const sendChatMessage = useSendMessage();
   const setMessageFeedback = useSetMessageFeedback();
 
+  // Source-aware chat suggestions
+  const sourceSuggestions = useSourceSuggestions(
+    activeNotebookId && activeNotebookId !== 'new' ? activeNotebookId : null,
+    documents
+  );
+  const sourceCount = useMemo(
+    () => documents.filter((d: any) => d.status === 'completed').length,
+    [documents]
+  );
+
   // Filter notebooks for home page (notebooks may be undefined while loading)
   const notebookList = notebooks ?? [];
   const featuredNotebooks = useMemo(() => notebookList.filter((nb: NotebookItem) => nb.isFeatured), [notebookList]);
   const recentNotebooks = useMemo(() => notebookList.filter((nb: NotebookItem) => !nb.isFeatured), [notebookList]);
+  const activeNotebook = useMemo(() => {
+    if (!urlNotebookId || notebookList.length === 0) return undefined;
+    return notebookList.find((nb: NotebookItem) => nb.id === urlNotebookId);
+  }, [urlNotebookId, notebookList]);
 
   // Resize State
   const [leftWidth, setLeftWidth] = useState(360);
@@ -310,6 +329,7 @@ const AppContent: React.FC = () => {
       setStreamingContent('');
       setStreamingReferences(null);
       setStreamingJustFinished(false);
+      streamStartedAtRef.current = null;
       // Convex reactivity will update `messages` automatically
     } catch (error) {
       console.error('Failed to clear chat history', error);
@@ -317,6 +337,7 @@ const AppContent: React.FC = () => {
       setStreamingContent('');
       setStreamingReferences(null);
       setStreamingJustFinished(false);
+      streamStartedAtRef.current = null;
     }
   };
 
@@ -324,6 +345,7 @@ const AppContent: React.FC = () => {
   const handleSendMessage = async (messageText: string) => {
     if (!activeNotebookId || isChatStreaming) return;
 
+    streamStartedAtRef.current = Date.now();
     setIsChatStreaming(true);
     setStreamingContent('');
     setStreamingReferences(null);
@@ -340,13 +362,17 @@ const AppContent: React.FC = () => {
       setStreamingReferences(null);
       setStreamingJustFinished(false);
       setStreamingToolCalls([]);
+      streamStartedAtRef.current = null;
     };
 
     const onStreamComplete = () => {
       setIsChatStreaming(false);
       setStreamingJustFinished(true);
       setStreamingToolCalls([]);
-      messagesLengthWhenStreamCompleteRef.current = messages.length;
+      // Convex `messages` can lag one frame behind this callback; `0` breaks cleanup (use sentinel).
+      const len = messagesRef.current.length;
+      messagesLengthWhenStreamCompleteRef.current = len > 0 ? len : -1;
+      streamStartedAtRef.current = null;
     };
 
     try {
@@ -379,9 +405,10 @@ const AppContent: React.FC = () => {
 
   // Once stream completes, keep showing streaming content until DB has the new assistant message, then clear to avoid duplicate/flash
   useEffect(() => {
+    const refLen = messagesLengthWhenStreamCompleteRef.current;
     if (
       streamingJustFinished &&
-      messages.length > messagesLengthWhenStreamCompleteRef.current &&
+      (messages.length >= refLen || refLen < 0) &&
       messages[messages.length - 1]?.role === 'assistant'
     ) {
       setStreamingContent('');
@@ -389,6 +416,47 @@ const AppContent: React.FC = () => {
       setStreamingJustFinished(false);
     }
   }, [streamingJustFinished, messages]);
+
+  // If the HTTP stream never signals completion, isChatStreaming can stay true while the full answer
+  // is already shown (and saved). Input stays "loading" even though the bubble looks done. When the
+  // persisted assistant matches what we streamed, force the same cleanup as onStreamComplete.
+  useEffect(() => {
+    if (!isChatStreaming || !streamingContent.trim()) return;
+    const last = messages[messages.length - 1];
+    if (last?.role !== 'assistant' || !last.content) return;
+    if (last.content.trimEnd() !== streamingContent.trimEnd()) return;
+
+    setIsChatStreaming(false);
+    setStreamingToolCalls([]);
+    setStreamingJustFinished(true);
+    messagesLengthWhenStreamCompleteRef.current = messages.length - 1;
+  }, [isChatStreaming, streamingContent, messages]);
+
+  // Convex can persist the assistant before the HTTP client finishes (e.g. slow follow-up phase). If the
+  // UI still thinks we're streaming with an empty buffer, drop the ghost "thinking/searching" row and unlock input.
+  useEffect(() => {
+    if (!isChatStreaming || streamingContent.trim()) return;
+    const t0 = streamStartedAtRef.current;
+    if (t0 == null) return;
+    const n = messages.length;
+    if (n < 2) return;
+    const assistant = messages[n - 1] as Doc<'messages'>;
+    const user = messages[n - 2] as Doc<'messages'>;
+    if (assistant?.role !== 'assistant' || user?.role !== 'user') return;
+    const assistantText =
+      typeof assistant.content === 'string' ? assistant.content : String(assistant.content ?? '');
+    if (!assistantText.trim()) return;
+    // Allow clock skew between client `Date.now()` and server `createdAt` (ms).
+    const SKEW_MS = 120_000;
+    if (typeof assistant.createdAt !== 'number' || assistant.createdAt < t0 - SKEW_MS) return;
+
+    setIsChatStreaming(false);
+    setStreamingToolCalls([]);
+    setStreamingContent('');
+    setStreamingReferences(null);
+    setStreamingJustFinished(false);
+    streamStartedAtRef.current = null;
+  }, [isChatStreaming, streamingContent, messages]);
 
   // Chat list: DB messages + in-flight streaming assistant message so tokens appear as they arrive
   const chatDisplayMessages = useMemo((): Message[] => {
@@ -407,7 +475,27 @@ const AppContent: React.FC = () => {
         lastAssistantFollowUps
       ) ? lastAssistantFollowUps : undefined,
     }));
-    if (isChatStreaming || streamingContent) {
+    const t0 = streamStartedAtRef.current;
+    const last = messages[messages.length - 1] as Doc<'messages'> | undefined;
+    const prev = messages[messages.length - 2] as Doc<'messages'> | undefined;
+    const SKEW_MS = 120_000;
+    const lastAssistantText =
+      last?.content == null
+        ? ''
+        : typeof last.content === 'string'
+          ? last.content
+          : String(last.content);
+    const ghostStuckAssistantRow =
+      isChatStreaming &&
+      !streamingContent.trim() &&
+      t0 != null &&
+      last?.role === 'assistant' &&
+      prev?.role === 'user' &&
+      !!lastAssistantText.trim() &&
+      typeof last.createdAt === 'number' &&
+      last.createdAt >= t0 - SKEW_MS;
+
+    if ((isChatStreaming || streamingContent) && !ghostStuckAssistantRow) {
       list.push({
         id: '__streaming__',
         role: 'assistant',
@@ -1008,6 +1096,12 @@ const AppContent: React.FC = () => {
                     notebookTitle={notebookTitle}
                     onSaveChatOptimistic={setOptimisticSaveNote}
                     onSetFeedback={setMessageFeedback}
+                    sourceCount={sourceCount}
+                    sourceSummary={sourceSuggestions.summary}
+                    suggestions={sourceSuggestions.suggestions}
+                    isLoadingSuggestions={sourceSuggestions.isLoading}
+                    notebookIcon={activeNotebook?.icon}
+                    notebookCoverColor={activeNotebook?.coverColor}
                   />
 
                   {isStudioOpen && (
@@ -1076,6 +1170,12 @@ const AppContent: React.FC = () => {
                         notebookTitle={notebookTitle}
                         onSaveChatOptimistic={setOptimisticSaveNote}
                         onSetFeedback={setMessageFeedback}
+                        sourceCount={sourceCount}
+                        sourceSummary={sourceSuggestions.summary}
+                        suggestions={sourceSuggestions.suggestions}
+                        isLoadingSuggestions={sourceSuggestions.isLoading}
+                        notebookIcon={activeNotebook?.icon}
+                        notebookCoverColor={activeNotebook?.coverColor}
                       />
                     </div>
                   )}

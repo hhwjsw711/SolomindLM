@@ -7,10 +7,11 @@
  */
 
 import { ChatTogetherAI } from '@langchain/community/chat_models/togetherai';
-import { HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { z } from 'zod';
 import type { ReferenceChunk } from '../../storage/ChatHistoryService';
 import { createLangSmithRunConfig } from '../_shared/index.js';
+import { uncachedLlmCall } from '../_shared/cachedLlm.js';
 
 // ============================================================
 // Types
@@ -186,21 +187,73 @@ const STRICT_GROUNDING_PREFIX = `IMPORTANT: A previous response was flagged for 
 export class ChatLLMWrapper {
   private llm: ChatTogetherAI;
   private fastLlm: ChatTogetherAI;
+  /** Temp-0 smart LLM used for deterministic tool-calling/routing decisions. */
+  private decisionLlm: ChatTogetherAI;
+  /** Together model id for uncached follow-up calls (reasoning disabled). */
+  private readonly fastLlmModelId: string;
   private tokenBudget: number = 7000; // Reserve tokens for generation
 
   constructor(config: LLMWrapperConfig) {
-    this.llm = new ChatTogetherAI({
-      apiKey: config.apiKey,
-      model: config.model,
-      temperature: config.temperature ?? 0.1,
-    });
-    this.fastLlm = config.fastModel
-      ? new ChatTogetherAI({
-          apiKey: config.fastApiKey ?? config.apiKey,
-          model: config.fastModel,
-          temperature: 0.1,
-        })
-      : this.llm;
+  this.llm = new ChatTogetherAI({
+    apiKey: config.apiKey,
+    model: config.model,
+    temperature: config.temperature ?? 0.1,
+  });
+  this.fastLlm = config.fastModel
+    ? new ChatTogetherAI({
+        apiKey: config.fastApiKey ?? config.apiKey,
+        model: config.fastModel,
+        temperature: 0.1,
+        modelKwargs: { chat_template_kwargs: { thinking: false } },
+      })
+    : this.llm;
+  this.fastLlmModelId = config.fastModel ?? config.model;
+  // Deterministic routing — must be temp=0, always smart model
+  this.decisionLlm = new ChatTogetherAI({
+    apiKey: config.apiKey,
+    model: config.model,
+    temperature: 0,
+  });
+}
+
+  /**
+   * Returns the decision LLM with bound tools for the tool-calling loop.
+   * Centralises ownership so ChatAgent doesn't need its own ChatTogetherAI instance.
+   */
+  bindDecisionTools(tools: any[]): any {
+    return (this.decisionLlm as any).bindTools(tools);
+  }
+
+  /**
+   * Generates a direct conversational response without RAG context.
+   * Used when the routing LLM decides no document search is needed
+   * (e.g. greetings, meta-questions about the app).
+   */
+  async generateDirectResponse(
+    userMessage: string,
+    conversationHistory: Array<{ role: string; content: string }>
+  ): Promise<string> {
+    console.log('[ChatLLMWrapper] Generating direct response (no RAG)');
+    const systemPrompt =
+      'You are a helpful study assistant. Answer the user conversationally and concisely. ' +
+      'If they are asking about specific content from their documents, let them know you can search ' +
+      'for it if they rephrase their question.';
+    const messages = [
+      new SystemMessage(systemPrompt),
+      ...conversationHistory.slice(-4).map((t) =>
+        t.role === 'user' ? new HumanMessage(t.content) : new AIMessage(t.content)
+      ),
+      new HumanMessage(userMessage),
+    ];
+    try {
+      const response = await this.fastLlm.invoke(messages);
+      return typeof response.content === 'string'
+        ? response.content.trim()
+        : String(response.content).trim();
+    } catch (error) {
+      console.warn('[ChatLLMWrapper] Direct response failed:', error);
+      return "I'm here to help! Ask me anything about your study materials.";
+    }
   }
 
   /**
@@ -211,13 +264,15 @@ export class ChatLLMWrapper {
     console.log('[ChatLLMWrapper] Generating hypothetical document for HyDE');
     const prompt = `Write a short, factual paragraph (2-4 sentences) that would directly answer this question if it appeared in a textbook or study material. Write as a statement of facts, not as an answer to a question.\n\nQuestion: ${query}`;
     try {
-      const response = await this.fastLlm.invoke(
-        [new HumanMessage(prompt)],
-        { maxTokens: 150 } as any
-      );
-      const text = typeof response.content === 'string'
-        ? response.content.trim()
-        : String(response.content).trim();
+      const response = await uncachedLlmCall({
+        model: this.fastLlmModelId,
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.1,
+        maxTokens: 150,
+        reasoningEnabled: false,
+        toolChoice: 'none',
+      });
+      const text = response.content.trim();
       console.log('[ChatLLMWrapper] HyDE document:', text.slice(0, 200));
       return text || query;
     } catch (error) {
@@ -234,12 +289,25 @@ export class ChatLLMWrapper {
     const truncatedAnswer = answer.length > 600 ? answer.slice(0, 600) + '...' : answer;
     const prompt = `You are helping a student study. Based on this Q&A, suggest 2-3 short follow-up questions the student might naturally ask next.\n\nQuestion: ${userMessage}\nAnswer: ${truncatedAnswer}\n\nReturn ONLY a JSON array of strings, e.g. ["Question 1?", "Question 2?", "Question 3?"]`;
     try {
-      const response = await this.fastLlm.invoke(
-        [new HumanMessage(prompt)],
-        { maxTokens: 120 } as any
-      );
-      const text = typeof response.content === 'string' ? response.content.trim() : String(response.content).trim();
-      const match = text.match(/\[[\s\S]*\]/);
+      const response = await uncachedLlmCall({
+        model: this.fastLlmModelId,
+        messages: [
+          {
+            role: 'system',
+            content:
+              'Reply with ONLY a JSON array of 2-3 short question strings. No markdown, no tools, and no text before or after the array.',
+          },
+          { role: 'user', content: prompt },
+        ],
+        temperature: 0.35,
+        maxTokens: 320,
+        reasoningEnabled: false,
+        toolChoice: 'none',
+      });
+      const text = response.content.trim();
+      // Strip Qwen-style <think>...</think> reasoning blocks before parsing
+      const stripped = text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+      const match = stripped.match(/\[[\s\S]*\]/);
       if (match) {
         const parsed = JSON.parse(match[0]);
         if (Array.isArray(parsed)) {

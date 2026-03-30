@@ -214,7 +214,7 @@ ${chunk}`;
 // REFINE PROMPT (IMAGE GENERATION)
 // ============================================================
 
-export const getRefineSlidePrompt = (candidate: SlideCandidate, slideNumber: number, slideType: 'detailed_deck' | 'presenter_slides'): string => {
+export const getRefineSlidePrompt = (candidate: SlideCandidate, slideNumber: number, slideType: 'detailed_deck' | 'presenter_slides', customPrompt?: string): string => {
   
   const layoutGuidance = slideType === 'detailed_deck'
     ? `LAYOUT STRUCTURE FOR DETAILED DECK:
@@ -237,6 +237,7 @@ export const getRefineSlidePrompt = (candidate: SlideCandidate, slideNumber: num
   const bulletText = bulletPoints.map((point, idx) => `${idx + 1}. ${point}`).join('\n');
 
   return `You are creating a prompt for ZhipuAI's glm-image model, which EXCELS at rendering text within images.
+${customPrompt ? `**Custom Focus:** Ensure the slide content reflects this focus area: ${customPrompt}` : ''}
 
 **PROJECT THEME:**
 ${THEME_SOLOMIND.visual_instructions}
@@ -336,8 +337,9 @@ export const getSlideSelectionPrompt = (params: {
   maxSlides: number;
   slideType: 'detailed_deck' | 'presenter_slides';
   deckLength: 'short' | 'default';
+  customPrompt?: string;
 }): string => {
-  const { candidates, minSlides, maxSlides, deckLength } = params;
+  const { candidates, minSlides, maxSlides, deckLength, customPrompt } = params;
   const targetCount = Math.floor((minSlides + maxSlides) / 2);
 
   // Format candidates for LLM
@@ -361,6 +363,7 @@ export const getSlideSelectionPrompt = (params: {
   return `You are a Senior Presentation Architect curating a world-class educational slide deck.
 
 **GOAL:** Select ${targetCount} slides (Range: ${minSlides}-${maxSlides}) that form a compelling, professional narrative.
+${customPrompt ? `**Custom Focus:** ${customPrompt}` : ''}
 
 ${narrativeGuidance}
 

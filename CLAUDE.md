@@ -20,11 +20,7 @@ bun run typecheck:convex       # Type check convex only
 bun run typecheck:web          # Type check web only
 ```
 
-**Type Checking:**
-Type checks must be run individually for each workspace:
-- Run `bun run typecheck:convex` to check Convex backend types
-- Run `bun run typecheck:web` to check web frontend types
-- Type checks cannot be run simultaneously due to TypeScript compilation limitations
+Type checks must be run individually per workspace (cannot run simultaneously).
 
 **Convex Environment:**
 ```bash
@@ -157,6 +153,37 @@ bun run convex:env:push:dry    # Dry run for env push
 - **Convex URLs:** Dev and prod use different deployment URLs - ensure `.env.local` uses dev URLs locally, while production hosting (Vercel) uses prod URLs
 - **TypeScript strict mode disabled** - `strict: false` in web tsconfig; rely on typecheck rather than strict null checks
 - **Agent caching** - Agent results are cached; increment version in `cacheVersions` table when prompts change to invalidate cache
+
+## Required Skills
+
+**Always invoke these skills at the specified triggers.**
+
+| Skill | When |
+|-------|------|
+| `serena-first` | Session start — before any code work |
+| `convex-dev` | Working on Convex backend code |
+| `convex-create-component` | Creating new Convex components |
+| `langgraph-langchain` | Modifying agents in `convex/_agents/` |
+| `coding-standards` | Writing or reviewing TypeScript/React code |
+| `add-studio-feature` | Adding or extending Studio generation tools |
+
+## Code Navigation & Editing (Serena MCP)
+
+**ALWAYS invoke the `serena-first` skill at the start of every session before doing any code work.** This project uses the Serena MCP server for LSP-powered semantic code operations.
+
+**When to use Serena vs built-in tools:**
+- **Reading code:** Use `find_symbol` (with `include_body=true`) or `get_symbols_overview` instead of `Read` for `.ts`/`.tsx` files
+- **Searching:** Use `find_symbol` or `search_for_pattern` instead of `Grep` for code searches
+- **Editing:** Use `replace_symbol_body`, `replace_content` (regex mode), `insert_before_symbol`, `insert_after_symbol` instead of `Edit`
+- **Renaming:** Use `rename_symbol` for project-wide renames
+- **Finding usages:** Use `find_referencing_symbols` before changing any signature
+- **New files:** Use `create_text_file` instead of `Write`
+
+**Built-in tools are fine for:** non-code files (`.md`, `.json`, `.yaml`, `.css`, `.html`), images, and binary files.
+
+**Workflow:** Start with `get_symbols_overview` to understand a file, then `find_symbol` to read specific symbols. Avoid reading entire files when possible.
+
+**LSP staleness:** If Serena seems unaware of recent changes, call `restart_language_server` to resync. This can happen after using built-in tools for edits.
 
 <!-- convex-ai-start -->
 This project uses [Convex](https://convex.dev) as its backend.
