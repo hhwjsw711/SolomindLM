@@ -249,6 +249,7 @@ export default defineSchema({
     content: v.string(),
     references: v.optional(v.array(v.any())),
     metadata: v.optional(v.any()),
+    feedback: v.optional(v.union(v.literal("up"), v.literal("down"))),
     createdAt: v.number(),
   })
     .index("by_conversation", ["conversationId"]),
