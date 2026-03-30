@@ -105,7 +105,8 @@ export class VectorSearchHandler {
     userId: string,
     noteId: string,
     query: string,
-    documentIds?: string[]
+    documentIds?: string[],
+    preComputedEmbedding?: number[]
   ): Promise<ReferenceChunk[]> {
     if (!this.embeddingService || !this.vectorSearchRunner) {
       throw new Error(
@@ -118,7 +119,10 @@ export class VectorSearchHandler {
       `[VectorSearch] params: threshold=${this.config.vectorMatchThreshold}, count=${this.config.vectorMatchCount}, rerankTopN=${this.config.rerankTopN}`
     );
 
-    const queryEmbedding = await this.embeddingService.embedText(query);
+    if (preComputedEmbedding) {
+      console.log('[VectorSearch] Using pre-computed HyDE embedding');
+    }
+    const queryEmbedding = preComputedEmbedding ?? await this.embeddingService.embedText(query);
     let raw = await this.vectorSearchRunner(
       queryEmbedding,
       this.config.vectorMatchCount,

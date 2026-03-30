@@ -2,30 +2,29 @@
 /**
  * Chat Agent Service
  *
- * Orchestrates chat responses with strict RAG (Retrieval-Augmented Generation)
- * using extracted modules for vector search, grounding validation, and LLM generation.
- *
- * This refactored version uses composition patterns with dedicated modules:
- * - VectorSearchHandler: Hybrid search with reranking
- * - ChatLLMWrapper: Structured output generation
- * - validateGrounding: Grounding validation
+ * Orchestrates chat responses using a constrained tool-calling loop:
+ * 1. LLM decides what to search for (search_documents / ask_clarification tools)
+ * 2. HyDE embedding improves retrieval quality
+ * 3. Structured generation with citations
+ * 4. Grounding validation with one retry on failure
+ * 5. Follow-up question generation
  */
 
 import { env } from '../_lib/env';
+import { ChatTogetherAI } from '@langchain/community/chat_models/togetherai';
+import { AIMessage, HumanMessage, SystemMessage, ToolMessage } from '@langchain/core/messages';
+import type { BaseMessage } from '@langchain/core/messages';
 
-// Import extracted modules
 import { VectorSearchHandler } from './chat/vector_search.js';
 import { ChatLLMWrapper, type ChatResponse } from './chat/llm_wrapper.js';
-import { validateGrounding, isArtifactContent, validateSemanticGrounding } from './chat/grounding_validator.js';
+import { validateGrounding, validateSemanticGrounding } from './chat/grounding_validator.js';
 import { EmbeddingService } from '../_services/processing/EmbeddingServiceClient';
+import type { ReferenceChunk } from '../storage/ChatHistoryService';
 
 // ============================================================
 // Types
 // ============================================================
 
-/**
- * Context for chat agent execution.
- */
 export interface ChatAgentContext {
   userId: string;
   noteId: string;
@@ -33,52 +32,83 @@ export interface ChatAgentContext {
   documentIds?: string[];
 }
 
-/**
- * Stream chunk for streaming responses.
- */
 export interface StreamChunk {
-  type: 'token' | 'references' | 'done' | 'error' | 'warning' | 'grounding_check' | 'status';
+  type: 'token' | 'references' | 'done' | 'error' | 'warning' | 'grounding_check' | 'status' | 'tool_call' | 'followups' | 'clarification';
   data?: any;
   status?: string;
   message?: string;
 }
 
-/**
- * Result of grounding validation.
- */
-export interface GroundingValidationResult {
-  isGrounded: boolean;
-  missingCitations: boolean;
-  issues: string[];
+export interface ChatAgentOptions {
+  vectorSearchHandler?: VectorSearchHandler;
 }
+
+// ============================================================
+// Constants
+// ============================================================
+
+const MAX_SEARCH_ITERATIONS = 3;
+
+const TOOL_DECISION_SYSTEM_PROMPT = `You are a study assistant helping a student understand their uploaded documents.
+
+Your job is to decide what information to retrieve before answering.
+
+RULES:
+1. You MUST call search_documents before answering any content question about the study material.
+2. You may skip searching ONLY for: greetings, meta-questions about the app itself, or follow-ups already fully covered by a prior tool result in this conversation.
+3. If the question is too ambiguous to search effectively, call ask_clarification instead.
+4. When calling search_documents, rephrase the question as a declarative statement for better retrieval (e.g. "photosynthesis converts light into chemical energy" not "How does photosynthesis work?").
+5. You may call search_documents multiple times with different queries to gather comprehensive information.`;
+
+const SEARCH_TOOL_DEF = {
+  name: 'search_documents',
+  description: "Search the user's uploaded documents for relevant information. Always call this before answering content questions.",
+  parameters: {
+    type: 'object' as const,
+    properties: {
+      query: {
+        type: 'string',
+        description: 'Search query — rephrase the user question as a declarative statement for better retrieval',
+      },
+    },
+    required: ['query'],
+  },
+};
+
+const CLARIFY_TOOL_DEF = {
+  name: 'ask_clarification',
+  description: 'Ask the user to clarify their question when it is too ambiguous to search effectively.',
+  parameters: {
+    type: 'object' as const,
+    properties: {
+      question: {
+        type: 'string',
+        description: 'The clarifying question to show the user',
+      },
+    },
+    required: ['question'],
+  },
+};
 
 // ============================================================
 // Chat Agent Service
 // ============================================================
 
-export interface ChatAgentOptions {
-  /** When running in Convex, pass a handler that uses Convex vector search + ZeroEntropy reranking */
-  vectorSearchHandler?: VectorSearchHandler;
-}
-
-/**
- * Main chat agent class that orchestrates RAG-based chat responses.
- * For Convex backend, pass vectorSearchHandler so search uses Convex + reranking.
- */
 export class ChatAgent {
   private llmWrapper: ChatLLMWrapper;
   private vectorSearch: VectorSearchHandler;
   private embeddingService: EmbeddingService;
+  private decisionLlm: ChatTogetherAI;
 
   constructor(options?: ChatAgentOptions) {
-    // Initialize LLM wrapper
     this.llmWrapper = new ChatLLMWrapper({
       apiKey: env.TOGETHER_AI_API_KEY,
-      model: env.SMART_LLM || 'Qwen/Qwen3-Next-80B-A3B-Instruct',
+      model: env.SMART_LLM || 'openai/gpt-oss-120b',
       temperature: parseFloat(env.CHAT_LLM_TEMPERATURE ?? '0.1'),
+      fastModel: env.FAST_LLM,
+      fastApiKey: env.TOGETHER_AI_API_KEY,
     });
 
-    // Use injected handler (Convex) or build one that requires runner at search time
     this.vectorSearch =
       options?.vectorSearchHandler ??
       new VectorSearchHandler({
@@ -89,113 +119,169 @@ export class ChatAgent {
         maxResults: parseInt(env.CHAT_MAX_RESULTS ?? '7', 10),
       });
 
-    // Initialize embedding service for semantic grounding validation
     this.embeddingService = new EmbeddingService(env.OPENAI_API_KEY);
+
+    // Decision LLM for the tool-calling loop (temperature 0 for deterministic routing)
+    this.decisionLlm = new ChatTogetherAI({
+      apiKey: env.TOGETHER_AI_API_KEY,
+      model: env.SMART_LLM || 'openai/gpt-oss-120b',
+      temperature: 0,
+    });
   }
 
-  /**
-   * Streams response using strict RAG pattern (retrieve first, then generate).
-   *
-   * This eliminates agentic decision-making and ensures grounding by:
-   * 1. Retrieving relevant documents (deterministic, no LLM decision)
-   * 2. Generating structured output with citations
-   * 3. Validating grounding of the response
-   *
-   * @param context - Chat execution context
-   * @param userMessage - The user's question
-   * @yields Stream chunks with tokens, references, and status updates
-   */
-  async *streamResponse(context: ChatAgentContext, userMessage: string): AsyncGenerator<StreamChunk> {
-    console.log('[ChatAgent] ========== STREAM START (Strict RAG) ==========');
+  async *streamResponse(
+    context: ChatAgentContext,
+    userMessage: string
+  ): AsyncGenerator<StreamChunk> {
+    console.log('[ChatAgent] ========== STREAM START ==========');
     console.log(`[ChatAgent] User message: "${userMessage}"`);
-    console.log(`[ChatAgent] Context: noteId=${context.noteId}`);
 
     try {
-      // ============================================================
-      // PHASE 1: Retrieval (deterministic, no LLM decision)
-      // ============================================================
-
-      console.log('[ChatAgent] Phase 1: Retrieving relevant documents');
-      yield { type: 'status', status: 'searching', message: 'Searching relevant sources...' };
-
-      const chunks = await this.vectorSearch.search(
-        context.userId,
-        context.noteId,
-        userMessage,
-        context.documentIds
-      );
-
-      console.log(`[ChatAgent] Retrieved ${chunks.length} relevant chunks`);
-      yield { type: 'status', status: 'reading', message: `Reading ${chunks.length} sources...` };
-
-      // Immediately send references so user sees what's being used
-      yield { type: 'references', data: chunks };
-
-      // ============================================================
-      // PHASE 2: Generation with structured output
-      // ============================================================
-
-      console.log('[ChatAgent] Phase 2: Generating grounded response (structured output)');
-      yield { type: 'status', status: 'thinking', message: 'Analyzing sources and formulating response...' };
-
-      // Extract recent conversation turns (user + assistant pairs) for context
-      // Include last 3 pairs (6 messages) to help the LLM understand follow-up questions
       const recentTurns = context.conversationHistory.slice(-6);
+      const allChunks: ReferenceChunk[] = [];
 
-      console.log(`[ChatAgent] Including ${recentTurns.length} previous messages for context`);
+      // ============================================================
+      // PHASE 1: Tool-calling loop — LLM decides what to search
+      // ============================================================
 
-      // Generate structured response with citations and conversation context
-      const structuredResponse = await this.llmWrapper.generateStructuredResponse(
-        chunks,
+      console.log('[ChatAgent] Phase 1: Tool-calling decision loop');
+
+      const messages: BaseMessage[] = [
+        new SystemMessage(TOOL_DECISION_SYSTEM_PROMPT),
+        ...recentTurns.map((t) =>
+          t.role === 'user' ? new HumanMessage(t.content) : new AIMessage(t.content)
+        ),
+        new HumanMessage(userMessage),
+      ];
+
+      const llmWithTools = (this.decisionLlm as any).bindTools([SEARCH_TOOL_DEF, CLARIFY_TOOL_DEF]);
+
+      let iterations = 0;
+      while (iterations < MAX_SEARCH_ITERATIONS) {
+        const response = await llmWithTools.invoke(messages);
+        messages.push(response as AIMessage);
+
+        const toolCalls = (response as any).tool_calls as Array<{ name: string; args: any; id?: string }> | undefined;
+
+        if (!toolCalls || toolCalls.length === 0) {
+          // LLM decided no search needed (greeting, meta-question, etc.)
+          console.log('[ChatAgent] LLM skipped search — direct answer or no tools called');
+          break;
+        }
+
+        for (const call of toolCalls) {
+          if (call.name === 'ask_clarification') {
+            const question = call.args?.question ?? 'Could you clarify your question?';
+            console.log(`[ChatAgent] LLM requested clarification: "${question}"`);
+            yield { type: 'clarification', data: { question } };
+            yield { type: 'done' };
+            return;
+          }
+
+          if (call.name === 'search_documents') {
+            const query: string = call.args?.query ?? userMessage;
+            console.log(`[ChatAgent] search_documents called with query: "${query}"`);
+
+            yield { type: 'tool_call', data: { tool: 'search_documents', query, status: 'searching' } };
+
+            // HyDE: embed a hypothetical answer for better semantic matching
+            const hydeText = await this.llmWrapper.generateHypotheticalDocument(query);
+            const hydeEmbedding = await this.embeddingService.embedText(hydeText);
+
+            const newChunks = await this.vectorSearch.search(
+              context.userId,
+              context.noteId,
+              query,
+              context.documentIds,
+              hydeEmbedding
+            );
+
+            // Deduplicate by sourceId + chunkIndex
+            for (const chunk of newChunks) {
+              const key = `${chunk.sourceId}:${chunk.chunkIndex}`;
+              if (!allChunks.some((c) => `${c.sourceId}:${c.chunkIndex}` === key)) {
+                allChunks.push(chunk);
+              }
+            }
+
+            console.log(`[ChatAgent] search returned ${newChunks.length} chunks (total: ${allChunks.length})`);
+
+            yield {
+              type: 'tool_call',
+              data: { tool: 'search_documents', query, status: 'done', resultCount: newChunks.length },
+            };
+
+            messages.push(
+              new ToolMessage({
+                content: `Found ${newChunks.length} relevant passages.`,
+                tool_call_id: call.id ?? `call_${iterations}`,
+              })
+            );
+          }
+        }
+
+        iterations++;
+      }
+
+      if (allChunks.length === 0) {
+        throw new Error(
+          'No results found. The documents may not contain information relevant to your query.'
+        );
+      }
+
+      // Send references so the UI can show what's being used
+      yield { type: 'status', status: 'reading', message: `Reading ${allChunks.length} passages...` };
+      yield { type: 'references', data: allChunks };
+
+      // ============================================================
+      // PHASE 2: Generate structured response with citations
+      // ============================================================
+
+      console.log('[ChatAgent] Phase 2: Generating grounded response');
+      yield { type: 'status', status: 'thinking', message: 'Formulating answer...' };
+
+      let structuredResponse: ChatResponse = await this.llmWrapper.generateStructuredResponse(
+        allChunks,
         userMessage,
         recentTurns
       );
 
-      // Yield the answer as tokens for compatibility with existing streaming interface
-      yield { type: 'status', status: 'generating', message: 'Generating response...' };
-      const answerText = structuredResponse.answer_markdown;
-
-      // Stream by paragraphs/sentences for better Markdown rendering
-      // This preserves markdown formatting better than arbitrary character chunks
-      const paragraphs = answerText.split(/\n\n+/);
-      for (const para of paragraphs) {
-        if (para.trim().length > 0) {
-          yield { type: 'token', data: para + '\n\n' };
-          // Small delay for readability
-          await new Promise((resolve) => setTimeout(resolve, 30));
-        }
-      }
-
-      console.log(`[ChatAgent] Generated response length: ${answerText.length} characters`);
-
-      // Extract citations from markdown for logging
-      const citationMatches = [...answerText.matchAll(/\[(\d+)\]/g)];
-      const citedIndices = [...new Set(citationMatches.map((m) => parseInt(m[1])))]
-        .filter((n) => !isNaN(n))
-        .sort((a, b) => a - b);
-      console.log(
-        `[ChatAgent] Cited indices: [${citedIndices.join(', ')}], Confidence: ${structuredResponse.confidence}`
-      );
-
       // ============================================================
-      // PHASE 3: Validation (syntactic + semantic)
+      // PHASE 3: Grounding validation + one retry on failure
       // ============================================================
 
       console.log('[ChatAgent] Phase 3: Validating grounding');
 
-      // First, syntactic validation (citations exist and are valid)
-      const syntacticValidation = validateGrounding(answerText, chunks);
-
-      // Second, semantic validation (cited content actually supports claims)
-      console.log('[ChatAgent] Running semantic grounding validation...');
-      const semanticValidation = await validateSemanticGrounding(answerText, chunks, this.embeddingService);
-
-      // Combine both validation results
-      const allIssues = [...syntacticValidation.issues, ...semanticValidation.issues];
+      const syntacticValidation = validateGrounding(structuredResponse.answer_markdown, allChunks);
+      const semanticValidation = await validateSemanticGrounding(
+        structuredResponse.answer_markdown,
+        allChunks,
+        this.embeddingService
+      );
       const isGrounded = syntacticValidation.isGrounded && semanticValidation.isGrounded;
 
       if (!isGrounded) {
-        console.warn(`[ChatAgent] Grounding validation failed: ${allIssues.join(', ')}`);
+        console.warn('[ChatAgent] Grounding failed — retrying with strict grounding');
+        structuredResponse = await this.llmWrapper.generateWithStrictGrounding(
+          allChunks,
+          userMessage,
+          recentTurns
+        );
+      }
+
+      // Stream final answer by paragraphs
+      yield { type: 'status', status: 'generating', message: 'Generating response...' };
+      const finalText = structuredResponse.answer_markdown;
+      for (const para of finalText.split(/\n\n+/)) {
+        if (para.trim().length > 0) {
+          yield { type: 'token', data: para + '\n\n' };
+          await new Promise((resolve) => setTimeout(resolve, 30));
+        }
+      }
+
+      // Surface grounding warning only after retry still failed
+      if (!isGrounded) {
+        const allIssues = [...syntacticValidation.issues, ...semanticValidation.issues];
         yield {
           type: 'grounding_check',
           data: {
@@ -204,11 +290,8 @@ export class ChatAgent {
             message: 'Note: This response may not be fully grounded in your documents',
           },
         };
-      } else {
-        console.log('[ChatAgent] Grounding validation passed (syntactic + semantic)');
       }
 
-      // Emit confidence score from structured output
       if (structuredResponse.confidence !== 'high') {
         yield {
           type: 'grounding_check',
@@ -220,33 +303,29 @@ export class ChatAgent {
         };
       }
 
+      // ============================================================
+      // PHASE 4: Follow-up question suggestions
+      // ============================================================
+
+      const followUps = await this.llmWrapper.generateFollowUpQuestions(userMessage, finalText);
+      if (followUps.length > 0) {
+        yield { type: 'followups', data: followUps };
+      }
+
       yield { type: 'done' };
 
-      console.log(`[ChatAgent] ========== STREAM COMPLETE ==========`);
-      console.log(
-        `[ChatAgent] Response: ${answerText.length} chars, Sources: ${chunks.length}, Validation: ${isGrounded ? 'PASSED' : 'FAILED'}`
-      );
+      console.log('[ChatAgent] ========== STREAM COMPLETE ==========');
     } catch (error) {
-      console.error('[ChatAgent] ========== ERROR ==========');
-      console.error('[ChatAgent] Error:', error);
+      console.error('[ChatAgent] ========== ERROR ==========', error);
 
-      // Classify error types for better user messaging
       let errorMessage = 'Unknown error occurred';
       let errorType = 'unknown';
 
       if (error instanceof Error) {
         errorMessage = error.message;
-
-        // Classify common errors
-        if (
-          error.message.includes('No results found') ||
-          error.message.includes('No relevant documents')
-        ) {
+        if (error.message.includes('No results found') || error.message.includes('No relevant documents')) {
           errorType = 'no_documents';
-        } else if (
-          error.message.includes('Vector search failed') ||
-          error.message.includes('Hybrid search failed')
-        ) {
+        } else if (error.message.includes('Vector search failed') || error.message.includes('Hybrid search failed')) {
           errorType = 'search_failed';
         } else if (error.message.includes('API key')) {
           errorType = 'api_error';
@@ -255,12 +334,7 @@ export class ChatAgent {
         }
       }
 
-      console.error(`[ChatAgent] Error type: ${errorType}, message: ${errorMessage}`);
-
-      yield {
-        type: 'error',
-        data: { message: errorMessage, type: errorType },
-      };
+      yield { type: 'error', data: { message: errorMessage, type: errorType } };
     }
   }
 }

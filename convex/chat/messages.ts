@@ -177,6 +177,28 @@ export const sendMessageOptimistic = mutation({
 });
 
 /**
+ * Set thumbs up/down feedback on an assistant message.
+ * Pass null to remove existing feedback.
+ */
+export const setMessageFeedback = mutation({
+  args: {
+    messageId: v.id("messages"),
+    feedback: v.union(v.literal("up"), v.literal("down"), v.null()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
+
+    const message = await ctx.db.get(args.messageId);
+    if (!message) throw new Error("Message not found");
+
+    await ctx.db.patch(args.messageId, {
+      feedback: args.feedback ?? undefined,
+    });
+  },
+});
+
+/**
  * Clear all messages for a notebook
  */
 export const clearHistory = mutation({
