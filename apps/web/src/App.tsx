@@ -37,7 +37,7 @@ import { useNotebooks, useCreateNotebook, useUpdateNotebook, useDeleteNotebook }
 import { useFolders, useCreateFolder, useUpdateFolder, useDeleteFolder } from './features/notebooks/services/foldersApi';
 import { useGenerateUploadUrl, useCreateDocument, useUpdateDocument, useDeleteDocument } from './features/sources/services/documentsApi';
 import { useSubscriptionStatus } from './features/billing/services/subscriptionApi';
-import { useSendMessage } from './features/chat/services/chatApi';
+import { useSendMessage, useSetMessageFeedback } from './features/chat/services/chatApi';
 import { useLimitErrorToast } from './shared/hooks/useLimitErrorToast';
 import 'mind-elixir/style.css';
 
@@ -214,6 +214,8 @@ const AppContent: React.FC = () => {
   const [streamingContent, setStreamingContent] = useState('');
   const [streamingReferences, setStreamingReferences] = useState<unknown[] | null>(null);
   const [streamingJustFinished, setStreamingJustFinished] = useState(false);
+  const [streamingToolCalls, setStreamingToolCalls] = useState<import('./shared/types/index').MessageToolCall[]>([]);
+  const [lastAssistantFollowUps, setLastAssistantFollowUps] = useState<string[] | null>(null);
   const messagesLengthWhenStreamCompleteRef = useRef(0);
 
   // Mini Audio Player state
@@ -239,6 +241,7 @@ const AppContent: React.FC = () => {
 
   // Chat: stream messages with optimistic updates
   const sendChatMessage = useSendMessage();
+  const setMessageFeedback = useSetMessageFeedback();
 
   // Filter notebooks for home page (notebooks may be undefined while loading)
   const notebookList = notebooks ?? [];
@@ -328,16 +331,21 @@ const AppContent: React.FC = () => {
       .filter((source) => source.selected)
       .map((source) => source.id);
 
+    setStreamingToolCalls([]);
+    setLastAssistantFollowUps(null);
+
     const clearStreaming = () => {
       setIsChatStreaming(false);
       setStreamingContent('');
       setStreamingReferences(null);
       setStreamingJustFinished(false);
+      setStreamingToolCalls([]);
     };
 
     const onStreamComplete = () => {
       setIsChatStreaming(false);
       setStreamingJustFinished(true);
+      setStreamingToolCalls([]);
       messagesLengthWhenStreamCompleteRef.current = messages.length;
     };
 
@@ -349,6 +357,16 @@ const AppContent: React.FC = () => {
           onToken: (token) => setStreamingContent((prev) => prev + token),
           onReferences: (refs) => setStreamingReferences(refs),
           onStatus: () => {},
+          onToolCall: (tc) => setStreamingToolCalls((prev) => {
+            const existing = prev.findIndex((c) => c.query === tc.query && c.tool === tc.tool);
+            if (existing >= 0) {
+              const next = [...prev];
+              next[existing] = tc;
+              return next;
+            }
+            return [...prev, tc];
+          }),
+          onFollowUps: (qs) => setLastAssistantFollowUps(qs),
           onComplete: onStreamComplete,
           onError: clearStreaming,
         },
@@ -374,24 +392,34 @@ const AppContent: React.FC = () => {
 
   // Chat list: DB messages + in-flight streaming assistant message so tokens appear as they arrive
   const chatDisplayMessages = useMemo((): Message[] => {
-    const list: Message[] = messages.map((msg: Doc<'messages'>) => ({
+    const list: Message[] = messages.map((msg: Doc<'messages'>, index: number) => ({
       id: msg._id,
       role: msg.role as 'user' | 'assistant',
       content: msg.content,
       timestamp: new Date(msg.createdAt as number),
       references: msg.references,
+      feedback: (msg as any).feedback as 'up' | 'down' | undefined,
+      // Attach follow-ups to last DB assistant message when stream just finished
+      followUps: (
+        !streamingContent &&
+        msg.role === 'assistant' &&
+        index === messages.length - 1 &&
+        lastAssistantFollowUps
+      ) ? lastAssistantFollowUps : undefined,
     }));
-    if (streamingContent) {
+    if (isChatStreaming || streamingContent) {
       list.push({
         id: '__streaming__',
         role: 'assistant',
         content: streamingContent,
         timestamp: new Date(),
         references: (streamingReferences as Message['references']) ?? undefined,
+        toolCalls: streamingToolCalls.length > 0 ? streamingToolCalls : undefined,
+        status: streamingContent ? undefined : 'thinking',
       });
     }
     return list;
-  }, [messages, streamingContent, streamingReferences]);
+  }, [messages, streamingContent, streamingReferences, streamingToolCalls, lastAssistantFollowUps, isChatStreaming]);
 
   const handleToggleSource = (id: string) => {
     setSources(prev => prev.map(source =>
@@ -979,6 +1007,7 @@ const AppContent: React.FC = () => {
                     notebookId={activeNotebookId}
                     notebookTitle={notebookTitle}
                     onSaveChatOptimistic={setOptimisticSaveNote}
+                    onSetFeedback={setMessageFeedback}
                   />
 
                   {isStudioOpen && (
@@ -1046,6 +1075,7 @@ const AppContent: React.FC = () => {
                         notebookId={activeNotebookId}
                         notebookTitle={notebookTitle}
                         onSaveChatOptimistic={setOptimisticSaveNote}
+                        onSetFeedback={setMessageFeedback}
                       />
                     </div>
                   )}

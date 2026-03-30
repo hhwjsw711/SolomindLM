@@ -36,10 +36,14 @@ export interface ChatResponse {
 export interface LLMWrapperConfig {
   /** TogetherAI API key */
   apiKey: string;
-  /** Model to use for generation */
+  /** Smart model for generation */
   model: string;
   /** Temperature for generation (default: 0.1) */
   temperature?: number;
+  /** Fast model for lightweight operations (HyDE, follow-ups). Falls back to smart model if omitted. */
+  fastModel?: string;
+  /** API key for fast model (defaults to apiKey) */
+  fastApiKey?: string;
 }
 
 // ============================================================
@@ -132,7 +136,12 @@ When paraphrasing, stay VERY close to original wording:
 - BAD: "The model is optimized to reproduce mappings [1]" (if source says "learns from labeled examples")
 - GOOD: "The model learns from labeled examples [1]"
 
-Your job is to REFLECT what the documents say, not enhance them with your training data.`;
+Your job is to REFLECT what the documents say, not enhance them with your training data.
+
+# PROHIBITED CLOSINGS
+- Do NOT end responses with meta-commentary like "Note: The above points are drawn directly from..."
+- Do NOT add any closing disclaimers about what sources do or don't contain
+- If sources are missing information, say so inline where relevant, then stop`;
 
 /**
  * Minimal few-shot examples (only used for first query or complex patterns).
@@ -172,8 +181,11 @@ A: {
 /**
  * Handles LLM response generation with structured output and citations.
  */
+const STRICT_GROUNDING_PREFIX = `IMPORTANT: A previous response was flagged for insufficient grounding. This time, ONLY state things that are word-for-word supported by the sources. When in doubt, write: "The sources do not contain enough information to answer this."\n\n`;
+
 export class ChatLLMWrapper {
   private llm: ChatTogetherAI;
+  private fastLlm: ChatTogetherAI;
   private tokenBudget: number = 7000; // Reserve tokens for generation
 
   constructor(config: LLMWrapperConfig) {
@@ -182,6 +194,75 @@ export class ChatLLMWrapper {
       model: config.model,
       temperature: config.temperature ?? 0.1,
     });
+    this.fastLlm = config.fastModel
+      ? new ChatTogetherAI({
+          apiKey: config.fastApiKey ?? config.apiKey,
+          model: config.fastModel,
+          temperature: 0.1,
+        })
+      : this.llm;
+  }
+
+  /**
+   * Generates a hypothetical document paragraph for HyDE retrieval.
+   * The resulting text is embedded instead of the raw query for better semantic search.
+   */
+  async generateHypotheticalDocument(query: string): Promise<string> {
+    console.log('[ChatLLMWrapper] Generating hypothetical document for HyDE');
+    const prompt = `Write a short, factual paragraph (2-4 sentences) that would directly answer this question if it appeared in a textbook or study material. Write as a statement of facts, not as an answer to a question.\n\nQuestion: ${query}`;
+    try {
+      const response = await this.fastLlm.invoke(
+        [new HumanMessage(prompt)],
+        { maxTokens: 150 } as any
+      );
+      const text = typeof response.content === 'string'
+        ? response.content.trim()
+        : String(response.content).trim();
+      console.log('[ChatLLMWrapper] HyDE document:', text.slice(0, 200));
+      return text || query;
+    } catch (error) {
+      console.warn('[ChatLLMWrapper] HyDE generation failed, falling back to raw query:', error);
+      return query;
+    }
+  }
+
+  /**
+   * Generates 2-3 follow-up question suggestions for a study session.
+   */
+  async generateFollowUpQuestions(userMessage: string, answer: string): Promise<string[]> {
+    console.log('[ChatLLMWrapper] Generating follow-up questions');
+    const truncatedAnswer = answer.length > 600 ? answer.slice(0, 600) + '...' : answer;
+    const prompt = `You are helping a student study. Based on this Q&A, suggest 2-3 short follow-up questions the student might naturally ask next.\n\nQuestion: ${userMessage}\nAnswer: ${truncatedAnswer}\n\nReturn ONLY a JSON array of strings, e.g. ["Question 1?", "Question 2?", "Question 3?"]`;
+    try {
+      const response = await this.fastLlm.invoke(
+        [new HumanMessage(prompt)],
+        { maxTokens: 120 } as any
+      );
+      const text = typeof response.content === 'string' ? response.content.trim() : String(response.content).trim();
+      const match = text.match(/\[[\s\S]*\]/);
+      if (match) {
+        const parsed = JSON.parse(match[0]);
+        if (Array.isArray(parsed)) {
+          return parsed.slice(0, 3).map(String).filter(Boolean);
+        }
+      }
+      return [];
+    } catch (error) {
+      console.warn('[ChatLLMWrapper] Follow-up question generation failed:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Re-generates a response with stricter grounding constraints after a validation failure.
+   */
+  async generateWithStrictGrounding(
+    chunks: ReferenceChunk[],
+    userMessage: string,
+    conversationHistory: Array<{ role: string; content: string }> = []
+  ): Promise<ChatResponse> {
+    console.log('[ChatLLMWrapper] Retrying with strict grounding');
+    return this._generateStructuredResponse(chunks, userMessage, conversationHistory, true);
   }
 
   /**
@@ -189,7 +270,7 @@ export class ChatLLMWrapper {
    *
    * @param chunks - Reference chunks to use as context
    * @param userMessage - The user's question
-   * @param userQuestions - Previous user questions for context
+   * @param conversationHistory - Previous conversation turns for context
    * @returns Structured chat response with citations
    */
   async generateStructuredResponse(
@@ -197,18 +278,28 @@ export class ChatLLMWrapper {
     userMessage: string,
     conversationHistory: Array<{ role: string; content: string }> = []
   ): Promise<ChatResponse> {
+    return this._generateStructuredResponse(chunks, userMessage, conversationHistory, false);
+  }
+
+  private async _generateStructuredResponse(
+    chunks: ReferenceChunk[],
+    userMessage: string,
+    conversationHistory: Array<{ role: string; content: string }>,
+    strictGrounding: boolean
+  ): Promise<ChatResponse> {
     console.log('[ChatLLMWrapper] Generating structured response with citations');
 
     // Conditional few-shot: only for first query or complex patterns
     const needsExamples = conversationHistory.length === 0 || this.isComplexQuery(userMessage);
-    
+
     // Inject current date so the model knows "today" vs historical document dates
     const today = new Date().toISOString().split('T')[0];
     const dateContext = `\nCurrent Date: ${today}`;
 
-    const systemPrompt = needsExamples
+    const basePrompt = needsExamples
       ? `${MINIMAL_FEW_SHOT}\n\n${CORE_SYSTEM_PROMPT}${dateContext}`
       : `${CORE_SYSTEM_PROMPT}${dateContext}`;
+    const systemPrompt = strictGrounding ? `${STRICT_GROUNDING_PREFIX}${basePrompt}` : basePrompt;
 
     // Create model with structured output
     // Use 'any' to avoid deep type instantiation issues

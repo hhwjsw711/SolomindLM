@@ -156,11 +156,12 @@ export class HybridSearchHandler extends VectorSearchHandler {
     userId: string,
     noteId: string,
     query: string,
-    documentIds?: string[]
+    documentIds?: string[],
+    preComputedEmbedding?: number[]
   ): Promise<HybridReferenceChunk[]> {
     if (!this.hybridConfig.enableHybrid || !this.keywordSearchRunner) {
       // Vector-only: cast to base type for compatibility
-      return (await super.search(userId, noteId, query, documentIds)) as HybridReferenceChunk[];
+      return (await super.search(userId, noteId, query, documentIds, preComputedEmbedding)) as HybridReferenceChunk[];
     }
 
     const startTime = Date.now();
@@ -169,7 +170,7 @@ export class HybridSearchHandler extends VectorSearchHandler {
     try {
       // Parallel retrieval
       const [vectorResults, keywordResults] = await Promise.all([
-        this.executeVectorSearch(query, documentIds),
+        this.executeVectorSearch(query, documentIds, preComputedEmbedding),
         this.executeKeywordSearch(query, documentIds),
       ]);
 
@@ -248,10 +249,10 @@ export class HybridSearchHandler extends VectorSearchHandler {
    */
   private async executeVectorSearch(
     query: string,
-    documentIds?: string[]
+    documentIds?: string[],
+    preComputedEmbedding?: number[]
   ): Promise<VectorSearchRawResult[]> {
-    // Access protected embeddingService via getter
-    const embedding = await this['embeddingService'].embedText(query);
+    const embedding = preComputedEmbedding ?? await this['embeddingService'].embedText(query);
     return await this['vectorSearchRunner'](embedding, this['config'].vectorMatchCount, documentIds);
   }
 

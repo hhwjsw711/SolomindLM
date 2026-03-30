@@ -321,6 +321,12 @@ export async function streamChatResponse(
       } else if (chunk.type === "grounding_check") {
         // Append grounding check as metadata
         await chunkAppender(`\n__GROUNDING:${JSON.stringify(chunk.data)}\n`);
+      } else if (chunk.type === "tool_call") {
+        await chunkAppender(`\n__TOOL_CALL:${JSON.stringify(chunk.data)}\n`);
+      } else if (chunk.type === "followups") {
+        await chunkAppender(`\n__FOLLOWUPS:${JSON.stringify(chunk.data)}\n`);
+      } else if (chunk.type === "clarification") {
+        await chunkAppender(`\n__CLARIFICATION:${JSON.stringify(chunk.data)}\n`);
       } else if (chunk.type === "error") {
         hasError = true;
         await chunkAppender(`\n__ERROR:${JSON.stringify(chunk.data)}\n`);

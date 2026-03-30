@@ -28,6 +28,9 @@ export interface ParsedStreamData {
   references?: ReferenceChunk[];
   status?: { status: string; message: string };
   groundingCheck?: { passed: boolean; issues: string[]; message: string };
+  toolCall?: { tool: string; query: string; status: 'searching' | 'done'; resultCount?: number };
+  followUps?: string[];
+  clarification?: { question: string };
   error?: { message: string; type?: string };
   isDone: boolean;
 }
@@ -71,6 +74,9 @@ export interface SendMessageCallbacks {
   onToken: (token: string) => void;
   onReferences: (references: ReferenceChunk[]) => void;
   onStatus?: (status: string, message?: string) => void;
+  onToolCall?: (toolCall: { tool: string; query: string; status: 'searching' | 'done'; resultCount?: number }) => void;
+  onFollowUps?: (questions: string[]) => void;
+  onClarification?: (question: string) => void;
   onComplete: () => void;
   onError: (error: string | ChatError) => void;
 }
@@ -110,6 +116,24 @@ export function parseStreamBody(body: string): ParsedStreamData {
       try {
         const jsonStr = line.slice('__GROUNDING:'.length);
         result.groundingCheck = JSON.parse(jsonStr);
+      } catch {
+        // Ignore parse errors
+      }
+    } else if (line.startsWith('__TOOL_CALL:')) {
+      try {
+        result.toolCall = JSON.parse(line.slice('__TOOL_CALL:'.length));
+      } catch {
+        // Ignore parse errors
+      }
+    } else if (line.startsWith('__FOLLOWUPS:')) {
+      try {
+        result.followUps = JSON.parse(line.slice('__FOLLOWUPS:'.length));
+      } catch {
+        // Ignore parse errors
+      }
+    } else if (line.startsWith('__CLARIFICATION:')) {
+      try {
+        result.clarification = JSON.parse(line.slice('__CLARIFICATION:'.length));
       } catch {
         // Ignore parse errors
       }
@@ -299,8 +323,16 @@ export function useSendMessage() {
         if (parsed.status) {
           callbacks.onStatus?.(parsed.status.status, parsed.status.message);
         }
+        if (parsed.toolCall) {
+          callbacks.onToolCall?.(parsed.toolCall);
+        }
+        if (parsed.followUps) {
+          callbacks.onFollowUps?.(parsed.followUps);
+        }
+        if (parsed.clarification) {
+          callbacks.onClarification?.(parsed.clarification.question);
+        }
         if (parsed.groundingCheck) {
-          // You can add a callback for grounding checks if needed
           console.log('[Chat] Grounding check:', parsed.groundingCheck);
         }
         if (parsed.error) {
@@ -327,4 +359,17 @@ export function useSendMessage() {
   }, [sendMessageMutation, isAuthenticated, authToken]);
 
   return sendMessage;
+}
+
+/**
+ * Set thumbs up/down feedback on an assistant message.
+ * Pass null to remove existing feedback.
+ */
+export function useSetMessageFeedback() {
+  const setFeedback = useMutation(api.chat.messages.setMessageFeedback);
+  return useCallback(
+    (messageId: string, feedback: 'up' | 'down' | null) =>
+      setFeedback({ messageId: messageId as Id<'messages'>, feedback }),
+    [setFeedback]
+  );
 }

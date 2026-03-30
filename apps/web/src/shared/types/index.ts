@@ -21,6 +21,13 @@ export interface ReferenceChunk {
   similarity?: number;
 }
 
+export interface MessageToolCall {
+  tool: string;
+  query: string;
+  status: 'searching' | 'done';
+  resultCount?: number;
+}
+
 export interface Message {
   id: string;
   role: 'user' | 'assistant';
@@ -29,6 +36,9 @@ export interface Message {
   references?: ReferenceChunk[];
   timestamp: Date;
   status?: 'searching' | 'reading' | 'thinking' | 'generating';
+  feedback?: 'up' | 'down';
+  followUps?: string[];
+  toolCalls?: MessageToolCall[];
 }
 
 export interface StudioTool {
