@@ -113,6 +113,7 @@ import type * as documents_embeddingJob from "../documents/embeddingJob.js";
 import type * as documents_embeddings from "../documents/embeddings.js";
 import type * as documents_index from "../documents/index.js";
 import type * as folders_index from "../folders/index.js";
+import type * as googleDrive from "../googleDrive.js";
 import type * as http from "../http.js";
 import type * as notebooks_index from "../notebooks/index.js";
 import type * as notes_index from "../notes/index.js";
@@ -253,6 +254,7 @@ declare const fullApi: ApiFromModules<{
   "documents/embeddings": typeof documents_embeddings;
   "documents/index": typeof documents_index;
   "folders/index": typeof folders_index;
+  googleDrive: typeof googleDrive;
   http: typeof http;
   "notebooks/index": typeof notebooks_index;
   "notes/index": typeof notes_index;

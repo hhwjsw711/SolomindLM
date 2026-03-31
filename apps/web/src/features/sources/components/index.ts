@@ -8,3 +8,5 @@ export { SourceList } from './SourceList';
 export { SourceViewer } from './SourceViewer';
 export { SourcesPanelHeader } from './SourcesPanelHeader';
 export { DiscoverSourcesModal } from './DiscoverSourcesModal';
+export { GoogleDrivePicker } from './GoogleDrivePicker';
+export type { GoogleDrivePickerHandle, PickedFile } from './GoogleDrivePicker';

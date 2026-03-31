@@ -1,17 +1,19 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useSourcesContext } from '../SourcesContext';
 import { DiscoverSourcesModal } from './DiscoverSourcesModal';
 import { AddSourceModal } from './AddSourceModal';
 import { UrlInputModal } from './UrlInputModal';
 import { SocialMediaInputModal } from './SocialMediaInputModal';
 import { TextInputModal } from './TextInputModal';
+import { GoogleDrivePicker } from './GoogleDrivePicker';
+import type { GoogleDrivePickerHandle, PickedFile } from './GoogleDrivePicker';
 import { SourceList } from './SourceList';
 import { SourceViewer } from './SourceViewer';
 import { SourcesPanelHeader } from './SourcesPanelHeader';
 import { useSourceUpload } from '../hooks/useSourceUpload';
 import { useSourceContent } from '../hooks/useSourceContent';
 import { useSourceSearch } from '../hooks/useSourceSearch';
-import { useDocumentContent, useDocument } from '../services/documentsApi';
+import { useDocumentContent, useDocument, useIngestFromGoogleDrive } from '../services/documentsApi';
 import { useConfirmDialog } from '@/shared/ui/ConfirmDialog';
 
 interface SourcesPanelProps {
@@ -53,6 +55,36 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [showSocialMediaInput, setShowSocialMediaInput] = useState(false);
   const [showTextInput, setShowTextInput] = useState(false);
+
+  const googleDriveRef = useRef<GoogleDrivePickerHandle>(null);
+  const ingestFromDrive = useIngestFromGoogleDrive();
+
+  const handleGoogleDriveFiles = useCallback(
+    async (files: PickedFile[], accessToken: string) => {
+      if (!userId || !noteId) return;
+
+      for (const file of files) {
+        try {
+          const result = await ingestFromDrive({
+            notebookId: noteId,
+            fileId: file.id,
+            fileName: file.name,
+            mimeType: file.mimeType,
+            accessToken,
+          });
+          onDocumentUploaded?.(result.documentId);
+        } catch (err) {
+          console.error('Google Drive upload failed:', err);
+          alert(
+            err instanceof Error
+              ? err.message
+              : `Failed to import "${file.name}" from Google Drive`,
+          );
+        }
+      }
+    },
+    [userId, noteId, ingestFromDrive, onDocumentUploaded],
+  );
 
   // Custom hooks
   const sourceUpload = useSourceUpload({
@@ -317,6 +349,10 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
           setIsAddModalOpen(false);
           setIsDiscoverOpen(true);
         }}
+        onGoogleDriveClick={() => {
+          setIsAddModalOpen(false);
+          googleDriveRef.current?.open();
+        }}
         isDragging={sourceUpload.isDragging}
         onDragEnter={sourceUpload.handleDragEnter}
         onDragLeave={sourceUpload.handleDragLeave}
@@ -361,6 +397,7 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
         onDocumentUploaded={onDocumentUploaded}
       />
 
+      <GoogleDrivePicker ref={googleDriveRef} onFilesSelected={handleGoogleDriveFiles} />
       <ConfirmDialogComponent />
     </>
   );

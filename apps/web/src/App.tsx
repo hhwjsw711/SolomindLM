@@ -104,6 +104,7 @@ const AppContent: React.FC = () => {
   const isHomePage = location.pathname === '/home' || location.pathname === '/billing' || location.pathname.startsWith('/folder/');
 
   const notebookList = notebooks ?? [];
+  const folderList = folders ?? [];
   const featuredNotebooks = useMemo(() => notebookList.filter((nb: NotebookItem) => nb.isFeatured), [notebookList]);
   const recentNotebooks = useMemo(() => notebookList.filter((nb: NotebookItem) => !nb.isFeatured), [notebookList]);
   const activeNotebook = useMemo(() => {
@@ -150,7 +151,7 @@ const AppContent: React.FC = () => {
     urlNotebookId,
     urlFolderId,
     currentView,
-    folders,
+    folders: folderList,
     selectNotebook: handleSelectNotebook,
     createNotebook: notebookCRUD.handleCreateNotebook,
     updateNotebook: notebookCRUD.handleUpdateNotebook,
@@ -174,7 +175,7 @@ const AppContent: React.FC = () => {
     },
   }), [
     notebookList, featuredNotebooks, recentNotebooks, activeNotebook,
-    urlNotebookId, urlFolderId, currentView, folders,
+    urlNotebookId, urlFolderId, currentView, folderList,
     handleSelectNotebook, notebookCRUD, folderCRUD,
     handleLogoClick, notebookTitle, subscriptionStatus, navigate,
     setAuthError, setShowLoginModal,

@@ -1,6 +1,5 @@
 import type { Document, UploadResponse, DiscoveryRequest, DiscoveryResponse } from '@/shared/types/index';
-import { useQuery, useMutation, useAction } from 'convex/react';
-import { api } from '@convex/_generated/api';
+import { useQuery, useMutation, useAction } from 'convex/react';import { api } from '@convex/_generated/api';
 import type { Id } from '@convex/_generated/dataModel';
 import { ConvexClient } from 'convex/browser';
 
@@ -151,6 +150,26 @@ export function useDiscoverSources() {
   return async (request: DiscoveryRequest): Promise<DiscoveryResponse> => {
     const result = await discover(request);
     return { ...result, count: result.sources.length };
+  };
+}
+
+export function useIngestFromGoogleDrive() {
+  const ingest = useAction(api.googleDrive.ingestFromGoogleDrive);
+
+  return async (data: {
+    notebookId: string;
+    fileId: string;
+    fileName: string;
+    mimeType: string;
+    accessToken: string;
+  }) => {
+    return await ingest({
+      notebookId: data.notebookId as Id<'notebooks'>,
+      fileId: data.fileId,
+      fileName: data.fileName,
+      mimeType: data.mimeType,
+      accessToken: data.accessToken,
+    });
   };
 }
 

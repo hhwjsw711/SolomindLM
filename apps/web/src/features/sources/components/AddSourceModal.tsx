@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import {
-  X, FileStack, Upload, Link as LinkIcon, Youtube, Clipboard, FileText, Globe, File,
+  X, FileStack, Upload, Link as LinkIcon, Youtube, Clipboard, FileText, Globe, File, HardDrive,
 } from 'lucide-react';
 
 const MAX_SOURCES = 100;
@@ -13,6 +13,7 @@ interface AddSourceModalProps {
   onSocialMediaClick: () => void;
   onTextClick: () => void;
   onDiscoverClick: () => void;
+  onGoogleDriveClick: () => void;
   isDragging: boolean;
   onDragEnter: (e: React.DragEvent<HTMLDivElement>) => void;
   onDragLeave: (e: React.DragEvent<HTMLDivElement>) => void;
@@ -34,6 +35,7 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
   onSocialMediaClick,
   onTextClick,
   onDiscoverClick,
+  onGoogleDriveClick,
   isDragging,
   onDragEnter,
   onDragLeave,
@@ -144,18 +146,17 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
           </div>
 
           {/* Grid Options */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Column 1: Link options */}
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
             <div className="border border-border/50 rounded-xl p-5 space-y-4 bg-card shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
                 <LinkIcon className="w-4 h-4" />
-                Link
+                Links
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={onUrlClick}
                   disabled={!canUpload}
-                  className="flex items-center justify-center gap-2 p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 border border-transparent hover:border-border transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="h-11 flex items-center justify-center gap-2 p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 border border-transparent hover:border-border transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Globe className="w-4 h-4 text-chart-3 group-hover:scale-110 transition-transform shrink-0" />
                   <span className="text-sm font-medium">Website</span>
@@ -163,7 +164,7 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
                 <button
                   onClick={onSocialMediaClick}
                   disabled={!canUpload}
-                  className="flex items-center justify-center gap-2 p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 border border-transparent hover:border-border transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="h-11 flex items-center justify-center gap-2 p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 border border-transparent hover:border-border transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Youtube className="w-4 h-4 text-destructive group-hover:scale-110 transition-transform shrink-0" />
                   <span className="text-sm font-medium">Transcripts</span>
@@ -171,7 +172,6 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
               </div>
             </div>
 
-            {/* Column 2: Paste text */}
             <div className="border border-border/50 rounded-xl p-5 space-y-4 bg-card shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
                 <Clipboard className="w-4 h-4" />
@@ -181,12 +181,29 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
                 <button
                   onClick={onTextClick}
                   disabled={!canUpload}
-                  className="w-full flex items-center gap-3 p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 border border-transparent hover:border-border transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="h-11 w-full flex items-center gap-3 p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 border border-transparent hover:border-border transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <div className="w-8 h-8 rounded-full bg-background flex items-center justify-center border border-border shadow-sm group-hover:scale-105 transition-transform shrink-0">
                     <FileText className="w-4 h-4 text-chart-4" />
                   </div>
                   <span className="text-sm font-medium">Copied text</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="border border-border/50 rounded-xl p-5 space-y-4 bg-card shadow-sm hover:shadow-md transition-shadow md:col-span-2 xl:col-span-1">
+              <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+                <HardDrive className="w-4 h-4" />
+                Google Drive
+              </div>
+              <div className="space-y-2">
+                <button
+                  onClick={onGoogleDriveClick}
+                  disabled={!canUpload}
+                  className="h-11 w-full flex items-center justify-center gap-2 p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 border border-transparent hover:border-border transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <HardDrive className="w-4 h-4 text-chart-2 group-hover:scale-110 transition-transform shrink-0" />
+                  <span className="text-sm font-medium">Choose from Google Drive</span>
                 </button>
               </div>
             </div>
