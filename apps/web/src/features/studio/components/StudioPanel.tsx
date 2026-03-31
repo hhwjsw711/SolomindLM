@@ -14,6 +14,7 @@ import { NoteListView } from './NoteListView';
 import { ActiveNoteView } from './ActiveNoteView';
 import { MiniAudioPlayer } from '@/features/audio/components/MiniAudioPlayer';
 import { useStudioContext } from '../StudioContext';
+import { useAudioPlayerContext } from '@/features/audio/AudioPlayerContext';
 import { useStudioHandlers } from '../hooks/useStudioHandlers';
 import { useNoteActions } from '../hooks/useNoteActions';
 
@@ -26,15 +27,6 @@ interface StudioPanelProps {
   sources?: any[];
   userId?: string | null;
   noteId?: string | null;
-  onPlayAudio?: (audioUrl: string, title: string, transcript?: string, noteId?: string) => void;
-  miniPlayerVisible?: boolean;
-  miniPlayerData?: {
-    audioUrl: string;
-    title: string;
-    transcript?: string;
-  } | null;
-  onCloseMiniPlayer?: () => void;
-  onExpandAudioPlayer?: () => void;
 }
 
 /**
@@ -50,11 +42,6 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
   sources = [],
   userId,
   noteId,
-  onPlayAudio,
-  miniPlayerVisible = false,
-  miniPlayerData = null,
-  onCloseMiniPlayer,
-  onExpandAudioPlayer,
 }) => {
   const {
     notes,
@@ -64,6 +51,14 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
     onAddNote,
     onSaveReportContent,
   } = useStudioContext();
+
+  const {
+    miniPlayerVisible,
+    miniPlayerData,
+    onPlayAudio,
+    onCloseMiniPlayer,
+    onExpandAudioPlayer,
+  } = useAudioPlayerContext();
   // State
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
   const [isMindMapExpanded, setIsMindMapExpanded] = useState(false);

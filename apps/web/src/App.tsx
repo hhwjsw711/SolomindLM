@@ -6,15 +6,13 @@ import { useQuery, useMutation } from 'convex/react';
 import { api } from '@convex/_generated/api';
 import { Id, type Doc } from '@convex/_generated/dataModel';
 import { Header } from './shared/ui/Header';
-import { SourcesPanel } from './features/sources/components/SourcesPanel';
-import { ChatPanel } from './features/chat/components/ChatPanel';
-import { StudioPanel } from './features/studio/components/StudioPanel';
 import { HomePage } from './features/notebooks/components/HomePage';
 import { FolderView } from './features/notebooks/components/views/FolderView';
 import { NotebookProvider } from './features/notebooks/NotebookContext';
 import { ChatStreamingProvider } from './features/chat/ChatStreamingContext';
 import { SourcesProvider } from './features/sources/SourcesContext';
 import { StudioProvider } from './features/studio/StudioContext';
+import { NotebookView } from './features/notebooks/components/views/NotebookView';
 import { BillingPage } from './features/billing/components/BillingPage';
 import { LandingPage } from './features/landing/LandingPage';
 import { useAuth, AuthProvider } from './features/auth/AuthContext';
@@ -25,7 +23,6 @@ import { ToastContainer } from './shared/components/ToastContainer';
 import { ProtectedRoute } from './shared/components/ProtectedRoute';
 import { PrivacyPolicy } from './features/legal/components/PrivacyPolicy';
 import { TermsOfService } from './features/legal/components/TermsOfService';
-import { STUDIO_TOOLS } from './shared/constants';
 import { Source, Note, NotebookItem, Message, FolderItem } from '@/shared/types/index';
 import { documentToSource } from './shared/utils/documentToSource';
 import { useNotes } from './features/studio/services/notesApi';
@@ -45,9 +42,6 @@ import { useSubscriptionStatus } from './features/billing/services/subscriptionA
 import { useSendMessage, useSetMessageFeedback, useSourceSuggestions } from './features/chat/services/chatApi';
 import { useLimitErrorToast } from './shared/hooks/useLimitErrorToast';
 import 'mind-elixir/style.css';
-
-const MIN_PANEL_WIDTH = 220;
-const getMaxPanelWidth = () => Math.min(window.innerWidth * 0.7, 1400);
 
 const AppContent: React.FC = () => {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -140,9 +134,6 @@ const AppContent: React.FC = () => {
   }, [location.pathname]);
 
   // Notebook specific state
-  const [isSourcesOpen, setIsSourcesOpen] = useState(true);
-  const [isStudioOpen, setIsStudioOpen] = useState(true);
-  const [mobileActiveTab, setMobileActiveTab] = useState<'sources' | 'chat' | 'studio'>('sources');
   const [sources, setSources] = useState<Source[]>([]);
   const [notebookTitle, setNotebookTitle] = useState("Notebook");
   const [isChatStreaming, setIsChatStreaming] = useState(false);
@@ -157,14 +148,6 @@ const AppContent: React.FC = () => {
   messagesRef.current = messages;
   /** Wall-clock ms when current stream started; used to detect stuck UI after DB already has the reply. */
   const streamStartedAtRef = useRef<number | null>(null);
-
-  // Mini Audio Player state
-  const [miniPlayerVisible, setMiniPlayerVisible] = useState(false);
-  const [miniPlayerData, setMiniPlayerData] = useState<{
-    audioUrl: string;
-    title: string;
-    transcript?: string;
-  } | null>(null);
 
   // Optimistic UI: saved-chat placeholder shown in notes list until save completes
   const [optimisticSaveNote, setOptimisticSaveNote] = useState<{ notebookId: string; note: Note } | null>(null);
@@ -201,12 +184,6 @@ const AppContent: React.FC = () => {
     if (!urlNotebookId || notebookList.length === 0) return undefined;
     return notebookList.find((nb: NotebookItem) => nb.id === urlNotebookId);
   }, [urlNotebookId, notebookList]);
-
-  // Resize State
-  const [leftWidth, setLeftWidth] = useState(360);
-  const [rightWidth, setRightWidth] = useState(420);
-  const [isResizingLeft, setIsResizingLeft] = useState(false);
-  const [isResizingRight, setIsResizingRight] = useState(false);
 
   // Use a ref to track previous documents for comparison
   const prevDocumentsRef = useRef<any[]>([]);
@@ -250,9 +227,6 @@ const AppContent: React.FC = () => {
       prevDocumentsRef.current = documents;
     }
   }, [documents]);
-
-  const toggleSources = () => setIsSourcesOpen(!isSourcesOpen);
-  const toggleStudio = () => setIsStudioOpen(!isStudioOpen);
 
   /** Reset all streaming state to idle. */
   const resetStreamingState = () => {
@@ -605,72 +579,6 @@ const AppContent: React.FC = () => {
     }
   };
 
-  const startResizingLeft = useCallback(() => setIsResizingLeft(true), []);
-  const startResizingRight = useCallback(() => setIsResizingRight(true), []);
-  const stopResizing = useCallback(() => {
-    setIsResizingLeft(false);
-    setIsResizingRight(false);
-  }, []);
-
-  const resize = useCallback(
-    (mouseMoveEvent: MouseEvent) => {
-      const maxWidth = getMaxPanelWidth();
-      if (isResizingLeft) {
-        const newWidth = mouseMoveEvent.clientX;
-        if (newWidth >= MIN_PANEL_WIDTH && newWidth <= maxWidth) {
-          setLeftWidth(newWidth);
-        }
-      }
-      if (isResizingRight) {
-        const newWidth = window.innerWidth - mouseMoveEvent.clientX;
-        if (newWidth >= MIN_PANEL_WIDTH && newWidth <= maxWidth) {
-          setRightWidth(newWidth);
-        }
-      }
-    },
-    [isResizingLeft, isResizingRight]
-  );
-
-  useEffect(() => {
-    if (isResizingLeft || isResizingRight) {
-      window.addEventListener("mousemove", resize);
-      window.addEventListener("mouseup", stopResizing);
-      document.body.style.userSelect = 'none';
-      document.body.style.cursor = 'col-resize';
-    } else {
-      document.body.style.userSelect = '';
-      document.body.style.cursor = '';
-    }
-
-    return () => {
-      window.removeEventListener("mousemove", resize);
-      window.removeEventListener("mouseup", stopResizing);
-      document.body.style.userSelect = '';
-      document.body.style.cursor = '';
-    };
-  }, [isResizingLeft, isResizingRight, resize, stopResizing]);
-
-  // Listen for panel resize events from child components
-  useEffect(() => {
-    const handleSourcesPanelResize = (e: Event) => {
-      const customEvent = e as CustomEvent;
-      setLeftWidth(customEvent.detail.width);
-    };
-
-    const handleStudioPanelResize = (e: Event) => {
-      const customEvent = e as CustomEvent;
-      setRightWidth(customEvent.detail.width);
-    };
-
-    window.addEventListener('resizeSourcesPanel', handleSourcesPanelResize);
-    window.addEventListener('resizeStudioPanel', handleStudioPanelResize);
-
-    return () => {
-      window.removeEventListener('resizeSourcesPanel', handleSourcesPanelResize);
-      window.removeEventListener('resizeStudioPanel', handleStudioPanelResize);
-    };
-  }, []);
-
   // Handle redirect from Stripe checkout (go to billing and clear query so subscription state can load)
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -845,30 +753,6 @@ const AppContent: React.FC = () => {
     }
   };
 
-  const handlePlayAudio = (audioUrl: string, title: string, transcript?: string, noteId?: string) => {
-    setMiniPlayerData({ audioUrl, title, transcript });
-    setMiniPlayerVisible(true);
-    if (noteId) {
-      (window as any).__currentPlayingAudioNoteId = noteId;
-    }
-  };
-
-  const handleCloseMiniPlayer = () => {
-    setMiniPlayerVisible(false);
-  };
-
-  const handleExpandAudioPlayer = () => {
-    setMiniPlayerVisible(false);
-    const noteId = (window as any).__currentPlayingAudioNoteId;
-    if (noteId) {
-      const note = notes.find(n => n.id === noteId);
-      if (note) {
-        const event = new CustomEvent('setActiveNote', { detail: { noteId } });
-        window.dispatchEvent(event);
-      }
-    }
-  };
-
   // NotebookContext value (pass-through — AppContent owns the state)
   const notebookContextValue = useMemo(() => ({
     notebookList,
@@ -1016,147 +900,7 @@ const AppContent: React.FC = () => {
               <ChatStreamingProvider value={chatStreamingContextValue}>
               <SourcesProvider value={sourcesContextValue}>
               <StudioProvider value={studioContextValue}>
-              <main className="flex-1 flex flex-col overflow-hidden relative animate-in fade-in duration-300">
-                {/* Mobile Navigation Bar */}
-                <div className="md:hidden flex items-center justify-around border-b border-border bg-background sticky top-0 z-60 h-12">
-                  <button
-                    onClick={() => setMobileActiveTab('sources')}
-                    className={`flex-1 py-3 px-4 text-sm font-semibold transition-colors ${
-                      mobileActiveTab === 'sources'
-                        ? 'text-primary border-b-2 border-primary bg-primary/5'
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    Sources
-                  </button>
-                  <div className="w-px h-6 bg-border"></div>
-                  <button
-                    onClick={() => setMobileActiveTab('chat')}
-                    className={`flex-1 py-3 px-4 text-sm font-semibold transition-colors ${
-                      mobileActiveTab === 'chat'
-                        ? 'text-primary border-b-2 border-primary bg-primary/5'
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    Chat
-                  </button>
-                  <div className="w-px h-6 bg-border"></div>
-                  <button
-                    onClick={() => setMobileActiveTab('studio')}
-                    className={`flex-1 py-3 px-4 text-sm font-semibold transition-colors ${
-                      mobileActiveTab === 'studio'
-                        ? 'text-primary border-b-2 border-primary bg-primary/5'
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    Studio
-                  </button>
-                </div>
-
-                {/* Desktop Layout */}
-                <div className="hidden md:flex flex-1 overflow-hidden w-full">
-                  <SourcesPanel
-                    isOpen={isSourcesOpen}
-                    onClose={toggleSources}
-                    width={leftWidth}
-                    isResizing={isResizingLeft}
-                    userId={user?.id}
-                    noteId={activeNotebookId}
-                    onDocumentUploaded={() => {}}
-                  />
-
-                  {isSourcesOpen && (
-                    <div
-                      className="w-1 hover:w-1.5 -ml-0.5 z-50 cursor-col-resize shrink-0 hover:bg-primary/50 transition-colors select-none"
-                      onMouseDown={startResizingLeft}
-                    />
-                  )}
-
-                  <ChatPanel
-                    isLeftOpen={isSourcesOpen}
-                    isRightOpen={isStudioOpen}
-                    toggleLeft={toggleSources}
-                    toggleRight={toggleStudio}
-                    notebookId={activeNotebookId}
-                    notebookTitle={notebookTitle}
-                    notebookIcon={activeNotebook?.icon}
-                    notebookCoverColor={activeNotebook?.coverColor}
-                  />
-
-                  {isStudioOpen && (
-                    <div
-                      className="w-1 hover:w-1.5 -mr-0.5 z-50 cursor-col-resize shrink-0 hover:bg-primary/50 transition-colors select-none"
-                      onMouseDown={startResizingRight}
-                    />
-                  )}
-
-                  <StudioPanel
-                    isOpen={isStudioOpen}
-                    onClose={toggleStudio}
-                    tools={STUDIO_TOOLS}
-                    width={rightWidth}
-                    isResizing={isResizingRight}
-                    sources={sources}
-                    userId={user?.id}
-                    noteId={activeNotebookId}
-                    onPlayAudio={handlePlayAudio}
-                    miniPlayerVisible={miniPlayerVisible}
-                    miniPlayerData={miniPlayerData}
-                    onCloseMiniPlayer={handleCloseMiniPlayer}
-                    onExpandAudioPlayer={handleExpandAudioPlayer}
-                  />
-                </div>
-
-                {/* Mobile Layout */}
-                <div className="md:hidden flex-1 overflow-hidden w-full flex flex-col">
-                  {mobileActiveTab === 'sources' && (
-                    <div className="flex-1 w-full overflow-hidden">
-                      <SourcesPanel
-                        isOpen={true}
-                        onClose={() => {}}
-                        width={390}
-                        isResizing={false}
-                        userId={user?.id}
-                        noteId={activeNotebookId}
-                        onDocumentUploaded={() => {}}
-                      />
-                    </div>
-                  )}
-                  {mobileActiveTab === 'chat' && (
-                    <div className="flex-1 w-full overflow-hidden">
-                      <ChatPanel
-                        isLeftOpen={false}
-                        isRightOpen={false}
-                        toggleLeft={() => {}}
-                        toggleRight={() => {}}
-                        notebookId={activeNotebookId}
-                        notebookTitle={notebookTitle}
-                        notebookIcon={activeNotebook?.icon}
-                        notebookCoverColor={activeNotebook?.coverColor}
-                      />
-                    </div>
-                  )}
-                  {mobileActiveTab === 'studio' && (
-                    <div className="flex-1 w-full overflow-hidden">
-                      <StudioPanel
-                        isOpen={true}
-                        onClose={() => {}}
-                        tools={STUDIO_TOOLS}
-                        width={390}
-                        isResizing={false}
-                        sources={sources}
-                        userId={user?.id}
-                        noteId={activeNotebookId}
-                        onPlayAudio={handlePlayAudio}
-                        miniPlayerVisible={miniPlayerVisible}
-                        miniPlayerData={miniPlayerData}
-                        onCloseMiniPlayer={handleCloseMiniPlayer}
-                        onExpandAudioPlayer={handleExpandAudioPlayer}
-                      />
-                    </div>
-                  )}
-                </div>
-              </main>
+                <NotebookView />
               </StudioProvider>
               </SourcesProvider>
               </ChatStreamingProvider>
