@@ -1,6 +1,6 @@
 "use node"
 
-import { ZhipuAI } from 'zhipuai-sdk-nodejs-v4';
+import OpenAI from 'openai';
 
 import {
   invokeWithTimeout,
@@ -13,11 +13,11 @@ import { GRAPH_CONFIG } from '../config.js';
 import type { Slide } from '../prompts.js';
 
 /**
- * SlideImageGenerationService handles ZhipuAI glm-image API calls
+ * SlideImageGenerationService handles OpenAI gpt-image-1.5 API calls
  * and uploads generated images to Convex storage.
  */
 export class SlideImageGenerationService {
-  private client: ZhipuAI;
+  private client: OpenAI;
   private uploadStorage: (buffer: Buffer, fileName: string) => Promise<string>;
   private maxRetries = 1; // Only 1 retry - ZhipuAI rate limits are very strict, retrying immediately doesn't help
 
@@ -28,10 +28,10 @@ export class SlideImageGenerationService {
           agent: 'SlideDeckGraph',
           phase: 'image_service_init',
         } as any,
-        'ZhipuAI API key not configured - image generation will be skipped'
+        'OpenAI API key not configured - image generation will be skipped'
       );
     }
-    this.client = new ZhipuAI({ apiKey });
+    this.client = new OpenAI({ apiKey });
     this.uploadStorage = uploadStorage;
   }
 
