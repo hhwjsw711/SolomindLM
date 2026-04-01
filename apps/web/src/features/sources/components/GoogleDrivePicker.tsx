@@ -85,10 +85,6 @@ export const GoogleDrivePicker = forwardRef<GoogleDrivePickerHandle, Props>(
             const action = data.action ?? data[google.picker.Response.ACTION];
             const docs = data.docs ?? data[google.picker.Response.DOCUMENTS];
 
-            // #region agent log
-            fetch('http://127.0.0.1:7243/ingest/c40b03dc-b194-43e0-8425-638bcd5bfca0',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f9b18a'},body:JSON.stringify({sessionId:'f9b18a',runId:'gd-upload-debug',hypothesisId:'H1',location:'GoogleDrivePicker.tsx:callback',message:'Picker callback payload received',data:{action,docsCount:Array.isArray(docs)?docs.length:-1},timestamp:Date.now()})}).catch(()=>{});
-            // #endregion
-
             if (action === google.picker.Action.PICKED && Array.isArray(docs)) {
               const files: PickedFile[] = docs
                 .filter((doc) => doc.id && doc.name && doc.mimeType)
@@ -98,10 +94,6 @@ export const GoogleDrivePicker = forwardRef<GoogleDrivePickerHandle, Props>(
                   mimeType: doc.mimeType!,
                   sizeBytes: doc.sizeBytes,
                 }));
-
-              // #region agent log
-              fetch('http://127.0.0.1:7243/ingest/c40b03dc-b194-43e0-8425-638bcd5bfca0',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f9b18a'},body:JSON.stringify({sessionId:'f9b18a',runId:'gd-upload-debug',hypothesisId:'H2',location:'GoogleDrivePicker.tsx:callback',message:'Mapped picker docs to files',data:{filesCount:files.length,hasAccessToken:Boolean(accessToken)},timestamp:Date.now()})}).catch(()=>{});
-              // #endregion
 
               if (files.length > 0) {
                 onFilesSelected(files, accessToken);
