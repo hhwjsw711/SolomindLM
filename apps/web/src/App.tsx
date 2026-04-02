@@ -62,7 +62,11 @@ const AppContent: React.FC = () => {
   useGenerateUploadUrl();
   useCreateDocument();
 
-  const sourceManager = useSourceManager({ documents });
+  const sourceManager = useSourceManager({
+    documents,
+    notebookId:
+      activeNotebookId && activeNotebookId !== 'new' ? activeNotebookId : null,
+  });
   const noteCRUD = useNoteCRUD({ activeNotebookId });
   const chatStream = useChatStream({
     activeNotebookId,
@@ -212,6 +216,7 @@ const AppContent: React.FC = () => {
     onToggleAll: sourceManager.handleToggleAll,
     onAddSource: sourceManager.handleAddSource,
     onDeleteSource: sourceManager.handleDeleteSource,
+    onDeleteSelectedSources: sourceManager.handleDeleteSelectedSources,
     onRenameSource: sourceManager.handleRenameSource,
   }), [sourceManager]);
 

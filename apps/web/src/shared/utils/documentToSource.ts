@@ -57,6 +57,13 @@ export function documentToSource(doc: any): Source {
       ? (doc.fileUrl as string | undefined)
       : undefined;
 
+  let remoteRefreshKind: 'url' | 'drive' | undefined;
+  if (doc.fileType === 'url') {
+    remoteRefreshKind = 'url';
+  } else if (doc.fileType === 'file' && doc.googleDriveFileId) {
+    remoteRefreshKind = 'drive';
+  }
+
   return {
     id: doc._id,
     title: displayTitle,
@@ -66,5 +73,6 @@ export function documentToSource(doc: any): Source {
     content: '',
     status: doc.status,
     url,
+    remoteRefreshKind,
   };
 }

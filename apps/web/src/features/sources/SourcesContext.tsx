@@ -7,6 +7,7 @@ export interface SourcesContextType {
   onToggleAll: () => void;
   onAddSource: (source: Source) => void;
   onDeleteSource: (id: string) => void;
+  onDeleteSelectedSources: (ids: string[]) => Promise<void>;
   onRenameSource: (id: string, newTitle: string) => void;
 }
 

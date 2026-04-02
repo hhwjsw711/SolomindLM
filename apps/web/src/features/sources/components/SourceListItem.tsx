@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  FileText, Globe, File, CheckSquare, Square, Loader2, XCircle, MoreVertical, Edit2, Trash2,
+  FileText, Globe, File, CheckSquare, Square, Loader2, XCircle, MoreVertical, Edit2, Trash2, RefreshCw,
 } from 'lucide-react';
 import { Source } from '@/shared/types';
 
@@ -14,6 +14,7 @@ interface SourceListItemProps {
   onToggle: (id: string) => void;
   onView: (id: string) => void;
   onDelete: (id: string, title: string) => void;
+  onRefreshSource: (id: string) => void;
   onMenuOpen: (id: string) => void;
   onStartRename: (sourceId: string) => void;
   isMenuOpen: boolean;
@@ -29,6 +30,7 @@ export const SourceListItem: React.FC<SourceListItemProps> = ({
   onToggle,
   onView,
   onDelete,
+  onRefreshSource,
   onMenuOpen,
   onStartRename,
   isMenuOpen,
@@ -132,24 +134,40 @@ export const SourceListItem: React.FC<SourceListItemProps> = ({
                       onMenuOpen('');
                     }}
                   />
-                  <div className="absolute right-0 top-full mt-1 z-[110] min-w-[140px] rounded-lg border border-border bg-card shadow-xl">
+                  <div className="absolute right-0 top-full mt-1 z-[110] min-w-[140px] rounded-lg border border-border bg-card shadow-xl overflow-hidden">
+                    {source.remoteRefreshKind && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onRefreshSource(source.id);
+                          onMenuOpen('');
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-secondary border-b border-border transition-colors"
+                      >
+                        <RefreshCw className="w-4 h-4" />
+                        Refresh
+                      </button>
+                    )}
                     <button
+                      type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         onStartRename(source.id);
                       }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-secondary first:rounded-t-lg transition-colors"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-secondary border-b border-border transition-colors"
                     >
                       <Edit2 className="w-4 h-4" />
                       Rename
                     </button>
                     <button
+                      type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         onDelete(source.id, source.title);
                         onMenuOpen('');
                       }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-destructive/10 last:rounded-b-lg transition-colors"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
                       Delete

@@ -1,5 +1,6 @@
 import type { Document, UploadResponse, DiscoveryRequest, DiscoveryResponse } from '@/shared/types/index';
-import { useQuery, useMutation, useAction } from 'convex/react';import { api } from '@convex/_generated/api';
+import { useQuery, useMutation, useAction } from 'convex/react';
+import { api } from '@convex/_generated/api';
 import type { Id } from '@convex/_generated/dataModel';
 import { ConvexClient } from 'convex/browser';
 
@@ -120,6 +121,60 @@ export function useDeleteDocument() {
 
   return async (id: string) => {
     return await remove({ id: id as Id<'documents'> });
+  };
+}
+
+/**
+ * Delete multiple documents with optimistic list updates (notebook-scoped list args).
+ */
+export function useRemoveManyDocuments(notebookId: string | null) {
+  const listArgs = notebookId ? { notebookId: notebookId as Id<'notebooks'> } : {};
+  const removeMany = useMutation(api.documents.index.removeMany).withOptimisticUpdate(
+    (localStore, args: { ids: Id<'documents'>[] }) => {
+      const listResult = localStore.getQuery(api.documents.index.list, listArgs);
+      if (listResult) {
+        const idSet = new Set(args.ids.map((id) => id));
+        localStore.setQuery(
+          api.documents.index.list,
+          listArgs,
+          listResult.filter((doc: { _id: string }) => !idSet.has(doc._id as Id<'documents'>))
+        );
+      }
+      for (const id of args.ids) {
+        localStore.setQuery(api.documents.index.get, { id }, null);
+      }
+    }
+  );
+
+  return async (ids: string[]) => {
+    if (ids.length === 0) return;
+    await removeMany({ ids: ids as Id<'documents'>[] });
+  };
+}
+
+/**
+ * Re-fetch all web URL + Google Drive sources in a notebook.
+ */
+export function useRefreshNotebookRemoteSources() {
+  const run = useAction(api.documents.refreshRemote.refreshNotebookRemoteSources);
+  return async (params: { notebookId: string; accessToken?: string }) => {
+    return await run({
+      notebookId: params.notebookId as Id<'notebooks'>,
+      accessToken: params.accessToken,
+    });
+  };
+}
+
+/**
+ * Re-fetch a single remote source (url or Drive-backed file).
+ */
+export function useRefreshRemoteSource() {
+  const run = useAction(api.documents.refreshRemote.refreshRemoteSource);
+  return async (params: { documentId: string; accessToken?: string }) => {
+    await run({
+      documentId: params.documentId as Id<'documents'>,
+      accessToken: params.accessToken,
+    });
   };
 }
 

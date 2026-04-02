@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Youtube, Loader2 } from 'lucide-react';
+import { useToast } from '@/shared/contexts/ToastContext';
 
 interface SocialMediaInputModalProps {
   isOpen: boolean;
@@ -14,6 +15,7 @@ export const SocialMediaInputModal: React.FC<SocialMediaInputModalProps> = ({
   onUpload,
   isUploading,
 }) => {
+  const { error: showError } = useToast();
   const [urlInput, setUrlInput] = useState('');
 
   // Reset input when modal opens
@@ -32,7 +34,7 @@ export const SocialMediaInputModal: React.FC<SocialMediaInputModalProps> = ({
       .filter(url => url.length > 0 && (url.startsWith('http://') || url.startsWith('https://')));
 
     if (urls.length === 0) {
-      alert('Please enter at least one valid URL (starting with http:// or https://).');
+      showError('Please enter at least one valid URL (starting with http:// or https://).');
       return;
     }
 

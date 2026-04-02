@@ -56,7 +56,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, [toast]);
 
   const error = useCallback((message: string, options?: Partial<Toast>) => {
-    return toast(message, { ...options, type: 'error', duration: 6000 });
+    const { duration: durationOverride, ...rest } = options ?? {};
+    return toast(message, {
+      ...rest,
+      type: 'error',
+      duration: durationOverride ?? 6000,
+    });
   }, [toast]);
 
   const info = useCallback((message: string, options?: Partial<Toast>) => {

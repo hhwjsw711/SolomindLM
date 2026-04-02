@@ -1,5 +1,13 @@
 import { v } from "convex/values";
-import { mutation, query, internalMutation, internalQuery, internalAction, action } from "../_generated/server";
+import {
+  mutation,
+  query,
+  internalMutation,
+  internalQuery,
+  internalAction,
+  action,
+  type MutationCtx,
+} from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
 import { getAuthUserId } from "../auth";
@@ -9,6 +17,19 @@ import {
   assertCanReadNotebook,
 } from "../_lib/notebookAccess";
 import { TavilySearchService } from "../_services/search/TavilySearchService";
+
+async function deleteAllChunksForDocument(
+  ctx: MutationCtx,
+  documentId: Id<"documents">,
+): Promise<void> {
+  const chunks = await ctx.db
+    .query("documentChunks")
+    .withIndex("by_document", (q) => q.eq("documentId", documentId))
+    .collect();
+  for (const chunk of chunks) {
+    await ctx.db.delete(chunk._id);
+  }
+}
 
 /**
  * Get a presigned URL for uploading a file to Convex Storage
@@ -34,6 +55,8 @@ export const upload = mutation({
     fileName: v.string(),
     fileSize: v.optional(v.number()),
     contentType: v.optional(v.string()), // e.g. application/pdf — used when fileName has no extension
+    googleDriveFileId: v.optional(v.string()),
+    googleDriveMimeType: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -58,6 +81,12 @@ export const upload = mutation({
       throw new Error("source is required for url/youtube/text type");
     }
 
+    if (args.type === "file" && (args.googleDriveFileId || args.googleDriveMimeType)) {
+      if (!args.googleDriveFileId || !args.googleDriveMimeType) {
+        throw new Error("googleDriveFileId and googleDriveMimeType must both be set for Drive-backed files");
+      }
+    }
+
     const now = Date.now();
 
     const documentId = await ctx.db.insert("documents", {
@@ -68,6 +97,8 @@ export const upload = mutation({
       fileSize: args.fileSize,
       storageId: args.storageId,
       contentType: args.contentType,
+      googleDriveFileId: args.googleDriveFileId,
+      googleDriveMimeType: args.googleDriveMimeType,
       fileUrl: (args.type === "url" || args.type === "youtube" || args.type === "text") ? args.source : undefined,
       status: "pending",
       createdAt: now,
@@ -280,25 +311,140 @@ export const remove = mutation({
 
     await assertCanEditNotebook(ctx, document.notebookId, userId);
 
-    // Delete file from storage if it exists
+    await deleteAllChunksForDocument(ctx, args.id);
+
     if (document.storageId) {
       await ctx.storage.delete(document.storageId as Id<'_storage'>);
     }
 
-    // Delete from database (chunks will need to be deleted separately)
     await ctx.db.delete(args.id);
 
-    // Delete associated chunks
-    const chunks = await ctx.db
-      .query("documentChunks")
-      .withIndex("by_document", (q) => q.eq("documentId", args.id))
-      .collect();
+    return { message: "Document deleted successfully" };
+  },
+});
 
-    for (const chunk of chunks) {
-      await ctx.db.delete(chunk._id);
+/**
+ * Delete multiple documents (same cleanup as remove).
+ */
+export const removeMany = mutation({
+  args: { ids: v.array(v.id("documents")) },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
+
+    if (args.ids.length === 0) {
+      return { deleted: 0 };
     }
 
-    return { message: "Document deleted successfully" };
+    let deleted = 0;
+    for (const id of args.ids) {
+      const document = await ctx.db.get(id);
+      if (!document) continue;
+
+      await assertCanEditNotebook(ctx, document.notebookId, userId);
+
+      await deleteAllChunksForDocument(ctx, id);
+
+      if (document.storageId) {
+        await ctx.storage.delete(document.storageId as Id<'_storage'>);
+      }
+
+      await ctx.db.delete(id);
+      deleted += 1;
+    }
+
+    return { deleted };
+  },
+});
+
+/**
+ * Internal: Clear chunks, optionally swap Convex storage blob, reset doc fields, schedule embedding.
+ */
+export const prepareDocumentReembed = internalMutation({
+  args: {
+    documentId: v.id("documents"),
+    delayMs: v.number(),
+    newStorageId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const doc = await ctx.db.get(args.documentId);
+    if (!doc) throw new Error("Document not found");
+
+    if (args.newStorageId !== undefined) {
+      if (doc.storageId) {
+        await ctx.storage.delete(doc.storageId as Id<"_storage">);
+      }
+      await ctx.db.patch(args.documentId, {
+        storageId: args.newStorageId,
+        updatedAt: Date.now(),
+      });
+    }
+
+    await deleteAllChunksForDocument(ctx, args.documentId);
+
+    await ctx.db.patch(args.documentId, {
+      status: "pending",
+      error: undefined,
+      wordCount: undefined,
+      estimatedReadingTimeMinutes: undefined,
+      totalPages: undefined,
+      totalChunks: undefined,
+      hasCodeBlocks: undefined,
+      hasMathNotation: undefined,
+      hasTables: undefined,
+      hasImages: undefined,
+      language: undefined,
+      documentStructure: undefined,
+      maxHeadingLevel: undefined,
+      metadata: undefined,
+      updatedAt: Date.now(),
+    });
+
+    const after = await ctx.db.get(args.documentId);
+    if (!after) throw new Error("Document not found");
+
+    await ctx.scheduler.runAfter(
+      args.delayMs,
+      internal.documents.embeddingJob.docEmbedding,
+      {
+        documentId: args.documentId,
+        userId: after.userId,
+        notebookId: after.notebookId,
+      },
+    );
+  },
+});
+
+/**
+ * Internal: Notebook documents for remote refresh (caller must pass authenticated user id).
+ */
+export const listDocumentsForNotebookRefresh = internalQuery({
+  args: {
+    notebookId: v.id("notebooks"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    await assertCanEditNotebook(ctx, args.notebookId, args.userId);
+    return await ctx.db
+      .query("documents")
+      .withIndex("by_notebook", (q) => q.eq("notebookId", args.notebookId))
+      .collect();
+  },
+});
+
+/**
+ * Internal: Single document if the user can edit its notebook.
+ */
+export const getDocumentForRefresh = internalQuery({
+  args: {
+    documentId: v.id("documents"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const doc = await ctx.db.get(args.documentId);
+    if (!doc) return null;
+    await assertCanEditNotebook(ctx, doc.notebookId, args.userId);
+    return doc;
   },
 });
 

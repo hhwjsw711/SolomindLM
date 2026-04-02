@@ -10,6 +10,8 @@ export interface Source {
   status?: 'pending' | 'processing' | 'completed' | 'failed';
   /** Original URL for WEB sources (url or youtube); used to open in new tab */
   url?: string;
+  /** Kebab Refresh: web page (`url` type, not YouTube) or Google Drive–backed file */
+  remoteRefreshKind?: 'url' | 'drive';
 }
 
 export interface ReferenceChunk {

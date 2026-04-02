@@ -150,6 +150,7 @@ import type * as _agents_written_questions_state from "../_agents/written_questi
 import type * as _agents_written_questions_structuredLlm from "../_agents/written_questions/structuredLlm.js";
 import type * as _lib_env from "../_lib/env.js";
 import type * as _lib_errors from "../_lib/errors.js";
+import type * as _lib_googleDriveDownload from "../_lib/googleDriveDownload.js";
 import type * as _lib_limits from "../_lib/limits.js";
 import type * as _lib_notebookAccess from "../_lib/notebookAccess.js";
 import type * as _lib_rateLimits from "../_lib/rateLimits.js";
@@ -197,6 +198,7 @@ import type * as chat_stream from "../chat/stream.js";
 import type * as documents_embeddingJob from "../documents/embeddingJob.js";
 import type * as documents_embeddings from "../documents/embeddings.js";
 import type * as documents_index from "../documents/index.js";
+import type * as documents_refreshRemote from "../documents/refreshRemote.js";
 import type * as folders_index from "../folders/index.js";
 import type * as googleDrive from "../googleDrive.js";
 import type * as http from "../http.js";
@@ -401,6 +403,7 @@ declare const fullApi: ApiFromModules<{
   "_agents/written_questions/structuredLlm": typeof _agents_written_questions_structuredLlm;
   "_lib/env": typeof _lib_env;
   "_lib/errors": typeof _lib_errors;
+  "_lib/googleDriveDownload": typeof _lib_googleDriveDownload;
   "_lib/limits": typeof _lib_limits;
   "_lib/notebookAccess": typeof _lib_notebookAccess;
   "_lib/rateLimits": typeof _lib_rateLimits;
@@ -448,6 +451,7 @@ declare const fullApi: ApiFromModules<{
   "documents/embeddingJob": typeof documents_embeddingJob;
   "documents/embeddings": typeof documents_embeddings;
   "documents/index": typeof documents_index;
+  "documents/refreshRemote": typeof documents_refreshRemote;
   "folders/index": typeof folders_index;
   googleDrive: typeof googleDrive;
   http: typeof http;

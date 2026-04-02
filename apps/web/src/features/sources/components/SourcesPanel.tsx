@@ -13,8 +13,16 @@ import { SourcesPanelHeader } from './SourcesPanelHeader';
 import { useSourceUpload } from '../hooks/useSourceUpload';
 import { useSourceContent } from '../hooks/useSourceContent';
 import { useSourceSearch } from '../hooks/useSourceSearch';
-import { useDocumentContent, useDocument, useIngestFromGoogleDrive } from '../services/documentsApi';
+import {
+  useDocumentContent,
+  useDocument,
+  useIngestFromGoogleDrive,
+  useRefreshNotebookRemoteSources,
+  useRefreshRemoteSource,
+} from '../services/documentsApi';
+import { requestGoogleDriveAccessToken } from '../utils/requestGoogleDriveAccessToken';
 import { useConfirmDialog } from '@/shared/ui/ConfirmDialog';
+import { useToast } from '@/shared/contexts/ToastContext';
 
 interface SourcesPanelProps {
   isOpen: boolean;
@@ -40,8 +48,11 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
     onToggleAll,
     onAddSource,
     onDeleteSource,
+    onDeleteSelectedSources,
     onRenameSource,
   } = useSourcesContext();
+  const { success, error: showError, info: showInfo } = useToast();
+
   // View state
   const [viewingSourceId, setViewingSourceId] = useState<string | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
@@ -58,6 +69,9 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
 
   const googleDriveRef = useRef<GoogleDrivePickerHandle>(null);
   const ingestFromDrive = useIngestFromGoogleDrive();
+  const refreshNotebookRemote = useRefreshNotebookRemoteSources();
+  const refreshRemoteSource = useRefreshRemoteSource();
+  const [isRefreshingAll, setIsRefreshingAll] = useState(false);
 
   const handleGoogleDriveFiles = useCallback(
     async (files: PickedFile[], accessToken: string) => {
@@ -75,7 +89,7 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
           onDocumentUploaded?.(result.documentId);
         } catch (err) {
           console.error('Google Drive upload failed:', err);
-          alert(
+          showError(
             err instanceof Error
               ? err.message
               : `Failed to import "${file.name}" from Google Drive`,
@@ -83,7 +97,7 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
         }
       }
     },
-    [noteId, ingestFromDrive, onDocumentUploaded],
+    [noteId, ingestFromDrive, onDocumentUploaded, showError],
   );
 
   // Custom hooks
@@ -157,6 +171,97 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
       onDeleteSource(sourceId);
     }
   };
+
+  const handleDeleteSelected = async () => {
+    const ids = sources.filter((s) => s.selected).map((s) => s.id);
+    if (ids.length === 0) return;
+    const confirmed = await confirm(
+      'Delete sources',
+      `Delete ${ids.length} selected source${ids.length === 1 ? '' : 's'}? This cannot be undone.`,
+      { confirmText: 'Delete', cancelText: 'Cancel', variant: 'danger' }
+    );
+    if (confirmed) {
+      await onDeleteSelectedSources(ids);
+    }
+  };
+
+  const canRefreshAll = useMemo(
+    () => sources.some((s) => s.remoteRefreshKind),
+    [sources]
+  );
+
+  const handleRefreshAll = useCallback(async () => {
+    if (!noteId || isRefreshingAll || !canRefreshAll) return;
+    setIsRefreshingAll(true);
+    try {
+      const needsDrive = sources.some((s) => s.remoteRefreshKind === 'drive');
+      let accessToken: string | undefined;
+      if (needsDrive) {
+        try {
+          accessToken = await requestGoogleDriveAccessToken();
+        } catch (e) {
+          console.warn('Google token not obtained; Drive sources may be skipped.', e);
+        }
+      }
+      const result = await refreshNotebookRemote({
+        notebookId: noteId,
+        accessToken,
+      });
+      const parts: string[] = [];
+      if (result.urlCount > 0) {
+        parts.push(`${result.urlCount} web page${result.urlCount === 1 ? '' : 's'} queued`);
+      }
+      if (result.driveRefreshed > 0) {
+        parts.push(`${result.driveRefreshed} from Google Drive`);
+      }
+      if (result.driveSkippedNoToken > 0) {
+        parts.push(
+          `${result.driveSkippedNoToken} Drive source${result.driveSkippedNoToken === 1 ? '' : 's'} skipped (sign in with Google to refresh)`
+        );
+      }
+      if (parts.length === 0) {
+        showInfo('No web or Google Drive sources to refresh in this notebook.');
+      } else {
+        success(`Refresh started: ${parts.join('. ')}.`);
+      }
+    } catch (err) {
+      console.error('Refresh all failed:', err);
+      showError(err instanceof Error ? err.message : 'Failed to refresh sources');
+    } finally {
+      setIsRefreshingAll(false);
+    }
+  }, [
+    noteId,
+    isRefreshingAll,
+    canRefreshAll,
+    sources,
+    refreshNotebookRemote,
+    success,
+    showInfo,
+    showError,
+  ]);
+
+  const handleRefreshSource = useCallback(
+    async (sourceId: string) => {
+      const source = sources.find((s) => s.id === sourceId);
+      if (!source?.remoteRefreshKind) return;
+      try {
+        let accessToken: string | undefined;
+        if (source.remoteRefreshKind === 'drive') {
+          accessToken = await requestGoogleDriveAccessToken();
+        }
+        await refreshRemoteSource({
+          documentId: sourceId,
+          accessToken,
+        });
+        showInfo('Refresh started for this source.');
+      } catch (err) {
+        console.error('Refresh source failed:', err);
+        showError(err instanceof Error ? err.message : 'Failed to refresh source');
+      }
+    },
+    [sources, refreshRemoteSource, showInfo, showError]
+  );
 
   const handleToggleSource = (sourceId: string) => {
     onToggleSource(sourceId);
@@ -312,6 +417,7 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
               onToggleSource={handleToggleSource}
               onViewSource={handleViewSource}
               onDeleteSource={handleDeleteSource}
+              onRefreshSource={handleRefreshSource}
               onRenameSource={handleRenameSource}
               allSelected={allSelected}
               renamingId={renamingId}
@@ -323,6 +429,11 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
               width={width}
               onAddSource={() => setIsAddModalOpen(true)}
               onDiscoverClick={() => setIsDiscoverOpen(true)}
+              selectedCount={selectedCount}
+              onDeleteSelected={handleDeleteSelected}
+              onRefreshAll={handleRefreshAll}
+              canRefreshAll={canRefreshAll}
+              isRefreshing={isRefreshingAll}
             />
           )}
         </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Plus, FileStack } from 'lucide-react';
+import { Search, Plus, FileStack, Trash2, RefreshCw } from 'lucide-react';
 import { Source } from '@/shared/types';
 import { SourceListItem } from './SourceListItem';
 
@@ -12,6 +12,7 @@ interface SourceListProps {
   onToggleSource: (id: string) => void;
   onViewSource: (id: string) => void;
   onDeleteSource: (id: string, title: string) => void;
+  onRefreshSource: (id: string) => void;
   onRenameSource: (id: string, newTitle: string) => void;
   allSelected: boolean;
   renamingId: string | null;
@@ -23,6 +24,11 @@ interface SourceListProps {
   width: number;
   onAddSource: () => void;
   onDiscoverClick: () => void;
+  selectedCount: number;
+  onDeleteSelected: () => void;
+  onRefreshAll: () => void;
+  canRefreshAll: boolean;
+  isRefreshing: boolean;
 }
 
 export const SourceList: React.FC<SourceListProps> = ({
@@ -34,6 +40,7 @@ export const SourceList: React.FC<SourceListProps> = ({
   onToggleSource,
   onViewSource,
   onDeleteSource,
+  onRefreshSource,
   onRenameSource,
   allSelected,
   renamingId,
@@ -45,6 +52,11 @@ export const SourceList: React.FC<SourceListProps> = ({
   width,
   onAddSource,
   onDiscoverClick,
+  selectedCount,
+  onDeleteSelected,
+  onRefreshAll,
+  canRefreshAll,
+  isRefreshing,
 }) => {
   const handleRenameSubmit = (id: string, newTitle: string) => {
     if (newTitle.trim()) {
@@ -59,23 +71,49 @@ export const SourceList: React.FC<SourceListProps> = ({
   return (
     <div className="p-3 space-y-4">
       {/* Action Bar */}
-      <div className="flex gap-2 p-1.5 bg-background/50 border border-border rounded-lg shadow-inner">
-        <button
-          onClick={onAddSource}
-          className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-primary text-primary-foreground rounded-md shadow-sm hover:bg-primary/90 hover:-translate-y-0.5 active:translate-y-0 transition-all font-sans font-bold text-[11px] uppercase tracking-wider ${width < 300 ? 'px-3' : ''}`}
-          title={width < 300 ? 'Add Source' : ''}
-        >
-          <Plus className="w-4 h-4 shrink-0" />
-          {width >= 300 && <span>Add Source</span>}
-        </button>
-        <button
-          onClick={onDiscoverClick}
-          className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-card border border-border text-foreground rounded-md shadow-xs hover:bg-secondary hover:border-primary/30 transition-all font-sans font-bold text-[11px] uppercase tracking-wider ${width < 300 ? 'px-3' : ''}`}
-          title={width < 300 ? 'Discover' : ''}
-        >
-          <Search className="w-4 h-4 text-primary shrink-0" />
-          {width >= 300 && <span>Discover</span>}
-        </button>
+      <div className="flex flex-col gap-2 p-1.5 bg-background/50 border border-border rounded-lg shadow-inner">
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={onAddSource}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-primary text-primary-foreground rounded-md shadow-sm hover:bg-primary/90 hover:-translate-y-0.5 active:translate-y-0 transition-all font-sans font-bold text-[11px] uppercase tracking-wider ${width < 300 ? 'px-3' : ''}`}
+            title={width < 300 ? 'Add Source' : ''}
+          >
+            <Plus className="w-4 h-4 shrink-0" />
+            {width >= 300 && <span>Add Source</span>}
+          </button>
+          <button
+            type="button"
+            onClick={onDiscoverClick}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-card border border-border text-foreground rounded-md shadow-xs hover:bg-secondary hover:border-primary/30 transition-all font-sans font-bold text-[11px] uppercase tracking-wider ${width < 300 ? 'px-3' : ''}`}
+            title={width < 300 ? 'Discover' : ''}
+          >
+            <Search className="w-4 h-4 text-primary shrink-0" />
+            {width >= 300 && <span>Discover</span>}
+          </button>
+        </div>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={onDeleteSelected}
+            disabled={selectedCount === 0}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 bg-card border border-border text-destructive rounded-md shadow-xs hover:bg-destructive/10 hover:border-destructive/30 transition-all font-sans font-bold text-[11px] uppercase tracking-wider disabled:opacity-40 disabled:pointer-events-none ${width < 300 ? 'px-2' : ''}`}
+            title={width < 300 ? 'Delete selected' : ''}
+          >
+            <Trash2 className="w-4 h-4 shrink-0" />
+            {width >= 300 && <span>Delete</span>}
+          </button>
+          <button
+            type="button"
+            onClick={onRefreshAll}
+            disabled={!canRefreshAll || isRefreshing}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 bg-card/80 border border-border/70 text-muted-foreground rounded-md shadow-none hover:bg-secondary/80 hover:border-border hover:text-foreground transition-all font-sans font-medium text-[11px] uppercase tracking-wide disabled:opacity-40 disabled:pointer-events-none ${width < 300 ? 'px-2' : ''}`}
+            title="Re-fetch web pages and Google Drive imports"
+          >
+            <RefreshCw className={`w-4 h-4 shrink-0 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {width >= 300 && <span>Refresh all</span>}
+          </button>
+        </div>
       </div>
 
       {/* Search & List */}
@@ -129,6 +167,7 @@ export const SourceList: React.FC<SourceListProps> = ({
                 onMenuOpen={onMenuOpen}
                 onStartRename={onStartRename}
                 isMenuOpen={openMenuId === source.id}
+                onRefreshSource={onRefreshSource}
               />
             ))
           )}

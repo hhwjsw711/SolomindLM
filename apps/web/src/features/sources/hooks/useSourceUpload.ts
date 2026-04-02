@@ -2,6 +2,7 @@ import { useRef, useState, useEffect } from 'react';
 import { useUploadDocument, useCreateDocument } from '../services/documentsApi';
 import { useUserLimits } from '@/features/billing/services/subscriptionApi';
 import { useLimitErrorToast } from '@/shared/hooks/useLimitErrorToast';
+import { useToast } from '@/shared/contexts/ToastContext';
 
 const ACCEPTED_FILE_TYPES = ['.pdf', '.docx', '.pptx', '.txt', '.md', '.json', '.csv', '.png', '.jpg', '.jpeg', '.avif', '.wav', '.mp3', '.m4a', '.webm', '.flac'];
 
@@ -52,6 +53,7 @@ export function useSourceUpload({
   const createDocument = useCreateDocument();
   const userLimits = useUserLimits();
   const { handleLimitError } = useLimitErrorToast();
+  const { error: showError, info: showInfo } = useToast();
 
   // Use provided limit or get from subscription
   const maxSources = sourceLimit ?? userLimits.sourceLimit;
@@ -80,7 +82,7 @@ export function useSourceUpload({
     if (files.length === 0) return;
 
     if (!userId || !noteId) {
-      alert('Please log in and select a notebook before uploading files.');
+      showInfo('Please log in and select a notebook before uploading files.');
       return;
     }
 
@@ -105,7 +107,7 @@ export function useSourceUpload({
       console.error('Upload failed:', err);
       const handled = await handleLimitError(err);
       if (!handled.isLimitError) {
-        alert(err instanceof Error ? err.message : 'Upload failed');
+        showError(err instanceof Error ? err.message : 'Upload failed');
       }
     } finally {
       setIsUploading(false);
@@ -124,7 +126,7 @@ export function useSourceUpload({
   // URL upload handler
   const handleUrlUpload = async (urls: string[]) => {
     if (!userId || !noteId) {
-      alert('Please log in and select a notebook before uploading URLs.');
+      showInfo('Please log in and select a notebook before uploading URLs.');
       return;
     }
 
@@ -140,7 +142,7 @@ export function useSourceUpload({
     }
 
     if (urls.length === 0) {
-      alert('Please enter at least one valid URL (starting with http:// or https://).');
+      showError('Please enter at least one valid URL (starting with http:// or https://).');
       return;
     }
 
@@ -164,16 +166,16 @@ export function useSourceUpload({
       }
 
       if (errors.length > 0 && errors.length === urls.length) {
-        alert(`Failed to upload all URLs:\n${errors.join('\n')}`);
+        showError(`Failed to upload all URLs: ${errors.join('; ')}`, { duration: 10_000 });
         return;
       } else if (errors.length > 0) {
-        alert(`Some URLs failed to upload:\n${errors.join('\n')}`);
+        showError(`Some URLs failed: ${errors.join('; ')}`, { duration: 10_000 });
       }
     } catch (err) {
       console.error('URL upload failed:', err);
       const handled = await handleLimitError(err);
       if (!handled.isLimitError) {
-        alert(err instanceof Error ? err.message : 'Upload failed');
+        showError(err instanceof Error ? err.message : 'Upload failed');
       }
       throw err;
     } finally {
@@ -184,7 +186,7 @@ export function useSourceUpload({
   // Social Media upload handler (YouTube, TikTok, Instagram, X)
   const handleSocialMediaUpload = async (urls: string[]) => {
     if (!userId || !noteId) {
-      alert('Please log in and select a notebook before uploading social media content.');
+      showInfo('Please log in and select a notebook before uploading social media content.');
       return;
     }
 
@@ -200,7 +202,7 @@ export function useSourceUpload({
     }
 
     if (urls.length === 0) {
-      alert('Please enter at least one valid URL (starting with http:// or https://).');
+      showError('Please enter at least one valid URL (starting with http:// or https://).');
       return;
     }
 
@@ -224,16 +226,16 @@ export function useSourceUpload({
       }
 
       if (errors.length > 0 && errors.length === urls.length) {
-        alert(`Failed to upload all URLs:\n${errors.join('\n')}`);
+        showError(`Failed to upload all URLs: ${errors.join('; ')}`, { duration: 10_000 });
         return;
       } else if (errors.length > 0) {
-        alert(`Some URLs failed to upload:\n${errors.join('\n')}`);
+        showError(`Some URLs failed: ${errors.join('; ')}`, { duration: 10_000 });
       }
     } catch (err) {
       console.error('Social media upload failed:', err);
       const handled = await handleLimitError(err);
       if (!handled.isLimitError) {
-        alert(err instanceof Error ? err.message : 'Upload failed');
+        showError(err instanceof Error ? err.message : 'Upload failed');
       }
       throw err;
     } finally {
@@ -244,7 +246,7 @@ export function useSourceUpload({
   // Text upload handler
   const handleTextUpload = async (text: string) => {
     if (!userId || !noteId) {
-      alert('Please log in and select a notebook before uploading text.');
+      showInfo('Please log in and select a notebook before uploading text.');
       return;
     }
 
@@ -272,7 +274,7 @@ export function useSourceUpload({
       console.error('Text upload failed:', err);
       const handled = await handleLimitError(err);
       if (!handled.isLimitError) {
-        alert(err instanceof Error ? err.message : 'Upload failed');
+        showError(err instanceof Error ? err.message : 'Upload failed');
       }
       throw err;
     } finally {
@@ -318,7 +320,9 @@ export function useSourceUpload({
     });
 
     if (files.length === 0) {
-      alert(`No supported files found. Supported types: ${ACCEPTED_FILE_TYPES.map(t => t.slice(1)).join(', ')}`);
+      showInfo(
+        `No supported files found. Supported types: ${ACCEPTED_FILE_TYPES.map((t) => t.slice(1)).join(', ')}`,
+      );
       return;
     }
 

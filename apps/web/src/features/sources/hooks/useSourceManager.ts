@@ -1,22 +1,36 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Source } from '@/shared/types/index';
 import { documentToSource } from '@/shared/utils/documentToSource';
-import { useUpdateDocument, useDeleteDocument } from '../services/documentsApi';
+import { useUpdateDocument, useDeleteDocument, useRemoveManyDocuments } from '../services/documentsApi';
+import { useToast } from '@/shared/contexts/ToastContext';
 import { type Doc } from '@convex/_generated/dataModel';
 
 interface UseSourceManagerProps {
   documents: Doc<'documents'>[];
+  notebookId: string | null;
 }
 
-export function useSourceManager({ documents }: UseSourceManagerProps) {
+export function useSourceManager({ documents, notebookId }: UseSourceManagerProps) {
   const [sources, setSources] = useState<Source[]>([]);
   const prevDocumentsRef = useRef<any[]>([]);
   const updateDocument = useUpdateDocument();
   const deleteDocumentMutation = useDeleteDocument();
+  const removeManyDocuments = useRemoveManyDocuments(notebookId);
+  const { error: showError } = useToast();
 
   useEffect(() => {
-    const currentSignature = documents.map((d: Doc<'documents'>) => `${d._id}:${d.status}:${d.fileName}`).join(',');
-    const prevSignature = prevDocumentsRef.current.map((d: Doc<'documents'>) => `${d._id}:${d.status}:${d.fileName}`).join(',');
+    const currentSignature = documents
+      .map(
+        (d: Doc<'documents'>) =>
+          `${d._id}:${d.status}:${d.fileName}:${d.fileType}:${d.googleDriveFileId ?? ''}`
+      )
+      .join(',');
+    const prevSignature = prevDocumentsRef.current
+      .map(
+        (d: Doc<'documents'>) =>
+          `${d._id}:${d.status}:${d.fileName}:${d.fileType}:${d.googleDriveFileId ?? ''}`
+      )
+      .join(',');
 
     if (currentSignature !== prevSignature) {
       setSources(prev => {
@@ -53,9 +67,22 @@ export function useSourceManager({ documents }: UseSourceManagerProps) {
       await deleteDocumentMutation(sourceId);
     } catch (error) {
       console.error('Failed to delete source:', error);
-      alert(error instanceof Error ? error.message : 'Failed to delete source');
+      showError(error instanceof Error ? error.message : 'Failed to delete source');
     }
-  }, [deleteDocumentMutation]);
+  }, [deleteDocumentMutation, showError]);
+
+  const handleDeleteSelectedSources = useCallback(
+    async (ids: string[]) => {
+      if (ids.length === 0) return;
+      try {
+        await removeManyDocuments(ids);
+    } catch (error) {
+      console.error('Failed to delete sources:', error);
+      showError(error instanceof Error ? error.message : 'Failed to delete sources');
+    }
+  },
+    [removeManyDocuments, showError]
+  );
 
   const handleRenameSource = useCallback(async (sourceId: string, newTitle: string) => {
     try {
@@ -63,9 +90,9 @@ export function useSourceManager({ documents }: UseSourceManagerProps) {
       await updateDocument(sourceId, { title: newTitle });
     } catch (error) {
       console.error('Failed to rename source:', error);
-      alert(error instanceof Error ? error.message : 'Failed to rename source');
+      showError(error instanceof Error ? error.message : 'Failed to rename source');
     }
-  }, [updateDocument]);
+  }, [updateDocument, showError]);
 
   return {
     sources,
@@ -73,6 +100,7 @@ export function useSourceManager({ documents }: UseSourceManagerProps) {
     handleToggleAll,
     handleAddSource,
     handleDeleteSource,
+    handleDeleteSelectedSources,
     handleRenameSource,
   };
 }

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { X, Search, Globe, Plus, Loader2, ExternalLink } from 'lucide-react';
 import { Source } from '@/shared/types/index';
 import { useDiscoverSources, useCreateDocument } from '../services/documentsApi';
+import { useToast } from '@/shared/contexts/ToastContext';
 
 interface DiscoverSourcesModalProps {
   isOpen: boolean;
@@ -38,6 +39,7 @@ export const DiscoverSourcesModal: React.FC<DiscoverSourcesModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const discoverSources = useDiscoverSources();
   const createDocument = useCreateDocument();
+  const { error: showError } = useToast();
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,6 +96,7 @@ export const DiscoverSourcesModal: React.FC<DiscoverSourcesModalProps> = ({
         selected: true,
         status: 'pending',
         url: result.url,
+        remoteRefreshKind: 'url',
       };
 
       onAddSource(newSource);
@@ -107,7 +110,7 @@ export const DiscoverSourcesModal: React.FC<DiscoverSourcesModalProps> = ({
       ));
     } catch (err) {
       console.error('Add source error:', err);
-      alert(err instanceof Error ? err.message : 'Failed to add source');
+      showError(err instanceof Error ? err.message : 'Failed to add source');
 
       // Reset loading state
       setResults(prev => prev.map(r =>
