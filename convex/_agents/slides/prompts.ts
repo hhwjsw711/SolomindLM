@@ -2,13 +2,12 @@
 /**
  * Prompt templates and schemas for SlideDeckGraph.
  *
- * OPTIMIZED FOR SOLOMINDLM (Vintage Academia Theme)
- *
  * This system leverages OpenAI's gpt-image-1.5 model's excellent text rendering
  * capabilities to generate complete, professional presentation slides with
  * all text (titles, bullet points, labels) baked directly into the images.
  *
  * Handles:
+ * - AI-driven theme selection based on content analysis
  * - Slide concept generation with professional narrative flow (map phase)
  * - Intelligent slide selection for coherent storytelling (selection phase)
  * - Detailed image generation prompts with exact text specifications (refine phase)
@@ -27,7 +26,7 @@ import { env } from '../../_lib/env';
 export const SlideSchema = z.object({
   slideNumber: z.number().int().min(1).describe('The slide number in the deck (1-indexed)'),
   title: z.string().describe('The title of the slide'),
-  prompt: z.string().describe('Comprehensive prompt for gpt-image-1.5 model that includes: (1) EXACT text to render in quotation marks (title, bullet points, labels), (2) typography specifications (fonts, sizes, weights, crisp/sharp keywords), (3) layout composition (text placement, visual elements, spacing), (4) visual style (Vintage Academia theme, colors, graphics), (5) quality requirements. The prompt must be detailed enough for gpt-image-1.5 to generate a complete, professional presentation slide with all text baked in.'),
+  prompt: z.string().describe('Comprehensive prompt for gpt-image-1.5 model that includes: (1) EXACT text to render in quotation marks (title, bullet points, labels), (2) typography specifications (fonts, sizes, weights, crisp/sharp keywords), (3) layout composition (text placement, visual elements, spacing), (4) visual style (AI-selected theme colors, graphics), (5) quality requirements. The prompt must be detailed enough for gpt-image-1.5 to generate a complete, professional presentation slide with all text baked in.'),
   imageUrl: z.string().nullable().optional().describe('URL to the generated slide image (filled in after image generation)'),
   talkingPoints: z.array(z.string()).describe('Array of talking points for the presenter (3-5 bullet points) - these are also rendered as bullet points in the slide image for detailed_deck type'),
   sourceReferences: z.array(z.string()).nullable().optional().describe('References to source material for attribution'),
@@ -42,7 +41,7 @@ export const SlideCandidateSchema = z.object({
   content: z.string().describe('The main content/topic of the slide'),
   talkingPoints: z.array(z.string()).describe('Key talking points (3-5 bullet points)'),
   sourceSnippet: z.string().describe('Relevant text from source for grounding and reference'),
-  themeSpecification: z.string().optional().describe('AI-selected theme specification (only in first slide concept)'),
+  themeSpecification: z.string().nullable().describe('AI-selected theme specification (only in first slide concept)'),
 });;
 
 /**
@@ -114,36 +113,11 @@ export const GRAPH_CONFIG = {
 } as const;
 
 // ============================================================
-// THEME DEFINITION
-// ============================================================
-
-const THEME_SOLOMIND = {
-  name: "Vintage Academia / Coffee House",
-  visual_instructions: `
-    **VISUAL STYLE GUIDELINES:**
-    - **Aesthetic:** "Vintage Academia" meets "Warm Coffee Shop". Think Leonardo da Vinci's sketchbooks meets a modern high-end cafe menu.
-    - **Backgrounds:** Textured parchment paper, warm beige (#F5F5DC), latte tones, or worn leather textures. NEVER pure white.
-    - **Typography:** Classical Serif for headers (Playfair Display, Garamond style) in dark coffee brown (#4B3621). Clean Sans-Serif for body text.
-    - **Graphics:** Hand-drawn ink illustrations, botanical sketches, sepia-toned technical diagrams, or "etched" style icons.
-    - **Accent Colors:** Deep forest green, burnt orange, or maroon. No neon or bright primary colors.
-    - **Vibe:** Intellectual, organic, artisanal, thoughtful, researched.
-  `
-};
-
-// ============================================================
 // SYSTEM PROMPTS
 // ============================================================
 
 /** System prompt for map phase slide concept generation */
-export const MAP_CONCEPTS_SYSTEM_PROMPT = `You are an expert instructional designer and presentation architect. You create professional slide deck concepts that follow Mayer's Principles of Multimedia Learning, with clear narrative flow, specific content, and strong visual storytelling potential. Every slide you design has a clear purpose in the overall narrative arc.
-
-CRITICAL: You must also analyze the content and determine the most appropriate visual theme for the presentation. The theme should:
-- Enhance and support the content's message and tone
-- Be appropriate for the subject matter (academic, business, creative, technical, etc.)
-- Appeal to the target audience
-- Be consistent throughout the entire slide deck
-
-Your first output must include a theme selection with detailed visual specifications.`;;
+export const MAP_CONCEPTS_SYSTEM_PROMPT = `You are an expert instructional designer and presentation architect. You create professional slide deck concepts that follow Mayer's Principles of Multimedia Learning, with clear narrative flow, specific content, and strong visual storytelling potential. Every slide you design has a clear purpose in the overall narrative arc.`;;
 
 /** System prompt for reduce phase slide refinement with image generation prompts */
 export const REFINE_SLIDES_SYSTEM_PROMPT = `You are a master presentation designer who creates complete, professional slides where ALL text (titles, bullet points, labels) is rendered directly in the image by OpenAI's gpt-image-1.5 model. You craft detailed prompts that specify exact text content in quotation marks, crisp typography with sharp/legible keywords, precise layout, and visual elements to produce publication-ready slides with excellent text rendering.
@@ -185,27 +159,6 @@ export const getCandidateMapPrompt = (params: {
 **Slide Strategy:** ${slideTypeDescription}
 **Deck Scope:** ${deckLengthDescription}
 ${customPrompt ? `**Custom Focus:** ${customPrompt}` : ''}
-
-**CRITICAL - THEME SELECTION:**
-Before creating slide concepts, you MUST analyze the content and select the most appropriate visual theme for this presentation. Consider:
-- Subject matter (academic, business, creative, technical, medical, etc.)
-- Target audience (students, professionals, general public, executives)
-- Tone (formal, casual, inspirational, educational, persuasive)
-- Content type (data-heavy, conceptual, instructional, narrative)
-
-Provide a brief theme specification (2-3 sentences) describing:
-1. Theme name and aesthetic direction
-2. Color palette and typography approach
-3. Visual style (illustrations, photos, diagrams, abstract)
-4. Why this theme fits the content
-
-Example themes to consider (but create your own as appropriate):
-- "Modern Tech" - Clean whites, blues, sans-serif fonts, data visualizations
-- "Vintage Academia" - Warm parchment, serif fonts, hand-drawn illustrations
-- "Corporate Professional" - Navy/grayscale, clean layouts, business graphics
-- "Creative Bold" - Vibrant colors, dynamic layouts, artistic elements
-- "Scientific Research" - Cool blues, technical diagrams, precision typography
-- "Elegant Minimalist" - Subtle colors, generous whitespace, refined typography
 
 TASK: Extract approximately ${slidesPerChunk} slide concepts that will form a cohesive, professional presentation.
 
@@ -434,48 +387,48 @@ Return the final curated list of slides with your reasoning for the narrative ar
  * These examples demonstrate the level of detail and specificity required.
  */
 export const EXAMPLE_IMAGE_PROMPTS = {
-  detailed_deck: `Professional presentation slide in vintage academia aesthetic. 16:9 aspect ratio (1728x960px).
+  detailed_deck: `Professional presentation slide. 16:9 aspect ratio (1728x960px).
 
-TITLE (top, large serif font 60pt, dark coffee brown #4B3621):
+TITLE (top, large bold font 60pt, primary color):
 "How Neural Networks Learn from Data"
 
-BULLET POINTS (left side, clean sans-serif 28pt, dark brown #4B3621):
+BULLET POINTS (left side, clean sans-serif 28pt, high contrast):
 1. Networks adjust weights through backpropagation algorithm
 2. Training requires labeled datasets and loss function optimization
 3. Learning rate controls the speed of weight adjustments
 4. Overfitting occurs when model memorizes rather than generalizes
 
 VISUAL ELEMENT (right side, 50% of slide):
-Hand-drawn ink illustration of a neural network diagram with nodes and connections, arrows showing data flow, sketched in sepia tones with vintage technical drawing style
+Technical diagram of a neural network with nodes and connections, arrows showing data flow, clean modern illustration style
 
 BACKGROUND:
-Textured parchment paper (#F5F5DC) with subtle coffee stains and aged paper texture, warm lighting
+Professional solid color or subtle gradient appropriate to the theme
 
 LAYOUT:
 Split composition - text occupies left 45%, visual occupies right 55%, proper margins and spacing
 
 STYLE:
-Vintage academia meets modern design, ink wash aesthetic, hand-drawn illustrations, warm color palette, professional presentation quality, 8k resolution, crisp text rendering`,
+Professional presentation quality, 8k resolution, crisp text rendering`,
 
-  presenter_slides: `Professional presentation slide in vintage academia aesthetic. 16:9 aspect ratio (1728x960px).
+  presenter_slides: `Professional presentation slide. 16:9 aspect ratio (1728x960px).
 
-TITLE (center-top, very large bold serif font 72pt, dark coffee brown #4B3621):
+TITLE (center-top, very large bold font 72pt, primary color):
 "The Power of Compound Interest"
 
-KEY PHRASE (center, medium sans-serif 36pt, forest green accent):
+KEY PHRASE (center, medium sans-serif 36pt, accent color):
 "Small changes today, exponential results tomorrow"
 
 VISUAL ELEMENT (dominant, 85% of slide):
-Artistic hand-drawn graph showing exponential growth curve, sketched in ink with vintage mathematical diagram style, sepia and brown tones, elegant curve with subtle grid lines
+Clean graph showing exponential growth curve, smooth modern style, subtle grid lines
 
 BACKGROUND:
-Warm textured parchment (#F5F5DC) with aged paper aesthetic, coffee-stained edges, vintage academic journal style
+Professional solid color or subtle gradient appropriate to the theme
 
 LAYOUT:
 Hero composition - title at top 10%, key phrase in middle 10%, massive visual dominates 80%
 
 STYLE:
-Minimalist yet sophisticated, vintage academia aesthetic, hand-drawn ink illustrations, warm lighting, professional presentation design, 8k quality, perfect text rendering`
+Professional presentation design, 8k quality, perfect text rendering`
 };
 
 // ============================================================

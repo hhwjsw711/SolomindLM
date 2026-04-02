@@ -2,7 +2,10 @@ import { v } from "convex/values";
 import { mutation, query, internalMutation, internalQuery } from "../../_generated/server";
 import { internal } from "../../_generated/api";
 import { getAuthUserId } from "../../auth";
-import * as Notebooks from "../../_model/notebooks";
+import {
+  assertCanEditNotebook,
+  assertCanReadNotebook,
+} from "../../_lib/notebookAccess";
 import * as Mindmaps from "../../_model/mindmaps";
 
 /**
@@ -14,7 +17,8 @@ export const list = query({
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
 
-    return await Mindmaps.listByNotebook(ctx, args.notebookId, userId);
+    await assertCanReadNotebook(ctx, args.notebookId, userId);
+    return await Mindmaps.listByNotebook(ctx, args.notebookId);
   },
 });
 
@@ -29,7 +33,13 @@ export const get = query({
 
     const mindmap = await Mindmaps.getMindmap(ctx, args.id);
 
-    if (!mindmap || mindmap.userId !== userId) {
+    if (!mindmap) {
+      return null;
+    }
+
+    try {
+      await assertCanReadNotebook(ctx, mindmap.notebookId, userId);
+    } catch {
       return null;
     }
 
@@ -60,10 +70,7 @@ export const create = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
 
-    const notebook = await Notebooks.getNotebook(ctx, args.notebookId);
-    if (!notebook || notebook.userId !== userId) {
-      throw new Error("Notebook not found");
-    }
+    await assertCanEditNotebook(ctx, args.notebookId, userId);
 
     return await Mindmaps.createMindmapAndFetch(ctx, {
       userId,
@@ -92,9 +99,11 @@ export const update = mutation({
     const { id, ...updates } = args;
 
     const existing = await Mindmaps.getMindmap(ctx, id);
-    if (!existing || existing.userId !== userId) {
+    if (!existing) {
       throw new Error("Mindmap not found");
     }
+
+    await assertCanEditNotebook(ctx, existing.notebookId, userId);
 
     await Mindmaps.updateMindmap(ctx, id, updates);
 
@@ -112,9 +121,11 @@ export const remove = mutation({
     if (!userId) throw new Error("Unauthenticated");
 
     const mindmap = await Mindmaps.getMindmap(ctx, args.id);
-    if (!mindmap || mindmap.userId !== userId) {
+    if (!mindmap) {
       throw new Error("Mindmap not found");
     }
+
+    await assertCanEditNotebook(ctx, mindmap.notebookId, userId);
 
     await Mindmaps.deleteMindmap(ctx, args.id);
 
@@ -139,6 +150,8 @@ export const generateMindMap = mutation({
     if (documentIds.length === 0) {
       throw new Error("Please select at least one source. Content generation uses only your selected sources.");
     }
+
+    await assertCanEditNotebook(ctx, notebookId, userId);
 
     // Create mindmap record
     const mindmapId = await Mindmaps.createMindmap(ctx, {
@@ -177,11 +190,12 @@ export const updateMindMap = mutation({
 
     const { mindmapId, data, title } = args;
 
-    // Verify ownership
     const mindmap = await Mindmaps.getMindmap(ctx, mindmapId);
-    if (!mindmap || mindmap.userId !== userId) {
+    if (!mindmap) {
       throw new Error("Mindmap not found or access denied");
     }
+
+    await assertCanEditNotebook(ctx, mindmap.notebookId, userId);
 
     // Update
     const updates: Record<string, unknown> = { updatedAt: Date.now() };
@@ -205,11 +219,12 @@ export const deleteMindMap = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
-    // Verify ownership
     const mindmap = await Mindmaps.getMindmap(ctx, args.mindmapId);
-    if (!mindmap || mindmap.userId !== userId) {
+    if (!mindmap) {
       throw new Error("Mindmap not found or access denied");
     }
+
+    await assertCanEditNotebook(ctx, mindmap.notebookId, userId);
 
     await Mindmaps.deleteMindmap(ctx, args.mindmapId);
   },

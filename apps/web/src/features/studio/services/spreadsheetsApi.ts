@@ -99,7 +99,7 @@ export function useSpreadsheet(spreadsheetId: string | null) {
  * Create a new spreadsheet and queue generation
  */
 export function useCreateSpreadsheet() {
-  const schedule = useAction(api.studio._shared.scheduleSpreadsheet);
+  const schedule = useAction(api.studio.scheduling.spreadsheets.scheduleSpreadsheet);
 
   return async (params: CreateSpreadsheetParams): Promise<CreateSpreadsheetResponse> => {
     const result = await schedule({

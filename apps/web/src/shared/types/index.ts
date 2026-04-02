@@ -309,6 +309,8 @@ export interface NotebookItem {
   coverColor?: string; // e.g. 'bg-amber-200'
   icon?: string;
   isFeatured?: boolean;
+  /** True when this notebook is owned by someone else and you are an editor via share link */
+  isSharedNotebook?: boolean;
   folderId?: string;
   created_at?: string | number;
   updated_at?: string | number;

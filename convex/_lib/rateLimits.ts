@@ -30,6 +30,11 @@ export const rateLimiter = new RateLimiter(components.rateLimiter, {
   writtenQuestionPro: { kind: "fixed window", rate: 100, period: DAY },
   spreadsheetPro: { kind: "fixed window", rate: 100, period: DAY },
   slidePro: { kind: "fixed window", rate: 10, period: DAY },
+
+  /** Joining notebooks via share link (per user, per hour) */
+  shareRedeem: { kind: "fixed window", rate: 60, period: HOUR },
+  /** Forking a notebook from a fork link (per user, per hour) */
+  notebookFork: { kind: "fixed window", rate: 20, period: HOUR },
 });
 
 /**

@@ -108,7 +108,7 @@ export function useWrittenQuestionSet(id: string | null) {
  * Create new written questions and queue generation
  */
 export function useCreateWrittenQuestions() {
-  const schedule = useAction(api.studio._shared.scheduleWrittenQuestions);
+  const schedule = useAction(api.studio.scheduling.writtenQuestions.scheduleWrittenQuestions);
 
   return async (params: CreateWrittenQuestionsParams): Promise<CreateWrittenQuestionsResponse> => {
     const result = await schedule({

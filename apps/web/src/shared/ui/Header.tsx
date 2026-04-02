@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { User as UserIcon } from 'lucide-react';
+import { User as UserIcon, Share2 } from 'lucide-react';
 import { useAuth } from '../../features/auth/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { DropdownMenu } from './DropdownMenu';
@@ -13,9 +13,22 @@ interface HeaderProps {
   onLogoClick: () => void;
   onBillingClick?: () => void;
   hasSubscription?: boolean;
+  /** When false, title is read-only (e.g. shared notebook as editor). */
+  notebookRenamable?: boolean;
+  /** Owner-only: opens share UI for the active notebook. */
+  onShare?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ title, onRename, isHome, onLogoClick, onBillingClick, hasSubscription = false }) => {
+export const Header: React.FC<HeaderProps> = ({
+  title,
+  onRename,
+  isHome,
+  onLogoClick,
+  onBillingClick,
+  hasSubscription = false,
+  notebookRenamable = true,
+  onShare,
+}) => {
   const { user, isAuthenticated, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -30,6 +43,13 @@ export const Header: React.FC<HeaderProps> = ({ title, onRename, isHome, onLogoC
   useEffect(() => {
     setInputValue(title);
   }, [title]);
+
+  useEffect(() => {
+    if (!notebookRenamable && isEditing) {
+      setInputValue(title);
+      setIsEditing(false);
+    }
+  }, [notebookRenamable, isEditing, title]);
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -114,11 +134,18 @@ export const Header: React.FC<HeaderProps> = ({ title, onRename, isHome, onLogoC
                 className="text-lg font-sans font-bold text-foreground bg-transparent border-b border-primary outline-none p-0 tracking-tight min-w-0"
                 aria-label="Notebook name"
               />
-            ) : (
+            ) : notebookRenamable ? (
               <h1
                 onClick={() => setIsEditing(true)}
                 className="text-lg font-sans font-bold text-foreground tracking-tight cursor-text hover:text-foreground/80 hover:decoration-dotted hover:underline underline-offset-4 transition-all truncate min-w-0"
                 title="Click to rename notebook"
+              >
+                {title}
+              </h1>
+            ) : (
+              <h1
+                className="text-lg font-sans font-bold text-foreground tracking-tight truncate min-w-0"
+                title={title}
               >
                 {title}
               </h1>
@@ -129,6 +156,17 @@ export const Header: React.FC<HeaderProps> = ({ title, onRename, isHome, onLogoC
 
       {/* Right Section */}
       <div className="flex items-center gap-2 sm:gap-4">
+        {onShare && (
+          <button
+            type="button"
+            onClick={onShare}
+            className="px-3 py-1.5 text-sm font-medium border border-border rounded-md hover:bg-secondary transition-colors flex items-center gap-1.5 shrink-0"
+            title="Share notebook"
+          >
+            <Share2 className="w-4 h-4" />
+            <span className="hidden sm:inline">Share</span>
+          </button>
+        )}
         {onBillingClick && !hasSubscription && (
           <button
             onClick={onBillingClick}

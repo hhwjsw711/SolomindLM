@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { query, mutation, internalMutation, action } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { getAuthUserId } from "../auth";
+import { assertCanReadNotebook } from "../_lib/notebookAccess";
 
 /**
  * Vector search for document chunks
@@ -17,30 +18,13 @@ export const vectorSearch = query({
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
 
-    // Normalize query at entry point to improve cache hit rate
-    // Trim whitespace but preserve semantic meaning (don't lowercase)
-    const normalizedQuery = args.query.trim();
+    void args.query;
 
-    // Verify user owns the notebook
-    const notebook = await ctx.db.get(args.notebookId);
-    if (!notebook || notebook.userId !== userId) {
-      throw new Error("Notebook not found");
-    }
-
-    // Generate embedding for query
-    // This needs to be done in an action, so we'll use a different approach
-    // For now, we'll return chunks without vector search
-    // In production, you'd use the vector index
+    await assertCanReadNotebook(ctx, args.notebookId, userId);
 
     const chunks = await ctx.db
       .query("documentChunks")
-      .withIndex("by_document")
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("userId"), userId),
-          q.eq(q.field("notebookId"), args.notebookId)
-        )
-      )
+      .withIndex("by_notebook", (q) => q.eq("notebookId", args.notebookId))
       .take(args.limit || 10);
 
     return chunks;
@@ -58,21 +42,11 @@ export const getChunks = query({
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
 
-    // Verify user owns the notebook
-    const notebook = await ctx.db.get(args.notebookId);
-    if (!notebook || notebook.userId !== userId) {
-      throw new Error("Notebook not found");
-    }
+    await assertCanReadNotebook(ctx, args.notebookId, userId);
 
     return await ctx.db
       .query("documentChunks")
-      .withIndex("by_document")
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("userId"), userId),
-          q.eq(q.field("notebookId"), args.notebookId)
-        )
-      )
+      .withIndex("by_notebook", (q) => q.eq("notebookId", args.notebookId))
       .collect();
   },
 });

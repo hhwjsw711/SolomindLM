@@ -1,6 +1,8 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { getAuthUserId } from "../auth";
+import { assertCanReadNotebook } from "../_lib/notebookAccess";
+import * as NotesModel from "../_model/notes";
 
 /**
  * Unified query to fetch all note types for a notebook in a single request.
@@ -19,13 +21,12 @@ export const listAllByNotebook = query({
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
 
-    // Verify user owns the notebook
-    const notebook = await ctx.db.get(args.notebookId);
-    if (!notebook || notebook.userId !== userId) {
+    try {
+      await assertCanReadNotebook(ctx, args.notebookId, userId);
+    } catch {
       return [];
     }
 
-    // Fetch all note types in parallel using Promise.all
     const types = args.types ?? [
       "reports",
       "flashcards",
@@ -40,13 +41,11 @@ export const listAllByNotebook = query({
 
     const queries: Promise<any[]>[] = [];
 
-    // Build queries only for requested types
     if (!args.types || args.types.includes("reports")) {
       queries.push(
         ctx.db
           .query("reports")
           .withIndex("by_notebook", (q) => q.eq("notebookId", args.notebookId))
-          .filter((q) => q.eq(q.field("userId"), userId))
           .order("desc")
           .collect()
           .then((items) => items.map((item) => ({ ...item, _type: "report" as const })))
@@ -58,7 +57,6 @@ export const listAllByNotebook = query({
         ctx.db
           .query("flashcards")
           .withIndex("by_notebook", (q) => q.eq("notebookId", args.notebookId))
-          .filter((q) => q.eq(q.field("userId"), userId))
           .order("desc")
           .collect()
           .then((items) => items.map((item) => ({ ...item, _type: "flashcard" as const })))
@@ -70,7 +68,6 @@ export const listAllByNotebook = query({
         ctx.db
           .query("quizzes")
           .withIndex("by_notebook", (q) => q.eq("notebookId", args.notebookId))
-          .filter((q) => q.eq(q.field("userId"), userId))
           .order("desc")
           .collect()
           .then((items) => items.map((item) => ({ ...item, _type: "quiz" as const })))
@@ -82,7 +79,6 @@ export const listAllByNotebook = query({
         ctx.db
           .query("mindmaps")
           .withIndex("by_notebook", (q) => q.eq("notebookId", args.notebookId))
-          .filter((q) => q.eq(q.field("userId"), userId))
           .order("desc")
           .collect()
           .then((items) => items.map((item) => ({ ...item, _type: "mindmap" as const })))
@@ -94,7 +90,6 @@ export const listAllByNotebook = query({
         ctx.db
           .query("audioOverviews")
           .withIndex("by_notebook", (q) => q.eq("notebookId", args.notebookId))
-          .filter((q) => q.eq(q.field("userId"), userId))
           .order("desc")
           .collect()
           .then((items) => items.map((item) => ({ ...item, _type: "audioOverview" as const })))
@@ -106,7 +101,6 @@ export const listAllByNotebook = query({
         ctx.db
           .query("slides")
           .withIndex("by_notebook", (q) => q.eq("notebookId", args.notebookId))
-          .filter((q) => q.eq(q.field("userId"), userId))
           .order("desc")
           .collect()
           .then((items) => items.map((item) => ({ ...item, _type: "slides" as const })))
@@ -118,7 +112,6 @@ export const listAllByNotebook = query({
         ctx.db
           .query("spreadsheets")
           .withIndex("by_notebook", (q) => q.eq("notebookId", args.notebookId))
-          .filter((q) => q.eq(q.field("userId"), userId))
           .order("desc")
           .collect()
           .then((items) => items.map((item) => ({ ...item, _type: "spreadsheet" as const })))
@@ -130,7 +123,6 @@ export const listAllByNotebook = query({
         ctx.db
           .query("writtenQuestions")
           .withIndex("by_notebook", (q) => q.eq("notebookId", args.notebookId))
-          .filter((q) => q.eq(q.field("userId"), userId))
           .order("desc")
           .collect()
           .then((items) => items.map((item) => ({ ...item, _type: "writtenQuestions" as const })))
@@ -139,21 +131,15 @@ export const listAllByNotebook = query({
 
     if (!args.types || args.types.includes("notes")) {
       queries.push(
-        ctx.db
-          .query("notes")
-          .withIndex("by_notebook", (q) => q.eq("notebookId", args.notebookId))
-          .filter((q) => q.eq(q.field("userId"), userId))
-          .order("desc")
-          .collect()
+        NotesModel
+          .listByNotebookShared(ctx, args.notebookId, userId)
           .then((items) => items.map((item) => ({ ...item, _type: "note" as const })))
       );
     }
 
-    // Execute all queries in parallel and merge results
     const results = await Promise.all(queries);
     const allNotes = results.flat();
 
-    // Sort by updatedAt descending (most recent first)
     allNotes.sort((a, b) => b.updatedAt - a.updatedAt);
 
     return allNotes;
@@ -182,7 +168,6 @@ export const getById = query({
     const userId = await getAuthUserId(ctx);
     if (!userId) return null;
 
-    // Map type to table name
     const tableMap: Record<string, string> = {
       report: "reports",
       flashcard: "flashcards",
@@ -200,13 +185,23 @@ export const getById = query({
       return null;
     }
 
-    // Query the appropriate table
     const note = await ctx.db.get(args.id as any);
     if (!note) return null;
 
-    // Verify ownership
-    if ("userId" in note && note.userId !== userId) {
+    if (!("notebookId" in note)) {
       return null;
+    }
+
+    try {
+      await assertCanReadNotebook(ctx, note.notebookId, userId);
+    } catch {
+      return null;
+    }
+
+    if (tableName === "notes" && "type" in note) {
+      if (note.type === "chat" && note.userId !== userId) {
+        return null;
+      }
     }
 
     return { ...note, _type: args.type };
@@ -224,70 +219,63 @@ export const countByType = query({
     const userId = await getAuthUserId(ctx);
     if (!userId) return null;
 
-    // Verify user owns the notebook
-    const notebook = await ctx.db.get(args.notebookId);
-    if (!notebook || notebook.userId !== userId) {
+    try {
+      await assertCanReadNotebook(ctx, args.notebookId, userId);
+    } catch {
       return null;
     }
 
-    // Count all types in parallel
-    const [reports, flashcards, quizzes, mindmaps, audioOverviews, slides, spreadsheets, writtenQuestions, notes] =
+    const sharedNotes = await NotesModel.listByNotebookShared(
+      ctx,
+      args.notebookId,
+      userId
+    );
+
+    const [reports, flashcards, quizzes, mindmaps, audioOverviews, slides, spreadsheets, writtenQuestions] =
       await Promise.all([
         ctx.db
           .query("reports")
           .withIndex("by_notebook", (q) => q.eq("notebookId", args.notebookId))
-          .filter((q) => q.eq(q.field("userId"), userId))
           .collect()
           .then((items) => items.length),
         ctx.db
           .query("flashcards")
           .withIndex("by_notebook", (q) => q.eq("notebookId", args.notebookId))
-          .filter((q) => q.eq(q.field("userId"), userId))
           .collect()
           .then((items) => items.length),
         ctx.db
           .query("quizzes")
           .withIndex("by_notebook", (q) => q.eq("notebookId", args.notebookId))
-          .filter((q) => q.eq(q.field("userId"), userId))
           .collect()
           .then((items) => items.length),
         ctx.db
           .query("mindmaps")
           .withIndex("by_notebook", (q) => q.eq("notebookId", args.notebookId))
-          .filter((q) => q.eq(q.field("userId"), userId))
           .collect()
           .then((items) => items.length),
         ctx.db
           .query("audioOverviews")
           .withIndex("by_notebook", (q) => q.eq("notebookId", args.notebookId))
-          .filter((q) => q.eq(q.field("userId"), userId))
           .collect()
           .then((items) => items.length),
         ctx.db
           .query("slides")
           .withIndex("by_notebook", (q) => q.eq("notebookId", args.notebookId))
-          .filter((q) => q.eq(q.field("userId"), userId))
           .collect()
           .then((items) => items.length),
         ctx.db
           .query("spreadsheets")
           .withIndex("by_notebook", (q) => q.eq("notebookId", args.notebookId))
-          .filter((q) => q.eq(q.field("userId"), userId))
           .collect()
           .then((items) => items.length),
         ctx.db
           .query("writtenQuestions")
           .withIndex("by_notebook", (q) => q.eq("notebookId", args.notebookId))
-          .filter((q) => q.eq(q.field("userId"), userId))
-          .collect()
-          .then((items) => items.length),
-        ctx.db
-          .query("notes")
-          .withIndex("by_notebook", (q) => q.eq("notebookId", args.notebookId))
-          .filter((q) => q.eq(q.field("userId"), userId))
           .collect()
           .then((items) => items.length),
       ]);
+
+    const notes = sharedNotes.length;
 
     return {
       reports,

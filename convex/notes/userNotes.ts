@@ -1,7 +1,10 @@
 import { v } from "convex/values";
 import { mutation, query, internalMutation, action } from "../_generated/server";
 import { getAuthUserId } from "../auth";
-import * as Notebooks from "../_model/notebooks";
+import {
+  assertCanEditNotebook,
+  assertCanReadNotebook,
+} from "../_lib/notebookAccess";
 import * as Notes from "../_model/notes";
 import { internal } from "../_generated/api";
 
@@ -34,7 +37,8 @@ export const list = query({
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
 
-    return await Notes.listByNotebook(ctx, args.notebookId, userId);
+    await assertCanReadNotebook(ctx, args.notebookId, userId);
+    return await Notes.listByNotebookShared(ctx, args.notebookId, userId);
   },
 });
 
@@ -49,7 +53,17 @@ export const get = query({
 
     const note = await Notes.getNote(ctx, args.id);
 
-    if (!note || note.userId !== userId) {
+    if (!note) {
+      return null;
+    }
+
+    try {
+      await assertCanReadNotebook(ctx, note.notebookId, userId);
+    } catch {
+      return null;
+    }
+
+    if (note.type === "chat" && note.userId !== userId) {
       return null;
     }
 
@@ -71,11 +85,7 @@ export const create = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
 
-    // Verify user owns the notebook
-    const notebook = await Notebooks.getNotebook(ctx, args.notebookId);
-    if (!notebook || notebook.userId !== userId) {
-      throw new Error("Notebook not found");
-    }
+    await assertCanEditNotebook(ctx, args.notebookId, userId);
 
     return await Notes.createNoteAndFetch(ctx, {
       userId,
@@ -105,6 +115,7 @@ export const createInternal = internalMutation({
     metadata: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
+    await assertCanEditNotebook(ctx, args.notebookId, args.userId);
     return await Notes.createNoteAndFetch(ctx, args);
   },
 });
@@ -190,7 +201,12 @@ export const update = mutation({
     if (!userId) throw new Error("Unauthenticated");
 
     const note = await Notes.getNote(ctx, args.id);
-    if (!note || note.userId !== userId) {
+    if (!note) {
+      throw new Error("Note not found");
+    }
+
+    await assertCanEditNotebook(ctx, note.notebookId, userId);
+    if (note.type === "chat" && note.userId !== userId) {
       throw new Error("Note not found");
     }
 
@@ -220,7 +236,12 @@ export const remove = mutation({
     if (!userId) throw new Error("Unauthenticated");
 
     const note = await Notes.getNote(ctx, args.id);
-    if (!note || note.userId !== userId) {
+    if (!note) {
+      throw new Error("Note not found");
+    }
+
+    await assertCanEditNotebook(ctx, note.notebookId, userId);
+    if (note.type === "chat" && note.userId !== userId) {
       throw new Error("Note not found");
     }
 

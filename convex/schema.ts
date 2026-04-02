@@ -24,6 +24,29 @@ export default defineSchema({
       filterFields: ["userId", "folderId"],
     }),
 
+  // Share links: opaque token (stored as hash) for collaborate or fork-only access
+  notebookShareLinks: defineTable({
+    notebookId: v.id("notebooks"),
+    kind: v.union(v.literal("collaborate"), v.literal("fork")),
+    tokenHash: v.string(),
+    createdByUserId: v.id("users"),
+    createdAt: v.number(),
+    revokedAt: v.optional(v.number()),
+  })
+    .index("by_token_hash", ["tokenHash"])
+    .index("by_notebook", ["notebookId"]),
+
+  // Members invited via collaborate link (editors on shared notebook)
+  notebookMembers: defineTable({
+    notebookId: v.id("notebooks"),
+    userId: v.id("users"),
+    role: v.literal("editor"),
+    joinedAt: v.number(),
+  })
+    .index("by_notebook", ["notebookId"])
+    .index("by_notebook_and_user", ["notebookId", "userId"])
+    .index("by_user", ["userId"]),
+
   // Folders table
   folders: defineTable({
     userId: v.id("users"),

@@ -79,7 +79,7 @@ export function useReport(reportId: string | null) {
  * Create a new report and queue generation
  */
 export function useCreateReport() {
-  const schedule = useAction(api.studio._shared.scheduleReport);
+  const schedule = useAction(api.studio.scheduling.reports.scheduleReport);
 
   return async (params: CreateReportParams): Promise<CreateReportResponse> => {
     const result = await schedule({

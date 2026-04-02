@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { query, mutation } from "../_generated/server";
 import { getAuthUserId } from "../auth";
+import { assertCanReadNotebook } from "../_lib/notebookAccess";
 
 /**
  * Get all messages for a notebook
@@ -14,6 +15,8 @@ export const listByNotebook = query({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
+
+    await assertCanReadNotebook(ctx, args.notebookId, userId);
 
     // First, find the conversation for this notebook
     const conversation = await ctx.db
@@ -48,6 +51,8 @@ export const createConversation = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
 
+    await assertCanReadNotebook(ctx, args.notebookId, userId);
+
     const now = Date.now();
 
     const conversationId = await ctx.db.insert("conversations", {
@@ -75,6 +80,8 @@ export const sendMessage = mutation({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
+
+    await assertCanReadNotebook(ctx, args.notebookId, userId);
 
     // Find or create conversation
     let conversation = await ctx.db
@@ -130,6 +137,8 @@ export const sendMessageOptimistic = mutation({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
+
+    await assertCanReadNotebook(ctx, args.notebookId, userId);
 
     // Find or create conversation
     let conversation = await ctx.db
@@ -192,6 +201,11 @@ export const setMessageFeedback = mutation({
     const message = await ctx.db.get(args.messageId);
     if (!message) throw new Error("Message not found");
 
+    const conversation = await ctx.db.get(message.conversationId);
+    if (!conversation || conversation.userId !== userId) {
+      throw new Error("Unauthorized");
+    }
+
     await ctx.db.patch(args.messageId, {
       feedback: args.feedback ?? undefined,
     });
@@ -253,6 +267,8 @@ export const clearHistory = mutation({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
+
+    await assertCanReadNotebook(ctx, args.notebookId, userId);
 
     // Find the conversation
     const conversation = await ctx.db

@@ -1,7 +1,10 @@
 import { v } from "convex/values";
 import { mutation, query, internalMutation, internalQuery } from "../../_generated/server";
 import { getAuthUserId } from "../../auth";
-import * as Notebooks from "../../_model/notebooks";
+import {
+  assertCanEditNotebook,
+  assertCanReadNotebook,
+} from "../../_lib/notebookAccess";
 import * as Flashcards from "../../_model/flashcards";
 
 /**
@@ -23,7 +26,8 @@ export const list = query({
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
 
-    return await Flashcards.listByNotebook(ctx, args.notebookId, userId);
+    await assertCanReadNotebook(ctx, args.notebookId, userId);
+    return await Flashcards.listByNotebook(ctx, args.notebookId);
   },
 });
 
@@ -38,7 +42,13 @@ export const get = query({
 
     const flashcard = await Flashcards.getFlashcard(ctx, args.id);
 
-    if (!flashcard || flashcard.userId !== userId) {
+    if (!flashcard) {
+      return null;
+    }
+
+    try {
+      await assertCanReadNotebook(ctx, flashcard.notebookId, userId);
+    } catch {
       return null;
     }
 
@@ -60,11 +70,7 @@ export const create = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
 
-    // Verify user owns the notebook
-    const notebook = await Notebooks.getNotebook(ctx, args.notebookId);
-    if (!notebook || notebook.userId !== userId) {
-      throw new Error("Notebook not found");
-    }
+    await assertCanEditNotebook(ctx, args.notebookId, userId);
 
     return await Flashcards.createFlashcardAndFetch(ctx, {
       userId,
@@ -89,6 +95,7 @@ export const createInternal = internalMutation({
     metadata: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
+    await assertCanEditNotebook(ctx, args.notebookId, args.userId);
     return await Flashcards.createFlashcardAndFetch(ctx, {
       userId: args.userId,
       notebookId: args.notebookId,
@@ -118,11 +125,12 @@ export const update = mutation({
     const metadata = rest.metadata;
     const otherUpdates: Omit<typeof rest, "metadata"> = rest;
 
-    // Verify ownership
     const existing = await Flashcards.getFlashcard(ctx, id);
-    if (!existing || existing.userId !== userId) {
+    if (!existing) {
       throw new Error("Flashcard set not found");
     }
+
+    await assertCanEditNotebook(ctx, existing.notebookId, userId);
 
     await Flashcards.updateFlashcard(ctx, id, otherUpdates, !!metadata);
 
@@ -145,9 +153,11 @@ export const remove = mutation({
     if (!userId) throw new Error("Unauthenticated");
 
     const flashcard = await Flashcards.getFlashcard(ctx, args.id);
-    if (!flashcard || flashcard.userId !== userId) {
+    if (!flashcard) {
       throw new Error("Flashcard set not found");
     }
+
+    await assertCanEditNotebook(ctx, flashcard.notebookId, userId);
 
     await Flashcards.deleteFlashcard(ctx, args.id);
 

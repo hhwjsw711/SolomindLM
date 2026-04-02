@@ -65,29 +65,6 @@ export const LANDING_CONTENT = {
       { name: "Text Files", icon: "File" }
     ]
   },
-  howItWorks: {
-    title: "How It Works",
-    steps: [
-      {
-        number: 1,
-        title: "Upload Content",
-        description: "Drag and drop PDFs, paste URLs, or record audio",
-        icon: "Upload"
-      },
-      {
-        number: 2,
-        title: "Generate Study Tools",
-        description: "AI automatically creates flashcards, quizzes, and more",
-        icon: "Wand2"
-      },
-      {
-        number: 3,
-        title: "Learn & Retain",
-        description: "Study with interactive tools and track your progress",
-        icon: "GraduationCap"
-      }
-    ]
-  },
   finalCTA: {
     title: "Ready to Transform Your Learning?",
     description: "Join thousands of students and researchers using SolomindLM",

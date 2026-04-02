@@ -31,7 +31,11 @@ export const submitAndGrade = action({
       throw new Error("Written question set not found");
     }
 
-    if (writtenQuestion.userId !== userId) {
+    const canEdit = await ctx.runQuery(internal.notebooks.index.canEditNotebookInternal, {
+      notebookId: writtenQuestion.notebookId,
+      userId,
+    });
+    if (!canEdit) {
       throw new Error("Access denied");
     }
 

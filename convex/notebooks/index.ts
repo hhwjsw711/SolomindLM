@@ -3,6 +3,7 @@ import { mutation, query, internalQuery } from "../_generated/server";
 import type { Doc, Id } from "../_generated/dataModel";
 import { getAuthUserId } from "../auth";
 import { checkNotebookLimit } from "../_lib/limits";
+import { getNotebookAccess } from "../_lib/notebookAccess";
 import * as Notebooks from "../_model/notebooks";
 
 /** Shape notebook + source count for API response */
@@ -11,7 +12,8 @@ function toNotebookDTO(
     Doc<"notebooks">,
     "_id" | "title" | "updatedAt" | "coverColor" | "icon" | "isFeatured" | "folderId" | "createdAt"
   >,
-  sourceCount: number
+  sourceCount: number,
+  options?: { isSharedNotebook?: boolean }
 ) {
   return {
     id: notebook._id,
@@ -28,6 +30,7 @@ function toNotebookDTO(
     folderId: notebook.folderId,
     created_at: notebook.createdAt,
     updated_at: notebook.updatedAt,
+    isSharedNotebook: options?.isSharedNotebook ?? false,
   };
 }
 
@@ -39,14 +42,30 @@ export const list = query({
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
 
-    const notebooks = await Notebooks.getUserNotebooks(ctx, userId);
-    const notebooksWithCounts = await Promise.all(
-      notebooks.map(async (notebook) => {
+    const owned = await Notebooks.getUserNotebooks(ctx, userId);
+    const ownedDtos = await Promise.all(
+      owned.map(async (notebook) => {
         const sourceCount = await Notebooks.getDocumentCountByNotebook(ctx, notebook._id);
-        return toNotebookDTO(notebook, sourceCount);
+        return toNotebookDTO(notebook, sourceCount, { isSharedNotebook: false });
       })
     );
-    return notebooksWithCounts;
+
+    const memberships = await ctx.db
+      .query("notebookMembers")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
+
+    const sharedDtos: ReturnType<typeof toNotebookDTO>[] = [];
+    for (const m of memberships) {
+      const notebook = await ctx.db.get(m.notebookId);
+      if (!notebook) continue;
+      const sourceCount = await Notebooks.getDocumentCountByNotebook(ctx, notebook._id);
+      sharedDtos.push(toNotebookDTO(notebook, sourceCount, { isSharedNotebook: true }));
+    }
+
+    const merged = [...ownedDtos, ...sharedDtos];
+    merged.sort((a, b) => b.updated_at - a.updated_at);
+    return merged;
   },
 });
 
@@ -67,6 +86,36 @@ export const listInternal = internalQuery({
   },
 });
 
+/** For actions: check edit access without throwing. */
+export const canEditNotebookInternal = internalQuery({
+  args: {
+    notebookId: v.id("notebooks"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const access = await getNotebookAccess(ctx, args.notebookId, args.userId);
+    return access === "owner" || access === "editor";
+  },
+});
+
+export const canReadNotebookInternal = internalQuery({
+  args: {
+    notebookId: v.id("notebooks"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const access = await getNotebookAccess(ctx, args.notebookId, args.userId);
+    return access !== null;
+  },
+});
+
+export const getNotebookInternal = internalQuery({
+  args: { notebookId: v.id("notebooks") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.notebookId);
+  },
+});
+
 /**
  * Get a specific notebook by ID
  */
@@ -77,10 +126,15 @@ export const get = query({
     if (!userId) return null;
 
     const notebook = await Notebooks.getNotebook(ctx, args.id);
-    if (!notebook || notebook.userId !== userId) return null;
+    if (!notebook) return null;
+
+    const access = await getNotebookAccess(ctx, args.id, userId);
+    if (!access) return null;
 
     const sourceCount = await Notebooks.getDocumentCountByNotebook(ctx, notebook._id);
-    return toNotebookDTO(notebook, sourceCount);
+    return toNotebookDTO(notebook, sourceCount, {
+      isSharedNotebook: access === "editor",
+    });
   },
 });
 
@@ -177,6 +231,22 @@ export const remove = mutation({
       throw new Error("Notebook not found");
     }
 
+    const members = await ctx.db
+      .query("notebookMembers")
+      .withIndex("by_notebook", (q) => q.eq("notebookId", args.id))
+      .collect();
+    for (const m of members) {
+      await ctx.db.delete(m._id);
+    }
+
+    const shareLinks = await ctx.db
+      .query("notebookShareLinks")
+      .withIndex("by_notebook", (q) => q.eq("notebookId", args.id))
+      .collect();
+    for (const l of shareLinks) {
+      await ctx.db.delete(l._id);
+    }
+
     await Notebooks.deleteNotebook(ctx, args.id);
     return { message: "Notebook deleted successfully" };
   },
@@ -191,8 +261,8 @@ export const getReports = query({
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
 
-    const notebook = await Notebooks.getNotebook(ctx, args.notebookId);
-    if (!notebook || notebook.userId !== userId) return [];
+    const access = await getNotebookAccess(ctx, args.notebookId, userId);
+    if (!access) return [];
 
     return await Notebooks.getReportsByNotebook(ctx, args.notebookId);
   },

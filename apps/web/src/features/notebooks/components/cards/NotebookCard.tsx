@@ -1,5 +1,5 @@
 import React from 'react';
-import { MoreVertical, Settings2, Trash2, FolderOpen, FileText, Book, Globe, BarChart3, Monitor, Search, Brain, Folder, GraduationCap, Lightbulb } from 'lucide-react';
+import { MoreVertical, Settings2, Trash2, FolderOpen, FileText, Book, Globe, BarChart3, Monitor, Search, Brain, Folder, GraduationCap, Lightbulb, Users } from 'lucide-react';
 import { NotebookItem } from '@/shared/types/index';
 import { useConfirmDialog } from '@/shared/ui/ConfirmDialog';
 
@@ -61,37 +61,50 @@ export const NotebookCard: React.FC<NotebookCardProps> = ({
         >
           <Icon className={`w-10 h-10 ${(notebook.coverColor || '').replace('bg-', 'text-')} opacity-55 group-hover:scale-110 transition-transform duration-300 drop-shadow-sm`} />
 
-          <div className="relative kebab-menu z-20" onClick={(e) => e.stopPropagation()}>
-            <button
-              onClick={() => isMenuOpen ? onCloseMenu() : onToggleMenu()}
-              className="p-1.5 -mr-1.5 -mt-1.5 hover:bg-black/10 rounded-full text-muted-foreground/70 hover:text-foreground transition-colors opacity-100"
-            >
-              <MoreVertical className="w-4 h-4" />
-            </button>
+          {!notebook.isSharedNotebook ? (
+            <div className="relative kebab-menu z-20" onClick={(e) => e.stopPropagation()}>
+              <button
+                onClick={() => (isMenuOpen ? onCloseMenu() : onToggleMenu())}
+                className="p-1.5 -mr-1.5 -mt-1.5 hover:bg-black/10 rounded-full text-muted-foreground/70 hover:text-foreground transition-colors opacity-100"
+              >
+                <MoreVertical className="w-4 h-4" />
+              </button>
 
-            {isMenuOpen && (
-              <div className="absolute right-0 top-full mt-1 w-40 bg-popover border border-border shadow-xl rounded-md z-30 py-1 animate-in fade-in zoom-in-95 duration-150">
-                <button
-                  onClick={onOpenCustomize}
-                  className="w-full text-left px-3 py-2 text-xs font-medium hover:bg-accent flex items-center gap-2 text-popover-foreground"
-                >
-                  <Settings2 className="w-3.5 h-3.5" /> Customize
-                </button>
-                <button
-                  onClick={onOpenMoveToFolder}
-                  className="w-full text-left px-3 py-2 text-xs font-medium hover:bg-accent flex items-center gap-2 text-popover-foreground"
-                >
-                  <FolderOpen className="w-3.5 h-3.5" /> Move to folder
-                </button>
-                <button
-                  onClick={() => { handleDeleteWithConfirmation(); onCloseMenu(); }}
-                  className="w-full text-left px-3 py-2 text-xs font-medium hover:bg-destructive/10 text-destructive flex items-center gap-2"
-                >
-                  <Trash2 className="w-3.5 h-3.5" /> Delete
-                </button>
-              </div>
-            )}
-          </div>
+              {isMenuOpen && (
+                <div className="absolute right-0 top-full mt-1 w-40 bg-popover border border-border shadow-xl rounded-md z-30 py-1 animate-in fade-in zoom-in-95 duration-150">
+                  <button
+                    onClick={onOpenCustomize}
+                    className="w-full text-left px-3 py-2 text-xs font-medium hover:bg-accent flex items-center gap-2 text-popover-foreground"
+                  >
+                    <Settings2 className="w-3.5 h-3.5" /> Customize
+                  </button>
+                  <button
+                    onClick={onOpenMoveToFolder}
+                    className="w-full text-left px-3 py-2 text-xs font-medium hover:bg-accent flex items-center gap-2 text-popover-foreground"
+                  >
+                    <FolderOpen className="w-3.5 h-3.5" /> Move to folder
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleDeleteWithConfirmation();
+                      onCloseMenu();
+                    }}
+                    className="w-full text-left px-3 py-2 text-xs font-medium hover:bg-destructive/10 text-destructive flex items-center gap-2"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" /> Delete
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div
+              className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-primary"
+              title="Shared with you"
+            >
+              <Users className="w-3 h-3" />
+              Shared
+            </div>
+          )}
         </div>
 
         {/* Bottom Info Half */}
@@ -102,7 +115,9 @@ export const NotebookCard: React.FC<NotebookCardProps> = ({
           <div className="absolute top-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-border to-transparent opacity-50" />
 
           <div className="flex items-end justify-between gap-2">
-            <h3 className="text-base font-bold text-foreground leading-snug line-clamp-2 font-sans flex-1 min-w-0">{notebook.title}</h3>
+            <h3 className="text-base font-bold text-foreground leading-snug line-clamp-2 font-sans flex-1 min-w-0">
+              {notebook.title}
+            </h3>
             <div className="flex items-center gap-1.5 bg-secondary/50 px-2 py-0.5 rounded-full text-[11px] text-muted-foreground font-medium uppercase tracking-wider shrink-0">
               <FileText className="w-3 h-3" />
               <span>{notebook.sourceCount}</span>
@@ -141,38 +156,60 @@ export const NotebookCard: React.FC<NotebookCardProps> = ({
             <span>{notebook.sourceCount}</span>
           </div>
 
-          {/* Menu */}
-          <div className="kebab-menu relative pointer-events-auto">
-            <button
-              onClick={(e) => { e.stopPropagation(); isMenuOpen ? onCloseMenu() : onToggleMenu(); }}
-              className={`p-1 rounded text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors flex items-center justify-center shrink-0 opacity-100 ${isMenuOpen ? 'bg-secondary' : ''}`}
-            >
-              <MoreVertical className="w-3.5 h-3.5 shrink-0" />
-            </button>
+          {!notebook.isSharedNotebook ? (
+            <div className="kebab-menu relative pointer-events-auto">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  isMenuOpen ? onCloseMenu() : onToggleMenu();
+                }}
+                className={`p-1 rounded text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors flex items-center justify-center shrink-0 opacity-100 ${isMenuOpen ? 'bg-secondary' : ''}`}
+              >
+                <MoreVertical className="w-3.5 h-3.5 shrink-0" />
+              </button>
 
-            {isMenuOpen && (
-              <div className="absolute right-0 top-full mt-1 w-40 bg-popover border border-border shadow-xl rounded-lg z-50 py-1 animate-in fade-in zoom-in-95 duration-150">
-                <button
-                  onClick={(e) => { e.stopPropagation(); onOpenCustomize(); }}
-                  className="w-full text-left px-3 py-2 text-xs font-medium hover:bg-accent flex items-center gap-2 text-popover-foreground transition-colors"
-                >
-                  <Settings2 className="w-3.5 h-3.5 shrink-0" /> Customize
-                </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); onOpenMoveToFolder(); }}
-                  className="w-full text-left px-3 py-2 text-xs font-medium hover:bg-accent flex items-center gap-2 text-popover-foreground transition-colors"
-                >
-                  <FolderOpen className="w-3.5 h-3.5 shrink-0" /> Move to folder
-                </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleDeleteWithConfirmation(); onCloseMenu(); }}
-                  className="w-full text-left px-3 py-2 text-xs font-medium hover:bg-destructive/10 text-destructive flex items-center gap-2 transition-colors"
-                >
-                  <Trash2 className="w-3.5 h-3.5 shrink-0" /> Delete
-                </button>
-              </div>
-            )}
-          </div>
+              {isMenuOpen && (
+                <div className="absolute right-0 top-full mt-1 w-40 bg-popover border border-border shadow-xl rounded-lg z-50 py-1 animate-in fade-in zoom-in-95 duration-150">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenCustomize();
+                    }}
+                    className="w-full text-left px-3 py-2 text-xs font-medium hover:bg-accent flex items-center gap-2 text-popover-foreground transition-colors"
+                  >
+                    <Settings2 className="w-3.5 h-3.5 shrink-0" /> Customize
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenMoveToFolder();
+                    }}
+                    className="w-full text-left px-3 py-2 text-xs font-medium hover:bg-accent flex items-center gap-2 text-popover-foreground transition-colors"
+                  >
+                    <FolderOpen className="w-3.5 h-3.5 shrink-0" /> Move to folder
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteWithConfirmation();
+                      onCloseMenu();
+                    }}
+                    className="w-full text-left px-3 py-2 text-xs font-medium hover:bg-destructive/10 text-destructive flex items-center gap-2 transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 shrink-0" /> Delete
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <span
+              className="inline-flex items-center gap-0.5 rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-primary pointer-events-none"
+              title="Shared with you"
+            >
+              <Users className="w-3 h-3 shrink-0" />
+              Shared
+            </span>
+          )}
         </div>
       </div>
       <ConfirmDialogComponent />
@@ -207,34 +244,59 @@ export const NotebookCard: React.FC<NotebookCardProps> = ({
 
       {/* Action Column */}
       <div className="flex justify-end z-20 pointer-events-auto kebab-menu relative">
-        <button
-          onClick={(e) => { e.stopPropagation(); isMenuOpen ? onCloseMenu() : onToggleMenu(); }}
-          className={`p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors flex items-center justify-center shrink-0 opacity-100 ${isMenuOpen ? 'bg-secondary' : ''}`}
-        >
-          <MoreVertical className="w-4 h-4 shrink-0" />
-        </button>
+        {!notebook.isSharedNotebook ? (
+          <>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                isMenuOpen ? onCloseMenu() : onToggleMenu();
+              }}
+              className={`p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors flex items-center justify-center shrink-0 opacity-100 ${isMenuOpen ? 'bg-secondary' : ''}`}
+            >
+              <MoreVertical className="w-4 h-4 shrink-0" />
+            </button>
 
-        {isMenuOpen && (
-          <div className="absolute right-0 top-full mt-1 w-40 bg-popover border border-border shadow-xl rounded-lg z-50 py-1 animate-in fade-in zoom-in-95 duration-150">
-            <button
-              onClick={(e) => { e.stopPropagation(); onOpenCustomize(); }}
-              className="w-full text-left px-3 py-2 text-xs font-medium hover:bg-accent flex items-center gap-2 text-popover-foreground transition-colors"
-            >
-              <Settings2 className="w-3.5 h-3.5 shrink-0" /> Customize
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); onOpenMoveToFolder(); }}
-              className="w-full text-left px-3 py-2 text-xs font-medium hover:bg-accent flex items-center gap-2 text-popover-foreground transition-colors"
-            >
-              <FolderOpen className="w-3.5 h-3.5 shrink-0" /> Move to folder
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); handleDeleteWithConfirmation(); onCloseMenu(); }}
-              className="w-full text-left px-3 py-2 text-xs font-medium hover:bg-destructive/10 text-destructive flex items-center gap-2 transition-colors"
-            >
-              <Trash2 className="w-3.5 h-3.5 shrink-0" /> Delete
-            </button>
-          </div>
+            {isMenuOpen && (
+              <div className="absolute right-0 top-full mt-1 w-40 bg-popover border border-border shadow-xl rounded-lg z-50 py-1 animate-in fade-in zoom-in-95 duration-150">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenCustomize();
+                  }}
+                  className="w-full text-left px-3 py-2 text-xs font-medium hover:bg-accent flex items-center gap-2 text-popover-foreground transition-colors"
+                >
+                  <Settings2 className="w-3.5 h-3.5 shrink-0" /> Customize
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenMoveToFolder();
+                  }}
+                  className="w-full text-left px-3 py-2 text-xs font-medium hover:bg-accent flex items-center gap-2 text-popover-foreground transition-colors"
+                >
+                  <FolderOpen className="w-3.5 h-3.5 shrink-0" /> Move to folder
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteWithConfirmation();
+                    onCloseMenu();
+                  }}
+                  className="w-full text-left px-3 py-2 text-xs font-medium hover:bg-destructive/10 text-destructive flex items-center gap-2 transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5 shrink-0" /> Delete
+                </button>
+              </div>
+            )}
+          </>
+        ) : (
+          <span
+            className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-primary"
+            title="Shared with you"
+          >
+            <Users className="w-3.5 h-3.5 shrink-0" />
+            Shared
+          </span>
         )}
       </div>
     </div>

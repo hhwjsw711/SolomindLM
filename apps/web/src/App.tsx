@@ -13,6 +13,8 @@ import { ChatStreamingProvider } from './features/chat/ChatStreamingContext';
 import { SourcesProvider } from './features/sources/SourcesContext';
 import { StudioProvider } from './features/studio/StudioContext';
 import { NotebookView } from './features/notebooks/components/views/NotebookView';
+import { ForkNotebookPage } from './features/notebooks/components/views/ForkNotebookPage';
+import { ShareNotebookModal } from './features/notebooks/components/modals/ShareNotebookModal';
 import { BillingPage } from './features/billing/components/BillingPage';
 import { LandingPage } from './features/landing/LandingPage';
 import { useAuth, AuthProvider } from './features/auth/AuthContext';
@@ -44,6 +46,7 @@ const AppContent: React.FC = () => {
 
   const [activeNotebookId, setActiveNotebookId] = useState<string | null>(null);
   const [notebookTitle, setNotebookTitle] = useState("Notebook");
+  const [shareModalOpen, setShareModalOpen] = useState(false);
 
   useStripeRedirect({ isAuthenticated, user });
   const { showLoginModal, setShowLoginModal, authError, setAuthError } = useAuthGuard({ isAuthenticated, isLoading });
@@ -129,6 +132,13 @@ const AppContent: React.FC = () => {
       }
     }
   }, [urlNotebookId, notebookList]);
+
+  useEffect(() => {
+    if (!shareModalOpen) return;
+    if (!urlNotebookId || !activeNotebook || activeNotebook.isSharedNotebook) {
+      setShareModalOpen(false);
+    }
+  }, [shareModalOpen, urlNotebookId, activeNotebook]);
 
   const handleLogoClick = () => {
     navigate('/');
@@ -225,6 +235,13 @@ const AppContent: React.FC = () => {
         />
       )}
 
+      {shareModalOpen && urlNotebookId && activeNotebook && !activeNotebook.isSharedNotebook && (
+        <ShareNotebookModal
+          notebookId={urlNotebookId}
+          onClose={() => setShareModalOpen(false)}
+        />
+      )}
+
       <div className={`w-full bg-background text-foreground font-serif ${isPublicPage ? '' : 'flex flex-col h-screen overflow-hidden'}`}>
       {!isPublicPage && (
         <Header
@@ -239,6 +256,19 @@ const AppContent: React.FC = () => {
           onLogoClick={handleLogoClick}
           onBillingClick={() => navigate('/billing')}
           hasSubscription={subscriptionStatus.hasSubscription}
+          notebookRenamable={
+            location.pathname.startsWith('/notebook/') &&
+            activeNotebook !== undefined &&
+            !activeNotebook?.isSharedNotebook
+          }
+          onShare={
+            location.pathname.startsWith('/notebook/') &&
+            urlNotebookId &&
+            activeNotebook &&
+            !activeNotebook.isSharedNotebook
+              ? () => setShareModalOpen(true)
+              : undefined
+          }
         />
       )}
 
@@ -273,6 +303,17 @@ const AppContent: React.FC = () => {
             <ProtectedRoute>
               <main className="flex-1 overflow-auto">
                 <BillingPage onBack={() => navigate('/home')} />
+              </main>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/share/fork/:token"
+          element={
+            <ProtectedRoute>
+              <main className="flex-1 overflow-auto">
+                <ForkNotebookPage />
               </main>
             </ProtectedRoute>
           }

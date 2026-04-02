@@ -84,7 +84,7 @@ export function useFlashcard(flashcardId: string | null) {
  * Create a new flashcard set and queue generation
  */
 export function useCreateFlashcards() {
-  const schedule = useAction(api.studio._shared.scheduleFlashcards);
+  const schedule = useAction(api.studio.scheduling.flashcards.scheduleFlashcards);
 
   return async (params: CreateFlashcardsParams): Promise<CreateFlashcardsResponse> => {
     const result = await schedule({

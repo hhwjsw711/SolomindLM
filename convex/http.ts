@@ -204,6 +204,17 @@ http.route({
 
       console.log("[Chat] Processing message for user:", userId);
 
+      const canReadNotebook = await ctx.runQuery(
+        internal.notebooks.index.canReadNotebookInternal,
+        {
+          notebookId: notebookId as any,
+          userId: userId as any,
+        }
+      );
+      if (!canReadNotebook) {
+        return errorResponse("Notebook not found", 404);
+      }
+
       // Create persistent stream
       const streamId = await streaming.createStream(ctx);
       console.log("[Chat] Created stream:", streamId);
@@ -215,8 +226,9 @@ http.route({
       });
 
       // Chunks are added *during* generation by the node action (runWithStreamId) via
-      // components.persistentTextStreaming.lib.addChunk for each token. We relay to the
-      // client by polling getStreamText and writing to the HTTP response. We do not use
+      // batched components.persistentTextStreaming.lib.addChunk (time/size thresholds;
+      // protocol lines like \n__REFERENCES flush immediately). We relay to the client by
+      // polling getStreamText every 50ms and writing to the HTTP response. We do not use
       // streaming.stream() because after our streamWriter returns the component tries to
       // flush pending with addChunk, but the stream is already "done" → timeout error.
       await ctx.scheduler.runAfter(0, internal.chat.stream.runWithStreamId, {

@@ -2,6 +2,10 @@ import { v } from "convex/values";
 import { mutation, query, internalMutation, internalQuery } from "../../_generated/server";
 import { internal } from "../../_generated/api";
 import { getAuthUserId } from "../../auth";
+import {
+  assertCanEditNotebook,
+  assertCanReadNotebook,
+} from "../../_lib/notebookAccess";
 import * as WrittenQuestions from "../../_model/writtenQuestions";
 
 export const list = query({
@@ -9,7 +13,8 @@ export const list = query({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
-    return await WrittenQuestions.listByNotebook(ctx, args.notebookId, userId);
+    await assertCanReadNotebook(ctx, args.notebookId, userId);
+    return await WrittenQuestions.listByNotebook(ctx, args.notebookId);
   },
 });
 
@@ -19,7 +24,12 @@ export const get = query({
     const userId = await getAuthUserId(ctx);
     if (!userId) return null;
     const writtenQuestion = await WrittenQuestions.getWrittenQuestion(ctx, args.id);
-    if (!writtenQuestion || writtenQuestion.userId !== userId) return null;
+    if (!writtenQuestion) return null;
+    try {
+      await assertCanReadNotebook(ctx, writtenQuestion.notebookId, userId);
+    } catch {
+      return null;
+    }
     return writtenQuestion;
   },
 });
@@ -44,6 +54,7 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
+    await assertCanEditNotebook(ctx, args.notebookId, userId);
     return await WrittenQuestions.createWrittenQuestionAndFetch(ctx, {
       userId,
       notebookId: args.notebookId,
@@ -63,6 +74,7 @@ export const createInternal = internalMutation({
     metadata: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
+    await assertCanEditNotebook(ctx, args.notebookId, args.userId);
     return await WrittenQuestions.createWrittenQuestionAndFetch(ctx, {
       userId: args.userId,
       notebookId: args.notebookId,
@@ -84,6 +96,7 @@ export const generateWrittenQuestions = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
     const { notebookId, documentIds, questionType, title } = args;
+    await assertCanEditNotebook(ctx, notebookId, userId);
     const writtenQuestionId = await WrittenQuestions.createWrittenQuestion(ctx, {
       userId,
       notebookId,
@@ -119,7 +132,8 @@ export const update = mutation({
     const metadata = rest.metadata;
     const otherUpdates: Omit<typeof rest, "metadata"> = rest;
     const existing = await WrittenQuestions.getWrittenQuestion(ctx, id);
-    if (!existing || existing.userId !== userId) throw new Error("Written question set not found or access denied");
+    if (!existing) throw new Error("Written question set not found or access denied");
+    await assertCanEditNotebook(ctx, existing.notebookId, userId);
     await WrittenQuestions.updateWrittenQuestion(ctx, id, otherUpdates, !!metadata);
     if (metadata) {
       await WrittenQuestions.patchWrittenQuestion(ctx, id, { metadata });
@@ -139,7 +153,8 @@ export const updateWrittenQuestions = mutation({
     if (!userId) throw new Error("Not authenticated");
     const { writtenQuestionId, questionsData, title } = args;
     const writtenQuestion = await WrittenQuestions.getWrittenQuestion(ctx, writtenQuestionId);
-    if (!writtenQuestion || writtenQuestion.userId !== userId) throw new Error("Written question set not found or access denied");
+    if (!writtenQuestion) throw new Error("Written question set not found or access denied");
+    await assertCanEditNotebook(ctx, writtenQuestion.notebookId, userId);
     const updates: Record<string, unknown> = { updatedAt: Date.now() };
     if (questionsData !== undefined) updates.questionsData = questionsData;
     if (title !== undefined) updates.title = title;
@@ -154,7 +169,8 @@ export const remove = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
     const writtenQuestion = await WrittenQuestions.getWrittenQuestion(ctx, args.writtenQuestionId);
-    if (!writtenQuestion || writtenQuestion.userId !== userId) throw new Error("Written question set not found or access denied");
+    if (!writtenQuestion) throw new Error("Written question set not found or access denied");
+    await assertCanEditNotebook(ctx, writtenQuestion.notebookId, userId);
     await WrittenQuestions.deleteWrittenQuestion(ctx, args.writtenQuestionId);
   },
 });

@@ -94,6 +94,11 @@ export const docEmbedding = internalAction({
         documentId,
       });
 
+      const notebookRow = await ctx.runQuery(internal.notebooks.index.getNotebookInternal, {
+        notebookId,
+      });
+      const chunkUserId = (notebookRow?.userId ?? userId) as string;
+
       logger.phaseComplete('loading_document', {
         fileType: docDetails.fileType,
         fileName: docDetails.fileName,
@@ -321,7 +326,7 @@ export const docEmbedding = internalAction({
         const chunk = chunksWithMetadata[i];
         await ctx.runMutation(internal.documents.index.storeChunk, {
           documentId,
-          userId: userId as any,
+          userId: chunkUserId as any,
           notebookId,
           content: chunk.content,
           chunkIndex: chunk.metadata.chunkIndex,

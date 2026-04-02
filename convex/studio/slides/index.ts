@@ -3,7 +3,10 @@ import { mutation, query, internalMutation, internalQuery } from "../../_generat
 import { internal } from "../../_generated/api";
 import { getAuthUserId } from "../../auth";
 import { checkDailyLimit } from "../../_lib/limits";
-import * as Notebooks from "../../_model/notebooks";
+import {
+  assertCanEditNotebook,
+  assertCanReadNotebook,
+} from "../../_lib/notebookAccess";
 import * as Slides from "../../_model/slides";
 
 // List, get, create, update, remove use model functions
@@ -12,7 +15,8 @@ export const list = query({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
-    return await Slides.listByNotebook(ctx, args.notebookId, userId);
+    await assertCanReadNotebook(ctx, args.notebookId, userId);
+    return await Slides.listByNotebook(ctx, args.notebookId);
   },
 });
 
@@ -22,7 +26,12 @@ export const get = query({
     const userId = await getAuthUserId(ctx);
     if (!userId) return null;
     const slideDeck = await Slides.getSlideDeck(ctx, args.id);
-    if (!slideDeck || slideDeck.userId !== userId) return null;
+    if (!slideDeck) return null;
+    try {
+      await assertCanReadNotebook(ctx, slideDeck.notebookId, userId);
+    } catch {
+      return null;
+    }
     return slideDeck;
   },
 });
@@ -47,8 +56,7 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
-    const notebook = await Notebooks.getNotebook(ctx, args.notebookId);
-    if (!notebook || notebook.userId !== userId) throw new Error("Notebook not found");
+    await assertCanEditNotebook(ctx, args.notebookId, userId);
     return await Slides.createSlideDeckAndFetch(ctx, {
       userId,
       notebookId: args.notebookId,
@@ -71,7 +79,8 @@ export const update = mutation({
     if (!userId) throw new Error("Unauthenticated");
     const { id, ...updates } = args;
     const existing = await Slides.getSlideDeck(ctx, id);
-    if (!existing || existing.userId !== userId) throw new Error("Slide deck not found");
+    if (!existing) throw new Error("Slide deck not found");
+    await assertCanEditNotebook(ctx, existing.notebookId, userId);
     await Slides.updateSlideDeck(ctx, id, updates);
     return await Slides.getSlideDeck(ctx, id);
   },
@@ -83,7 +92,8 @@ export const remove = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
     const slideDeck = await Slides.getSlideDeck(ctx, args.id);
-    if (!slideDeck || slideDeck.userId !== userId) throw new Error("Slide deck not found");
+    if (!slideDeck) throw new Error("Slide deck not found");
+    await assertCanEditNotebook(ctx, slideDeck.notebookId, userId);
     await Slides.deleteSlideDeck(ctx, args.id);
     return { message: "Slide deck deleted successfully" };
   },
@@ -104,6 +114,7 @@ export const generateSlideDeck = mutation({
     if (documentIds.length === 0) {
       throw new Error("Please select at least one source. Content generation uses only your selected sources.");
     }
+    await assertCanEditNotebook(ctx, notebookId, userId);
     const slideDeckId = await Slides.createSlideDeck(ctx, {
       userId,
       notebookId,
@@ -135,7 +146,8 @@ export const updateSlideDeck = mutation({
     if (!userId) throw new Error("Not authenticated");
     const { slideDeckId, data, title } = args;
     const slideDeck = await Slides.getSlideDeck(ctx, slideDeckId);
-    if (!slideDeck || slideDeck.userId !== userId) throw new Error("Slide deck not found or access denied");
+    if (!slideDeck) throw new Error("Slide deck not found or access denied");
+    await assertCanEditNotebook(ctx, slideDeck.notebookId, userId);
     const updates: Record<string, unknown> = { updatedAt: Date.now() };
     if (data !== undefined) updates.data = data;
     if (title !== undefined) updates.title = title;
@@ -150,7 +162,8 @@ export const deleteSlideDeck = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
     const slideDeck = await Slides.getSlideDeck(ctx, args.slideDeckId);
-    if (!slideDeck || slideDeck.userId !== userId) throw new Error("Slide deck not found or access denied");
+    if (!slideDeck) throw new Error("Slide deck not found or access denied");
+    await assertCanEditNotebook(ctx, slideDeck.notebookId, userId);
     await Slides.deleteSlideDeck(ctx, args.slideDeckId);
   },
 });

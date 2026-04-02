@@ -38,6 +38,23 @@ const streaming = new PersistentTextStreaming(
   components.persistentTextStreaming
 );
 
+/** Batched addChunk to stay under Convex mutation write throughput (e.g. 4 MiB/s on S16). */
+const CHAT_STREAM_FLUSH_MS = parseInt(
+  process.env.CHAT_STREAM_FLUSH_MS ?? "85",
+  10
+);
+const CHAT_STREAM_FLUSH_MIN_CHARS = parseInt(
+  process.env.CHAT_STREAM_FLUSH_MIN_CHARS ?? "200",
+  10
+);
+const CHAT_STREAM_MAX_CHUNK_CHARS = Math.min(
+  65536,
+  Math.max(
+    1024,
+    parseInt(process.env.CHAT_STREAM_MAX_CHUNK_CHARS ?? "65536", 10)
+  )
+);
+
 /**
  * Internal action: run chat and write chunks to the persistent stream via addChunk.
  * Used by the HTTP route so the isolate bundle does not import this file (avoids @langchain/langgraph in isolate).
@@ -57,13 +74,50 @@ export const runWithStreamId = internalAction({
       feature: "chat",
     });
 
-    const chunkAppender = async (text: string) => {
+    const streamId = args.streamId as any;
+
+    const rawAddChunk = async (text: string) => {
+      if (!text) return;
       await ctx.runMutation(components.persistentTextStreaming.lib.addChunk, {
-        streamId: args.streamId as any,
+        streamId,
         text,
         final: false,
       });
     };
+
+    let tokenBuffer = "";
+    let lastFlushAt = Date.now();
+
+    const flushTokenBuffer = async () => {
+      if (tokenBuffer.length === 0) return;
+      while (tokenBuffer.length > 0) {
+        const piece = tokenBuffer.slice(0, CHAT_STREAM_MAX_CHUNK_CHARS);
+        tokenBuffer = tokenBuffer.slice(piece.length);
+        await rawAddChunk(piece);
+      }
+      lastFlushAt = Date.now();
+    };
+
+    const chunkAppender = async (text: string) => {
+      if (!text) return;
+
+      // Protocol lines from streamChatResponse (\n__REFERENCES, \n__ERROR, …): flush tokens first, then one chunk.
+      if (text.startsWith("\n__")) {
+        await flushTokenBuffer();
+        await rawAddChunk(text);
+        return;
+      }
+
+      tokenBuffer += text;
+      const now = Date.now();
+      const dueBySize = tokenBuffer.length >= CHAT_STREAM_FLUSH_MIN_CHARS;
+      const dueByTime =
+        tokenBuffer.length > 0 && now - lastFlushAt >= CHAT_STREAM_FLUSH_MS;
+      if (dueBySize || dueByTime) {
+        await flushTokenBuffer();
+      }
+    };
+
     await streamChatResponse(
       ctx as any,
       args.streamId,
@@ -73,8 +127,9 @@ export const runWithStreamId = internalAction({
       args.documentIds,
       chunkAppender
     );
+    await flushTokenBuffer();
     await ctx.runMutation(components.persistentTextStreaming.lib.addChunk, {
-      streamId: args.streamId as any,
+      streamId,
       text: "",
       final: true,
     });
@@ -95,6 +150,11 @@ export async function streamChatResponse(
   chunkAppender: (text: string) => Promise<void>
 ): Promise<{ fullResponse: string; references: unknown[]; hasError: boolean }> {
   const notebookIdTyped = notebookId as Id<"notebooks">;
+
+  const notebookDoc = await ctx.runQuery(internal.notebooks.index.getNotebookInternal, {
+    notebookId: notebookIdTyped,
+  });
+  const keywordSearchChunkUserId = (notebookDoc?.userId ?? userId) as Id<"users">;
 
   console.log("[ChatStream] Starting stream:", streamId);
 
@@ -242,7 +302,7 @@ export async function streamChatResponse(
     return thresholded.slice(0, limit);
   };
 
-  // Keyword search runner using closure pattern (captures notebookIdTyped and userId)
+  // Keyword search runner: full-text index filters by chunk.userId; chunks use notebook owner's id for RAG.
   const keywordSearchRunner = async (
     query: string,
     limit: number,
@@ -251,11 +311,11 @@ export async function streamChatResponse(
     console.log("[keywordSearchRunner] executing with closure-captured context");
 
     const results = await ctx.runQuery(internal.documents.index.keywordSearch, {
-      notebookId: notebookIdTyped,  // Captured from outer scope
-      userId,                        // Captured from outer scope
+      notebookId: notebookIdTyped,
+      userId: keywordSearchChunkUserId,
       query,
       limit,
-      documentIds: docIds as any,    // Cast for Convex Id type
+      documentIds: docIds as any,
     });
 
     console.log("[keywordSearchRunner] returned", results.length, "results");

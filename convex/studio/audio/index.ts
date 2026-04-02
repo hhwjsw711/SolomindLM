@@ -3,7 +3,10 @@ import { mutation, query, internalMutation, internalQuery } from "../../_generat
 import { internal } from "../../_generated/api";
 import { getAuthUserId } from "../../auth";
 import { checkDailyLimit } from "../../_lib/limits";
-import * as Notebooks from "../../_model/notebooks";
+import {
+  assertCanEditNotebook,
+  assertCanReadNotebook,
+} from "../../_lib/notebookAccess";
 import * as AudioOverviews from "../../_model/audioOverviews";
 
 /**
@@ -15,7 +18,8 @@ export const list = query({
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
 
-    return await AudioOverviews.listByNotebook(ctx, args.notebookId, userId);
+    await assertCanReadNotebook(ctx, args.notebookId, userId);
+    return await AudioOverviews.listByNotebook(ctx, args.notebookId);
   },
 });
 
@@ -30,7 +34,13 @@ export const get = query({
 
     const audioOverview = await AudioOverviews.getAudioOverview(ctx, args.id);
 
-    if (!audioOverview || audioOverview.userId !== userId) {
+    if (!audioOverview) {
+      return null;
+    }
+
+    try {
+      await assertCanReadNotebook(ctx, audioOverview.notebookId, userId);
+    } catch {
       return null;
     }
 
@@ -61,10 +71,7 @@ export const create = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
 
-    const notebook = await Notebooks.getNotebook(ctx, args.notebookId);
-    if (!notebook || notebook.userId !== userId) {
-      throw new Error("Notebook not found");
-    }
+    await assertCanEditNotebook(ctx, args.notebookId, userId);
 
     return await AudioOverviews.createAudioOverviewAndFetch(ctx, {
       userId,
@@ -93,9 +100,11 @@ export const update = mutation({
     const { id, ...updates } = args;
 
     const existing = await AudioOverviews.getAudioOverview(ctx, id);
-    if (!existing || existing.userId !== userId) {
+    if (!existing) {
       throw new Error("Audio overview not found");
     }
+
+    await assertCanEditNotebook(ctx, existing.notebookId, userId);
 
     await AudioOverviews.updateAudioOverview(ctx, id, updates);
 
@@ -113,9 +122,11 @@ export const remove = mutation({
     if (!userId) throw new Error("Unauthenticated");
 
     const audioOverview = await AudioOverviews.getAudioOverview(ctx, args.id);
-    if (!audioOverview || audioOverview.userId !== userId) {
+    if (!audioOverview) {
       throw new Error("Audio overview not found");
     }
+
+    await assertCanEditNotebook(ctx, audioOverview.notebookId, userId);
 
     await AudioOverviews.deleteAudioOverview(ctx, args.id);
 
@@ -146,6 +157,8 @@ export const generateAudioOverview = mutation({
     if (documentIds.length === 0) {
       throw new Error("Please select at least one source. Content generation uses only your selected sources.");
     }
+
+    await assertCanEditNotebook(ctx, notebookId, userId);
 
     // Create audio overview record
     const audioOverviewId = await AudioOverviews.createAudioOverview(ctx, {
@@ -188,11 +201,12 @@ export const updateAudioOverview = mutation({
 
     const { audioOverviewId, transcript, audioUrl, title } = args;
 
-    // Verify ownership
     const audioOverview = await AudioOverviews.getAudioOverview(ctx, audioOverviewId);
-    if (!audioOverview || audioOverview.userId !== userId) {
+    if (!audioOverview) {
       throw new Error("Audio overview not found or access denied");
     }
+
+    await assertCanEditNotebook(ctx, audioOverview.notebookId, userId);
 
     // Update
     const updates: Record<string, unknown> = { updatedAt: Date.now() };
@@ -217,11 +231,12 @@ export const deleteAudioOverview = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
-    // Verify ownership
     const audioOverview = await AudioOverviews.getAudioOverview(ctx, args.audioOverviewId);
-    if (!audioOverview || audioOverview.userId !== userId) {
+    if (!audioOverview) {
       throw new Error("Audio overview not found or access denied");
     }
+
+    await assertCanEditNotebook(ctx, audioOverview.notebookId, userId);
 
     await AudioOverviews.deleteAudioOverview(ctx, args.audioOverviewId);
   },

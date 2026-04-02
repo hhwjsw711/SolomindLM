@@ -1,7 +1,10 @@
 import { v } from "convex/values";
 import { mutation, query, internalMutation, internalQuery } from "../../_generated/server";
 import { getAuthUserId } from "../../auth";
-import * as Notebooks from "../../_model/notebooks";
+import {
+  assertCanEditNotebook,
+  assertCanReadNotebook,
+} from "../../_lib/notebookAccess";
 import * as Quizzes from "../../_model/quizzes";
 
 /**
@@ -13,7 +16,8 @@ export const list = query({
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
 
-    return await Quizzes.listByNotebook(ctx, args.notebookId, userId);
+    await assertCanReadNotebook(ctx, args.notebookId, userId);
+    return await Quizzes.listByNotebook(ctx, args.notebookId);
   },
 });
 
@@ -28,7 +32,13 @@ export const get = query({
 
     const quiz = await Quizzes.getQuiz(ctx, args.id);
 
-    if (!quiz || quiz.userId !== userId) {
+    if (!quiz) {
+      return null;
+    }
+
+    try {
+      await assertCanReadNotebook(ctx, quiz.notebookId, userId);
+    } catch {
       return null;
     }
 
@@ -50,11 +60,7 @@ export const create = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
 
-    // Verify user owns the notebook
-    const notebook = await Notebooks.getNotebook(ctx, args.notebookId);
-    if (!notebook || notebook.userId !== userId) {
-      throw new Error("Notebook not found");
-    }
+    await assertCanEditNotebook(ctx, args.notebookId, userId);
 
     return await Quizzes.createQuizAndFetch(ctx, {
       userId,
@@ -79,6 +85,7 @@ export const createInternal = internalMutation({
     metadata: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
+    await assertCanEditNotebook(ctx, args.notebookId, args.userId);
     return await Quizzes.createQuizAndFetch(ctx, {
       userId: args.userId,
       notebookId: args.notebookId,
@@ -118,11 +125,12 @@ export const update = mutation({
     const metadata = rest.metadata;
     const otherUpdates: Omit<typeof rest, "metadata"> = rest;
 
-    // Verify ownership
     const existing = await Quizzes.getQuiz(ctx, id);
-    if (!existing || existing.userId !== userId) {
+    if (!existing) {
       throw new Error("Quiz not found");
     }
+
+    await assertCanEditNotebook(ctx, existing.notebookId, userId);
 
     await Quizzes.updateQuiz(ctx, id, otherUpdates, !!metadata);
 
@@ -145,9 +153,11 @@ export const remove = mutation({
     if (!userId) throw new Error("Unauthenticated");
 
     const quiz = await Quizzes.getQuiz(ctx, args.id);
-    if (!quiz || quiz.userId !== userId) {
+    if (!quiz) {
       throw new Error("Quiz not found");
     }
+
+    await assertCanEditNotebook(ctx, quiz.notebookId, userId);
 
     await Quizzes.deleteQuiz(ctx, args.id);
 
@@ -224,9 +234,11 @@ export const submitAnswer = mutation({
     if (!userId) throw new Error("Unauthenticated");
 
     const quiz = await Quizzes.getQuiz(ctx, args.id);
-    if (!quiz || quiz.userId !== userId) {
+    if (!quiz) {
       throw new Error("Quiz not found");
     }
+
+    await assertCanEditNotebook(ctx, quiz.notebookId, userId);
 
     await Quizzes.patchQuizUserAnswer(ctx, args.id, args.questionIndex, args.selectedOption);
 

@@ -114,7 +114,7 @@ export function useQuiz(quizId: string | null) {
  * Create a new quiz and queue generation
  */
 export function useCreateQuiz() {
-  const schedule = useAction(api.studio._shared.scheduleQuiz);
+  const schedule = useAction(api.studio.scheduling.quizzes.scheduleQuiz);
 
   return async (params: CreateQuizParams): Promise<CreateQuizResponse> => {
     const result = await schedule({

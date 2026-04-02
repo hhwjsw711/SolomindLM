@@ -28,6 +28,24 @@ export async function listByNotebook(
   return await query.order("desc").collect();
 }
 
+/** Manual notes are shared; saved chat notes stay private to their author. */
+export async function listByNotebookShared(
+  ctx: QueryCtx,
+  notebookId: Id<"notebooks">,
+  viewerUserId: Id<"users">
+): Promise<Doc<"notes">[]> {
+  const rows = await ctx.db
+    .query("notes")
+    .withIndex("by_notebook", (q) => q.eq("notebookId", notebookId))
+    .order("desc")
+    .collect();
+  return rows.filter(
+    (n) =>
+      n.type === "manual" ||
+      (n.type === "chat" && n.userId === viewerUserId)
+  );
+}
+
 export async function listByUser(
   ctx: QueryCtx,
   userId: Id<"users">

@@ -1,7 +1,10 @@
 import { v } from "convex/values";
 import { mutation, query, internalMutation, internalQuery } from "../../_generated/server";
 import { getAuthUserId } from "../../auth";
-import * as Notebooks from "../../_model/notebooks";
+import {
+  assertCanEditNotebook,
+  assertCanReadNotebook,
+} from "../../_lib/notebookAccess";
 import * as Reports from "../../_model/reports";
 
 /**
@@ -23,7 +26,8 @@ export const list = query({
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
 
-    return await Reports.listByNotebook(ctx, args.notebookId, userId);
+    await assertCanReadNotebook(ctx, args.notebookId, userId);
+    return await Reports.listByNotebook(ctx, args.notebookId);
   },
 });
 
@@ -38,7 +42,13 @@ export const get = query({
 
     const report = await Reports.getReport(ctx, args.id);
 
-    if (!report || report.userId !== userId) {
+    if (!report) {
+      return null;
+    }
+
+    try {
+      await assertCanReadNotebook(ctx, report.notebookId, userId);
+    } catch {
       return null;
     }
 
@@ -55,7 +65,8 @@ export const getReports = query({
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
 
-    return await Reports.listByNotebook(ctx, args.notebookId, userId);
+    await assertCanReadNotebook(ctx, args.notebookId, userId);
+    return await Reports.listByNotebook(ctx, args.notebookId);
   },
 });
 
@@ -74,11 +85,7 @@ export const create = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
 
-    // Verify user owns the notebook
-    const notebook = await Notebooks.getNotebook(ctx, args.notebookId);
-    if (!notebook || notebook.userId !== userId) {
-      throw new Error("Notebook not found");
-    }
+    await assertCanEditNotebook(ctx, args.notebookId, userId);
 
     return await Reports.createReportAndFetch(ctx, {
       userId,
@@ -105,6 +112,7 @@ export const createInternal = internalMutation({
     metadata: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
+    await assertCanEditNotebook(ctx, args.notebookId, args.userId);
     return await Reports.createReportAndFetch(ctx, {
       userId: args.userId,
       notebookId: args.notebookId,
@@ -134,11 +142,12 @@ export const update = mutation({
 
     const { id, ...updates } = args;
 
-    // Verify ownership
     const existing = await Reports.getReport(ctx, id);
-    if (!existing || existing.userId !== userId) {
+    if (!existing) {
       throw new Error("Report not found");
     }
+
+    await assertCanEditNotebook(ctx, existing.notebookId, userId);
 
     await Reports.updateReport(ctx, id, updates);
 
@@ -156,9 +165,11 @@ export const remove = mutation({
     if (!userId) throw new Error("Unauthenticated");
 
     const report = await Reports.getReport(ctx, args.id);
-    if (!report || report.userId !== userId) {
+    if (!report) {
       throw new Error("Report not found");
     }
+
+    await assertCanEditNotebook(ctx, report.notebookId, userId);
 
     await Reports.deleteReport(ctx, args.id);
 

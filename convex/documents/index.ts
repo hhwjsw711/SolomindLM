@@ -4,6 +4,10 @@ import type { Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
 import { getAuthUserId } from "../auth";
 import { checkSourceLimit } from "../_lib/limits";
+import {
+  assertCanEditNotebook,
+  assertCanReadNotebook,
+} from "../_lib/notebookAccess";
 import { TavilySearchService } from "../_services/search/TavilySearchService";
 
 /**
@@ -35,11 +39,7 @@ export const upload = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
 
-    // Verify user owns the notebook
-    const notebook = await ctx.db.get(args.notebookId);
-    if (!notebook || notebook.userId !== userId) {
-      throw new Error("Notebook not found");
-    }
+    await assertCanEditNotebook(ctx, args.notebookId, userId);
 
     // Check source limit
     await checkSourceLimit(ctx, args.notebookId);
@@ -102,7 +102,13 @@ export const get = query({
 
     const document = await ctx.db.get(args.id);
 
-    if (!document || document.userId !== userId) {
+    if (!document) {
+      return null;
+    }
+
+    try {
+      await assertCanReadNotebook(ctx, document.notebookId, userId);
+    } catch {
       return null;
     }
 
@@ -120,11 +126,7 @@ export const list = query({
     if (!userId) return [];
 
     if (args.notebookId) {
-      // Verify user owns the notebook
-      const notebook = await ctx.db.get(args.notebookId);
-      if (!notebook || notebook.userId !== userId) {
-        throw new Error("Notebook not found");
-      }
+      await assertCanReadNotebook(ctx, args.notebookId, userId);
 
       return await ctx.db
         .query("documents")
@@ -152,7 +154,13 @@ export const getContent = query({
     if (!userId) return null;
 
     const document = await ctx.db.get(args.id);
-    if (!document || document.userId !== userId) {
+    if (!document) {
+      return null;
+    }
+
+    try {
+      await assertCanReadNotebook(ctx, document.notebookId, userId);
+    } catch {
       return null;
     }
 
@@ -188,16 +196,16 @@ export const getSignedUrl = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) return null;
 
-    // Verify user owns a document with this storageId
     const document = await ctx.db
       .query("documents")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
       .filter((q) => q.eq(q.field("storageId"), args.storageId))
       .first();
 
     if (!document) {
       throw new Error("Document not found");
     }
+
+    await assertCanReadNotebook(ctx, document.notebookId, userId);
 
     return await ctx.storage.getUrl(args.storageId as Id<"_storage">);
   },
@@ -226,11 +234,12 @@ export const update = mutation({
 
     const { id, title } = args;
 
-    // Verify ownership
     const existing = await ctx.db.get(id);
-    if (!existing || existing.userId !== userId) {
+    if (!existing) {
       throw new Error("Document not found");
     }
+
+    await assertCanEditNotebook(ctx, existing.notebookId, userId);
 
     let newFileName = title.trim();
 
@@ -265,9 +274,11 @@ export const remove = mutation({
     if (!userId) throw new Error("Unauthenticated");
 
     const document = await ctx.db.get(args.id);
-    if (!document || document.userId !== userId) {
+    if (!document) {
       throw new Error("Document not found");
     }
+
+    await assertCanEditNotebook(ctx, document.notebookId, userId);
 
     // Delete file from storage if it exists
     if (document.storageId) {

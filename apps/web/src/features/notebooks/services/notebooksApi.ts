@@ -47,6 +47,7 @@ export function useCreateNotebook() {
       coverColor: args.coverColor || "bg-yellow-500",
       icon: args.icon || "Folder",
       isFeatured: args.isFeatured || false,
+      isSharedNotebook: false,
       folderId: args.folderId,
       created_at: now,
       updated_at: now,
