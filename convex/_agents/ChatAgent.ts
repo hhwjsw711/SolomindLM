@@ -61,6 +61,10 @@ const RESPONSE_GENERATION_TIMEOUT_MS = parseInt(
   process.env.CHAT_RESPONSE_TIMEOUT_MS ?? '90000',
   10
 );
+/** Max executed search_documents calls per user message (parallel calls in one turn each count). */
+const MAX_SEARCH_DOCUMENTS_CALLS = parseInt(env.CHAT_MAX_SEARCH_CALLS ?? '5', 10);
+/** Chunks passed to the answer model and citation indices (after merge + rank). */
+const MAX_CONTEXT_CHUNKS = parseInt(env.CHAT_MAX_CONTEXT_CHUNKS ?? '15', 10);
 
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -78,6 +82,62 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
   });
 }
 
+function chunkDedupKey(c: ReferenceChunk): string {
+  return `${c.sourceId}:${c.chunkIndex}`;
+}
+
+function mergeChunkScores(existing: ReferenceChunk, incoming: ReferenceChunk): ReferenceChunk {
+  const pickMax = (a?: number, b?: number): number | undefined => {
+    const hasA = a != null && !Number.isNaN(a);
+    const hasB = b != null && !Number.isNaN(b);
+    if (!hasA && !hasB) return undefined;
+    return Math.max(hasA ? (a as number) : 0, hasB ? (b as number) : 0);
+  };
+  return {
+    ...existing,
+    similarity: pickMax(existing.similarity, incoming.similarity),
+    rrfScore: pickMax(existing.rrfScore, incoming.rrfScore),
+  };
+}
+
+function chunkRankingScore(c: ReferenceChunk): number {
+  if (c.similarity != null && !Number.isNaN(c.similarity)) return c.similarity;
+  if (c.rrfScore != null && !Number.isNaN(c.rrfScore)) return c.rrfScore;
+  return 0;
+}
+
+function rankAndCapChunks(chunks: ReferenceChunk[], maxN: number): ReferenceChunk[] {
+  const sorted = [...chunks].sort((a, b) => chunkRankingScore(b) - chunkRankingScore(a));
+  return sorted.length <= maxN ? sorted : sorted.slice(0, maxN);
+}
+
+/** Smaller token yields so the HTTP stream and UI update more frequently than whole-paragraph chunks. */
+const STREAM_TOKEN_SLICE_CHARS = parseInt(process.env.CHAT_STREAM_TOKEN_SLICE_CHARS ?? '480', 10);
+const STREAM_TOKEN_DELAY_MS = parseInt(process.env.CHAT_STREAM_TOKEN_DELAY_MS ?? '12', 10);
+
+async function* sliceParagraphForStream(para: string): AsyncGenerator<string> {
+  const trimmed = para.trim();
+  if (!trimmed) return;
+  const max = Math.max(120, STREAM_TOKEN_SLICE_CHARS);
+  if (trimmed.length <= max) {
+    yield trimmed + '\n\n';
+    return;
+  }
+  let i = 0;
+  while (i < trimmed.length) {
+    let end = Math.min(i + max, trimmed.length);
+    if (end < trimmed.length) {
+      const sp = trimmed.lastIndexOf(' ', end);
+      if (sp > i + 48) end = sp + 1;
+    }
+    const part = trimmed.slice(i, end).trimEnd();
+    if (part) {
+      yield part + (end >= trimmed.length ? '\n\n' : '');
+    }
+    i = end;
+  }
+}
+
 const TOOL_DECISION_SYSTEM_PROMPT = `You are a study assistant helping a student understand their uploaded documents.
 
 Your job is to decide what information to retrieve before answering.
@@ -87,7 +147,7 @@ RULES:
 2. You may skip searching ONLY for: greetings, meta-questions about the app itself, or follow-ups already fully covered by a prior tool result in this conversation.
 3. If the question is too ambiguous to search effectively, call ask_clarification instead.
 4. When calling search_documents, rephrase the question as a declarative statement for better retrieval (e.g. "photosynthesis converts light into chemical energy" not "How does photosynthesis work?").
-5. You may call search_documents multiple times with different queries to gather comprehensive information.`;
+5. Prefer ONE strong search first. Call search_documents at most once per turn. Run a second search on a later turn only if the first results are clearly insufficient — do not batch multiple unrelated searches in a single turn. The system enforces a small search budget per question.`;
 
 /** OpenAI-style tool defs so LangChain/Together receive `type: "function"` (required by inference v2). */
 const SEARCH_TOOL_DEF = {
@@ -185,6 +245,7 @@ export class ChatAgent {
     const llmWithTools = this.llmWrapper.bindDecisionTools([SEARCH_TOOL_DEF, CLARIFY_TOOL_DEF]);
 
     let iterations = 0;
+    let searchCallCount = 0;
     while (iterations < MAX_SEARCH_ITERATIONS) {
       const response = await llmWithTools.invoke(messages);
       messages.push(response as AIMessage);
@@ -192,8 +253,9 @@ export class ChatAgent {
       const toolCalls = (response as any).tool_calls as Array<{ name: string; args: any; id?: string }> | undefined;
 
       if (!toolCalls || toolCalls.length === 0) {
-        // LLM decided no search needed (greeting, meta-question, etc.)
-        console.log('[ChatAgent] LLM skipped search — generating direct response');
+        console.log(
+          `[ChatAgent] Phase 1 finished — model returned no further tools (iterations=${iterations}, chunks=${allChunks.length})`
+        );
         break;
       }
 
@@ -208,37 +270,90 @@ export class ChatAgent {
 
         if (call.name === 'search_documents') {
           const query: string = call.args?.query ?? userMessage;
+
+          if (searchCallCount >= MAX_SEARCH_DOCUMENTS_CALLS) {
+            console.warn(
+              `[ChatAgent] search_documents skipped — budget exhausted (${MAX_SEARCH_DOCUMENTS_CALLS}) for query: "${query}"`
+            );
+            yield {
+              type: 'tool_call',
+              data: { tool: 'search_documents', query, status: 'done', resultCount: 0, skipped: true },
+            };
+            messages.push(
+              new ToolMessage({
+                content:
+                  'Search budget exhausted for this question; use the passages already retrieved. Respond from existing tool results only.',
+                tool_call_id: call.id ?? `call_budget_${iterations}`,
+              })
+            );
+            continue;
+          }
+
           console.log(`[ChatAgent] search_documents called with query: "${query}"`);
 
           yield { type: 'tool_call', data: { tool: 'search_documents', query, status: 'searching' } };
 
           let newChunks: ReferenceChunk[] = [];
           try {
+            const pipelineDeadline = Date.now() + SEARCH_PIPELINE_TIMEOUT_MS;
+            const remainingMs = () => {
+              const ms = pipelineDeadline - Date.now();
+              if (ms <= 0) {
+                throw new Error(`search_pipeline timed out after ${SEARCH_PIPELINE_TIMEOUT_MS}ms`);
+              }
+              return ms;
+            };
+
+            yield {
+              type: 'status',
+              status: 'retrieving',
+              message: 'Shaping a hypothetical answer to improve retrieval quality…',
+            };
+            const hydeText = await withTimeout(
+              this.llmWrapper.generateHypotheticalDocument(query),
+              remainingMs(),
+              'hyde_generation'
+            );
+            yield {
+              type: 'status',
+              status: 'embedding',
+              message: 'Embedding the query for semantic search…',
+            };
+            const hydeEmbedding = await withTimeout(
+              this.embeddingService.embedText(hydeText),
+              remainingMs(),
+              'hyde_embedding'
+            );
+            yield {
+              type: 'status',
+              status: 'ranking',
+              message: 'Running hybrid search and reranking passages…',
+            };
             newChunks = await withTimeout(
-              (async () => {
-                const hydeText = await this.llmWrapper.generateHypotheticalDocument(query);
-                const hydeEmbedding = await this.embeddingService.embedText(hydeText);
-                return await this.vectorSearch.search(
-                  context.userId,
-                  context.noteId,
-                  query,
-                  context.documentIds,
-                  hydeEmbedding
-                );
-              })(),
-              SEARCH_PIPELINE_TIMEOUT_MS,
-              'search_pipeline'
+              this.vectorSearch.search(
+                context.userId,
+                context.noteId,
+                query,
+                context.documentIds,
+                hydeEmbedding
+              ),
+              remainingMs(),
+              'vector_hybrid_search'
             );
           } catch (e) {
             console.warn('[ChatAgent] Search pipeline failed or timed out:', e);
             newChunks = [];
           }
 
-          // Deduplicate by sourceId + chunkIndex
+          searchCallCount += 1;
+
           for (const chunk of newChunks) {
-            const key = `${chunk.sourceId}:${chunk.chunkIndex}`;
-            if (!allChunks.some((c) => `${c.sourceId}:${c.chunkIndex}` === key)) {
+            const key = chunkDedupKey(chunk);
+            const idx = allChunks.findIndex((c) => chunkDedupKey(c) === key);
+            if (idx < 0) {
               allChunks.push(chunk);
+            } else {
+              allChunks[idx] = mergeChunkScores(allChunks[idx], chunk);
             }
           }
 
@@ -271,8 +386,10 @@ export class ChatAgent {
       const directAnswer = await this.llmWrapper.generateDirectResponse(userMessage, recentTurns);
       for (const para of directAnswer.split(/\n\n+/)) {
         if (para.trim().length > 0) {
-          yield { type: 'token', data: para + '\n\n' };
-          await new Promise((resolve) => setTimeout(resolve, 30));
+          for await (const piece of sliceParagraphForStream(para)) {
+            yield { type: 'token', data: piece };
+            await new Promise((resolve) => setTimeout(resolve, STREAM_TOKEN_DELAY_MS));
+          }
         }
       }
       yield { type: 'done' };
@@ -280,7 +397,16 @@ export class ChatAgent {
       return;
     }
 
-    // Send references so the UI can show what's being used
+    const rankedChunks = rankAndCapChunks(allChunks, MAX_CONTEXT_CHUNKS);
+    if (rankedChunks.length < allChunks.length) {
+      console.log(
+        `[ChatAgent] Capped context: ${allChunks.length} merged chunks → top ${rankedChunks.length} for generation`
+      );
+    }
+    allChunks.length = 0;
+    allChunks.push(...rankedChunks);
+
+    // Send references so the UI can show what's being used (same ordering as model context)
     yield { type: 'status', status: 'reading', message: `Reading ${allChunks.length} passages...` };
     yield { type: 'references', data: allChunks };
 
@@ -311,21 +437,29 @@ export class ChatAgent {
       : { isGrounded: false, issues: [], missingCitations: false };
 
     let isGrounded = syntacticValidation.isGrounded && semanticValidation.isGrounded;
+    let semanticOnlyFailure = false;
 
     if (!isGrounded) {
-      console.warn('[ChatAgent] Grounding failed — retrying with strict grounding');
-      structuredResponse = await withTimeout(
-        this.llmWrapper.generateWithStrictGrounding(allChunks, userMessage, recentTurns),
-        RESPONSE_GENERATION_TIMEOUT_MS,
-        'strict_grounding_retry'
-      );
+      if (syntacticValidation.isGrounded && !semanticValidation.isGrounded) {
+        semanticOnlyFailure = true;
+        console.warn(
+          '[ChatAgent] Semantic grounding below threshold — keeping first response (no strict retry):',
+          semanticValidation.issues
+        );
+      } else {
+        console.warn('[ChatAgent] Grounding failed — retrying with strict grounding');
+        structuredResponse = await withTimeout(
+          this.llmWrapper.generateWithStrictGrounding(allChunks, userMessage, recentTurns),
+          RESPONSE_GENERATION_TIMEOUT_MS,
+          'strict_grounding_retry'
+        );
 
-      // Re-validate after retry so the warning reflects the retried response
-      const retrySyntactic = validateGrounding(structuredResponse.answer_markdown, allChunks);
-      const retrySemantic = retrySyntactic.isGrounded
-        ? await validateSemanticGrounding(structuredResponse.answer_markdown, allChunks, this.embeddingService)
-        : { isGrounded: false, issues: [], missingCitations: false };
-      isGrounded = retrySyntactic.isGrounded && retrySemantic.isGrounded;
+        const retrySyntactic = validateGrounding(structuredResponse.answer_markdown, allChunks);
+        const retrySemantic = retrySyntactic.isGrounded
+          ? await validateSemanticGrounding(structuredResponse.answer_markdown, allChunks, this.embeddingService)
+          : { isGrounded: false, issues: [], missingCitations: false };
+        isGrounded = retrySyntactic.isGrounded && retrySemantic.isGrounded;
+      }
     }
 
     // Stream final answer by paragraphs
@@ -333,22 +467,26 @@ export class ChatAgent {
     const finalText = structuredResponse.answer_markdown;
     for (const para of finalText.split(/\n\n+/)) {
       if (para.trim().length > 0) {
-        yield { type: 'token', data: para + '\n\n' };
-        await new Promise((resolve) => setTimeout(resolve, 30));
+        for await (const piece of sliceParagraphForStream(para)) {
+          yield { type: 'token', data: piece };
+          await new Promise((resolve) => setTimeout(resolve, STREAM_TOKEN_DELAY_MS));
+        }
       }
     }
 
-    // Only surface grounding warning if retry still failed
     if (!isGrounded) {
-      const allIssues = [
-        ...validateGrounding(structuredResponse.answer_markdown, allChunks).issues,
-      ];
+      const syntacticIssues = validateGrounding(structuredResponse.answer_markdown, allChunks).issues;
+      const allIssues = semanticOnlyFailure
+        ? [...semanticValidation.issues, ...syntacticIssues]
+        : syntacticIssues;
       yield {
         type: 'grounding_check',
         data: {
           passed: false,
           issues: allIssues,
-          message: 'Note: This response may not be fully grounded in your documents',
+          message: semanticOnlyFailure
+            ? 'Note: Automated check suggests the answer may be only loosely aligned with cited passages'
+            : 'Note: This response may not be fully grounded in your documents',
         },
       };
     }

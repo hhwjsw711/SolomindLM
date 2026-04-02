@@ -1,4 +1,6 @@
 "use node"
+import { MARKDOWN_MATH_NOTATION_FOR_APP } from '../_shared/markdownMathPrompt.js';
+
 /**
  * Prompt templates for MindMapGraph.
  *
@@ -21,7 +23,7 @@ export const REDUCE_SYSTEM_PROMPT = 'You are a Mind Map Architect. Create hierar
 
 export const MAP_PROMPT = `You are a Research Assistant analyzing document chunks.
 
-**Math Notation:** For math concepts, use proper delimiters ($...$ for inline, $$...$$ for display).
+${MARKDOWN_MATH_NOTATION_FOR_APP}
 
 CRITICAL GROUNDING REQUIREMENTS:
 - ONLY extract concepts EXPLICITLY STATED in the content below

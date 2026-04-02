@@ -8,6 +8,10 @@
 
 import type { ReferenceChunk } from '../../storage/ChatHistoryService';
 import type { EmbeddingService } from '../../_services/processing/EmbeddingServiceClient';
+import {
+  matchAllInlineCitations,
+  stripInlineCitationMarkers,
+} from '../_shared/citationExtract.js';
 
 // ============================================================
 // Types
@@ -31,11 +35,10 @@ export interface GroundingValidationResult {
 
 /**
  * Semantic similarity threshold for grounding validation.
- * Configurable via environment variable to support different embedding models.
- * - OpenAI text-embedding-3: 0.35-0.40 is typically a good range
- * - Older models (Ada-002): 0.60-0.70 may be needed
+ * Configurable via GROUNDING_SIMILARITY_THRESHOLD (see convex/_lib/env.ts).
+ * - OpenAI text-embedding-3-small: ~0.30 default is more lenient for long, paraphrased answers
  */
-const DEFAULT_GROUNDING_THRESHOLD = 0.38;
+const DEFAULT_GROUNDING_THRESHOLD = 0.3;
 const GROUNDING_THRESHOLD = parseFloat(
   process.env.GROUNDING_SIMILARITY_THRESHOLD ?? String(DEFAULT_GROUNDING_THRESHOLD)
 );
@@ -60,12 +63,8 @@ const UNCERTAIN_PHRASES = [
   'might be',
   'could be',
   'it seems',
-  'perhaps',
   'maybe',
-  'likely',
-  'possibly',
   'i believe',
-  'appears to be',
 ] as const;
 
 // ============================================================
@@ -99,9 +98,8 @@ export function validateGrounding(
 ): GroundingValidationResult {
   const issues: string[] = [];
 
-  // Check for citations
-  const citationPattern = /\[(\d+)\]/g;
-  const citations = [...response.matchAll(citationPattern)];
+  // Check for citations ([1] or mistaken LaTeX \[1\])
+  const citations = matchAllInlineCitations(response);
 
   if (citations.length === 0) {
     issues.push('No citations found in response');
@@ -247,8 +245,7 @@ export async function validateSemanticGrounding(
   const issues: string[] = [];
 
   // Determine which sources are actually cited in the response
-  const citationPattern = /\[(\d+)\]/g;
-  const citedIds = [...response.matchAll(citationPattern)]
+  const citedIds = matchAllInlineCitations(response)
     .map((m) => parseInt(m[1]))
     .filter((id) => id >= 1 && id <= sources.length);
 
@@ -270,7 +267,7 @@ export async function validateSemanticGrounding(
   }
 
   // Strip citation markers from response for cleaner embedding
-  const cleanResponse = response.replace(/\[\d+\]/g, '').trim();
+  const cleanResponse = stripInlineCitationMarkers(response);
 
   console.log(
     `[SemanticGrounding] Whole-response check: ${uniqueCitedIds.length} cited sources, ` +

@@ -194,6 +194,7 @@ const AppContent: React.FC = () => {
   const chatStreamingContextValue = useMemo(() => ({
     messages: chatStream.chatDisplayMessages,
     isChatStreaming: chatStream.isChatStreaming,
+    remoteChatGenerating: chatStream.remoteChatGenerating,
     onSendMessage: chatStream.handleSendMessage,
     onClearHistory: chatStream.handleClearChatHistory,
     onSetFeedback: chatStream.setMessageFeedback,

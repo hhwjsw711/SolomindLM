@@ -100,6 +100,7 @@ export const initQuizMapPhase = internalMutation({
         ...quiz.metadata,
         phase: 'map_processing',
         progress: 30,
+        currentStep: 'Processing content...',
         totalMapTasks: args.totalMapTasks,
         completedMapTasks: 0,
         mapResults: {},

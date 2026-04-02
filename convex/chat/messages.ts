@@ -14,7 +14,13 @@ export const listByNotebook = query({
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
-    if (!userId) return [];
+    if (!userId) {
+      return {
+        messages: [],
+        chatGenerating: false,
+        chatGenerationStartedAt: null,
+      };
+    }
 
     await assertCanReadNotebook(ctx, args.notebookId, userId);
 
@@ -27,15 +33,26 @@ export const listByNotebook = query({
       .first();
 
     if (!conversation) {
-      return [];
+      return {
+        messages: [],
+        chatGenerating: false,
+        chatGenerationStartedAt: null,
+      };
     }
 
     // Get all messages for this conversation
-    return await ctx.db
+    const messages = await ctx.db
       .query("messages")
       .withIndex("by_conversation", (q) => q.eq("conversationId", conversation._id))
       .order("asc")
       .collect();
+
+    const inFlight = conversation.chatGenerationInFlight ?? 0;
+    return {
+      messages,
+      chatGenerating: inFlight > 0,
+      chatGenerationStartedAt: conversation.chatGenerationStartedAt ?? null,
+    };
   },
 });
 
@@ -171,9 +188,14 @@ export const sendMessageOptimistic = mutation({
       createdAt: Date.now(),
     });
 
-    // Update conversation timestamp
+    const now = Date.now();
+    const inFlight = (conversation.chatGenerationInFlight ?? 0) + 1;
+
+    // Update conversation: server-visible “generating” for all tabs/devices
     await ctx.db.patch(conversation._id, {
-      updatedAt: Date.now(),
+      updatedAt: now,
+      chatGenerationInFlight: inFlight,
+      chatGenerationStartedAt: now,
     });
 
     // Return the message ID for reference
@@ -182,6 +204,59 @@ export const sendMessageOptimistic = mutation({
       conversationId: conversation._id,
       tempMessageId: messageId, // For compatibility with frontend expectations
     };
+  },
+});
+
+/**
+ * Release one chat generation refcount (e.g. fetch failed before the stream job ran).
+ * Safe to call when the server job already finished (idempotent).
+ */
+export const releaseChatGeneration = mutation({
+  args: {
+    notebookId: v.id("notebooks"),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Unauthenticated");
+    }
+
+    await assertCanReadNotebook(ctx, args.notebookId, userId);
+
+    const conversation = await ctx.db
+      .query("conversations")
+      .withIndex("by_user_notebook", (q) =>
+        q.eq("userId", userId).eq("notebookId", args.notebookId)
+      )
+      .first();
+
+    if (!conversation) {
+      return;
+    }
+
+    const prev = conversation.chatGenerationInFlight ?? 0;
+    if (prev <= 0) {
+      await ctx.db.patch(conversation._id, {
+        chatGenerationInFlight: undefined,
+        chatGenerationStartedAt: undefined,
+        updatedAt: Date.now(),
+      });
+      return;
+    }
+    const n = prev - 1;
+    const now = Date.now();
+    if (n <= 0) {
+      await ctx.db.patch(conversation._id, {
+        chatGenerationInFlight: undefined,
+        chatGenerationStartedAt: undefined,
+        updatedAt: now,
+      });
+    } else {
+      await ctx.db.patch(conversation._id, {
+        chatGenerationInFlight: n,
+        updatedAt: now,
+      });
+    }
   },
 });
 
@@ -291,6 +366,12 @@ export const clearHistory = mutation({
     for (const message of messages) {
       await ctx.db.delete(message._id);
     }
+
+    await ctx.db.patch(conversation._id, {
+      chatGenerationInFlight: undefined,
+      chatGenerationStartedAt: undefined,
+      updatedAt: Date.now(),
+    });
 
     return { message: "Chat history cleared" };
   },

@@ -28,7 +28,7 @@ export function useCreateMindMapFlow(ctx: CreateFlowContext) {
       const newNote: Note = {
         id: placeholderId,
         title: 'Mind Map',
-        preview: 'Mind Map • Generating...',
+        preview: 'Mind Map',
         type: 'mindmap',
         content: '',
         mindMapData: { nodeData: { id: 'root', topic: '', children: [] } },
@@ -48,7 +48,7 @@ export function useCreateMindMapFlow(ctx: CreateFlowContext) {
         const initialNote: MindMapNote = {
           id: mindmap.id ?? mindMapId,
           title: mindmap.title,
-          preview: 'Mind Map • Generating...',
+          preview: 'Mind Map',
           type: 'mindmap',
           content: typeof mindmap.content === 'string' ? mindmap.content : '',
           status: (mindmap.status ?? 'generating') as MindMapNote['status'],

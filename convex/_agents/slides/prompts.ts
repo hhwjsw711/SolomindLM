@@ -15,6 +15,7 @@
 
 import { z } from 'zod';
 import { env } from '../../_lib/env';
+import { MARKDOWN_MATH_NOTATION_FOR_APP } from '../_shared/markdownMathPrompt.js';
 
 // ============================================================
 // SCHEMAS
@@ -154,7 +155,7 @@ export const getCandidateMapPrompt = (params: {
 
   return `You are an expert instructional designer and presentation architect analyzing educational content.
 
-**Math Notation:** Use $...$ for inline math and $$...$$ for display math.
+${MARKDOWN_MATH_NOTATION_FOR_APP}
 
 **Slide Strategy:** ${slideTypeDescription}
 **Deck Scope:** ${deckLengthDescription}

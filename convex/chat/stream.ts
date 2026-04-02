@@ -68,12 +68,6 @@ export const runWithStreamId = internalAction({
     documentIds: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
-    // Check daily chat limit
-    await ctx.runMutation(internal._lib.limits.checkDailyLimitInternal, {
-      userId: args.userId,
-      feature: "chat",
-    });
-
     const streamId = args.streamId as any;
 
     const rawAddChunk = async (text: string) => {
@@ -118,15 +112,33 @@ export const runWithStreamId = internalAction({
       }
     };
 
-    await streamChatResponse(
-      ctx as any,
-      args.streamId,
-      args.userId,
-      args.notebookId,
-      args.message,
-      args.documentIds,
-      chunkAppender
-    );
+    const conversationId = await ctx.runMutation(internal.chat.index.ensureConversation, {
+      notebookId: args.notebookId as Id<"notebooks">,
+      userId: args.userId as Id<"users">,
+    });
+
+    try {
+      await ctx.runMutation(internal._lib.limits.checkDailyLimitInternal, {
+        userId: args.userId,
+        feature: "chat",
+      });
+
+      await streamChatResponse(
+        ctx as any,
+        args.streamId,
+        args.userId,
+        args.notebookId,
+        args.message,
+        args.documentIds,
+        chunkAppender,
+        conversationId
+      );
+    } finally {
+      await ctx.runMutation(internal.chat.index.releaseChatGenerationInternal, {
+        conversationId,
+      });
+    }
+
     await flushTokenBuffer();
     await ctx.runMutation(components.persistentTextStreaming.lib.addChunk, {
       streamId,
@@ -147,7 +159,8 @@ export async function streamChatResponse(
   notebookId: string,
   message: string,
   documentIds: string[] | undefined,
-  chunkAppender: (text: string) => Promise<void>
+  chunkAppender: (text: string) => Promise<void>,
+  conversationId: Id<"conversations">
 ): Promise<{ fullResponse: string; references: unknown[]; hasError: boolean }> {
   const notebookIdTyped = notebookId as Id<"notebooks">;
 
@@ -157,12 +170,6 @@ export async function streamChatResponse(
   const keywordSearchChunkUserId = (notebookDoc?.userId ?? userId) as Id<"users">;
 
   console.log("[ChatStream] Starting stream:", streamId);
-
-  // Ensure conversation exists
-  const conversationId = await ctx.runMutation(internal.chat.index.ensureConversation, {
-    notebookId: notebookIdTyped,
-    userId,
-  });
 
   // Get conversation history
   const { messages: messageList } = await ctx.runQuery(internal.chat.index.getMessagesInternal, {
@@ -358,6 +365,44 @@ export async function streamChatResponse(
   let references: unknown[] = [];
   let hasError = false;
 
+  type TraceToolCall = {
+    tool: string;
+    query: string;
+    status: "searching" | "done";
+    resultCount?: number;
+  };
+  type TraceGrounding = {
+    passed: boolean;
+    issues: string[];
+    message: string;
+  };
+  const agentTrace: {
+    toolCalls: TraceToolCall[];
+    grounding: TraceGrounding[];
+    phases: Array<{ status: string; message: string }>;
+    clarification?: string;
+  } = {
+    toolCalls: [],
+    grounding: [],
+    phases: [],
+  };
+  const toolKeyToIndex = new Map<string, number>();
+
+  const recordToolCall = (data: TraceToolCall) => {
+    const key = `${data.tool}\0${data.query}`;
+    const idx = toolKeyToIndex.get(key);
+    if (idx !== undefined) {
+      agentTrace.toolCalls[idx] = { ...data };
+    } else {
+      toolKeyToIndex.set(key, agentTrace.toolCalls.length);
+      agentTrace.toolCalls.push({ ...data });
+    }
+  };
+
+  const recordPhase = (status: string, message: string) => {
+    agentTrace.phases.push({ status, message });
+  };
+
   try {
     // Stream response chunks using ChatAgent
     for await (const chunk of agent.streamResponse({
@@ -377,16 +422,38 @@ export async function streamChatResponse(
         // Append references as JSON metadata
         await chunkAppender(`\n__REFERENCES:${JSON.stringify(references)}\n`);
       } else if (chunk.type === "status") {
+        if (chunk.status) {
+          recordPhase(chunk.status, chunk.message ?? "");
+        }
         // Append status as metadata
         await chunkAppender(`\n__STATUS:${chunk.status}:${chunk.message ?? ""}\n`);
       } else if (chunk.type === "grounding_check") {
+        const g = chunk.data as Partial<TraceGrounding>;
+        if (g && typeof g.passed === "boolean") {
+          agentTrace.grounding.push({
+            passed: g.passed,
+            issues: Array.isArray(g.issues) ? g.issues : [],
+            message: typeof g.message === "string" ? g.message : "",
+          });
+        }
         // Append grounding check as metadata
         await chunkAppender(`\n__GROUNDING:${JSON.stringify(chunk.data)}\n`);
       } else if (chunk.type === "tool_call") {
+        const tc = chunk.data as TraceToolCall;
+        if (tc?.tool && tc.status) {
+          recordToolCall({
+            tool: tc.tool,
+            query: tc.query ?? "",
+            status: tc.status,
+            resultCount: tc.resultCount,
+          });
+        }
         await chunkAppender(`\n__TOOL_CALL:${JSON.stringify(chunk.data)}\n`);
       } else if (chunk.type === "followups") {
         await chunkAppender(`\n__FOLLOWUPS:${JSON.stringify(chunk.data)}\n`);
       } else if (chunk.type === "clarification") {
+        const q = (chunk.data as { question?: string })?.question ?? "";
+        agentTrace.clarification = q;
         await chunkAppender(`\n__CLARIFICATION:${JSON.stringify(chunk.data)}\n`);
       } else if (chunk.type === "error") {
         hasError = true;
@@ -410,12 +477,30 @@ export async function streamChatResponse(
     conversationId,
     limit: 1,
   });
-  if (existingMessages.length > 0 && fullResponse.trim()) {
+  const clarificationBody =
+    agentTrace.clarification?.trim() &&
+    `**Could you clarify?**\n\n${agentTrace.clarification.trim()}`;
+  const contentToPersist = fullResponse.trim() || clarificationBody || "";
+
+  // Terminal phase so persisted agentTrace does not end on "generating" (UI would show a spinner forever).
+  if (!hasError && contentToPersist) {
+    recordPhase("completed", "Response complete");
+  }
+
+  if (existingMessages.length > 0 && contentToPersist) {
     await ctx.runMutation(internal.chat.index.addMessage, {
       conversationId,
       role: "assistant",
-      content: fullResponse,
-      references,
+      content: contentToPersist,
+      references: fullResponse.trim() ? references : undefined,
+      metadata: {
+        agentTrace: {
+          toolCalls: agentTrace.toolCalls,
+          grounding: agentTrace.grounding,
+          phases: agentTrace.phases.slice(-30),
+          clarification: agentTrace.clarification,
+        },
+      },
     });
   } else if (existingMessages.length === 0) {
     console.warn("[ChatStream] Conversation was cleared during generation — skipping assistant message storage.");

@@ -1,6 +1,8 @@
+import { replaceCitationMarkersWithPlaceholders } from '@convex/_agents/_shared/citationExtract';
+
 /**
- * Replaces citation markers [1], [2], etc. with `CITE:n` only in non-math segments.
- * This avoids corrupting LaTeX (e.g. matrix [1, 0] or intervals [1, 2]) inside $...$ or $$...$$.
+ * Replaces citation markers [1], [2], etc. (also \[1\] when models escape brackets) with `CITE:n`
+ * only in non-math segments. Avoids corrupting LaTeX (e.g. matrix [1, 0]) inside $...$ or $$...$$.
  */
 export function replaceCitationMarkersOutsideMath(content: string): string {
   const parts: string[] = [];
@@ -10,7 +12,7 @@ export function replaceCitationMarkersOutsideMath(content: string): string {
     // Prefer $$ over $ so we don't split display math
     const nextDollar = remaining.indexOf('$');
     if (nextDollar === -1) {
-      parts.push(remaining.replace(/\[(\d+)\]/g, '`CITE:$1`'));
+      parts.push(replaceCitationMarkersWithPlaceholders(remaining));
       break;
     }
 
@@ -21,14 +23,14 @@ export function replaceCitationMarkersOutsideMath(content: string): string {
 
     if (closeIndex === -1) {
       // Unclosed delimiter: treat rest as text and replace citations
-      parts.push(remaining.replace(/\[(\d+)\]/g, '`CITE:$1`'));
+      parts.push(replaceCitationMarkersWithPlaceholders(remaining));
       break;
     }
 
     const textSegment = remaining.slice(0, nextDollar);
     const mathSegment = remaining.slice(nextDollar, closeIndex + delim.length);
 
-    parts.push(textSegment.replace(/\[(\d+)\]/g, '`CITE:$1`'));
+    parts.push(replaceCitationMarkersWithPlaceholders(textSegment));
     parts.push(mathSegment);
     remaining = remaining.slice(closeIndex + delim.length);
   }

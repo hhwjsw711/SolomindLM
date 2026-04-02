@@ -31,7 +31,7 @@ export function useCreateWrittenQuestionsFlow(ctx: CreateFlowContext) {
       const newNote: Note = {
         id: placeholderId,
         title: 'Written Questions',
-        preview: `${questionCount} Questions • ${config.questionType} • Generating...`,
+        preview: `${questionCount} Questions • ${config.questionType}`,
         type: 'writtenQuestions',
         questions: [],
         status: 'generating',
@@ -59,7 +59,7 @@ export function useCreateWrittenQuestionsFlow(ctx: CreateFlowContext) {
         const initialNote: WrittenQuestionsNote = {
           id: writtenQuestionsId,
           title: apiNote?.title ?? 'Written Questions',
-          preview: `${questionCount} Questions • ${config.questionType} • Generating...`,
+          preview: `${questionCount} Questions • ${config.questionType}`,
           type: 'writtenQuestions',
           questions: [],
           status: (apiNote?.status ?? resWQ.status) as WrittenQuestionsNote['status'],

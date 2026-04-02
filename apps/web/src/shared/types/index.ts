@@ -28,6 +28,32 @@ export interface MessageToolCall {
   resultCount?: number;
 }
 
+/** Grounding / confidence signal streamed after the main answer chunks */
+export interface AgentGroundingCheck {
+  passed: boolean;
+  issues: string[];
+  message: string;
+}
+
+/** Persisted on assistant messages (metadata.agentTrace) for history replay */
+export interface ChatAgentTrace {
+  toolCalls: MessageToolCall[];
+  grounding: AgentGroundingCheck[];
+  phases: Array<{ status: string; message: string }>;
+  clarification?: string;
+}
+
+export type ChatActivityPhase =
+  | 'searching'
+  | 'reading'
+  | 'thinking'
+  | 'generating'
+  | 'writing'
+  | 'retrieving'
+  | 'embedding'
+  | 'ranking'
+  | 'completed';
+
 export interface Message {
   id: string;
   role: 'user' | 'assistant';
@@ -35,10 +61,16 @@ export interface Message {
   citations?: number[];
   references?: ReferenceChunk[];
   timestamp: Date;
-  status?: 'searching' | 'reading' | 'thinking' | 'generating';
+  status?: ChatActivityPhase;
+  /** Server detail for the current phase (e.g. "Reading 12 passages...") */
+  statusDetail?: string;
   feedback?: 'up' | 'down';
   followUps?: string[];
   toolCalls?: MessageToolCall[];
+  groundingChecks?: AgentGroundingCheck[];
+  clarificationQuestion?: string;
+  /** Saved assistant turn: full trace from backend */
+  agentTrace?: ChatAgentTrace;
 }
 
 export interface StudioTool {
@@ -104,6 +136,15 @@ export interface Slide {
   metadata?: Record<string, any>;
 }
 
+/** Convex studio jobs persist these on artifact `metadata` while status is `generating`. */
+export interface StudioGenerationMetadata {
+  phase?: string;
+  progress?: number;
+  currentStep?: string;
+  totalMapTasks?: number;
+  completedMapTasks?: number;
+}
+
 // Base interface with shared properties for all note types
 interface BaseNote {
   id: string;
@@ -125,10 +166,9 @@ export interface ReportNote extends BaseNote {
   metadata: {
     reportType: string;
     documentIds: string[];
-    phase?: string; // For internal intermediate statuses: mapping, collapsing, reducing, synthesizing, etc.
     error?: string;
     chunksProcessed?: number;
-  };
+  } & StudioGenerationMetadata;
 }
 
 // Flashcard note - study cards
@@ -141,7 +181,7 @@ export interface FlashcardNote extends BaseNote {
     topic?: string;
     error?: string;
     lastViewedIndex?: number;
-  };
+  } & StudioGenerationMetadata;
 }
 
 // Quiz note - multiple choice questions
@@ -155,7 +195,7 @@ export interface QuizNote extends BaseNote {
     focusArea?: string;
     error?: string;
     lastViewedIndex?: number;
-  };
+  } & StudioGenerationMetadata;
 }
 
 // Audio note - audio overview with transcript
@@ -167,9 +207,8 @@ export interface AudioNote extends BaseNote {
     audioType: string;
     audioOverviewId: string;
     duration?: number;
-    phase?: string;
     error?: string;
-  };
+  } & StudioGenerationMetadata;
 }
 
 // Audio overview note - studio audio overview (id, title, transcript, audioUrl)
@@ -189,11 +228,7 @@ export interface MindMapNote extends BaseNote {
   type: 'mindmap';
   mindMapData: MindMapNodeData;
   content: string; // JSON string representation
-  metadata?: {
-    phase?: string;
-    error?: string;
-    [key: string]: any;
-  };
+  metadata?: ({ error?: string } & StudioGenerationMetadata & Record<string, unknown>);
 }
 
 // Written questions note - open-ended questions with LLM grading
@@ -209,7 +244,7 @@ export interface WrittenQuestionsNote extends BaseNote {
     totalPoints?: number;
     error?: string;
     lastViewedIndex?: number;
-  };
+  } & StudioGenerationMetadata;
 }
 
 // Slide deck note - AI-generated presentation slides
@@ -222,7 +257,7 @@ export interface SlideDeckNote extends BaseNote {
     slideCount: number;
     customPrompt?: string;
     error?: string;
-  };
+  } & StudioGenerationMetadata;
 }
 
 // Spreadsheet note - structured table data
@@ -232,10 +267,9 @@ export interface SpreadsheetNote extends BaseNote {
   metadata: {
     spreadsheetType: 'data_extraction' | 'comparison_table' | 'timeline' | 'financial_summary' | 'custom';
     documentIds: string[];
-    phase?: string;
     error?: string;
     customPrompt?: string;
-  };
+  } & StudioGenerationMetadata;
 }
 
 // User note - saved chat conversations or manual notes

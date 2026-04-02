@@ -22,6 +22,26 @@ function trimMathContent(value: string): string {
     .trim();
 }
 
+/**
+ * Source citations like [1] must stay in markdown text, not inside $...$/$$...$$.
+ * Otherwise replaceCitationMarkersOutsideMath skips them and they render as plain digits in KaTeX.
+ * Only strips trailing citation markers (LLMs often append them inside parens or \\(...\\)).
+ */
+const TRAILING_INLINE_CITATION_RE = /(\s*\[\d+\])+(?:\s*)$/;
+
+function extractTrailingCitations(math: string): { core: string; tail: string } {
+  const m = math.match(TRAILING_INLINE_CITATION_RE);
+  if (!m) {
+    return { core: math, tail: '' };
+  }
+  const tail = m[0];
+  const core = math.slice(0, math.length - tail.length).trimEnd();
+  if (!core) {
+    return { core: math, tail: '' };
+  }
+  return { core, tail: tail.trimStart() };
+}
+
 function isLikelyMathSegment(value: string): boolean {
   const trimmed = value.trim();
 
@@ -38,16 +58,35 @@ function isLikelyMathSegment(value: string): boolean {
 
 function normalizeMathDelimiters(value: string): string {
   return value
-    .replace(DISPLAY_MATH_PATTERN, (_, math: string) => `$$${trimMathContent(math)}$$`)
-    .replace(INLINE_MATH_PATTERN, (_, math: string) => `$${trimMathContent(math)}$`);
+    .replace(DISPLAY_MATH_PATTERN, (_, math: string) => {
+      const trimmed = trimMathContent(math);
+      const { core, tail } = extractTrailingCitations(trimmed);
+      if (!tail) {
+        return `$$${trimmed}$$`;
+      }
+      return `$$${core}$$ ${tail}`;
+    })
+    .replace(INLINE_MATH_PATTERN, (_, math: string) => {
+      const trimmed = trimMathContent(math);
+      const { core, tail } = extractTrailingCitations(trimmed);
+      if (!tail) {
+        return `$${trimmed}$`;
+      }
+      return `$${core}$ ${tail}`;
+    });
 }
 
 function normalizeMathParentheticals(value: string): string {
   return value.replace(PARENTHESIZED_SEGMENT_PATTERN, (segment, inner: string) => {
-    if (!isLikelyMathSegment(inner)) {
+    const { core, tail } = extractTrailingCitations(inner);
+    const mathPart = tail ? core : inner;
+    if (!isLikelyMathSegment(mathPart)) {
       return segment;
     }
 
+    if (tail) {
+      return `($${trimMathContent(mathPart)}$) ${tail}`;
+    }
     return `($${trimMathContent(inner)}$)`;
   });
 }

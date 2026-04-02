@@ -20,6 +20,7 @@ import type * as _agents_WrittenQuestionsGraph from "../_agents/WrittenQuestions
 import type * as _agents__shared_cachedLlm from "../_agents/_shared/cachedLlm.js";
 import type * as _agents__shared_chunk_helper_factory from "../_agents/_shared/chunk_helper_factory.js";
 import type * as _agents__shared_chunk_operations from "../_agents/_shared/chunk_operations.js";
+import type * as _agents__shared_citationExtract from "../_agents/_shared/citationExtract.js";
 import type * as _agents__shared_concurrency from "../_agents/_shared/concurrency.js";
 import type * as _agents__shared_graph_builder from "../_agents/_shared/graph_builder.js";
 import type * as _agents__shared_index from "../_agents/_shared/index.js";
@@ -27,6 +28,7 @@ import type * as _agents__shared_jobHelpers from "../_agents/_shared/jobHelpers.
 import type * as _agents__shared_langsmith from "../_agents/_shared/langsmith.js";
 import type * as _agents__shared_llm_factory from "../_agents/_shared/llm_factory.js";
 import type * as _agents__shared_logging from "../_agents/_shared/logging.js";
+import type * as _agents__shared_markdownMathPrompt from "../_agents/_shared/markdownMathPrompt.js";
 import type * as _agents__shared_node_builder from "../_agents/_shared/node_builder.js";
 import type * as _agents__shared_progress from "../_agents/_shared/progress.js";
 import type * as _agents__shared_retry from "../_agents/_shared/retry.js";
@@ -268,6 +270,7 @@ declare const fullApi: ApiFromModules<{
   "_agents/_shared/cachedLlm": typeof _agents__shared_cachedLlm;
   "_agents/_shared/chunk_helper_factory": typeof _agents__shared_chunk_helper_factory;
   "_agents/_shared/chunk_operations": typeof _agents__shared_chunk_operations;
+  "_agents/_shared/citationExtract": typeof _agents__shared_citationExtract;
   "_agents/_shared/concurrency": typeof _agents__shared_concurrency;
   "_agents/_shared/graph_builder": typeof _agents__shared_graph_builder;
   "_agents/_shared/index": typeof _agents__shared_index;
@@ -275,6 +278,7 @@ declare const fullApi: ApiFromModules<{
   "_agents/_shared/langsmith": typeof _agents__shared_langsmith;
   "_agents/_shared/llm_factory": typeof _agents__shared_llm_factory;
   "_agents/_shared/logging": typeof _agents__shared_logging;
+  "_agents/_shared/markdownMathPrompt": typeof _agents__shared_markdownMathPrompt;
   "_agents/_shared/node_builder": typeof _agents__shared_node_builder;
   "_agents/_shared/progress": typeof _agents__shared_progress;
   "_agents/_shared/retry": typeof _agents__shared_retry;

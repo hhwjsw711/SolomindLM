@@ -124,6 +124,12 @@ export const env = {
   CHAT_RERANK_THRESHOLD: process.env.CHAT_RERANK_THRESHOLD ?? '10',
   CHAT_RERANK_TOP_N: process.env.CHAT_RERANK_TOP_N ?? '7',
   CHAT_MAX_RESULTS: process.env.CHAT_MAX_RESULTS ?? '7',
+  /** Max search_documents executions per user chat message (ChatAgent Phase 1). */
+  CHAT_MAX_SEARCH_CALLS: process.env.CHAT_MAX_SEARCH_CALLS ?? '5',
+  /** Top merged chunks passed to the answer model (citation indices match references). */
+  CHAT_MAX_CONTEXT_CHUNKS: process.env.CHAT_MAX_CONTEXT_CHUNKS ?? '15',
+  /** Whole-answer vs cited-chunks embedding similarity bar (grounding_validator). */
+  GROUNDING_SIMILARITY_THRESHOLD: process.env.GROUNDING_SIMILARITY_THRESHOLD ?? '0.30',
 
   // Hybrid Search (NEW)
   CHAT_ENABLE_HYBRID_SEARCH: process.env.CHAT_ENABLE_HYBRID_SEARCH ?? 'true',

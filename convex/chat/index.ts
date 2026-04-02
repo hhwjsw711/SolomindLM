@@ -40,6 +40,44 @@ export const ensureConversation = internalMutation({
 });
 
 /**
+ * Decrement chat generation refcount when a stream job finishes (success, error, or throw).
+ * Idempotent-safe when the field was already cleared.
+ */
+export const releaseChatGenerationInternal = internalMutation({
+  args: {
+    conversationId: v.id("conversations"),
+  },
+  handler: async (ctx, args) => {
+    const c = await ctx.db.get(args.conversationId);
+    if (!c) {
+      return;
+    }
+    const prev = c.chatGenerationInFlight ?? 0;
+    if (prev <= 0) {
+      await ctx.db.patch(args.conversationId, {
+        chatGenerationInFlight: undefined,
+        chatGenerationStartedAt: undefined,
+        updatedAt: Date.now(),
+      });
+      return;
+    }
+    const n = prev - 1;
+    if (n <= 0) {
+      await ctx.db.patch(args.conversationId, {
+        chatGenerationInFlight: undefined,
+        chatGenerationStartedAt: undefined,
+        updatedAt: Date.now(),
+      });
+    } else {
+      await ctx.db.patch(args.conversationId, {
+        chatGenerationInFlight: n,
+        updatedAt: Date.now(),
+      });
+    }
+  },
+});
+
+/**
  * Get all conversations for a user
  */
 export const list = query({

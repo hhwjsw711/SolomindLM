@@ -32,7 +32,7 @@ export function useCreateSlidesFlow(ctx: CreateFlowContext) {
       const newNote: Note = {
         id: placeholderId,
         title: 'Slide Deck',
-        preview: `${typeLabel} • ${lengthLabel} • Generating...`,
+        preview: `${typeLabel} • ${lengthLabel}`,
         type: 'slides',
         slides: [],
         status: 'generating',
@@ -59,7 +59,7 @@ export function useCreateSlidesFlow(ctx: CreateFlowContext) {
           ...slideDeck,
           id: slideDeckId,
           status: (slideDeck.status ?? 'generating') as SlideDeckNote['status'],
-          preview: `${typeLabel} • ${lengthLabel} • Generating...`,
+          preview: `${typeLabel} • ${lengthLabel}`,
         };
 
         if (ctx.onUpdateNoteFull) {

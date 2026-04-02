@@ -31,7 +31,7 @@ export function useCreateQuizFlow(ctx: CreateFlowContext) {
       const newNote: Note = {
         id: placeholderId,
         title: 'Quiz',
-        preview: `${questionCount} Questions • ${config.difficulty} • Generating...`,
+        preview: `${questionCount} Questions • ${config.difficulty}`,
         type: 'quiz',
         questions: [],
         status: 'generating',
@@ -53,7 +53,7 @@ export function useCreateQuizFlow(ctx: CreateFlowContext) {
         const initialNote: QuizNote = {
           id: quizId,
           title: apiNote?.title ?? 'Quiz',
-          preview: `${questionCount} Questions • ${config.difficulty} • Generating...`,
+          preview: `${questionCount} Questions • ${config.difficulty}`,
           type: 'quiz',
           questions: [],
           status: (apiNote?.status ?? resQuiz.status) as QuizNote['status'],

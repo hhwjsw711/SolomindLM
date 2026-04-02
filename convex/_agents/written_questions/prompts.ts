@@ -7,6 +7,7 @@
  */
 
 import { z } from 'zod';
+import { MARKDOWN_MATH_NOTATION_FOR_APP } from '../_shared/markdownMathPrompt.js';
 
 // ============================================================
 // SCHEMAS
@@ -106,7 +107,7 @@ export const getMapPrompt = (params: {
 
   return `You are an expert educator creating a HIGH-QUALITY assessment.
 
-**Math Notation:** Use $...$ for inline math and $$...$$ for display math.
+${MARKDOWN_MATH_NOTATION_FOR_APP}
 
 Generate exactly ${questionsPerChunk} questions based **exclusively** on the text provided below.
 

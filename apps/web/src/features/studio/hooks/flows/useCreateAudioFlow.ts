@@ -30,7 +30,7 @@ export function useCreateAudioFlow(ctx: CreateFlowContext) {
       const newNote: Note = {
         id: placeholderId,
         title: 'Audio Overview',
-        preview: `Audio Overview • ${formatTitle} • ${config.length} • Generating...`,
+        preview: `Audio Overview • ${formatTitle} • ${config.length}`,
         type: 'audioOverview',
         audioUrl: '',
         transcript: '',

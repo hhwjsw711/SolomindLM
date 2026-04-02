@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useLayoutEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { Note } from '@/shared/types/index';
+import { getStudioGeneratingListLines } from '../utils/studioGenerationLabels';
 import { NoteIcon } from './NoteIcon';
 
 interface NoteItemProps {
@@ -76,14 +77,23 @@ export const NoteItem: React.FC<NoteItemProps> = ({
   }, [isMenuOpen]);
 
   const isGenerating = note.status === 'generating';
+  const generatingLines = isGenerating ? getStudioGeneratingListLines(note) : null;
 
   return (
     <div
-      onClick={onClick}
-      className={`relative bg-card border-l-4 border-l-primary border-y border-r border-border p-3 pl-4 shadow-sm transition-shadow group rounded-r-sm ${
+      onClick={() => {
+        if (!isGenerating) onClick();
+      }}
+      aria-busy={isGenerating ? true : undefined}
+      aria-label={
+        isGenerating && generatingLines
+          ? `${note.title}, ${generatingLines.primary}`
+          : undefined
+      }
+      className={`relative rounded-r-sm border-y border-r border-border border-l-4 border-l-primary p-3 pl-4 transition-[box-shadow,transform] duration-300 ${
         isGenerating
-          ? 'opacity-60 cursor-not-allowed'
-          : 'hover:shadow-md cursor-pointer'
+          ? 'cursor-not-allowed overflow-hidden bg-card/95 shadow-sm border-l-primary/90'
+          : 'bg-card shadow-sm hover:shadow-md cursor-pointer group'
       }`}
     >
       <div className="flex justify-between items-start gap-3">
@@ -102,17 +112,56 @@ export const NoteItem: React.FC<NoteItemProps> = ({
                 aria-label="Edit note title"
               />
             ) : (
-              <h4 className={`text-sm font-bold text-foreground font-serif truncate leading-tight mb-1 transition-colors ${
-                isGenerating ? '' : 'group-hover:text-primary'
-              }`}>{note.title}</h4>
+              <h4
+                className={`text-sm font-bold text-foreground font-serif truncate leading-tight transition-colors ${
+                  isGenerating ? 'mb-0' : 'mb-1 group-hover:text-primary'
+                }`}
+              >
+                {note.title}
+              </h4>
             )}
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              {note.status === 'generating' ? (
-                <span className="font-mono tracking-tight text-primary italic">Generating...</span>
-              ) : (
+            {isGenerating && generatingLines ? (
+              <div className="relative z-1 mt-2 min-w-0 space-y-2">
+                {note.preview ? (
+                  <p className="text-[11px] leading-snug text-muted-foreground font-mono tracking-tight truncate">
+                    {note.preview}
+                  </p>
+                ) : null}
+                <div className="flex items-baseline justify-between gap-2 min-w-0">
+                  <p className="min-w-0 flex-1 text-xs leading-snug text-foreground">
+                    {generatingLines.primary}
+                  </p>
+                  {generatingLines.progressPercent !== null ? (
+                    <span className="shrink-0 text-xs font-medium tabular-nums text-muted-foreground">
+                      {generatingLines.progressPercent}%
+                    </span>
+                  ) : null}
+                </div>
+                {generatingLines.progressPercent !== null ? (
+                  <div
+                    className="relative h-1 w-full overflow-hidden rounded-full bg-muted/80"
+                    role="progressbar"
+                    aria-valuenow={generatingLines.progressPercent}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                  >
+                    <div
+                      className="h-full rounded-full bg-primary transition-[width] duration-500 ease-out motion-reduce:transition-none"
+                      style={{ width: `${generatingLines.progressPercent}%` }}
+                    />
+                  </div>
+                ) : (
+                  <div
+                    className="studio-generating-progress-indeterminate relative h-1 w-full rounded-full bg-muted/80"
+                    aria-hidden
+                  />
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <span className="font-mono tracking-tight">{note.preview}</span>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
         <div className="relative kebab-menu shrink-0">

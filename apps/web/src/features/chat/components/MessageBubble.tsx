@@ -1,8 +1,9 @@
 import React from 'react';
-import { Check, Copy, ThumbsUp, ThumbsDown, Search, RotateCcw } from 'lucide-react';
-import { Message } from '@/shared/types/index';
+import { Check, Copy, ThumbsUp, ThumbsDown, RotateCcw } from 'lucide-react';
+import { Message, type ChatActivityPhase } from '@/shared/types/index';
 import { renderMessageWithReferences, RefHandlers } from '../utils/messageRendering';
 import { getStatusIcon, getStatusMessage } from '../utils/messageStatus';
+import { AgentActivityPanel } from './AgentActivityPanel';
 
 interface MessageBubbleProps {
   message: Message;
@@ -54,7 +55,13 @@ export const MessageBubble = React.memo<MessageBubbleProps>(
       },
     ];
 
-    if (!isUser && onRetry) {
+    const canRetryAssistant =
+      !isUser &&
+      onRetry &&
+      message.id !== '__streaming__' &&
+      message.id !== '__remote_generating__';
+
+    if (canRetryAssistant) {
       messageActions.splice(1, 0, {
         id: 'retry',
         label: 'Retry',
@@ -130,6 +137,32 @@ export const MessageBubble = React.memo<MessageBubbleProps>(
       </div>
     );
 
+    const isStreamingRow = message.id === '__streaming__';
+    const toolCalls = message.toolCalls ?? message.agentTrace?.toolCalls ?? [];
+    const groundingChecks = message.groundingChecks ?? message.agentTrace?.grounding ?? [];
+    const activityPhases = message.agentTrace?.phases ?? [];
+    const tracePhases = message.agentTrace?.phases;
+    const lastTracePhase =
+      tracePhases && tracePhases.length > 0 ? tracePhases[tracePhases.length - 1] : undefined;
+    const rawHistoricalPhase = (lastTracePhase?.status as ChatActivityPhase) ?? null;
+    const rawHistoricalDetail = lastTracePhase?.message ?? null;
+    /** Older saves ended phases on "generating"; panel would show spinner + "Generating response…" with full content below. */
+    const staleInProgressHeader =
+      !isStreamingRow &&
+      !!message.content?.trim() &&
+      (rawHistoricalPhase === 'generating' || rawHistoricalPhase === 'writing');
+    const historicalPhase = staleInProgressHeader ? 'completed' : rawHistoricalPhase;
+    const historicalDetail = staleInProgressHeader ? null : rawHistoricalDetail;
+    const showAgentPanel =
+      isStreamingRow ||
+      activityPhases.length > 0 ||
+      toolCalls.length > 0 ||
+      groundingChecks.length > 0 ||
+      !!message.status ||
+      !!message.statusDetail ||
+      !!lastTracePhase ||
+      !!message.agentTrace;
+
     const ThinkingIndicator = ({ status }: { status: string }) => {
       const label = getStatusMessage(status) ?? 'Thinking';
       const icon = getStatusIcon(status);
@@ -158,28 +191,6 @@ export const MessageBubble = React.memo<MessageBubbleProps>(
               <span className="w-[3px] h-[3px] rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: '360ms', animationDuration: '1.1s' }} />
             </span>
           </div>
-        </div>
-      );
-    };
-
-    const ToolCallTrace = () => {
-      if (!message.toolCalls || message.toolCalls.length === 0) return null;
-      return (
-        <div className="flex flex-col gap-1 mb-2">
-          {message.toolCalls.map((tc, i) => (
-            <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground font-mono">
-              {tc.status === 'searching' ? (
-                <Search className="w-3 h-3 animate-pulse shrink-0" />
-              ) : (
-                <Check className="w-3 h-3 text-vintage-green-600 dark:text-vintage-green-500 shrink-0" />
-              )}
-              <span>
-                {tc.status === 'searching'
-                  ? `Searching for "${tc.query}"...`
-                  : `Found ${tc.resultCount ?? 0} passages`}
-              </span>
-            </div>
-          ))}
         </div>
       );
     };
@@ -226,21 +237,21 @@ export const MessageBubble = React.memo<MessageBubbleProps>(
           </div>
         ) : (
           <>
-            {message.status && !message.content && (
+            {showAgentPanel && (
+              <AgentActivityPanel
+                isStreaming={isStreamingRow}
+                activityPhase={message.status}
+                activityDetail={message.statusDetail}
+                historicalPhase={historicalPhase}
+                historicalDetail={historicalDetail}
+                activityPhases={activityPhases}
+                toolCalls={toolCalls}
+                groundingChecks={groundingChecks}
+              />
+            )}
+            {message.status && !message.content && !showAgentPanel && (
               <ThinkingIndicator status={message.status} />
             )}
-            {message.status && message.content && (
-              <div className="flex items-center gap-1.5 text-muted-foreground/70 text-[11px] mb-2 font-sans tracking-wide">
-                {getStatusIcon(message.status)}
-                <span>{getStatusMessage(message.status)}</span>
-                <span className="flex gap-0.5 ml-0.5">
-                  <span className="w-0.5 h-0.5 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: '0ms', animationDuration: '1s' }} />
-                  <span className="w-0.5 h-0.5 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: '150ms', animationDuration: '1s' }} />
-                  <span className="w-0.5 h-0.5 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: '300ms', animationDuration: '1s' }} />
-                </span>
-              </div>
-            )}
-            <ToolCallTrace />
             {message.content && (
               <div className="w-full max-w-4xl font-serif text-lg leading-relaxed text-foreground">
                 {renderMessageWithReferences(message.id, message.content, message.references, refHandlers)}
@@ -259,10 +270,14 @@ export const MessageBubble = React.memo<MessageBubbleProps>(
     prev.message.id === next.message.id &&
     prev.message.content === next.message.content &&
     prev.message.status === next.message.status &&
+    prev.message.statusDetail === next.message.statusDetail &&
     prev.message.references === next.message.references &&
     prev.message.feedback === next.message.feedback &&
     prev.message.followUps === next.message.followUps &&
     prev.message.toolCalls === next.message.toolCalls &&
+    prev.message.groundingChecks === next.message.groundingChecks &&
+    prev.message.clarificationQuestion === next.message.clarificationQuestion &&
+    JSON.stringify(prev.message.agentTrace) === JSON.stringify(next.message.agentTrace) &&
     prev.copiedMessageId === next.copiedMessageId
 );
 

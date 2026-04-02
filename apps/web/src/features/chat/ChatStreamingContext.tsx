@@ -4,6 +4,8 @@ import { Message, Note } from '@/shared/types/index';
 export interface ChatStreamingContextType {
   messages: Message[];
   isChatStreaming: boolean;
+  /** Assistant response in progress on the server (may be streaming in another tab/device). */
+  remoteChatGenerating: boolean;
   onSendMessage: (messageText: string) => void;
   onClearHistory: () => void;
   onSetFeedback: (messageId: string, feedback: 'up' | 'down' | null) => void;

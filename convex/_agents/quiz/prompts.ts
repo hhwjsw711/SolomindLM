@@ -7,6 +7,7 @@
  */
 
 import { z } from 'zod';
+import { MARKDOWN_MATH_NOTATION_FOR_APP } from '../_shared/markdownMathPrompt.js';
 
 export { GRAPH_CONFIG } from './config.js';
 
@@ -67,7 +68,7 @@ export const REDUCE_SELECT_SYSTEM_PROMPT = 'You are a quiz curator selecting div
 /** System prompt for expand phase distractor generation */
 export const EXPAND_QUESTION_SYSTEM_PROMPT = `You are a professional educator creating rigorous multiple-choice questions.
 
-**Math Notation:** Use $...$ for inline math and $$...$$ for display math.`;
+${MARKDOWN_MATH_NOTATION_FOR_APP}`;
 
 // ============================================================
 // MAP PROMPT (THE DRAFT)
@@ -102,6 +103,8 @@ export const getCandidateMapPrompt = (params: {
   };
 
   return `You are an expert analyst extracting "Testable Concepts" from a document.
+
+${MARKDOWN_MATH_NOTATION_FOR_APP}
 
 TARGET: Identify approximately ${questionsPerChunk} key concepts.
 

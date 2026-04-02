@@ -1,4 +1,6 @@
 "use node"
+import { MARKDOWN_MATH_NOTATION_FOR_APP } from '../_shared/markdownMathPrompt.js';
+
 /**
  * Prompt templates for ReportGraph.
  *
@@ -15,7 +17,7 @@
 /** System prompt for map phase content analysis and topic extraction */
 export const MAP_SYSTEM_PROMPT = `You are a professional content analyzer and writer. Always extract 3-5 key topics and provide comprehensive summaries.
 
-**Math Notation:** Use proper math delimiters ($...$ for inline, $$...$$ for display).`;
+${MARKDOWN_MATH_NOTATION_FOR_APP}`;
 
 /** System prompt for collapse phase summary condensation */
 export const COLLAPSE_SYSTEM_PROMPT = 'You are a skilled summarizer. Always maintain structured format with topic headers like "Main Topics:"';

@@ -31,7 +31,7 @@ export function useCreateSpreadsheetFlow(ctx: CreateFlowContext) {
       const newNote: Note = {
         id: placeholderId,
         title: 'Spreadsheet',
-        preview: `Spreadsheet • ${typeLabel} • Generating...`,
+        preview: `Spreadsheet • ${typeLabel}`,
         type: 'spreadsheet',
         content: '',
         status: 'generating',

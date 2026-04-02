@@ -1,4 +1,8 @@
-import { ReferenceChunk } from '@/shared/types/index';
+import {
+  ReferenceChunk,
+  type MessageToolCall,
+  type AgentGroundingCheck,
+} from '@/shared/types/index';
 import { useQuery, useMutation, useAction, useConvexAuth } from 'convex/react';
 import { api } from '@convex/_generated/api';
 import type { Id } from '@convex/_generated/dataModel';
@@ -27,8 +31,14 @@ export interface ParsedStreamData {
   text: string;
   references?: ReferenceChunk[];
   status?: { status: string; message: string };
-  groundingCheck?: { passed: boolean; issues: string[]; message: string };
-  toolCall?: { tool: string; query: string; status: 'searching' | 'done'; resultCount?: number };
+  /** All grounding lines in buffer order */
+  groundingChecks?: AgentGroundingCheck[];
+  /** Last grounding line (backward compat) */
+  groundingCheck?: AgentGroundingCheck;
+  /** Merged tool call state from every __TOOL_CALL line in the buffer */
+  toolCalls?: MessageToolCall[];
+  /** Last tool call event (backward compat) */
+  toolCall?: MessageToolCall;
   followUps?: string[];
   clarification?: { question: string };
   error?: { message: string; type?: string };
@@ -64,11 +74,66 @@ export interface SendMessageCallbacks {
   onToken: (token: string) => void;
   onReferences: (references: ReferenceChunk[]) => void;
   onStatus?: (status: string, message?: string) => void;
-  onToolCall?: (toolCall: { tool: string; query: string; status: 'searching' | 'done'; resultCount?: number }) => void;
+  /** Full merged tool-call list after each chunk (handles multiple __TOOL_CALL lines per read) */
+  onToolCalls?: (toolCalls: MessageToolCall[]) => void;
+  onGroundingChecks?: (checks: AgentGroundingCheck[]) => void;
   onFollowUps?: (questions: string[]) => void;
   onClarification?: (question: string) => void;
   onComplete: () => void;
   onError: (error: string | ChatError) => void;
+}
+
+function mergeToolCallsFromLines(lines: string[]): MessageToolCall[] {
+  const toolCalls: MessageToolCall[] = [];
+  const keyToIndex = new Map<string, number>();
+  for (const line of lines) {
+    if (!line.startsWith('__TOOL_CALL:')) continue;
+    try {
+      const raw = JSON.parse(line.slice('__TOOL_CALL:'.length)) as Partial<MessageToolCall>;
+      if (!raw.tool || (raw.status !== 'searching' && raw.status !== 'done')) continue;
+      const query = typeof raw.query === 'string' ? raw.query : '';
+      const key = `${raw.tool}\0${query}`;
+      const entry: MessageToolCall = {
+        tool: raw.tool,
+        query,
+        status: raw.status,
+        resultCount: raw.resultCount,
+      };
+      const existing = keyToIndex.get(key);
+      if (existing !== undefined) {
+        toolCalls[existing] = entry;
+      } else {
+        keyToIndex.set(key, toolCalls.length);
+        toolCalls.push(entry);
+      }
+    } catch {
+      // ignore malformed JSON
+    }
+  }
+  return toolCalls;
+}
+
+function parseStatusLine(line: string): { status: string; message: string } | undefined {
+  const payload = line.slice('__STATUS:'.length);
+  const i = payload.indexOf(':');
+  if (i < 0) return undefined;
+  return { status: payload.slice(0, i), message: payload.slice(i + 1) };
+}
+
+function collectGroundingLines(lines: string[]): AgentGroundingCheck[] {
+  const checks: AgentGroundingCheck[] = [];
+  for (const line of lines) {
+    if (!line.startsWith('__GROUNDING:')) continue;
+    try {
+      const g = JSON.parse(line.slice('__GROUNDING:'.length)) as AgentGroundingCheck;
+      if (g && typeof g.passed === 'boolean' && Array.isArray(g.issues) && typeof g.message === 'string') {
+        checks.push(g);
+      }
+    } catch {
+      // ignore
+    }
+  }
+  return checks;
 }
 
 /**
@@ -95,26 +160,17 @@ export function parseStreamBody(body: string): ParsedStreamData {
       }
     } else if (line.startsWith('__STATUS:')) {
       try {
-        const parts = line.slice('__STATUS:'.length).split(':', 2);
-        if (parts.length >= 2) {
-          result.status = { status: parts[0], message: parts[1] };
+        const parsed = parseStatusLine(line);
+        if (parsed) {
+          result.status = parsed;
         }
       } catch {
         // Ignore parse errors
       }
     } else if (line.startsWith('__GROUNDING:')) {
-      try {
-        const jsonStr = line.slice('__GROUNDING:'.length);
-        result.groundingCheck = JSON.parse(jsonStr);
-      } catch {
-        // Ignore parse errors
-      }
+      // Collected into result.groundingChecks after the loop
     } else if (line.startsWith('__TOOL_CALL:')) {
-      try {
-        result.toolCall = JSON.parse(line.slice('__TOOL_CALL:'.length));
-      } catch {
-        // Ignore parse errors
-      }
+      // Merged into result.toolCalls after the loop
     } else if (line.startsWith('__FOLLOWUPS:')) {
       try {
         result.followUps = JSON.parse(line.slice('__FOLLOWUPS:'.length));
@@ -143,6 +199,14 @@ export function parseStreamBody(body: string): ParsedStreamData {
   }
 
   result.text = currentText.trimEnd();
+  result.toolCalls = mergeToolCallsFromLines(lines);
+  if (result.toolCalls.length > 0) {
+    result.toolCall = result.toolCalls[result.toolCalls.length - 1];
+  }
+  result.groundingChecks = collectGroundingLines(lines);
+  if (result.groundingChecks.length > 0) {
+    result.groundingCheck = result.groundingChecks[result.groundingChecks.length - 1];
+  }
   return result;
 }
 
@@ -218,6 +282,7 @@ export function useClearHistory(notebookId: string | null) {
  */
 export function useSendMessage() {
   const sendMessageMutation = useMutation(api.chat.messages.sendMessageOptimistic);
+  const releaseChatGeneration = useMutation(api.chat.messages.releaseChatGeneration);
   const { isAuthenticated } = useConvexAuth();
   const authToken = useAuthToken();
 
@@ -234,6 +299,16 @@ export function useSendMessage() {
       callbacks.onError('Authentication required. Please log in.');
       return;
     }
+
+    let streamJobMayHaveStarted = false;
+
+    const releaseGenerationIfSafe = async () => {
+      try {
+        await releaseChatGeneration({ notebookId: notebookId as Id<'notebooks'> });
+      } catch {
+        // Best-effort: server job may have already decremented the refcount
+      }
+    };
 
     try {
       // Step 1: Send the message with optimistic update
@@ -267,6 +342,7 @@ export function useSendMessage() {
       });
 
       if (!response.ok) {
+        await releaseGenerationIfSafe();
         if (response.status === 401) {
           window.dispatchEvent(new CustomEvent('auth-session-expired'));
           callbacks.onError('Session expired. Please log in again.');
@@ -275,6 +351,8 @@ export function useSendMessage() {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
         throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
       }
+
+      streamJobMayHaveStarted = true;
 
       // Step 4: Read the streaming response
       // With Persistent Text Streaming, this is raw text with embedded metadata
@@ -289,8 +367,11 @@ export function useSendMessage() {
       let lastProcessedLength = 0;
       let completed = false;
       let lastReferencesJson: string | null = null;
-      let lastToolCallJson: string | null = null;
+      let lastToolCallsJson: string | null = null;
       let lastFollowUpsJson: string | null = null;
+      let lastStatusJson: string | null = null;
+      let lastGroundingJson: string | null = null;
+      let lastClarificationJson: string | null = null;
 
       try {
         while (true) {
@@ -319,13 +400,17 @@ export function useSendMessage() {
             }
           }
           if (parsed.status) {
-            callbacks.onStatus?.(parsed.status.status, parsed.status.message);
+            const sj = JSON.stringify(parsed.status);
+            if (sj !== lastStatusJson) {
+              lastStatusJson = sj;
+              callbacks.onStatus?.(parsed.status.status, parsed.status.message);
+            }
           }
-          if (parsed.toolCall) {
-            const j = JSON.stringify(parsed.toolCall);
-            if (j !== lastToolCallJson) {
-              lastToolCallJson = j;
-              callbacks.onToolCall?.(parsed.toolCall);
+          if (parsed.toolCalls) {
+            const j = JSON.stringify(parsed.toolCalls);
+            if (j !== lastToolCallsJson) {
+              lastToolCallsJson = j;
+              callbacks.onToolCalls?.(parsed.toolCalls);
             }
           }
           if (parsed.followUps) {
@@ -336,10 +421,18 @@ export function useSendMessage() {
             }
           }
           if (parsed.clarification) {
-            callbacks.onClarification?.(parsed.clarification.question);
+            const cj = JSON.stringify(parsed.clarification);
+            if (cj !== lastClarificationJson) {
+              lastClarificationJson = cj;
+              callbacks.onClarification?.(parsed.clarification.question);
+            }
           }
-          if (parsed.groundingCheck) {
-            console.log('[Chat] Grounding check:', parsed.groundingCheck);
+          if (parsed.groundingChecks && parsed.groundingChecks.length > 0) {
+            const gj = JSON.stringify(parsed.groundingChecks);
+            if (gj !== lastGroundingJson) {
+              lastGroundingJson = gj;
+              callbacks.onGroundingChecks?.(parsed.groundingChecks);
+            }
           }
           if (parsed.error) {
             callbacks.onError(parsed.error);
@@ -372,9 +465,12 @@ export function useSendMessage() {
         }
       }
     } catch (error) {
+      if (!streamJobMayHaveStarted) {
+        await releaseGenerationIfSafe();
+      }
       callbacks.onError(error instanceof Error ? error.message : 'Failed to send message');
     }
-  }, [sendMessageMutation, isAuthenticated, authToken]);
+  }, [sendMessageMutation, releaseChatGeneration, isAuthenticated, authToken]);
 
   return sendMessage;
 }

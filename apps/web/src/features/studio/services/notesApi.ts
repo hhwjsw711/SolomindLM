@@ -1,6 +1,7 @@
 import type { Note } from '@/shared/types/index';
 import { getReportSubtitle, normalizeReportTypeId } from '@/shared/types/reportTypes';
 import { getSpreadsheetTypeLabel } from './spreadsheetsApi';
+import { pickStudioGenerationFields } from '../utils/studioGenerationLabels';
 import { useQuery } from 'convex/react';
 import { api } from '@convex/_generated/api';
 import type { Id } from '@convex/_generated/dataModel';
@@ -37,9 +38,9 @@ function mapDatabaseNoteToNote(dbNote: any): Note {
         metadata: {
           reportType: dbNote.reportType || dbNote.metadata?.reportType || 'custom',
           documentIds: dbNote.metadata?.documentIds || [],
-          phase: dbNote.metadata?.phase,
           error: dbNote.metadata?.error,
           chunksProcessed: dbNote.metadata?.chunksProcessed,
+          ...pickStudioGenerationFields(dbNote.metadata),
         },
       };
 
@@ -56,6 +57,7 @@ function mapDatabaseNoteToNote(dbNote: any): Note {
           cardCount: dbNote.cardsData?.length || 0,
           topic: dbNote.metadata?.topic,
           error: dbNote.metadata?.error,
+          ...pickStudioGenerationFields(dbNote.metadata),
         },
       };
 
@@ -72,6 +74,7 @@ function mapDatabaseNoteToNote(dbNote: any): Note {
           difficulty: dbNote.metadata?.difficulty || 'medium',
           focusArea: dbNote.metadata?.focusArea,
           error: dbNote.metadata?.error,
+          ...pickStudioGenerationFields(dbNote.metadata),
         },
       };
 
@@ -86,8 +89,8 @@ function mapDatabaseNoteToNote(dbNote: any): Note {
         content: JSON.stringify(dbNote.data),
         status: dbNote.status,
         metadata: {
-          phase: dbNote.metadata?.phase,
           error: dbNote.metadata?.error,
+          ...pickStudioGenerationFields(dbNote.metadata),
         },
       };
 
@@ -117,6 +120,7 @@ function mapDatabaseNoteToNote(dbNote: any): Note {
           slideCount: dbNote.slideCount || 0,
           customPrompt: dbNote.metadata?.customPrompt,
           error: dbNote.metadata?.error,
+          ...pickStudioGenerationFields(dbNote.metadata),
         },
       };
 
@@ -131,9 +135,9 @@ function mapDatabaseNoteToNote(dbNote: any): Note {
         metadata: {
           spreadsheetType: dbNote.metadata?.spreadsheetType || 'custom',
           documentIds: dbNote.metadata?.documentIds || [],
-          phase: dbNote.metadata?.phase,
           error: dbNote.metadata?.error,
           customPrompt: dbNote.metadata?.customPrompt,
+          ...pickStudioGenerationFields(dbNote.metadata),
         },
       };
 
@@ -152,6 +156,7 @@ function mapDatabaseNoteToNote(dbNote: any): Note {
           focusArea: dbNote.metadata?.focusArea,
           totalPoints: dbNote.metadata?.totalPoints,
           error: dbNote.metadata?.error,
+          ...pickStudioGenerationFields(dbNote.metadata),
         },
       };
 
@@ -189,7 +194,7 @@ function capitalizeDifficulty(difficulty: string | undefined): string {
 function getReportPreview(dbNote: any): string {
   const reportType = normalizeReportTypeId(dbNote.reportType || dbNote.metadata?.reportType || 'custom');
   const subtitle = getReportSubtitle(reportType);
-  if (dbNote.status === 'generating') return `${subtitle} • Generating...`;
+  if (dbNote.status === 'generating') return subtitle;
   if (dbNote.status === 'failed') return `${subtitle} • Failed`;
   return subtitle;
 }
@@ -197,7 +202,7 @@ function getReportPreview(dbNote: any): string {
 function getFlashcardPreview(dbNote: any): string {
   const count = dbNote.cardsData?.length || 0;
   const difficulty = capitalizeDifficulty(dbNote.metadata?.difficulty);
-  if (dbNote.status === 'generating') return `${count} Flashcards · ${difficulty} · Generating...`;
+  if (dbNote.status === 'generating') return `${count} Flashcard${count !== 1 ? 's' : ''} · ${difficulty}`;
   if (dbNote.status === 'failed') return `${count} Flashcards · ${difficulty} · Failed`;
   return `${count} Flashcard${count !== 1 ? 's' : ''} · ${difficulty}`;
 }
@@ -205,26 +210,26 @@ function getFlashcardPreview(dbNote: any): string {
 function getQuizPreview(dbNote: any): string {
   const count = dbNote.questionsData?.length || 0;
   const difficulty = capitalizeDifficulty(dbNote.metadata?.difficulty);
-  if (dbNote.status === 'generating') return `${count} Questions · ${difficulty} · Generating...`;
+  if (dbNote.status === 'generating') return `${count} Question${count !== 1 ? 's' : ''} · ${difficulty}`;
   if (dbNote.status === 'failed') return `${count} Questions · ${difficulty} · Failed`;
   return `${count} Question${count !== 1 ? 's' : ''} · ${difficulty}`;
 }
 
 function getMindMapPreview(dbNote: any): string {
-  if (dbNote.status === 'generating') return 'Mind Map • Generating...';
+  if (dbNote.status === 'generating') return 'Mind Map';
   if (dbNote.status === 'failed') return 'Mind Map • Failed';
   return 'Mind Map';
 }
 
 function getAudioOverviewPreview(dbNote: any): string {
-  if (dbNote.status === 'generating') return 'Audio Overview • Generating...';
+  if (dbNote.status === 'generating') return 'Audio Overview';
   if (dbNote.status === 'failed') return 'Audio Overview • Failed';
   return 'Audio Overview';
 }
 
 function getSlidesPreview(dbNote: any): string {
   const count = dbNote.slideCount || 0;
-  if (dbNote.status === 'generating') return `${count} Slides • Generating...`;
+  if (dbNote.status === 'generating') return `${count} Slide${count !== 1 ? 's' : ''}`;
   if (dbNote.status === 'failed') return `${count} Slides • Failed`;
   return `${count} Slide${count !== 1 ? 's' : ''}`;
 }
@@ -232,7 +237,7 @@ function getSlidesPreview(dbNote: any): string {
 function getSpreadsheetPreview(dbNote: any): string {
   const spreadsheetType = dbNote.metadata?.spreadsheetType || 'custom';
   const typeLabel = getSpreadsheetTypeLabel(spreadsheetType);
-  if (dbNote.status === 'generating') return `Spreadsheet • ${typeLabel} • Generating...`;
+  if (dbNote.status === 'generating') return `Spreadsheet • ${typeLabel}`;
   if (dbNote.status === 'failed') return `Spreadsheet • ${typeLabel} • Failed`;
   return `Spreadsheet • ${typeLabel}`;
 }
@@ -240,7 +245,7 @@ function getSpreadsheetPreview(dbNote: any): string {
 function getWrittenQuestionsPreview(dbNote: any): string {
   const count = dbNote.questionsData?.length || 0;
   const difficulty = capitalizeDifficulty(dbNote.metadata?.difficulty);
-  if (dbNote.status === 'generating') return `${count} Questions · ${difficulty} · Generating...`;
+  if (dbNote.status === 'generating') return `${count} Question${count !== 1 ? 's' : ''} · ${difficulty}`;
   if (dbNote.status === 'failed') return `${count} Questions · ${difficulty} · Failed`;
   return `${count} Question${count !== 1 ? 's' : ''} · ${difficulty}`;
 }

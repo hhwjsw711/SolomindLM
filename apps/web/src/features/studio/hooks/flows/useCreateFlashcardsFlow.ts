@@ -31,7 +31,7 @@ export function useCreateFlashcardsFlow(ctx: CreateFlowContext) {
       const newNote: Note = {
         id: placeholderId,
         title: 'Flashcards',
-        preview: `${cardCount} Cards • ${config.difficulty} • Generating...`,
+        preview: `${cardCount} Cards • ${config.difficulty}`,
         type: 'flashcard',
         flashcards: [],
         status: 'generating',
@@ -53,7 +53,7 @@ export function useCreateFlashcardsFlow(ctx: CreateFlowContext) {
         const initialNote: FlashcardNote = {
           id: flashcardId,
           title: apiNote?.title ?? 'Flashcards',
-          preview: `${cardCount} Cards • ${config.difficulty} • Generating...`,
+          preview: `${cardCount} Cards • ${config.difficulty}`,
           type: 'flashcard',
           flashcards: [],
           status: (apiNote?.status ?? res.status) as FlashcardNote['status'],

@@ -874,3 +874,36 @@ input.pdf-zoom-range::-moz-range-thumb {
   opacity: 0 !important;
   pointer-events: none !important;
 }
+
+/* Studio sidebar: generating note — indeterminate progress sweep (theme tokens) */
+@keyframes studio-generating-bar-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(280%);
+  }
+}
+
+.studio-generating-progress-indeterminate {
+  position: relative;
+  overflow: hidden;
+}
+
+.studio-generating-progress-indeterminate::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 42%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklch, var(--primary) 45%, transparent),
+    transparent
+  );
+  animation: studio-generating-bar-sweep 1.9s ease-in-out infinite;
+}

@@ -261,6 +261,10 @@ export default defineSchema({
     userId: v.id("users"),
     notebookId: v.id("notebooks"),
     title: v.optional(v.string()),
+    /** Active HTTP/chat stream jobs; >0 means assistant response is in progress (all clients can show “generating”). */
+    chatGenerationInFlight: v.optional(v.number()),
+    /** Last time a generation was started (UX / stale detection). */
+    chatGenerationStartedAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

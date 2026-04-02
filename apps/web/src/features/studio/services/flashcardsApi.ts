@@ -1,4 +1,5 @@
 import type { Flashcard, FlashcardNote } from '@/shared/types/index';
+import { pickStudioGenerationFields } from '../utils/studioGenerationLabels';
 import { useQuery, useMutation, useAction } from 'convex/react';
 import { api } from '@convex/_generated/api';
 import type { Id } from '@convex/_generated/dataModel';
@@ -25,7 +26,7 @@ function getPreviewText(status: string, cardCount: number, metadata?: any): stri
   const difficulty = metadata?.difficulty || 'medium';
 
   if (status === 'generating' || status === 'mapping' || status === 'collapsing' || status === 'reducing') {
-    return `${cardCount} Cards • ${difficulty} • Generating...`;
+    return `${cardCount} Card${cardCount !== 1 ? 's' : ''} • ${difficulty}`;
   }
   if (status === 'failed') {
     return 'Flashcards • Failed';
@@ -53,6 +54,7 @@ function mapFlashcardToNote(dbFlashcard: any): FlashcardNote {
       cardCount: actualCardCount,
       topic: dbFlashcard.metadata?.topic,
       lastViewedIndex: dbFlashcard.metadata?.lastViewedIndex,
+      ...pickStudioGenerationFields(dbFlashcard.metadata),
     },
   };
 }

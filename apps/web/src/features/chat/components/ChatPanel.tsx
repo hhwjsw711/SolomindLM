@@ -46,6 +46,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   const {
     messages,
     isChatStreaming: isLoading,
+    remoteChatGenerating,
     onSendMessage,
     onClearHistory,
     onSetFeedback,
@@ -64,6 +65,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   const [inputMessage, setInputMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+
+  const chatInputDisabled = isSending || isLoading || remoteChatGenerating;
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
@@ -214,19 +217,19 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
 
   const handleSendMessage = useCallback(async () => {
     const trimmed = inputMessage.trim();
-    if (!trimmed || isSending || !notebookId || !onSendMessage) return;
+    if (!trimmed || chatInputDisabled || !notebookId || !onSendMessage) return;
     setIsSending(true);
     setInputMessage('');
     onSendMessage(trimmed);
     setIsSending(false);
-  }, [inputMessage, isSending, notebookId, onSendMessage]);
+  }, [inputMessage, chatInputDisabled, notebookId, onSendMessage]);
 
   const handleSendChip = useCallback(
     (text: string) => {
-      if (isSending || isLoading || !notebookId || !onSendMessage) return;
+      if (chatInputDisabled || !notebookId || !onSendMessage) return;
       onSendMessage(text);
     },
-    [isSending, isLoading, notebookId, onSendMessage]
+    [chatInputDisabled, notebookId, onSendMessage]
   );
 
   // --- Scroll to bottom ---
@@ -343,7 +346,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
           {messages.length === 0 ? (
             <ChatEmptyState
               onSendMessage={handleSendChip}
-              disabled={isSending || isLoading}
+              disabled={chatInputDisabled}
               sourceCount={sourceCount}
               sourceSummary={sourceSummary}
               suggestions={suggestions}
@@ -403,7 +406,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             value={inputMessage}
             onChange={setInputMessage}
             onSend={handleSendMessage}
-            disabled={isSending || isLoading}
+            disabled={chatInputDisabled}
             notebookId={notebookId}
           />
         </div>
