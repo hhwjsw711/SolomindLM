@@ -86,8 +86,11 @@ function togetherChoiceAssistantText(choice: any): string {
   const fromMessage = messageContentToString(msg);
   if (fromMessage.trim()) return fromMessage;
   if (typeof choice.text === "string" && choice.text.trim()) return choice.text;
+  
+  // FIX: Return reasoning content even if it's plain text (not just JSON)
+  // Hybrid models like openai/gpt-oss-* use reasoning field for all output
   const reasoning = (msg as { reasoning?: unknown }).reasoning;
-  if (typeof reasoning === "string" && reasoning.trim().startsWith("{")) {
+  if (typeof reasoning === "string" && reasoning.trim()) {
     return reasoning;
   }
   return "";
@@ -120,8 +123,15 @@ function togetherChatRequestBody(options: LLMOptions): Record<string, unknown> {
   if (options.responseFormat) {
     body.response_format = options.responseFormat;
   }
+  // FIX: Handle reasoning disabling for different model types
   if (options.reasoningEnabled === false) {
-    body.chat_template_kwargs = { thinking: false };
+    // For OpenAI-compatible reasoning models (openai/gpt-oss-*)
+    if (options.model.includes('openai/gpt-oss')) {
+      body.reasoning = { max_tokens: 0 }; // Disable reasoning by setting max tokens to 0
+    } else {
+      // For hybrid models (Qwen, etc.) use chat template
+      body.chat_template_kwargs = { thinking: false };
+    }
   }
   if (options.toolChoice !== undefined) {
     body.tool_choice = options.toolChoice;
