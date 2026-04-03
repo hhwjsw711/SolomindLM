@@ -160,13 +160,25 @@ export const AgentActivityPanel = React.memo<AgentActivityPanelProps>(
     }, []);
 
     const phaseLabel = useMemo(() => {
+      const currentPhase = (activityPhase ?? historicalPhase ?? undefined) as string | undefined;
+
+      // Show passage count for completed searches (takes priority over generic detail text)
+      if (currentPhase === 'completed' && toolCalls.length > 0) {
+        const totalPassages = toolCalls.reduce(
+          (sum, tc) => sum + (tc.resultCount ?? 0),
+          0
+        );
+        if (totalPassages > 0) {
+          return `Searched ${totalPassages} passage${totalPassages === 1 ? '' : 's'}`;
+        }
+      }
+
       if (activityDetail?.trim()) return activityDetail.trim();
       if (historicalDetail?.trim()) return historicalDetail.trim();
-      const fallback = getStatusMessage(
-        (activityPhase ?? historicalPhase ?? undefined) as string | undefined
-      );
+
+      const fallback = getStatusMessage(currentPhase);
       return fallback ?? 'Working…';
-    }, [activityPhase, activityDetail, historicalPhase, historicalDetail]);
+    }, [activityPhase, activityDetail, historicalPhase, historicalDetail, toolCalls]);
 
     const phaseIcon = getStatusIcon((activityPhase ?? historicalPhase ?? undefined) as string | undefined);
 
