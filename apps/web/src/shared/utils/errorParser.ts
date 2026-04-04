@@ -322,3 +322,116 @@ export function getUpgradeMessage(parsedError: ParsedLimitError): string {
 
   return 'Upgrade to Pro for higher limits.';
 }
+
+// --- Structured service errors (ConvexError.data.type from convex/_lib/errors.ts) ---
+
+export type ParsedExternalServiceError = {
+  kind: 'external_service';
+  service: string;
+  retryable: boolean;
+  statusCode?: number;
+  endpoint?: string;
+  detail?: string;
+};
+
+export type ParsedStorageError = {
+  kind: 'storage';
+  operation: string;
+  fileName?: string;
+  storageId?: string;
+  detail?: string;
+};
+
+export type ParsedInputValidationError = {
+  kind: 'input_validation';
+  field?: string;
+  detail?: string;
+};
+
+export type ParsedServiceError =
+  | ParsedExternalServiceError
+  | ParsedStorageError
+  | ParsedInputValidationError;
+
+function convexErrorDataObject(error: unknown): Record<string, unknown> | null {
+  if (error instanceof ConvexError) {
+    const d = error.data;
+    if (d && typeof d === 'object' && !Array.isArray(d)) {
+      return d as Record<string, unknown>;
+    }
+    return null;
+  }
+  if (error && typeof error === 'object' && 'data' in error) {
+    const d = (error as { data: unknown }).data;
+    if (d && typeof d === 'object' && !Array.isArray(d)) {
+      return d as Record<string, unknown>;
+    }
+  }
+  return null;
+}
+
+/**
+ * Parse EXTERNAL_SERVICE_ERROR / STORAGE_ERROR / INPUT_VALIDATION_ERROR from ConvexError.data
+ */
+export function parseServiceError(error: unknown): ParsedServiceError | null {
+  const o = convexErrorDataObject(error);
+  if (!o) return null;
+
+  const t = o.type;
+  if (t === 'EXTERNAL_SERVICE_ERROR') {
+    if (typeof o.service !== 'string' || typeof o.retryable !== 'boolean') return null;
+    return {
+      kind: 'external_service',
+      service: o.service,
+      retryable: o.retryable,
+      statusCode: typeof o.statusCode === 'number' ? o.statusCode : undefined,
+      endpoint: typeof o.endpoint === 'string' ? o.endpoint : undefined,
+      detail: typeof o.detail === 'string' ? o.detail : undefined,
+    };
+  }
+  if (t === 'STORAGE_ERROR') {
+    if (typeof o.operation !== 'string') return null;
+    return {
+      kind: 'storage',
+      operation: o.operation,
+      fileName: typeof o.fileName === 'string' ? o.fileName : undefined,
+      storageId: typeof o.storageId === 'string' ? o.storageId : undefined,
+      detail: typeof o.detail === 'string' ? o.detail : undefined,
+    };
+  }
+  if (t === 'INPUT_VALIDATION_ERROR') {
+    return {
+      kind: 'input_validation',
+      field: typeof o.field === 'string' ? o.field : undefined,
+      detail: typeof o.detail === 'string' ? o.detail : undefined,
+    };
+  }
+  return null;
+}
+
+export function getServiceErrorMessage(parsed: ParsedServiceError): string {
+  switch (parsed.kind) {
+    case 'external_service':
+      return (
+        parsed.detail ||
+        `${parsed.service} is temporarily unavailable${parsed.retryable ? '. Try again.' : '.'}`
+      );
+    case 'storage':
+      return parsed.detail || `Storage ${parsed.operation} failed.`;
+    case 'input_validation':
+      return parsed.detail || 'Invalid input.';
+    default:
+      return 'Something went wrong.';
+  }
+}
+
+/**
+ * Limit errors first, then structured service errors.
+ */
+export function parseAppError(
+  error: unknown
+): ParsedLimitError | ParsedServiceError | null {
+  const limit = parseLimitError(error);
+  if (limit) return limit;
+  return parseServiceError(error);
+}

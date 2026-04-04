@@ -6,6 +6,11 @@
  * to avoid retrying non-retryable errors (validation, timeout, auth, etc.).
  */
 
+import {
+  ExternalServiceError,
+  isRetryableHttpStatus,
+} from "../../_lib/errors";
+
 /**
  * Configuration for retry behavior.
  */
@@ -74,6 +79,22 @@ function isRetryableError(error: Error): boolean {
 
   // Default: don't retry unknown errors
   return false;
+}
+
+/**
+ * Retry predicate for HTTP/fetch failures: honors ExternalServiceError.retryable,
+ * parses "HTTP 503" style messages, then falls back to isRetryableError.
+ */
+export function isHttpAwareRetryableError(error: Error): boolean {
+  if (error instanceof ExternalServiceError) {
+    return error.retryable;
+  }
+  const m = error.message.match(/\bHTTP\s+(\d{3})\b/i);
+  if (m) {
+    const code = parseInt(m[1], 10);
+    return isRetryableHttpStatus(code);
+  }
+  return isRetryableError(error);
 }
 
 /**
@@ -227,4 +248,33 @@ export const RetryPolicies = {
     baseDelayMs: 2000,
     jitter: false,
   } as RetryConfig,
+
+  /**
+   * HTTP / external API fetch: jitter + status-aware + message heuristics
+   */
+  http: {
+    maxAttempts: 3,
+    baseDelayMs: 1000,
+    jitter: true,
+    retryableErrors: isHttpAwareRetryableError,
+  } as RetryConfig,
 } as const;
+
+/**
+ * Run an async op with RetryPolicies.http defaults (override via partial config).
+ */
+export async function invokeWithHttpRetry<T>(
+  fn: () => Promise<T>,
+  phase: string,
+  overrides?: Partial<RetryConfig>
+): Promise<T> {
+  return invokeWithRetry(
+    fn,
+    {
+      ...RetryPolicies.http,
+      ...overrides,
+      retryableErrors: overrides?.retryableErrors ?? RetryPolicies.http.retryableErrors,
+    },
+    phase
+  );
+}

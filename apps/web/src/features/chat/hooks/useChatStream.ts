@@ -263,17 +263,20 @@ export function useChatStream({ activeNotebookId, sources, notes, documents }: U
 
     if ((isChatStreaming || streamingContent || streamingClarification) && !ghostStuckAssistantRow) {
       const toolSearching = streamingToolCalls.some((t) => t.status === 'searching');
-      let phaseForRow: ChatActivityPhase | undefined =
-        streamingPhase ??
-        (toolSearching ? 'searching' : streamingContent.trim() ? 'writing' : 'thinking');
-      if (streamingContent.trim() && !toolSearching) {
+      let phaseForRow: ChatActivityPhase | undefined = streamingClarification
+        ? 'completed'
+        : streamingPhase ??
+          (toolSearching ? 'searching' : streamingContent.trim() ? 'writing' : 'thinking');
+      if (streamingContent.trim() && !toolSearching && !streamingClarification) {
         const p = phaseForRow;
         if (p === 'generating' || p === 'thinking' || p === 'reading') {
           phaseForRow = 'writing';
         }
       }
       const statusDetailForRow =
-        phaseForRow === 'writing' ? undefined : (streamingPhaseDetail ?? undefined);
+        streamingClarification || phaseForRow === 'writing'
+          ? undefined
+          : (streamingPhaseDetail ?? undefined);
       const streamingTrace =
         streamingTracePhases.length > 0 ||
         streamingToolCalls.length > 0 ||

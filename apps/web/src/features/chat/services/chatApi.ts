@@ -123,11 +123,15 @@ function parseStatusLine(line: string): { status: string; message: string } | un
 function collectGroundingLines(lines: string[]): AgentGroundingCheck[] {
   const checks: AgentGroundingCheck[] = [];
   for (const line of lines) {
-    if (!line.startsWith('__GROUNDING:')) continue;
+    const isWarn = line.startsWith('__GROUNDING_WARN:');
+    if (!line.startsWith('__GROUNDING:') && !isWarn) continue;
     try {
-      const g = JSON.parse(line.slice('__GROUNDING:'.length)) as AgentGroundingCheck;
+      const raw = line.slice(
+        isWarn ? '__GROUNDING_WARN:'.length : '__GROUNDING:'.length
+      );
+      const g = JSON.parse(raw) as AgentGroundingCheck;
       if (g && typeof g.passed === 'boolean' && Array.isArray(g.issues) && typeof g.message === 'string') {
-        checks.push(g);
+        checks.push({ ...g, soft: isWarn || g.soft === true });
       }
     } catch {
       // ignore
@@ -167,7 +171,7 @@ export function parseStreamBody(body: string): ParsedStreamData {
       } catch {
         // Ignore parse errors
       }
-    } else if (line.startsWith('__GROUNDING:')) {
+    } else if (line.startsWith('__GROUNDING:') || line.startsWith('__GROUNDING_WARN:')) {
       // Collected into result.groundingChecks after the loop
     } else if (line.startsWith('__TOOL_CALL:')) {
       // Merged into result.toolCalls after the loop

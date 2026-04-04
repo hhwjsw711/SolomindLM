@@ -108,7 +108,8 @@ export class VectorSearchHandler {
     documentIds?: string[],
     preComputedEmbedding?: number[],
     /** Extra text (e.g. HyDE paragraph) appended for reranking only — does not change the embedding. */
-    retrievalAugmentForRerank?: string
+    retrievalAugmentForRerank?: string,
+    options?: { skipRerank?: boolean; allowEmpty?: boolean }
   ): Promise<ReferenceChunk[]> {
     if (!this.embeddingService || !this.vectorSearchRunner) {
       throw new Error(
@@ -162,12 +163,29 @@ export class VectorSearchHandler {
     const deduped = this.deduplicateResults(filtered);
     console.log(`[VectorSearch] After dedup: ${deduped.length}`);
 
+    const allowEmpty = options?.allowEmpty === true;
+    if (deduped.length === 0 && allowEmpty) {
+      return [];
+    }
+
     const augment = retrievalAugmentForRerank?.trim();
     const rerankQuery = augment
       ? `${query.trim()}\n\n${augment.length > 2000 ? augment.slice(0, 2000) : augment}`
       : query;
-    const reranked = await this.rerankResults(rerankQuery, deduped);
-    const limited = reranked.slice(0, this.config.maxResults);
+
+    let ranked: (VectorSearchRawResult & { similarity?: number })[];
+    if (options?.skipRerank) {
+      ranked = [...deduped].sort(
+        (a, b) => (b.similarity ?? 0) - (a.similarity ?? 0)
+      );
+    } else {
+      ranked = await this.rerankResults(rerankQuery, deduped);
+    }
+
+    const pool = options?.skipRerank
+      ? Math.max(this.config.maxResults, this.config.rerankTopN)
+      : this.config.maxResults;
+    const limited = ranked.slice(0, pool);
 
     const finalResults: ReferenceChunk[] = limited.map((r, index) => ({
       id: String(index + 1),
@@ -181,6 +199,10 @@ export class VectorSearchHandler {
     }));
 
     console.log(`[VectorSearch] final: ${finalResults.length} results`);
+
+    if (finalResults.length === 0 && allowEmpty) {
+      return [];
+    }
 
     if (finalResults.length === 0) {
       if (documentIds?.length) {

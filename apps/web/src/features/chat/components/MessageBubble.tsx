@@ -258,6 +258,9 @@ export const MessageBubble = React.memo<MessageBubbleProps>(
                 activityPhases={activityPhases}
                 toolCalls={toolCalls}
                 groundingChecks={groundingChecks}
+                clarificationResponse={
+                  !!message.clarificationQuestion || !!message.agentTrace?.clarification
+                }
               />
             )}
             {message.status && !message.content && !showAgentPanel && (

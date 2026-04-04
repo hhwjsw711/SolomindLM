@@ -6,7 +6,8 @@ import { Id, Doc } from "../_generated/dataModel";
 import { v } from "convex/values";
 import { components } from "../_generated/api";
 import { PersistentTextStreaming } from "@convex-dev/persistent-text-streaming";
-import { ChatAgent } from "../_agents/ChatAgent";
+import { ChatAgent, type GlobalRerankFn } from "../_agents/ChatAgent";
+import { budgetConversationHistory } from "../_agents/chat/chatHistoryBudget";
 import { HybridSearchHandler } from "../_agents/chat/hybrid_search.js";
 import { cachedRerank, RerankDocument } from "../_agents/chat/rerankCache.js";
 import { EmbeddingService } from "../_services/processing/EmbeddingServiceClient";
@@ -54,6 +55,15 @@ const CHAT_STREAM_MAX_CHUNK_CHARS = Math.min(
     parseInt(process.env.CHAT_STREAM_MAX_CHUNK_CHARS ?? "65536", 10)
   )
 );
+
+const CHAT_HISTORY_FETCH_LIMIT = parseInt(
+  process.env.CHAT_HISTORY_FETCH_LIMIT ?? "80",
+  10
+);
+
+async function sleepMs(ms: number): Promise<void> {
+  await new Promise((r) => setTimeout(r, ms));
+}
 
 /**
  * Internal action: run chat and write chunks to the persistent stream via addChunk.
@@ -133,17 +143,32 @@ export const runWithStreamId = internalAction({
         chunkAppender,
         conversationId
       );
+    } catch (e) {
+      console.error("[ChatStream] runWithStreamId failed:", e);
+      try {
+        const msg =
+          e instanceof Error ? e.message : "Unknown error while generating a response.";
+        await ctx.runMutation(internal.chat.index.persistAssistantFromStream, {
+          conversationId,
+          streamId: args.streamId,
+          content:
+            "**We couldn't complete this reply.**\n\nPlease try sending your message again. If this keeps happening, try again in a moment.",
+          metadata: { tombstone: true, errorMessage: msg.slice(0, 500) },
+        });
+      } catch (persistErr) {
+        console.error("[ChatStream] Tombstone persist failed:", persistErr);
+      }
     } finally {
-      await ctx.runMutation(internal.chat.index.releaseChatGenerationInternal, {
-        conversationId,
+      await flushTokenBuffer();
+      await ctx.runMutation(components.persistentTextStreaming.lib.addChunk, {
+        streamId,
+        text: "",
+        final: true,
       });
     }
 
-    await flushTokenBuffer();
-    await ctx.runMutation(components.persistentTextStreaming.lib.addChunk, {
-      streamId,
-      text: "",
-      final: true,
+    await ctx.runMutation(internal.chat.index.releaseChatGenerationInternal, {
+      conversationId,
     });
   },
 });
@@ -174,12 +199,21 @@ export async function streamChatResponse(
   // Get conversation history
   const { messages: messageList } = await ctx.runQuery(internal.chat.index.getMessagesInternal, {
     conversationId,
-    limit: 20,
+    limit: CHAT_HISTORY_FETCH_LIMIT,
   });
 
-  const conversationHistory = messageList
+  const fullHistory = messageList
     .filter((m: any) => m.role !== "system")
     .map((m: any) => ({ role: m.role, content: m.content }));
+
+  const historyBudget = parseInt(env.CHAT_HISTORY_TOKEN_BUDGET ?? "4000", 10);
+  const conversationHistory = budgetConversationHistory(fullHistory, historyBudget);
+
+  const notebookGrounding = notebookDoc?.chatGroundingMode as
+    | "async"
+    | "sync"
+    | "off"
+    | undefined;
 
   // Vector search runner using Convex
   const vectorSearchRunner = async (
@@ -375,7 +409,9 @@ export async function streamChatResponse(
   ): Promise<Array<{ id: string; content: string; score?: number }>> => {
     return cachedRerank(ctx, query, documents as RerankDocument[], "zerank-2", 15);
   };
-  
+
+  const globalRerankFn: GlobalRerankFn = rerankFn;
+
   const hybridSearch = new HybridSearchHandler(
     {
       vectorMatchThreshold: parseFloat(env.CHAT_VECTOR_MATCH_THRESHOLD),
@@ -394,7 +430,10 @@ export async function streamChatResponse(
     rerankFn
   );
 
-  const agent = new ChatAgent({ vectorSearchHandler: hybridSearch });
+  const agent = new ChatAgent({
+    vectorSearchHandler: hybridSearch,
+    globalRerankFn,
+  });
 
   let fullResponse = "";
   let references: unknown[] = [];
@@ -410,6 +449,7 @@ export async function streamChatResponse(
     passed: boolean;
     issues: string[];
     message: string;
+    soft?: boolean;
   };
   const agentTrace: {
     toolCalls: TraceToolCall[];
@@ -445,12 +485,16 @@ export async function streamChatResponse(
 
   try {
     // Stream response chunks using ChatAgent
-    for await (const chunk of agent.streamResponse({
-      userId,
-      noteId: notebookId,
-      conversationHistory,
-      documentIds,
-    }, message)) {
+    for await (const chunk of agent.streamResponse(
+      {
+        userId,
+        noteId: notebookId,
+        conversationHistory,
+        documentIds,
+        groundingMode: notebookGrounding,
+      },
+      message
+    )) {
       if (chunk.type === "token") {
         fullResponse += chunk.data ?? "";
 
@@ -478,6 +522,19 @@ export async function streamChatResponse(
         }
         // Append grounding check as metadata
         await chunkAppender(`\n__GROUNDING:${JSON.stringify(chunk.data)}\n`);
+      } else if (chunk.type === "grounding_warn") {
+        const g = chunk.data as Partial<TraceGrounding>;
+        if (g && typeof g.passed === "boolean") {
+          agentTrace.grounding.push({
+            passed: g.passed,
+            issues: Array.isArray(g.issues) ? g.issues : [],
+            message: typeof g.message === "string" ? g.message : "",
+            soft: true,
+          });
+        }
+        await chunkAppender(
+          `\n__GROUNDING_WARN:${JSON.stringify({ ...(chunk.data as object), soft: true })}\n`
+        );
       } else if (chunk.type === "tool_call") {
         const tc = chunk.data as TraceToolCall;
         if (tc?.tool && tc.status) {
@@ -527,23 +584,62 @@ export async function streamChatResponse(
     recordPhase("completed", "Response complete");
   }
 
-  if (existingMessages.length > 0 && contentToPersist) {
-    await ctx.runMutation(internal.chat.index.addMessage, {
-      conversationId,
-      role: "assistant",
-      content: contentToPersist,
-      references: fullResponse.trim() ? references : undefined,
-      metadata: {
-        agentTrace: {
-          toolCalls: agentTrace.toolCalls,
-          grounding: agentTrace.grounding,
-          phases: agentTrace.phases.slice(-30),
-          clarification: agentTrace.clarification,
-        },
-      },
-    });
-  } else if (existingMessages.length === 0) {
+  const metadataPayload = {
+    agentTrace: {
+      toolCalls: agentTrace.toolCalls,
+      grounding: agentTrace.grounding,
+      phases: agentTrace.phases.slice(-30),
+      clarification: agentTrace.clarification,
+    },
+  };
+
+  if (existingMessages.length === 0) {
     console.warn("[ChatStream] Conversation was cleared during generation — skipping assistant message storage.");
+  } else {
+    const refsToStore = fullResponse.trim() ? references : undefined;
+    const contentFinal =
+      contentToPersist ||
+      (hasError
+        ? "Something went wrong while generating a response. Please try again."
+        : "");
+
+    if (contentFinal) {
+      let persisted = false;
+      for (let attempt = 0; attempt < 4; attempt++) {
+        try {
+          const res = await ctx.runMutation(internal.chat.index.persistAssistantFromStream, {
+            conversationId,
+            streamId,
+            content: contentFinal,
+            references: refsToStore,
+            metadata: metadataPayload,
+          });
+          persisted = true;
+          void res;
+          break;
+        } catch (e) {
+          console.warn(`[ChatStream] persistAssistantFromStream attempt ${attempt + 1} failed:`, e);
+          if (attempt < 3) await sleepMs(150 * (attempt + 1));
+        }
+      }
+      if (!persisted) {
+        try {
+          await ctx.runMutation(internal.chat.index.persistAssistantFromStream, {
+            conversationId,
+            streamId,
+            content:
+              "**We couldn't save this reply.**\n\nPlease try sending your message again. Your answer may have appeared above but might not be kept in history.",
+            metadata: {
+              ...metadataPayload,
+              tombstone: true,
+              persistFailed: true,
+            },
+          });
+        } catch (e2) {
+          console.error("[ChatStream] Tombstone after persist exhaustion failed:", e2);
+        }
+      }
+    }
   }
 
   console.log("[ChatStream] Stream complete:", streamId);

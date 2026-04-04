@@ -1,5 +1,9 @@
 "use node";
 
+import { invokeWithHttpRetry } from "../../_agents/_shared/retry";
+import { createExternalServiceErrorFromResponse } from "../../_lib/errors";
+import { createServiceLogger } from "../../_lib/logging/serviceLogger";
+
 export class MistralOCRService {
   private apiKey: string;
   private baseUrl = 'https://api.mistral.ai/v1';
@@ -62,60 +66,69 @@ export class MistralOCRService {
   }
 
   private async callOcrEndpoint(documentUrl: string): Promise<string> {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
+    const logger = createServiceLogger("mistral", "ocr");
 
-    try {
-      const response = await fetch(`${this.baseUrl}/ocr`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: this.model,
-          document: {
-            type: 'document_url',
-            document_url: documentUrl,
+    return invokeWithHttpRetry(async () => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000);
+      try {
+        const t0 = Date.now();
+        logger.apiCall("mistral", "/ocr", { model: this.model });
+
+        const response = await fetch(`${this.baseUrl}/ocr`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${this.apiKey}`,
+            "Content-Type": "application/json",
           },
-        }),
-        signal: controller.signal,
-      });
+          body: JSON.stringify({
+            model: this.model,
+            document: {
+              type: "document_url",
+              document_url: documentUrl,
+            },
+          }),
+          signal: controller.signal,
+        });
 
-      clearTimeout(timeoutId);
+        clearTimeout(timeoutId);
 
-      const data = await response.json();
+        const data = await response.json();
 
-      if (!response.ok) {
-        const details = data ? JSON.stringify(data) : response.statusText;
-        console.error('Mistral API Response:', { status: response.status, details });
-        throw new Error(`Mistral OCR failed: ${details}`);
-      }
-
-      // FIX: Handle the "pages" array structure
-      let content = '';
-      if (data?.pages && Array.isArray(data.pages)) {
-        content = data.pages
-          .map((page: { markdown?: string }) => page.markdown || '')
-          .join('\n\n');
-      } else {
-        // Fallback for other potential formats
-        content = data.markdown || data.text || '';
-      }
-
-      // Strip all media references to ensure text-only output
-      return this.stripMedia(content);
-    } catch (error) {
-      clearTimeout(timeoutId);
-      console.error('Mistral OCR error:', error);
-      if (error instanceof Error) {
-        if (error.name === 'AbortError') {
-          throw new Error('Mistral OCR request timed out');
+        if (!response.ok) {
+          const details = data ? JSON.stringify(data) : response.statusText;
+          logger.apiError("mistral", "/ocr", new Error(`HTTP ${response.status}`));
+          throw createExternalServiceErrorFromResponse(
+            "mistral",
+            response.status,
+            "/ocr",
+            details.slice(0, 400)
+          );
         }
-        throw new Error(`Mistral OCR failed: ${error.message}`);
+
+        logger.apiSuccess("mistral", "/ocr", Date.now() - t0, {});
+
+        let content = "";
+        if (data?.pages && Array.isArray(data.pages)) {
+          content = data.pages
+            .map((page: { markdown?: string }) => page.markdown || "")
+            .join("\n\n");
+        } else {
+          content = data.markdown || data.text || "";
+        }
+
+        return this.stripMedia(content);
+      } catch (error) {
+        clearTimeout(timeoutId);
+        if (error instanceof Error) {
+          if (error.name === "AbortError") {
+            throw new Error("Mistral OCR request timed out");
+          }
+          throw error;
+        }
+        throw new Error("Failed to process document with Mistral OCR");
       }
-      throw new Error('Failed to process document with Mistral OCR');
-    }
+    }, "mistral_ocr");
   }
 
   async processDocument(fileUrl: string): Promise<string> {

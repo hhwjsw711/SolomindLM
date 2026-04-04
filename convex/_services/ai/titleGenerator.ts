@@ -1,36 +1,28 @@
 "use node";
 import { internalAction } from "../../_generated/server";
 import { v } from "convex/values";
+import { uncachedLlmCall } from "../../_agents/_shared/cachedLlm";
+import { env } from "../../_lib/env";
 
 /**
- * Generate a title for content based on a text chunk
- * This action uses Qwen/Qwen3.5-9B (hardcoded) with reasoning disabled.
- * Includes retry logic for 503 errors with exponential backoff.
+ * Generate a short title from a text chunk via Together (uncachedLlmCall includes transient retries).
+ * Tries env.FAST_LLM first, then env.SMART_LLM if the fast path fails.
  */
 export const generateTitle = internalAction({
   args: {
     chunk: v.string(),
-    // model parameter is ignored - always uses Qwen/Qwen3.5-9B
     model: v.optional(v.string()),
   },
-  handler: async (ctx, args) => {
-    "use node";
-
+  handler: async (_ctx, args) => {
     const apiKey = process.env.TOGETHER_AI_API_KEY;
     if (!apiKey) {
       throw new Error("TOGETHER_AI_API_KEY environment variable is not set");
     }
 
-    const { uncachedLlmCall } = await import("../../_agents/_shared/cachedLlm");
-
-    // HARDCODED: Always use Qwen/Qwen3.5-9B for title generation
-    const model = "Qwen/Qwen3.5-9B";
-    
-    // Truncate input to prevent token budget issues
-    // Use first 500 chars for title generation (enough context, fits in budget)
-    const truncatedContent = args.chunk.length > 500
-      ? args.chunk.substring(0, 500) + "..."
-      : args.chunk;
+    const truncatedContent =
+      args.chunk.length > 500
+        ? args.chunk.substring(0, 500) + "..."
+        : args.chunk;
 
     const prompt = `Generate a single, concise title (max 10 words) for the following content. Output ONLY the title with no preamble, no list, no introduction, and no quotation marks.
 
@@ -39,47 +31,40 @@ ${truncatedContent}
 
 Title:`;
 
-    // Add retry logic with exponential backoff for 503 errors
-    const maxRetries = 3;
-    let lastError: Error | null = null;
-
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        const response = await uncachedLlmCall({
-          model,
-          messages: [{ role: "user", content: prompt }],
-          temperature: 0.3,
-          maxTokens: 50, // Increased from 30 to ensure complete title generation
-          reasoningEnabled: false, // Explicitly disable reasoning
-        });
-        let title = response.content.trim();
-        title = title.replace(/^["']|["']$/g, "");
-        console.log("[TitleGenerator] Generated title:", title);
-        return title;
-      } catch (error) {
-        lastError = error as Error;
-        const errorMessage = lastError.message;
-
-        // Only retry on 503 errors or network issues
-        const isRetryable = errorMessage.includes('503') ||
-                           errorMessage.includes('Service unavailable') ||
-                           errorMessage.includes('ETIMEDOUT') ||
-                           errorMessage.includes('ECONNRESET');
-
-        if (!isRetryable || attempt === maxRetries) {
-          console.error(`[TitleGenerator] Error (attempt ${attempt}/${maxRetries}):`, error);
-          throw new Error("Failed to generate title");
-        }
-
-        // Exponential backoff with jitter: 1s, 2s, 4s
-        const delay = Math.min(1000 * Math.pow(2, attempt - 1), 4000);
-        const jitter = Math.random() * 500;
-        console.log(`[TitleGenerator] Retry ${attempt}/${maxRetries} after ${Math.round(delay + jitter)}ms...`);
-        await new Promise(resolve => setTimeout(resolve, delay + jitter));
-      }
+    async function titleFromModel(model: string): Promise<string> {
+      const response = await uncachedLlmCall({
+        model,
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.3,
+        maxTokens: 50,
+        reasoningEnabled: false,
+        toolChoice: "none",
+      });
+      let title = response.content.trim();
+      title = title.replace(/^["']|["']$/g, "");
+      return title;
     }
 
-    // Should never reach here, but TypeScript needs it
-    throw lastError || new Error("Failed to generate title");
+    try {
+      let title: string;
+      try {
+        title = await titleFromModel(env.FAST_LLM);
+      } catch (firstError) {
+        if (env.SMART_LLM !== env.FAST_LLM) {
+          console.warn(
+            "[TitleGenerator] fast model failed, retrying with smart model:",
+            firstError,
+          );
+          title = await titleFromModel(env.SMART_LLM);
+        } else {
+          throw firstError;
+        }
+      }
+      console.log("[TitleGenerator] Generated title:", title);
+      return title;
+    } catch (error) {
+      console.error("[TitleGenerator] Error:", error);
+      throw new Error("Failed to generate title");
+    }
   },
 });

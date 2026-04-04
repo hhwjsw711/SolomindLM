@@ -2,6 +2,9 @@
 import { action, internalAction } from "../../_generated/server";
 import { internal } from "../../_generated/api";
 import { v } from "convex/values";
+import { invokeWithHttpRetry } from "../../_agents/_shared/retry";
+import { createExternalServiceErrorFromResponse } from "../../_lib/errors";
+import { createServiceLogger } from "../../_lib/logging/serviceLogger";
 import { createCachedAction } from "../cache/cachedAgent";
 import { CACHE_TTL } from "../cache/cache";
 
@@ -11,30 +14,53 @@ import { CACHE_TTL } from "../cache/cache";
 export const generateEmbeddingInternal = internalAction({
   args: { text: v.string() },
   handler: async (_, { text }): Promise<number[]> => {
+    const logger = createServiceLogger("openai", "generateEmbeddingInternal");
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
+      logger.error("OPENAI_API_KEY is not set");
       throw new Error("OPENAI_API_KEY is not set");
     }
 
-    const response = await fetch("https://api.openai.com/v1/embeddings", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "text-embedding-3-small",
-        input: text,
-      }),
-    });
+    logger.operationStart({ inputChars: text.length });
 
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`OpenAI API error: ${error}`);
+    try {
+      const embedding = await invokeWithHttpRetry(async () => {
+        const t0 = Date.now();
+        logger.apiCall("openai", "/v1/embeddings", { model: "text-embedding-3-small" });
+        const response = await fetch("https://api.openai.com/v1/embeddings", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model: "text-embedding-3-small",
+            input: text,
+          }),
+        });
+
+        if (!response.ok) {
+          const errBody = await response.text();
+          logger.apiError("openai", "/v1/embeddings", new Error(`HTTP ${response.status}`));
+          throw createExternalServiceErrorFromResponse(
+            "openai",
+            response.status,
+            "/v1/embeddings",
+            errBody.slice(0, 400)
+          );
+        }
+
+        const data = await response.json();
+        logger.apiSuccess("openai", "/v1/embeddings", Date.now() - t0, {});
+        return data.data[0].embedding as number[];
+      }, "openai_embedding");
+
+      logger.operationComplete({ dims: embedding.length });
+      return embedding;
+    } catch (error) {
+      logger.operationError(error);
+      throw error;
     }
-
-    const data = await response.json();
-    return data.data[0].embedding;
   },
 });
 

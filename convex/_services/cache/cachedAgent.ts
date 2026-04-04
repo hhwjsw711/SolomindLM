@@ -1,7 +1,8 @@
 "use node";
 import { ActionCache } from "@convex-dev/action-cache";
 import { FunctionReference } from "convex/server";
-import { components, internal } from "../../_generated/api";
+import { components } from "../../_generated/api";
+import { createServiceLogger } from "../../_lib/logging/serviceLogger";
 import { CACHE_TTL } from "./cache";
 
 /**
@@ -24,22 +25,26 @@ export function createCachedAction(
 
   // Wrap the fetch method to add lightweight validation logging
   // Note: ActionCache v0.3.0 doesn't expose cache hit information, so we don't track metrics
+  const cacheName = options?.name || "unknown";
   return {
     async fetch(ctx: any, args: any): Promise<any> {
+      const logger = createServiceLogger("action-cache", cacheName);
       const startTime = Date.now();
+      const keyHint =
+        typeof args?.query === "string"
+          ? args.query.substring(0, 40)
+          : typeof args?.text === "string"
+            ? args.text.substring(0, 40)
+            : "args";
 
+      logger.debug("cache_fetch_start", { keyHint });
       const result = await cache.fetch(ctx, args);
       const duration = Date.now() - startTime;
 
-      // Log duration for observability (no hit/miss status - unreliable without ActionCache internals)
-      console.log(`[Cache] ${options?.name || "unknown"}: ${duration}ms`);
+      logger.performance("cache_fetch_ms", duration, "ms", { name: cacheName });
 
-      // Lightweight validation - just log, don't block
       if (result === null || result === undefined) {
-        console.warn(
-          `[Cache] Null/undefined result for ${options?.name || "unknown"}`,
-          { duration: `${duration}ms` }
-        );
+        logger.warn("Null/undefined cache result", { durationMs: duration, name: cacheName });
       }
 
       return result;

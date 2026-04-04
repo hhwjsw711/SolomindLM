@@ -206,6 +206,53 @@ export const addMessage = internalMutation({
 });
 
 /**
+ * Idempotent insert of assistant message for one chat stream (HTTP + persistent text streaming).
+ * Uses by_conversation_stream; safe to retry with identical args.
+ */
+export const persistAssistantFromStream = internalMutation({
+  args: {
+    conversationId: v.id("conversations"),
+    streamId: v.string(),
+    content: v.string(),
+    references: v.optional(v.array(v.any())),
+    metadata: v.optional(v.any()),
+  },
+  handler: async (ctx, args) => {
+    const conversation = await ctx.db.get(args.conversationId);
+    if (!conversation) {
+      throw new Error("Conversation not found");
+    }
+
+    const existing = await ctx.db
+      .query("messages")
+      .withIndex("by_conversation_stream", (q) =>
+        q.eq("conversationId", args.conversationId).eq("streamId", args.streamId)
+      )
+      .first();
+
+    if (existing) {
+      return { messageId: existing._id, inserted: false };
+    }
+
+    const messageId = await ctx.db.insert("messages", {
+      conversationId: args.conversationId,
+      role: "assistant",
+      content: args.content,
+      references: args.references,
+      metadata: args.metadata,
+      streamId: args.streamId,
+      createdAt: Date.now(),
+    });
+
+    await ctx.db.patch(args.conversationId, {
+      updatedAt: Date.now(),
+    });
+
+    return { messageId, inserted: true };
+  },
+});
+
+/**
  * Delete a conversation
  */
 export const remove = mutation({

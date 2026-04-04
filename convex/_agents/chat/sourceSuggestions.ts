@@ -3,8 +3,8 @@
  * Source Suggestions Generator
  *
  * Generates a source summary + study prompts based on uploaded documents.
- * Uses env.FAST_LLM (Together AI; default Qwen/Qwen3.5-9B). Hybrid Qwen can spend the whole
- * `max_tokens` budget on `reasoning` + spurious `tool_calls`, leaving `content` empty — we disable both.
+ * Tries env.FAST_LLM first, then env.SMART_LLM if the fast path fails (API or parse).
+ * Hybrid Qwen / gpt-oss: reasoning + tool_calls disabled so content stays in `message.content`.
  */
 
 import { internalAction } from "../../_generated/server";
@@ -47,6 +47,33 @@ function parseSuggestionsPayload(raw: string): {
     summary: String(parsed.summary),
     suggestions: parsed.suggestions.map(String).filter(Boolean),
   };
+}
+
+async function generateSuggestionsWithModel(
+  model: string,
+  prompt: string,
+): Promise<{ summary: string; suggestions: string[] }> {
+  const response = await uncachedLlmCall({
+    model,
+    messages: [
+      {
+        role: "system",
+        content:
+          "You output only a single JSON object. Keys: summary (string), suggestions (string array, length 3). No tools, no markdown, no explanation.",
+      },
+      { role: "user", content: prompt },
+    ],
+    temperature: 0.5,
+    maxTokens: 512,
+    reasoningEnabled: false,
+    toolChoice: "none",
+  });
+
+  const parsed = parseSuggestionsPayload(response.content);
+  if (parsed.suggestions.length === 0) {
+    throw new Error("Invalid response structure");
+  }
+  return parsed;
 }
 
 export const generateSuggestionsInternal = internalAction({
@@ -97,26 +124,19 @@ Generate a JSON response with:
 Keep suggestions short (under 10 words each) and varied. Output a single JSON object only — no markdown fences, no commentary before or after the object.`;
 
     try {
-      const response = await uncachedLlmCall({
-        model: env.FAST_LLM,
-        messages: [
-          {
-            role: "system",
-            content:
-              "You output only a single JSON object. Keys: summary (string), suggestions (string array, length 3). No tools, no markdown, no explanation.",
-          },
-          { role: "user", content: prompt },
-        ],
-        temperature: 0.5,
-        maxTokens: 512,
-        reasoningEnabled: false,
-        toolChoice: "none",
-      });
-
-      const parsed = parseSuggestionsPayload(response.content);
-
-      if (parsed.suggestions.length === 0) {
-        throw new Error("Invalid response structure");
+      let parsed: { summary: string; suggestions: string[] };
+      try {
+        parsed = await generateSuggestionsWithModel(env.FAST_LLM, prompt);
+      } catch (firstError) {
+        if (env.SMART_LLM !== env.FAST_LLM) {
+          console.warn(
+            "[sourceSuggestions] fast model failed, retrying with smart model:",
+            firstError,
+          );
+          parsed = await generateSuggestionsWithModel(env.SMART_LLM, prompt);
+        } else {
+          throw firstError;
+        }
       }
 
       return {
@@ -126,7 +146,12 @@ Keep suggestions short (under 10 words each) and varied. Output a single JSON ob
         documentSignature: args.documentSignature,
       };
     } catch (error) {
-      console.warn("[sourceSuggestions] LLM parse failed:", error);
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.startsWith("LLM API error:")) {
+        console.warn("[sourceSuggestions] LLM API request failed:", error);
+      } else {
+        console.warn("[sourceSuggestions] LLM output parse failed:", error);
+      }
       return {
         sourceCount: completed.length,
         summary: null,

@@ -160,7 +160,8 @@ export class HybridSearchHandler extends VectorSearchHandler {
     query: string,
     documentIds?: string[],
     preComputedEmbedding?: number[],
-    retrievalAugmentForRerank?: string
+    retrievalAugmentForRerank?: string,
+    options?: { skipRerank?: boolean; allowEmpty?: boolean }
   ): Promise<HybridReferenceChunk[]> {
     if (!this.hybridConfig.enableHybrid || !this.keywordSearchRunner) {
       // Vector-only: cast to base type for compatibility
@@ -170,7 +171,8 @@ export class HybridSearchHandler extends VectorSearchHandler {
         query,
         documentIds,
         preComputedEmbedding,
-        retrievalAugmentForRerank
+        retrievalAugmentForRerank,
+        options
       )) as HybridReferenceChunk[];
     }
 
@@ -202,8 +204,11 @@ export class HybridSearchHandler extends VectorSearchHandler {
       let filtered = fused.filter(r => r.rrfScore >= this.hybridConfig.hybridThreshold);
       if (filtered.length === 0) filtered = fused; // Fallback
 
-      // Rerank (reuse parent's ZeroEntropy via protected method)
-      // Store RRF metadata before reranking to preserve it
+      if (filtered.length === 0 && options?.allowEmpty) {
+        return [];
+      }
+
+      // RRF metadata for merging scores onto final chunks
       const rrfMetadataMap = new Map<string, Pick<RRFResult, 'rrfScore' | 'vectorRank' | 'keywordRank'>>();
       for (const r of filtered) {
         const key = `${r._id}-${r.chunkIndex}`;
@@ -214,14 +219,24 @@ export class HybridSearchHandler extends VectorSearchHandler {
         });
       }
 
-      const augment = retrievalAugmentForRerank?.trim();
-      const rerankQuery = augment
-        ? `${query.trim()}\n\n${augment.length > 2000 ? augment.slice(0, 2000) : augment}`
-        : query;
-      const reranked = await this.rerankResults(rerankQuery, filtered);
-      const limited = reranked.slice(0, this.hybridConfig.maxResults);
+      const poolSize = Math.max(this.hybridConfig.maxResults, this.hybridConfig.rerankTopN);
+      let rankedForMap: (RRFResult & { _score?: number; similarity?: number })[];
 
-      let finalResults: HybridReferenceChunk[] = limited.map((r, index) => {
+      if (options?.skipRerank) {
+        rankedForMap = filtered.slice(0, poolSize) as (RRFResult & { _score?: number; similarity?: number })[];
+      } else {
+        const augment = retrievalAugmentForRerank?.trim();
+        const rerankQuery = augment
+          ? `${query.trim()}\n\n${augment.length > 2000 ? augment.slice(0, 2000) : augment}`
+          : query;
+        const reranked = await this.rerankResults(rerankQuery, filtered);
+        rankedForMap = reranked.slice(0, this.hybridConfig.maxResults) as (RRFResult & {
+          _score?: number;
+          similarity?: number;
+        })[];
+      }
+
+      let finalResults: HybridReferenceChunk[] = rankedForMap.map((r, index) => {
         const key = `${r._id}-${r.chunkIndex}`;
         const rrfMeta = rrfMetadataMap.get(key);
         return {
@@ -230,7 +245,7 @@ export class HybridSearchHandler extends VectorSearchHandler {
           sourceTitle: r.sourceTitle ?? 'Document',
           content: r.content,
           chunkIndex: r.chunkIndex,
-          similarity: r._score ?? r.similarity,
+          similarity: r._score ?? r.similarity ?? r.rrfScore,
           rrfScore: rrfMeta?.rrfScore,
           vectorRank: rrfMeta?.vectorRank,
           keywordRank: rrfMeta?.keywordRank,

@@ -206,3 +206,123 @@ export function getFreeLimit(feature: DailyFeature): number {
 export function getFeatureLimit(feature: DailyFeature, isPro: boolean): number {
   return isPro ? getProLimit(feature) : getFreeLimit(feature);
 }
+
+// --- Service / IO errors (Convex-serializable .data, discriminated by `type`) ---
+
+export type ExternalServiceErrorData = {
+  type: "EXTERNAL_SERVICE_ERROR";
+  service: string;
+  retryable: boolean;
+  statusCode?: number;
+  endpoint?: string;
+  /** Safe, user-facing or developer-facing summary */
+  detail?: string;
+};
+
+export class ExternalServiceError extends Error {
+  service: string;
+  statusCode?: number;
+  retryable: boolean;
+  endpoint?: string;
+  data: ExternalServiceErrorData;
+
+  constructor(
+    service: string,
+    message: string,
+    options?: { statusCode?: number; retryable?: boolean; endpoint?: string; detail?: string }
+  ) {
+    super(message);
+    this.name = "ExternalServiceError";
+    this.service = service;
+    this.statusCode = options?.statusCode;
+    this.retryable = options?.retryable ?? isRetryableHttpStatus(options?.statusCode);
+    this.endpoint = options?.endpoint;
+    this.data = {
+      type: "EXTERNAL_SERVICE_ERROR",
+      service,
+      retryable: this.retryable,
+      statusCode: options?.statusCode,
+      endpoint: options?.endpoint,
+      detail: options?.detail ?? message,
+    };
+  }
+}
+
+export function isRetryableHttpStatus(status: number | undefined): boolean {
+  if (status === undefined) return true;
+  return [408, 425, 429, 500, 502, 503, 504].includes(status);
+}
+
+export function createExternalServiceErrorFromResponse(
+  service: string,
+  status: number | undefined,
+  endpoint: string | undefined,
+  bodySnippet?: string
+): ExternalServiceError {
+  const retryable = isRetryableHttpStatus(status);
+  const message = bodySnippet
+    ? `${service} HTTP ${status ?? "error"}: ${bodySnippet.slice(0, 200)}`
+    : `${service} HTTP ${status ?? "error"}`;
+  return new ExternalServiceError(service, message, {
+    statusCode: status,
+    retryable,
+    endpoint,
+    detail: message,
+  });
+}
+
+export type StorageErrorData = {
+  type: "STORAGE_ERROR";
+  operation: string;
+  fileName?: string;
+  storageId?: string;
+  detail?: string;
+};
+
+export class StorageError extends Error {
+  operation: string;
+  fileName?: string;
+  storageId?: string;
+  data: StorageErrorData;
+
+  constructor(
+    operation: string,
+    message: string,
+    options?: { fileName?: string; storageId?: string }
+  ) {
+    super(message);
+    this.name = "StorageError";
+    this.operation = operation;
+    this.fileName = options?.fileName;
+    this.storageId = options?.storageId;
+    this.data = {
+      type: "STORAGE_ERROR",
+      operation,
+      fileName: options?.fileName,
+      storageId: options?.storageId,
+      detail: message,
+    };
+  }
+}
+
+export type InputValidationErrorData = {
+  type: "INPUT_VALIDATION_ERROR";
+  field?: string;
+  detail?: string;
+};
+
+export class InputValidationError extends Error {
+  field?: string;
+  data: InputValidationErrorData;
+
+  constructor(message: string, options?: { field?: string }) {
+    super(message);
+    this.name = "InputValidationError";
+    this.field = options?.field;
+    this.data = {
+      type: "INPUT_VALIDATION_ERROR",
+      field: options?.field,
+      detail: message,
+    };
+  }
+}

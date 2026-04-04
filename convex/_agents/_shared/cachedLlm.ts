@@ -30,8 +30,9 @@ export interface LLMOptions {
   maxTokens?: number;
   responseFormat?: { type: "text" | "json_object" };
   /**
-   * Together hybrid models (e.g. Qwen3.5-9B): set false so reasoning tokens do not
-   * consume the whole `max_tokens` budget and leave `message.content` empty.
+   * When false: sends `chat_template_kwargs: { thinking: false }` — same shape as LangChain
+   * `ChatTogetherAI` (used by chat). Avoids GPT-OSS + `tool_choice` / extra reasoning fields that
+   * differ from that proven path.
    */
   reasoningEnabled?: boolean;
   /**
@@ -113,6 +114,29 @@ function logEmptyTogetherAssistant(
   });
 }
 
+/** HTTP statuses where a short backoff retry is appropriate (Together / OpenAI-style APIs). */
+const TRANSIENT_LLM_HTTP_STATUSES = new Set([
+  408, 429, 500, 502, 503, 504, 520, 522, 524, 529,
+]);
+
+function isTransientLlmHttpStatus(status: number): boolean {
+  return TRANSIENT_LLM_HTTP_STATUSES.has(status);
+}
+
+function sleepMs(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** Exponential backoff with jitter; capped for Convex action time limits. */
+function retryDelayMs(attemptIndex: number, baseMs: number): number {
+  const exp = baseMs * 2 ** attemptIndex;
+  const jitter = 0.5 + Math.random();
+  return Math.min(Math.floor(exp * jitter), 45_000);
+}
+
+const TOGETHER_LLM_MAX_ATTEMPTS = 5;
+const TOGETHER_LLM_RETRY_BASE_MS = 900;
+
 function togetherChatRequestBody(options: LLMOptions): Record<string, unknown> {
   const body: Record<string, unknown> = {
     model: options.model,
@@ -123,20 +147,104 @@ function togetherChatRequestBody(options: LLMOptions): Record<string, unknown> {
   if (options.responseFormat) {
     body.response_format = options.responseFormat;
   }
-  // FIX: Handle reasoning disabling for different model types
+  // Match @langchain/community ChatTogetherAI `modelKwargs.chat_template_kwargs` (chat uses this and works).
   if (options.reasoningEnabled === false) {
-    // For OpenAI-compatible reasoning models (openai/gpt-oss-*)
-    if (options.model.includes('openai/gpt-oss')) {
-      body.reasoning = { max_tokens: 0 }; // Disable reasoning by setting max tokens to 0
-    } else {
-      // For hybrid models (Qwen, etc.) use chat template
-      body.chat_template_kwargs = { thinking: false };
-    }
+    body.chat_template_kwargs = { thinking: false };
   }
-  if (options.toolChoice !== undefined) {
+  // Together marks GPT-OSS as no tool calling; omit tool_choice so the payload matches plain invokes.
+  if (
+    options.toolChoice !== undefined &&
+    !options.model.includes("openai/gpt-oss")
+  ) {
     body.tool_choice = options.toolChoice;
   }
   return body;
+}
+
+/**
+ * POST chat/completions to Together with retries on transient HTTP and fetch failures.
+ */
+async function executeTogetherLlmRequest(
+  options: LLMOptions,
+  apiKey: string,
+): Promise<LLMResponse> {
+  const url = "https://api.together.xyz/v1/chat/completions";
+  const init: RequestInit = {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify(togetherChatRequestBody(options)),
+  };
+
+  let lastFailure: Error | undefined;
+
+  for (let attempt = 0; attempt < TOGETHER_LLM_MAX_ATTEMPTS; attempt++) {
+    try {
+      const response = await fetch(url, init);
+      const bodyText = await response.text();
+
+      if (!response.ok) {
+        const err = new Error(
+          `LLM API error: ${response.status} - ${bodyText}`,
+        );
+        lastFailure = err;
+        if (
+          isTransientLlmHttpStatus(response.status) &&
+          attempt < TOGETHER_LLM_MAX_ATTEMPTS - 1
+        ) {
+          await sleepMs(retryDelayMs(attempt, TOGETHER_LLM_RETRY_BASE_MS));
+          continue;
+        }
+        throw err;
+      }
+
+      let data: any;
+      try {
+        data = JSON.parse(bodyText);
+      } catch {
+        throw new Error("LLM API returned non-JSON body");
+      }
+
+      const choice = data.choices?.[0];
+      const content = togetherChoiceAssistantText(choice);
+      if (!content.trim()) {
+        logEmptyTogetherAssistant(options.model, choice);
+      }
+
+      return {
+        content,
+        usage: data.usage
+          ? {
+              promptTokens: data.usage.prompt_tokens,
+              completionTokens: data.usage.completion_tokens,
+              totalTokens: data.usage.total_tokens,
+            }
+          : undefined,
+      };
+    } catch (e) {
+      if (
+        e instanceof Error &&
+        e.message === "LLM API returned non-JSON body"
+      ) {
+        throw e;
+      }
+      const isOurApiError =
+        e instanceof Error && e.message.startsWith("LLM API error:");
+      if (isOurApiError) {
+        throw e;
+      }
+      lastFailure = e instanceof Error ? e : new Error(String(e));
+      if (attempt < TOGETHER_LLM_MAX_ATTEMPTS - 1) {
+        await sleepMs(retryDelayMs(attempt, TOGETHER_LLM_RETRY_BASE_MS));
+        continue;
+      }
+      throw lastFailure;
+    }
+  }
+
+  throw lastFailure ?? new Error("LLM request failed after retries");
 }
 
 // ============================================================
@@ -162,46 +270,18 @@ export const llmInternal = internalAction({
       throw new Error("TOGETHER_AI_API_KEY is not configured");
     }
 
-    const response = await fetch("https://api.together.xyz/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
+    return executeTogetherLlmRequest(
+      {
+        model: args.model,
+        messages: args.messages as LLMMessage[],
+        temperature: args.temperature,
+        maxTokens: args.maxTokens,
+        responseFormat: args.responseFormat as LLMOptions["responseFormat"],
+        reasoningEnabled: args.reasoningEnabled,
+        toolChoice: args.toolChoice as LLMOptions["toolChoice"],
       },
-      body: JSON.stringify(
-        togetherChatRequestBody({
-          model: args.model,
-          messages: args.messages as LLMMessage[],
-          temperature: args.temperature,
-          maxTokens: args.maxTokens,
-          responseFormat: args.responseFormat as LLMOptions["responseFormat"],
-          reasoningEnabled: args.reasoningEnabled,
-          toolChoice: args.toolChoice as LLMOptions["toolChoice"],
-        }),
-      ),
-    });
-
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`LLM API error: ${response.status} - ${error}`);
-    }
-
-    const data = await response.json() as any;
-
-    const choice = data.choices?.[0];
-    const content = togetherChoiceAssistantText(choice);
-    if (!content.trim()) {
-      logEmptyTogetherAssistant(args.model, choice);
-    }
-
-    return {
-      content,
-      usage: data.usage ? {
-        promptTokens: data.usage.prompt_tokens,
-        completionTokens: data.usage.completion_tokens,
-        totalTokens: data.usage.total_tokens,
-      } : undefined,
-    };
+      apiKey,
+    );
   },
 });
 
@@ -262,38 +342,7 @@ export async function uncachedLlmCall(options: LLMOptions): Promise<LLMResponse>
     throw new Error("TOGETHER_AI_API_KEY is not configured");
   }
 
-  const response = await fetch("https://api.together.xyz/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify(togetherChatRequestBody(options)),
-  });
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`LLM API error: ${response.status} - ${error}`);
-  }
-
-  const data = await response.json() as any;
-
-  const choice = data.choices?.[0];
-  const content = togetherChoiceAssistantText(choice);
-  if (!content.trim()) {
-    logEmptyTogetherAssistant(options.model, choice);
-  }
-
-  return {
-    content,
-    usage: data.usage
-      ? {
-          promptTokens: data.usage.prompt_tokens,
-          completionTokens: data.usage.completion_tokens,
-          totalTokens: data.usage.total_tokens,
-        }
-      : undefined,
-  };
+  return executeTogetherLlmRequest(options, apiKey);
 }
 
 /**

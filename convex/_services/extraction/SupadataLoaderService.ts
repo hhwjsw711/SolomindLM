@@ -3,6 +3,7 @@ import { Supadata, SupadataError } from '@supadata/js';
 import { env } from '../../_lib/env';
 import { validateUrl } from '../../_lib/utils/urlValidation.js';
 import { invokeWithRetry } from '../../_agents/_shared/retry.js';
+import { createServiceLogger } from '../../_lib/logging/serviceLogger';
 
 /**
  * SupadataLoaderService handles content extraction from:
@@ -91,7 +92,8 @@ export class SupadataLoaderService {
       throw new Error(`Invalid URL: ${validation.error}`);
     }
 
-    console.log(`[Supadata] Fetching transcript for: ${url} (lang: ${lang})`);
+    const logger = createServiceLogger('supadata', 'loadTranscript');
+    logger.operationStart({ lang });
 
     const fetchOne = async (): Promise<string> => {
       const { content } = await this.loadTranscriptWithMetaInternal(url, lang);
@@ -106,7 +108,11 @@ export class SupadataLoaderService {
       retryableErrors: (err) =>
         /limit exceeded|rate limit|too many requests|429/i.test(err.message),
       onRetry: (attempt, error, delayMs) =>
-        console.warn(`[Supadata] Rate limited, retry ${attempt} in ${delayMs}ms: ${error.message}`),
+        logger.warn('Rate limited, retrying transcript fetch', {
+          attempt,
+          delayMs,
+          message: error.message,
+        }),
     }, 'loadTranscript');
   }
 
@@ -118,6 +124,7 @@ export class SupadataLoaderService {
     if (!validation.valid) {
       throw new Error(`Invalid URL: ${validation.error}`);
     }
+    const logger = createServiceLogger('supadata', 'loadTranscriptWithMeta');
     return invokeWithRetry(
       () => this.loadTranscriptWithMetaInternal(url, lang),
       {
@@ -127,13 +134,18 @@ export class SupadataLoaderService {
         retryableErrors: (err) =>
           /limit exceeded|rate limit|too many requests|429/i.test(err.message),
         onRetry: (attempt, error, delayMs) =>
-          console.warn(`[Supadata] Rate limited, retry ${attempt} in ${delayMs}ms: ${error.message}`),
+          logger.warn('Rate limited, retrying transcript with meta', {
+            attempt,
+            delayMs,
+            message: error.message,
+          }),
       },
       'loadTranscriptWithMeta'
     );
   }
 
   private async loadTranscriptWithMetaInternal(url: string, lang: string): Promise<{ title: string; content: string }> {
+    const logger = createServiceLogger('supadata', 'transcriptInternal');
     const transcriptResult = await this.supadata.transcript({
       url,
       lang,
@@ -142,7 +154,9 @@ export class SupadataLoaderService {
     });
 
     if ('jobId' in transcriptResult) {
-      console.log(`[Supadata] Started transcript job: ${(transcriptResult as { jobId: string }).jobId}`);
+      logger.info('Started async transcript job', {
+        jobId: (transcriptResult as { jobId: string }).jobId,
+      });
       return this.pollForTranscriptWithMeta((transcriptResult as { jobId: string }).jobId);
     }
 
@@ -151,7 +165,7 @@ export class SupadataLoaderService {
     const text = typeof result === 'string'
       ? result
       : (result?.content ?? JSON.stringify(result ?? ''));
-    console.log(`[Supadata] Successfully fetched transcript (${text.length} chars)`);
+    logger.operationComplete({ charCount: text.length });
     return { title, content: this.stripMedia(text) };
   }
 
@@ -167,7 +181,8 @@ export class SupadataLoaderService {
    * Poll for async transcript job completion; returns title when available from API
    */
   private async pollForTranscriptWithMeta(jobId: string, maxAttempts = 30): Promise<{ title: string; content: string }> {
-    console.log(`[Supadata] Polling for job ${jobId}...`);
+    const logger = createServiceLogger('supadata', 'pollTranscript');
+    logger.operationStart({ jobId, maxAttempts });
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       const jobResult = await this.supadata.transcript.getJobStatus(jobId);
@@ -179,14 +194,18 @@ export class SupadataLoaderService {
         const text = typeof content === 'string'
           ? content
           : JSON.stringify(content ?? '');
-        console.log(`[Supadata] Job completed (${text.length} chars)`);
+        logger.operationComplete({ charCount: text.length, jobId });
         return { title, content: this.stripMedia(text) };
       } else if (jobResult.status === 'failed') {
         throw new Error(`Transcript job failed: ${(jobResult as { error?: { message?: string } }).error?.message || 'Unknown error'}`);
       }
 
-      // Job is still 'queued' or 'active', wait and retry
-      console.log(`[Supadata] Job status: ${jobResult.status} (attempt ${attempt}/${maxAttempts})`);
+      logger.debug('Transcript job pending', {
+        status: jobResult.status,
+        attempt,
+        maxAttempts,
+        jobId,
+      });
       await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
     }
 
@@ -213,18 +232,22 @@ export class SupadataLoaderService {
       throw new Error(`Invalid URL: ${validation.error}`);
     }
 
-    console.log(`[Supadata] Scraping web page: ${url}`);
+    const logger = createServiceLogger('supadata', 'scrapeWebPage');
+    logger.operationStart({});
 
     try {
       const scrapeResult = await this.supadata.web.scrape(url) as { content?: string; title?: string };
       const text = scrapeResult.content || '';
       const title = scrapeResult.title ?? '';
       const cleanedText = this.stripMedia(text);
-      console.log(`[Supadata] Successfully scraped page (${text.length} chars, ${cleanedText.length} after cleaning)`);
+      logger.operationComplete({
+        rawChars: text.length,
+        cleanedChars: cleanedText.length,
+      });
       return { title, content: cleanedText };
     } catch (e) {
       if (e instanceof SupadataError) {
-        console.error(`[Supadata] Error (${e.error}): ${e.message}`);
+        logger.error('Scrape failed', e, { code: e.error });
         throw new Error(`Failed to scrape web page: ${e.message}`);
       }
       throw e;
@@ -244,15 +267,16 @@ export class SupadataLoaderService {
       throw new Error(`Invalid URL: ${validation.error}`);
     }
 
-    console.log(`[Supadata] Mapping website: ${url}`);
+    const logger = createServiceLogger('supadata', 'mapWebsite');
+    logger.operationStart({});
 
     try {
       const siteMap = await this.supadata.web.map(url);
-      console.log(`[Supadata] Found ${siteMap.urls?.length || 0} pages`);
+      logger.operationComplete({ urlCount: siteMap.urls?.length || 0 });
       return siteMap;
     } catch (e) {
       if (e instanceof SupadataError) {
-        console.error(`[Supadata] Error (${e.error}): ${e.message}`);
+        logger.error('Map failed', e, { code: e.error });
         throw new Error(`Failed to map website: ${e.message}`);
       }
       throw e;
@@ -273,7 +297,8 @@ export class SupadataLoaderService {
       throw new Error(`Invalid URL: ${validation.error}`);
     }
 
-    console.log(`[Supadata] Crawling website: ${url} (limit: ${limit})`);
+    const logger = createServiceLogger('supadata', 'crawlWebsite');
+    logger.operationStart({ limit });
 
     try {
       const crawl = await this.supadata.web.crawl({ url, limit });
@@ -284,20 +309,20 @@ export class SupadataLoaderService {
         const crawlResults = await this.supadata.web.getCrawlResults(jobId);
 
         if (crawlResults.status === 'completed') {
-          console.log(`[Supadata] Crawl completed with ${crawlResults.pages?.length || 0} pages`);
+          logger.operationComplete({ pageCount: crawlResults.pages?.length || 0, jobId });
           return crawlResults;
         } else if (crawlResults.status === 'failed') {
           throw new Error('Crawl job failed');
         }
 
-        console.log(`[Supadata] Crawl status: ${crawlResults.status} (attempt ${attempt}/30)`);
+        logger.debug('Crawl pending', { status: crawlResults.status, attempt, jobId });
         await new Promise(resolve => setTimeout(resolve, 2000));
       }
 
       throw new Error('Crawl job timed out');
     } catch (e) {
       if (e instanceof SupadataError) {
-        console.error(`[Supadata] Error (${e.error}): ${e.message}`);
+        logger.error('Crawl failed', e, { code: e.error });
         throw new Error(`Failed to crawl website: ${e.message}`);
       }
       throw e;

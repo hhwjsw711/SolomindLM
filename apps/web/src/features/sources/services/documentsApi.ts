@@ -1,4 +1,10 @@
-import type { Document, UploadResponse, DiscoveryRequest, DiscoveryResponse } from '@/shared/types/index';
+import type {
+  Document,
+  UploadResponse,
+  DiscoveryRequest,
+  DiscoveryResponse,
+  UnifiedDiscoveryResult,
+} from '@/shared/types/index';
 import { useQuery, useMutation, useAction } from 'convex/react';
 import { api } from '@convex/_generated/api';
 import type { Id } from '@convex/_generated/dataModel';
@@ -197,7 +203,8 @@ export function useGetSignedUrl() {
 }
 
 /**
- * Discover web sources using Tavily Search API
+ * Discover web sources using Tavily Search API (legacy)
+ * @deprecated Use useUnifiedDiscovery instead for multi-source support
  */
 export function useDiscoverSources() {
   const discover = useAction(api.documents.index.discoverSources);
@@ -205,6 +212,44 @@ export function useDiscoverSources() {
   return async (request: DiscoveryRequest): Promise<DiscoveryResponse> => {
     const result = await discover(request);
     return { ...result, count: result.sources.length };
+  };
+}
+
+/**
+ * Unified discovery service that searches across multiple source types
+ * Supports web, news, academic, and finance sources with advanced filtering
+ */
+export function useUnifiedDiscovery() {
+  const discover = useAction(api._services.search.DiscoveryService.discover);
+
+  return async (request: {
+    query: string;
+    sourceTypes: ('web' | 'news' | 'academic' | 'finance')[];
+    timeRange?: 'day' | 'week' | 'month' | 'year';
+    academicFilters?: {
+      publicationYearFrom?: number;
+      publicationYearTo?: number;
+      minCitations?: number;
+      openAccessOnly?: boolean;
+      hasFullText?: boolean;
+    };
+    maxResults: number;
+    sortBy?: 'relevance' | 'date' | 'citations';
+  }): Promise<{
+    sources: UnifiedDiscoveryResult[];
+    totalCount: number;
+    sourceTypeCounts: Record<string, number>;
+  }> => {
+    const result = await discover({
+      query: request.query,
+      sourceTypes: request.sourceTypes,
+      timeRange: request.timeRange,
+      academicFilters: request.academicFilters,
+      maxResults: request.maxResults,
+      sortBy: request.sortBy,
+    });
+
+    return result;
   };
 }
 

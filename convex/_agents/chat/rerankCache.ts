@@ -3,7 +3,7 @@
  * Cached ZeroEntropy Reranking Service
  *
  * Provides a cached wrapper around ZeroEntropy reranking API.
- * Uses document IDs in cache key to avoid hashing large content.
+ * @convex-dev/action-cache hashes the full `query` string and all `documents` bodies — cache invalidates when content changes.
  */
 
 import { internalAction } from "../../_generated/server";

@@ -123,6 +123,13 @@ bun run convex:env:push:dry    # Dry run for env push
 
 **Note:** Jobs are scheduled directly via `ctx.scheduler.runAfter()` from mutations, not via a jobs table.
 
+### Observability (logging and errors)
+
+- **Service logs:** [`convex/_lib/logging/serviceLogger.ts`](convex/_lib/logging/serviceLogger.ts) emits one JSON object per line (dashboard + optional Log Streams). Pass `requestId` in context when you have it so exports can correlate with Convex `function.request_id`.
+- **Production logs:** Prefer a [Convex Log Stream](https://stack.convex.dev/log-streams-common-uses) (e.g. Axiom, Datadog); dashboard log history is limited.
+- **Structured errors:** [`convex/_lib/errors.ts`](convex/_lib/errors.ts) (`ExternalServiceError`, `StorageError`, `InputValidationError`); map to `ConvexError` for clients via [`convex/_lib/serviceErrors.ts`](convex/_lib/serviceErrors.ts) `toConvexError`. Web parsing: [`apps/web/src/shared/utils/errorParser.ts`](apps/web/src/shared/utils/errorParser.ts) (`parseServiceError`, `parseAppError`) and optional [`useServiceErrorToast`](apps/web/src/shared/hooks/useServiceErrorToast.ts).
+- **HTTP retry:** [`convex/_agents/_shared/retry.ts`](convex/_agents/_shared/retry.ts) — `RetryPolicies.http`, `invokeWithHttpRetry`, `isHttpAwareRetryableError`.
+
 ## Environment Setup
 
 **Required:** Bun 1.2+ runtime

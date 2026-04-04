@@ -35,6 +35,8 @@ export interface AgentGroundingCheck {
   passed: boolean;
   issues: string[];
   message: string;
+  /** Async grounding path (__GROUNDING_WARN) — render as a subtle footnote, not a blocking alert */
+  soft?: boolean;
 }
 
 /** Persisted on assistant messages (metadata.agentTrace) for history replay */
@@ -407,7 +409,63 @@ export interface UploadResponse {
 }
 
 /**
- * Discovered web source from search API
+ * Unified discovery result from multi-source search
+ */
+export interface UnifiedDiscoveryResult {
+  id: string;
+  title: string;
+  url: string;
+  snippet: string;
+  score: number;
+  sourceType: 'web' | 'news' | 'academic' | 'finance';
+  publishedDate?: string;
+  metadata: {
+    // Academic-specific
+    authors?: string[];
+    venue?: string;
+    citationCount?: number;
+    openAccess?: boolean;
+    hasFullText?: boolean;
+    publicationYear?: number;
+    type?: string;
+
+    // Web/News-specific
+    domain?: string;
+    relevanceLabel?: 'high' | 'medium' | 'low';
+  };
+}
+
+/**
+ * Response from unified discovery API
+ */
+export interface DiscoveryResponse {
+  sources: UnifiedDiscoveryResult[];
+  totalCount: number;
+  sourceTypeCounts: Record<string, number>;
+}
+
+/**
+ * Request options for unified discovery
+ */
+export interface DiscoveryRequest {
+  query: string;
+  sourceTypes: ('web' | 'news' | 'academic' | 'finance')[];
+  timeRange?: 'day' | 'week' | 'month' | 'year';
+  filters: {
+    academic?: {
+      publicationYear?: { from?: number; to?: number };
+      minCitations?: number;
+      openAccessOnly?: boolean;
+      hasFullText?: boolean;
+    };
+  };
+  maxResults: number;
+  sortBy?: 'relevance' | 'date' | 'citations';
+}
+
+/**
+ * Legacy discovered source for backward compatibility
+ * @deprecated Use UnifiedDiscoveryResult instead
  */
 export interface DiscoveredSource {
   title: string;
@@ -417,18 +475,10 @@ export interface DiscoveredSource {
 }
 
 /**
- * Response from source discovery API
+ * Legacy discovery request for backward compatibility
+ * @deprecated Use DiscoveryRequest instead
  */
-export interface DiscoveryResponse {
-  query: string;
-  count: number;
-  sources: DiscoveredSource[];
-}
-
-/**
- * Request options for source discovery
- */
-export interface DiscoveryRequest {
+export interface LegacyDiscoveryRequest {
   query: string;
   scoreThreshold?: number;
   excludeDomains?: string[];

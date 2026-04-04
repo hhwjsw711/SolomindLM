@@ -14,6 +14,10 @@ export default defineSchema({
     icon: v.optional(v.string()),
     isFeatured: v.optional(v.boolean()),
     folderId: v.optional(v.id("folders")),
+    /** Overrides env CHAT_GROUNDING_MODE when set: async | sync | off */
+    chatGroundingMode: v.optional(
+      v.union(v.literal("async"), v.literal("sync"), v.literal("off"))
+    ),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -279,9 +283,12 @@ export default defineSchema({
     references: v.optional(v.array(v.any())),
     metadata: v.optional(v.any()),
     feedback: v.optional(v.union(v.literal("up"), v.literal("down"))),
+    /** Idempotent assistant persistence for a single chat HTTP stream (sparse index). */
+    streamId: v.optional(v.string()),
     createdAt: v.number(),
   })
-    .index("by_conversation", ["conversationId"]),
+    .index("by_conversation", ["conversationId"])
+    .index("by_conversation_stream", ["conversationId", "streamId"]),
 
   // Notes table - for saved chat conversations and manual user notes
   notes: defineTable({
@@ -380,6 +387,24 @@ export default defineSchema({
   })
     .index("by_type", ["cacheType"])
     .index("by_agent", ["agentType"]),
+
+  // Search analytics for discovery services
+  searchAnalytics: defineTable({
+    userId: v.id("users"),
+    query: v.string(), // Normalized query
+    sourceTypes: v.array(v.string()), // ['web', 'news', 'academic', 'finance']
+    filters: v.optional(v.any()), // { timeRange, academicFilters, sortBy }
+    resultsCount: v.number(), // Total results returned
+    sourceTypeCounts: v.optional(v.any()), // { web: 5, academic: 10 }
+    performanceMs: v.number(), // Total time in milliseconds
+    cached: v.boolean(), // Was served from cache
+    apiHealth: v.optional(v.any()), // { tavily: { status, timeMs }, openalex: { status, timeMs } }
+    error: v.optional(v.string()), // Error message if any
+    timestamp: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_timestamp", ["timestamp"])
+    .index("by_source_types", ["sourceTypes"]),
 
   // Note: Direct scheduling used instead of jobs table
   // Jobs are scheduled directly via ctx.scheduler.runAfter() from mutations

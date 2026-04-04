@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
-import { ChevronDown, Check, Search, AlertTriangle } from 'lucide-react';
+import { ChevronDown, Check, Search, AlertTriangle, CircleHelp } from 'lucide-react';
 import type {
   MessageToolCall,
   AgentGroundingCheck,
@@ -22,6 +22,8 @@ export interface AgentActivityPanelProps {
   activityPhases: Array<{ status: string; message: string }>;
   toolCalls: MessageToolCall[];
   groundingChecks: AgentGroundingCheck[];
+  /** Router asked for more detail — avoid showing "Response complete" for this turn */
+  clarificationResponse?: boolean;
 }
 
 function toolLabel(tool: string): string {
@@ -109,9 +111,20 @@ export const AgentActivityPanel = React.memo<AgentActivityPanelProps>(
     activityPhases,
     toolCalls,
     groundingChecks,
+    clarificationResponse,
   }) => {
     const panelId = useId();
-    const showGroundingCallout = groundingChecks.some((g) => !g.passed || g.issues.length > 0);
+    const hardGroundingChecks = useMemo(
+      () => groundingChecks.filter((g) => !g.soft),
+      [groundingChecks]
+    );
+    const softGroundingChecks = useMemo(
+      () => groundingChecks.filter((g) => g.soft === true),
+      [groundingChecks]
+    );
+    const showGroundingCallout = hardGroundingChecks.some(
+      (g) => !g.passed || g.issues.length > 0
+    );
 
     const [expanded, setExpanded] = useState(() => {
       if (typeof sessionStorage !== 'undefined') {
@@ -140,10 +153,10 @@ export const AgentActivityPanel = React.memo<AgentActivityPanelProps>(
     const prevStreamingRef = React.useRef(isStreaming);
     useEffect(() => {
       if (prevStreamingRef.current && !isStreaming) {
-        setExpanded(showGroundingCallout);
+        setExpanded(showGroundingCallout || softGroundingChecks.length > 0);
       }
       prevStreamingRef.current = isStreaming;
-    }, [isStreaming, showGroundingCallout]);
+    }, [isStreaming, showGroundingCallout, softGroundingChecks.length]);
 
     const togglePanel = useCallback(() => {
       setExpanded((prev) => {
@@ -161,6 +174,10 @@ export const AgentActivityPanel = React.memo<AgentActivityPanelProps>(
 
     const phaseLabel = useMemo(() => {
       const currentPhase = (activityPhase ?? historicalPhase ?? undefined) as string | undefined;
+
+      if (clarificationResponse) {
+        return 'Need a bit more context';
+      }
 
       // For completed searches with tool calls, always show passage count
       // This takes priority over historicalDetail which might say "Reading X passages..."
@@ -187,9 +204,20 @@ export const AgentActivityPanel = React.memo<AgentActivityPanelProps>(
 
       const fallback = getStatusMessage(currentPhase);
       return fallback ?? 'Working…';
-    }, [activityPhase, activityDetail, historicalPhase, historicalDetail, toolCalls]);
+    }, [
+      activityPhase,
+      activityDetail,
+      historicalPhase,
+      historicalDetail,
+      toolCalls,
+      clarificationResponse,
+    ]);
 
-    const phaseIcon = getStatusIcon((activityPhase ?? historicalPhase ?? undefined) as string | undefined);
+    const phaseIcon = clarificationResponse ? (
+      <CircleHelp className="w-3.5 h-3.5 text-muted-foreground" />
+    ) : (
+      getStatusIcon((activityPhase ?? historicalPhase ?? undefined) as string | undefined)
+    );
 
     /** Header already shows final completion; keep timeline focused on work steps */
     const timelinePhases = useMemo(
@@ -416,7 +444,7 @@ export const AgentActivityPanel = React.memo<AgentActivityPanelProps>(
                     aria-hidden
                   />
                   <div className="min-w-0 space-y-1">
-                    {groundingChecks.map((g, gi) => (
+                    {hardGroundingChecks.map((g, gi) => (
                       <div key={gi}>
                         <p className="font-medium leading-snug text-amber-950 dark:text-amber-50">
                           {g.message}
@@ -432,6 +460,17 @@ export const AgentActivityPanel = React.memo<AgentActivityPanelProps>(
                     ))}
                   </div>
                 </div>
+              </div>
+            )}
+
+            {softGroundingChecks.length > 0 && (
+              <div className="mt-2 rounded-md border border-border/40 bg-muted/20 px-2.5 py-2 text-muted-foreground">
+                {softGroundingChecks.map((g, gi) => (
+                  <p key={gi} className="text-[11px] leading-snug">
+                    {g.message}
+                    {g.issues.length > 0 ? ` (${g.issues.join('; ')})` : ''}
+                  </p>
+                ))}
               </div>
             )}
           </div>

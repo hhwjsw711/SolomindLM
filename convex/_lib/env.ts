@@ -15,6 +15,9 @@ export const env = {
   // Tavily (web search)
   TAVILY_API_KEY: process.env.TAVILY_API_KEY || '',
 
+  // OpenAlex (academic papers)
+  OPENALEX_BASE_URL: process.env.OPENALEX_BASE_URL || 'https://api.openalex.org',
+
   // Mistral (OCR)
   MISTRAL_API_KEY: process.env.MISTRAL_API_KEY || '',
 
@@ -128,6 +131,12 @@ export const env = {
   CHAT_MAX_SEARCH_CALLS: process.env.CHAT_MAX_SEARCH_CALLS ?? '5',
   /** Top merged chunks passed to the answer model (citation indices match references). */
   CHAT_MAX_CONTEXT_CHUNKS: process.env.CHAT_MAX_CONTEXT_CHUNKS ?? '15',
+  /** Estimated-token budget for prior conversation turns (not including the current user message). */
+  CHAT_HISTORY_TOKEN_BUDGET: process.env.CHAT_HISTORY_TOKEN_BUDGET ?? '4000',
+  /** When true, skip router + parallel RAG; use legacy Phase 1 tool loop in ChatAgent. */
+  CHAT_LEGACY_TOOL_LOOP: process.env.CHAT_LEGACY_TOOL_LOOP ?? 'false',
+  /** Grounding: async (stream-first + warn), sync (validate + strict retry before stream), off. */
+  CHAT_GROUNDING_MODE: process.env.CHAT_GROUNDING_MODE ?? 'async',
   /** Whole-answer vs cited-chunks embedding similarity bar (grounding_validator). */
   GROUNDING_SIMILARITY_THRESHOLD: process.env.GROUNDING_SIMILARITY_THRESHOLD ?? '0.30',
 

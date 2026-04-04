@@ -3,6 +3,7 @@ import { ChatTogetherAI } from '@langchain/community/chat_models/togetherai';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { z } from 'zod';
 import { env } from '../../_lib/env';
+import { createServiceLogger } from '../../_lib/logging/serviceLogger';
 import { invokeWithTimeout, invokeWithRetry } from '../../_agents/_shared/index.js';
 
 export interface WrittenQuestion {
@@ -53,16 +54,14 @@ export class WrittenQuestionsGradingService {
 
   async gradeAnswer(request: GradingRequest): Promise<GradingResult> {
     const { question, userAnswer, referenceContext } = request;
+    const logger = createServiceLogger('writtenQuestionsGrading', 'gradeAnswer');
 
-    console.log(JSON.stringify({
-      timestamp: new Date().toISOString(),
-      service: 'WrittenQuestionsGrading',
-      action: 'grade_answer',
+    logger.operationStart({
       questionId: question.id,
       questionType: question.questionType,
       maxPoints: question.rubric.maxPoints,
       answerLength: userAnswer.length,
-    }));
+    });
 
     const prompt = this.buildGradingPrompt(question, userAnswer, referenceContext);
 
@@ -88,25 +87,16 @@ export class WrittenQuestionsGradingService {
       // Parse the structured output
       const result = this.parseGradingOutput(output, question.rubric.maxPoints);
 
-      console.log(JSON.stringify({
-        timestamp: new Date().toISOString(),
-        service: 'WrittenQuestionsGrading',
-        action: 'grade_complete',
+      logger.operationComplete({
         questionId: question.id,
         score: result.score,
         maxScore: result.maxScore,
         percentage: Math.round((result.score / result.maxScore) * 100),
-      }));
+      });
 
       return result;
     } catch (error) {
-      console.error(JSON.stringify({
-        timestamp: new Date().toISOString(),
-        service: 'WrittenQuestionsGrading',
-        action: 'grade_error',
-        questionId: question.id,
-        error: error instanceof Error ? error.message : String(error),
-      }));
+      logger.operationError(error, { questionId: question.id });
 
       // Fallback result on error
       return this.getFallbackResult(question);
@@ -182,14 +172,11 @@ Be fair, constructive, and educational in your feedback.
         improvements: validated.improvements || [],
       };
     } catch (error) {
-      console.error(JSON.stringify({
-        timestamp: new Date().toISOString(),
-        service: 'WrittenQuestionsGrading',
-        action: 'parse_error',
-        error: error instanceof Error ? error.message : String(error),
+      const log = createServiceLogger('writtenQuestionsGrading', 'parseGradingOutput');
+      log.error('Parse grading JSON failed', error, {
         outputLength: output.length,
         outputPreview: output.substring(0, 200),
-      }));
+      });
 
       throw error;
     }
