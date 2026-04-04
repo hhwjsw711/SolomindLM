@@ -62,6 +62,8 @@ function splitPhasesForSearchToolDetails(
 
 /** Canonical RAG step order so a briefly out-of-order trace (e.g. status/detail vs phases) cannot show "Formulating" before HyDE/search prep. */
 const RAG_DISPLAY_ORDER: Record<string, number> = {
+  /** Sub-query / search strategy step before retrieval (distinct from post-read `thinking`). */
+  planning: 5,
   retrieving: 10,
   embedding: 20,
   ranking: 30,

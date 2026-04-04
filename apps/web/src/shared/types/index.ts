@@ -50,6 +50,7 @@ export interface ChatAgentTrace {
 export type ChatActivityPhase =
   | 'searching'
   | 'reading'
+  | 'planning'
   | 'thinking'
   | 'generating'
   | 'writing'
@@ -461,28 +462,6 @@ export interface DiscoveryRequest {
   };
   maxResults: number;
   sortBy?: 'relevance' | 'date' | 'citations';
-}
-
-/**
- * Legacy discovered source for backward compatibility
- * @deprecated Use UnifiedDiscoveryResult instead
- */
-export interface DiscoveredSource {
-  title: string;
-  url: string;
-  snippet: string;
-  score: number;
-}
-
-/**
- * Legacy discovery request for backward compatibility
- * @deprecated Use DiscoveryRequest instead
- */
-export interface LegacyDiscoveryRequest {
-  query: string;
-  scoreThreshold?: number;
-  excludeDomains?: string[];
-  maxResults?: number;
 }
 
 /**

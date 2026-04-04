@@ -7,6 +7,8 @@ export function getStatusIcon(status?: string): React.ReactNode {
       return <Search className="w-3.5 h-3.5" />;
     case 'reading':
       return <FileText className="w-3.5 h-3.5" />;
+    case 'planning':
+      return <Brain className="w-3.5 h-3.5" />;
     case 'thinking':
       return <Brain className="w-3.5 h-3.5" />;
     case 'generating':
@@ -32,6 +34,8 @@ export function getStatusMessage(status?: string): string | null {
       return 'Searching sources';
     case 'reading':
       return 'Reading sources';
+    case 'planning':
+      return 'Planning';
     case 'thinking':
       return 'Thinking';
     case 'generating':

@@ -6,6 +6,8 @@ export interface ChatStreamingContextType {
   isChatStreaming: boolean;
   /** Assistant response in progress on the server (may be streaming in another tab/device). */
   remoteChatGenerating: boolean;
+  /** When true, block starting a new message (last DB row is not assistant while server refcount > 0). */
+  remoteGenerationBlocksSend: boolean;
   onSendMessage: (messageText: string) => void;
   onClearHistory: () => void;
   onSetFeedback: (messageId: string, feedback: 'up' | 'down' | null) => void;

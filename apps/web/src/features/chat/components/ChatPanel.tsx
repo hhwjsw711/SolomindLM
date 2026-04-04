@@ -47,7 +47,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   const {
     messages,
     isChatStreaming: isLoading,
-    remoteChatGenerating,
+    remoteGenerationBlocksSend,
     onSendMessage,
     onClearHistory,
     onSetFeedback,
@@ -68,7 +68,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   const [isSending, setIsSending] = useState(false);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
 
-  const chatInputDisabled = isSending || isLoading || remoteChatGenerating;
+  const chatInputDisabled = isSending || isLoading || remoteGenerationBlocksSend;
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);

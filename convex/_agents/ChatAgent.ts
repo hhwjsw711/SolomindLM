@@ -501,7 +501,7 @@ export class ChatAgent {
     }
 
     console.log('[ChatAgent] Router: retrieve (parallel sub-queries)');
-    yield { type: 'status', status: 'thinking', message: 'Planning searches…' };
+    yield { type: 'status', status: 'planning', message: 'Planning searches…' };
 
     const { subqueries, rerankQuery: rerankQueryOpt } =
       await this.llmWrapper.generateRetrievalSubqueries(userMessage, recentTurns);
@@ -981,11 +981,3 @@ export class ChatAgent {
     console.log('[ChatAgent] ========== STREAM COMPLETE ==========');
   }
 }
-
-// ============================================================
-// Re-exports for backward compatibility
-// ============================================================
-
-export type { ChatResponse } from './chat/llm_wrapper.js';
-export { validateGrounding, isArtifactContent, validateSemanticGrounding } from './chat/grounding_validator.js';
-export { VectorSearchHandler } from './chat/vector_search.js';

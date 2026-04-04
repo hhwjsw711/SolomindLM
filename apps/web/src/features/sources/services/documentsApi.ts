@@ -1,10 +1,4 @@
-import type {
-  Document,
-  UploadResponse,
-  DiscoveryRequest,
-  DiscoveryResponse,
-  UnifiedDiscoveryResult,
-} from '@/shared/types/index';
+import type { Document, UploadResponse, UnifiedDiscoveryResult } from '@/shared/types/index';
 import { useQuery, useMutation, useAction } from 'convex/react';
 import { api } from '@convex/_generated/api';
 import type { Id } from '@convex/_generated/dataModel';
@@ -203,19 +197,6 @@ export function useGetSignedUrl() {
 }
 
 /**
- * Discover web sources using Tavily Search API (legacy)
- * @deprecated Use useUnifiedDiscovery instead for multi-source support
- */
-export function useDiscoverSources() {
-  const discover = useAction(api.documents.index.discoverSources);
-
-  return async (request: DiscoveryRequest): Promise<DiscoveryResponse> => {
-    const result = await discover(request);
-    return { ...result, count: result.sources.length };
-  };
-}
-
-/**
  * Unified discovery service that searches across multiple source types
  * Supports web, news, academic, and finance sources with advanced filtering
  */
@@ -356,16 +337,6 @@ function getConvexClient(): ConvexClient {
     convexClient = new ConvexClient(convexUrl);
   }
   return convexClient;
-}
-
-/**
- * Discover web sources using Tavily Search API
- * This is an imperative function that can be called outside of React
- */
-export async function discoverSources(request: DiscoveryRequest): Promise<DiscoveryResponse> {
-  const client = getConvexClient();
-  const result = await client.action(api.documents.index.discoverSources, request);
-  return { ...result, count: result.sources.length };
 }
 
 /**

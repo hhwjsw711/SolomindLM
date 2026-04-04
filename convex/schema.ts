@@ -271,6 +271,22 @@ export default defineSchema({
     chatGenerationInFlight: v.optional(v.number()),
     /** Last time a generation was started (UX / stale detection). */
     chatGenerationStartedAt: v.optional(v.number()),
+    // Deprecated/unused fields (kept for schema compatibility)
+    activeModes: v.optional(
+      v.object({
+        externalSearch: v.boolean(),
+        guidedLearning: v.boolean(),
+      })
+    ),
+    externalSearchSourceTypes: v.optional(
+      v.object({
+        academic: v.boolean(),
+        finance: v.boolean(),
+        news: v.boolean(),
+        web: v.boolean(),
+      })
+    ),
+    socraticThreadId: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

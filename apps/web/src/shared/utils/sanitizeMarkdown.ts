@@ -27,9 +27,6 @@ export function restoreAngleBracketsAfterDomPurify(content: string): string {
   return content.replace(/&lt;/g, '<').replace(/&gt;/g, '>');
 }
 
-/** @deprecated Use restoreAngleBracketsAfterDomPurify; kept for any external imports. */
-export const restoreAngleBracketsInMath = restoreAngleBracketsAfterDomPurify;
-
 /**
  * Sanitizes markdown content using DOMPurify before rendering with ReactMarkdown.
  * This prevents XSS attacks while allowing safe markdown elements.

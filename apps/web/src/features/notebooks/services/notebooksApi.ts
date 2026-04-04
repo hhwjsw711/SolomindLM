@@ -1,4 +1,3 @@
-import type { NotebookItem } from "@/shared/types/index";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
@@ -182,19 +181,4 @@ export function useNotebookReports(notebookId: string | null) {
     api.notebooks.index.getReports,
     notebookId ? { notebookId: notebookId as any } : "skip"
   );
-}
-
-// ============================================================
-// Imperative API (for use in event handlers, outside React)
-// ============================================================
-
-/**
- * Get notebooks for a folder (imperative version)
- * @deprecated Use useFolderNotebooks hook instead
- */
-export async function fetchFolderNotebooks(_folderId: string): Promise<NotebookItem[]> {
-  // This is a placeholder - the actual implementation would use the Convex API
-  // For now, return empty array since hooks should be used instead
-  console.warn('fetchFolderNotebooks is deprecated. Use useFolderNotebooks hook instead.');
-  return [];
 }

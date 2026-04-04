@@ -5,7 +5,6 @@ import {
   internalMutation,
   internalQuery,
   internalAction,
-  action,
   type MutationCtx,
 } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
@@ -783,55 +782,5 @@ export const storeChunk = internalMutation({
     }
 
     await ctx.db.insert('documentChunks', chunkData);
-  },
-});
-
-/**
- * Discover web sources using unified discovery service
- * Supports web, news, academic, and finance sources
- * This is a cached action to reduce API costs and improve latency
- */
-export const discoverSources = action({
-  args: {
-    query: v.string(),
-    maxResults: v.optional(v.number()),
-    scoreThreshold: v.optional(v.number()),
-  },
-  handler: async (ctx, args): Promise<{
-    sources: Array<{
-      url: string;
-      title: string;
-      snippet: string;
-      publishedDate: string | null;
-      score: number;
-    }>;
-    query: string;
-  }> => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Unauthenticated");
-
-    const maxResults = args.maxResults ?? 5;
-
-    // Use the new Tavily internal action (not the deprecated class)
-    const result: any = await (ctx.runAction as any)(internal._services.search.TavilySearchService.discoverSourcesInternal, {
-      query: args.query,
-      maxResults: maxResults,
-      topic: 'general',
-      searchDepth: 'basic',
-    });
-
-    // Transform to legacy format for backward compatibility
-    const sources = result.map((s: any) => ({
-      url: s.url,
-      title: s.title,
-      snippet: s.snippet,
-      publishedDate: s.publishedDate || null,
-      score: s.score,
-    }));
-
-    return {
-      sources,
-      query: args.query,
-    };
   },
 });

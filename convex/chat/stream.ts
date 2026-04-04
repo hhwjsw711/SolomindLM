@@ -159,17 +159,25 @@ export const runWithStreamId = internalAction({
         console.error("[ChatStream] Tombstone persist failed:", persistErr);
       }
     } finally {
-      await flushTokenBuffer();
-      await ctx.runMutation(components.persistentTextStreaming.lib.addChunk, {
-        streamId,
-        text: "",
-        final: true,
-      });
+      try {
+        await flushTokenBuffer();
+        await ctx.runMutation(components.persistentTextStreaming.lib.addChunk, {
+          streamId,
+          text: "",
+          final: true,
+        });
+      } catch (flushErr) {
+        console.error("[ChatStream] Final stream flush failed:", flushErr);
+      }
     }
 
-    await ctx.runMutation(internal.chat.index.releaseChatGenerationInternal, {
-      conversationId,
-    });
+    try {
+      await ctx.runMutation(internal.chat.index.releaseChatGenerationInternal, {
+        conversationId,
+      });
+    } catch (releaseErr) {
+      console.error("[ChatStream] releaseChatGenerationInternal failed:", releaseErr);
+    }
   },
 });
 

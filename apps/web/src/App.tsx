@@ -213,6 +213,7 @@ const AppContent: React.FC = () => {
     messages: chatStream.chatDisplayMessages,
     isChatStreaming: chatStream.isChatStreaming,
     remoteChatGenerating: chatStream.remoteChatGenerating,
+    remoteGenerationBlocksSend: chatStream.remoteGenerationBlocksSend,
     onSendMessage: chatStream.handleSendMessage,
     onClearHistory: chatStream.handleClearChatHistory,
     onSetFeedback: chatStream.setMessageFeedback,

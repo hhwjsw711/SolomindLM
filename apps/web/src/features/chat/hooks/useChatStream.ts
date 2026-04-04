@@ -36,8 +36,16 @@ export function useChatStream({ activeNotebookId, sources, notes, documents }: U
   const messages = chatBundle?.messages ?? [];
   const chatRemoteGenerating = chatBundle?.chatGenerating ?? false;
 
+  /** True when server reports an in-flight generation and the DB still expects a reply (last row is not assistant). */
+  const remoteGenerationBlocksSend = useMemo(() => {
+    if (!chatRemoteGenerating) return false;
+    const last = messages[messages.length - 1];
+    return last?.role !== 'assistant';
+  }, [chatRemoteGenerating, messages]);
+
   const clearChatHistoryMutation = useMutation(api.chat.messages.clearHistory);
   const deleteMessagesFromMutation = useMutation(api.chat.messages.deleteMessagesFrom);
+  const releaseChatGenerationMutation = useMutation(api.chat.messages.releaseChatGeneration);
   const sendChatMessage = useSendMessage();
   const setMessageFeedback = useSetMessageFeedback();
 
@@ -80,7 +88,18 @@ export function useChatStream({ activeNotebookId, sources, notes, documents }: U
   }, []);
 
   const handleSendMessage = useCallback(async (messageText: string) => {
-    if (!activeNotebookId || isChatStreaming || chatRemoteGenerating) return;
+    if (!activeNotebookId || isChatStreaming) return;
+    if (chatRemoteGenerating) {
+      const last = messagesRef.current.at(-1) as Doc<'messages'> | undefined;
+      if (last?.role !== 'assistant') return;
+      try {
+        await releaseChatGenerationMutation({
+          notebookId: activeNotebookId as Id<'notebooks'>,
+        });
+      } catch {
+        /* best-effort: persist path may have already cleared the refcount */
+      }
+    }
 
     streamStartedAtRef.current = Date.now();
     setIsChatStreaming(true);
@@ -121,6 +140,7 @@ export function useChatStream({ activeNotebookId, sources, notes, documents }: U
             const allowed: ChatActivityPhase[] = [
               'searching',
               'reading',
+              'planning',
               'thinking',
               'generating',
               'writing',
@@ -154,7 +174,14 @@ export function useChatStream({ activeNotebookId, sources, notes, documents }: U
     } catch {
       resetStreamingState();
     }
-  }, [activeNotebookId, isChatStreaming, chatRemoteGenerating, sendChatMessage, resetStreamingState]);
+  }, [
+    activeNotebookId,
+    isChatStreaming,
+    chatRemoteGenerating,
+    releaseChatGenerationMutation,
+    sendChatMessage,
+    resetStreamingState,
+  ]);
 
   const handleClearChatHistory = useCallback(async () => {
     if (!activeNotebookId || activeNotebookId === 'new') return;
@@ -343,7 +370,7 @@ export function useChatStream({ activeNotebookId, sources, notes, documents }: U
   ]);
 
   const handleRetryMessage = useCallback(async (assistantMessageId: string) => {
-    if (isChatStreaming || chatRemoteGenerating) return;
+    if (isChatStreaming || remoteGenerationBlocksSend) return;
     const idx = chatDisplayMessages.findIndex((m) => m.id === assistantMessageId);
     if (idx < 0) return;
 
@@ -360,7 +387,13 @@ export function useChatStream({ activeNotebookId, sources, notes, documents }: U
 
     await deleteMessagesFromMutation({ messageId: userMessageId as Id<'messages'> });
     handleSendMessage(userContent);
-  }, [chatDisplayMessages, isChatStreaming, chatRemoteGenerating, handleSendMessage, deleteMessagesFromMutation]);
+  }, [
+    chatDisplayMessages,
+    isChatStreaming,
+    remoteGenerationBlocksSend,
+    handleSendMessage,
+    deleteMessagesFromMutation,
+  ]);
 
   const sourceSuggestions = useSourceSuggestions(
     activeNotebookId && activeNotebookId !== 'new' ? activeNotebookId : null,
@@ -375,6 +408,7 @@ export function useChatStream({ activeNotebookId, sources, notes, documents }: U
     chatDisplayMessages,
     isChatStreaming,
     remoteChatGenerating: chatRemoteGenerating,
+    remoteGenerationBlocksSend,
     displayNotes,
     handleSendMessage,
     handleClearChatHistory,

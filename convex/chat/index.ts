@@ -244,9 +244,27 @@ export const persistAssistantFromStream = internalMutation({
       createdAt: Date.now(),
     });
 
-    await ctx.db.patch(args.conversationId, {
-      updatedAt: Date.now(),
-    });
+    // Drop chatGenerationInFlight in the same write as the assistant row so clients never see
+    // a completed reply with chatGenerating still true (fixes follow-up / multi-tab UI races).
+    const now = Date.now();
+    const prevFlight = conversation.chatGenerationInFlight ?? 0;
+    if (prevFlight > 0) {
+      const n = prevFlight - 1;
+      if (n <= 0) {
+        await ctx.db.patch(args.conversationId, {
+          updatedAt: now,
+          chatGenerationInFlight: undefined,
+          chatGenerationStartedAt: undefined,
+        });
+      } else {
+        await ctx.db.patch(args.conversationId, {
+          updatedAt: now,
+          chatGenerationInFlight: n,
+        });
+      }
+    } else {
+      await ctx.db.patch(args.conversationId, { updatedAt: now });
+    }
 
     return { messageId, inserted: true };
   },
