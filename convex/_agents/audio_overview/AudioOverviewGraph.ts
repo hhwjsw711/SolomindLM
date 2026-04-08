@@ -3,11 +3,13 @@
  * AudioOverviewGraph class that orchestrates audio overview generation.
  */
 
-import OpenAI from 'openai';
 import { ChatTogetherAI } from '@langchain/community/chat_models/togetherai';
+import { createTogetherTtsClient } from '../../_services/ai/togetherTts.js';
+import type Together from 'together-ai';
 import { END, START, Send, StateGraph, type CompiledStateGraph } from '@langchain/langgraph';
 
-import { env } from '../../_lib/env';
+import { AGENT_LANGGRAPH_RECURSION_LIMIT } from '../_shared/agent_graph_limits.js';
+import { mergeModelKwargs } from '../_shared/llm_factory.js';
 import { createAgentGraphLogger } from '../_shared/logging.js';
 import { OverallState, type OverallStateType, type ChunkProcessState } from './state.js';
 import { packChunks, validateChunks } from './chunkHelpers.js';
@@ -19,25 +21,24 @@ import { synthesizeAudio as synthesizeAudioNode } from './nodeSynthesizeAudio.js
 export class AudioOverviewGraph {
   private fastLlm: ChatTogetherAI;
   private smartLlm: ChatTogetherAI;
-  private openai: OpenAI;
+  private together: Together;
 
   constructor(apiKey: string, mapModel: string, reduceModel: string) {
     this.fastLlm = new ChatTogetherAI({
       apiKey,
       model: mapModel,
       temperature: 0.3,
-      modelKwargs: { chat_template_kwargs: { thinking: false } },
+      modelKwargs: mergeModelKwargs(mapModel, 'fast'),
     });
 
     this.smartLlm = new ChatTogetherAI({
       apiKey,
       model: reduceModel,
       temperature: 0.6,
+      modelKwargs: mergeModelKwargs(reduceModel, 'smart'),
     });
 
-    this.openai = new OpenAI({
-      apiKey: env.OPENAI_API_KEY,
-    });
+    this.together = createTogetherTtsClient();
   }
 
   /**
@@ -96,13 +97,13 @@ export class AudioOverviewGraph {
     builder.addEdge('write_script' as never, 'synthesize_audio' as never);
     builder.addEdge('synthesize_audio' as never, END as never);
 
-    return builder.compile();
+    return builder.compile().withConfig({ recursionLimit: AGENT_LANGGRAPH_RECURSION_LIMIT });
   }
 
   /**
    * Synthesize audio from dialogue script (TTS phase).
    */
   async synthesizeAudio(state: OverallStateType): Promise<Partial<OverallStateType>> {
-    return synthesizeAudioNode(state, { openai: this.openai });
+    return synthesizeAudioNode(state, { together: this.together });
   }
 }

@@ -32,6 +32,7 @@ import {
   EXPAND_QUESTION_SYSTEM_PROMPT,
 } from '../../_agents/quiz/prompts';
 import { sanitizeUserInput, allWithConcurrency } from '../../_agents/_shared/index';
+import { mergeModelKwargs } from '../../_agents/_shared/llm_factory';
 import { invokeStudioLlm, createLangSmithRunConfig } from '../_job/invokeStudioLlm';
 
 // Interface for the structured LLM to avoid deep type instantiation
@@ -115,7 +116,7 @@ function createMapLLM(): ChatTogetherAI {
     model: env.FAST_LLM,
     temperature: 0.4,
     timeout: CONFIG.PER_CHUNK_TIMEOUT_MS,
-    modelKwargs: { chat_template_kwargs: { thinking: false } },
+    modelKwargs: mergeModelKwargs(env.FAST_LLM, 'fast'),
     // Increased from 8000 to handle large chunks (19-22K chars = ~6-8K input tokens)
     // Need room for 8 candidates × ~300 tokens each = ~2400 output tokens
     // Total: ~6K input + ~2.4K output + ~1K prompt = ~10K tokens minimum
@@ -130,6 +131,7 @@ function createReduceLLM(): ChatTogetherAI {
     temperature: 0.3,
     timeout: CONFIG.REDUCE_TIMEOUT_MS,
     maxTokens: parseInt(env.QUIZ_REDUCE_MAX_TOKENS || '24000', 10),
+    modelKwargs: mergeModelKwargs(env.SMART_LLM, 'smart'),
   });
 }
 
@@ -140,6 +142,7 @@ function createExpandLLM(): ChatTogetherAI {
     temperature: 0.3,
     timeout: CONFIG.EXPAND_TIMEOUT_MS,
     maxTokens: parseInt(env.QUIZ_EXPAND_MAX_TOKENS || '4096', 10),
+    modelKwargs: mergeModelKwargs(env.SMART_LLM, 'smart'),
   });
 }
 

@@ -25,6 +25,7 @@ export interface VectorSearchRawResult {
   chunkIndex: number;
   documentId?: string;
   sourceTitle?: string;
+  sourceUrl?: string;
   // Chunk metadata for enhanced RAG context
   metadata?: ChunkMetadata;
 }
@@ -190,7 +191,9 @@ export class VectorSearchHandler {
     const finalResults: ReferenceChunk[] = limited.map((r, index) => ({
       id: String(index + 1),
       sourceId: String(r._id),
+      documentId: r.documentId,
       sourceTitle: r.sourceTitle ?? 'Document',
+      sourceUrl: r.sourceUrl,
       content: r.content,
       chunkIndex: r.chunkIndex,
       similarity: r.similarity,

@@ -2,7 +2,7 @@
 
 import { env } from '../../_lib/env';
 
-/** Voice configuration (OpenAI TTS-1) */
+/** Together TTS voice IDs (Kokoro by default); override via AUDIO_VOICE_HOST_* env. */
 export const VOICES = {
   host_a: env.AUDIO_VOICE_HOST_A,
   host_b: env.AUDIO_VOICE_HOST_B,

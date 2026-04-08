@@ -234,7 +234,7 @@ export const MessageBubble = React.memo<MessageBubbleProps>(
 
     return (
       <div
-        className={`group/message flex flex-col ${isUser ? 'items-end' : 'items-start'} gap-1`}
+        className={`group/message flex min-w-0 w-full max-w-full flex-col ${isUser ? 'items-end gap-1' : 'items-start gap-1'}`}
         data-message-id={message.id}
       >
         {isUser ? (
@@ -258,6 +258,7 @@ export const MessageBubble = React.memo<MessageBubbleProps>(
                 activityPhases={activityPhases}
                 toolCalls={toolCalls}
                 groundingChecks={groundingChecks}
+                references={message.references}
                 clarificationResponse={
                   !!message.clarificationQuestion || !!message.agentTrace?.clarification
                 }
@@ -267,7 +268,7 @@ export const MessageBubble = React.memo<MessageBubbleProps>(
               <ThinkingIndicator status={message.status} />
             )}
             {message.content && (
-              <div className="w-full max-w-4xl font-serif text-lg leading-relaxed text-foreground">
+              <div className="w-full min-w-0 max-w-4xl font-serif text-lg leading-relaxed text-foreground">
                 {renderMessageWithReferences(message.id, message.content, message.references, refHandlers)}
                 <div className="mt-3 pt-3 border-t border-dashed border-border/40">
                   <ActionBar />

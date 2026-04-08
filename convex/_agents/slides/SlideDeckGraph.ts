@@ -7,7 +7,9 @@
 import { StateGraph, START, END } from '@langchain/langgraph';
 import { ChatTogetherAI } from '@langchain/community/chat_models/togetherai';
 
+import { AGENT_LANGGRAPH_RECURSION_LIMIT } from '../_shared/agent_graph_limits.js';
 import { countTokens } from '../_shared/index.js';
+import { mergeModelKwargs } from '../_shared/llm_factory.js';
 
 import { GRAPH_CONFIG } from './config.js';
 import { collapse } from './nodeCollapse.js';
@@ -51,7 +53,7 @@ export class SlideDeckGraph {
       model: fastModel,
       temperature: 0.4,
       maxTokens: GRAPH_CONFIG.MAX_TOKENS,
-      modelKwargs: { chat_template_kwargs: { thinking: false } },
+      modelKwargs: mergeModelKwargs(fastModel, 'fast'),
     });
 
     this.smartLlm = new ChatTogetherAI({
@@ -59,6 +61,7 @@ export class SlideDeckGraph {
       model: smartModel,
       temperature: 0.4,
       maxTokens: GRAPH_CONFIG.MAX_TOKENS,
+      modelKwargs: mergeModelKwargs(smartModel, 'smart'),
     });
 
     this.fastLlmStructured = createStructuredLLM<SlideCandidateResponse>(
@@ -112,6 +115,6 @@ export class SlideDeckGraph {
     builder.addEdge('reduce' as any, 'generate_images' as any);
     builder.addEdge('generate_images' as any, END as any);
 
-    return builder.compile();
+    return builder.compile().withConfig({ recursionLimit: AGENT_LANGGRAPH_RECURSION_LIMIT });
   }
 }

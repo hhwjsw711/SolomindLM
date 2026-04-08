@@ -1,14 +1,16 @@
 "use node"
 
-import type OpenAI from 'openai';
+import type Together from "together-ai";
 
+import { synthesizeSpeechToBuffer } from "../../_services/ai/togetherTts.js";
+import { env } from "../../_lib/env.js";
 import { createAgentGraphLogger } from '../_shared/logging.js';
 import type { OverallStateType, DialogueLine } from './state.js';
 import { GRAPH_CONFIG } from './config.js';
 import { VOICES } from './voices.js';
 
 export interface SynthesizeAudioDeps {
-  openai: OpenAI;
+  together: Together;
 }
 
 /**
@@ -20,7 +22,7 @@ export async function synthesizeAudio(
 ): Promise<Partial<OverallStateType>> {
   const logger = createAgentGraphLogger('AudioOverviewGraph', 'audio');
   const { dialogueScript } = state;
-  const { openai } = deps;
+  const { together } = deps;
 
   if (!dialogueScript || dialogueScript.length === 0) {
     throw new Error('No dialogue script to synthesize');
@@ -46,22 +48,16 @@ export async function synthesizeAudio(
 
     const batchPromises = batchLines.map(async (line: DialogueLine, batchIdx: number) => {
       const globalIndex = i + batchIdx;
-      const voice = (line.speaker === 'host_a' ? VOICES.host_a : VOICES.host_b) as "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer";
+      const voice =
+        line.speaker === "host_a" ? VOICES.host_a : VOICES.host_b;
 
       try {
-        const mp3 = await Promise.race([
-          openai.audio.speech.create({
-            model: 'tts-1',
-            voice: voice,
-            input: line.text,
-            response_format: 'mp3',
-          }),
-          new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error('TTS timeout')), GRAPH_CONFIG.TTS_TIMEOUT_MS)
-          ),
-        ]);
-
-        const buffer = Buffer.from(await mp3.arrayBuffer());
+        const buffer = await synthesizeSpeechToBuffer(together, {
+          model: env.AUDIO_TTS_MODEL,
+          input: line.text,
+          voice,
+          timeoutMs: GRAPH_CONFIG.TTS_TIMEOUT_MS,
+        });
 
         logger.info(`Synthesized line ${globalIndex + 1}/${dialogueScript.length}`, {
           agent: 'AudioOverviewGraph',

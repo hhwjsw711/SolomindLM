@@ -19,6 +19,7 @@ export type JobType =
   | 'slides'
   | 'spreadsheet'
   | 'written_questions'
+  | 'wiki'
   | 'document_embedding'
   /** Shared graph / node-builder paths without a Convex job document */
   | 'agent_graph';
@@ -347,7 +348,7 @@ export interface JobLogger {
  * const documents = await retrieveDocuments(ctx, documentIds);
  * logger.phaseComplete('document_retrieval', { chunkCount: 45 });
  *
- * logger.phaseStart('llm_generation', { model: 'qwen3-80b' });
+ * logger.phaseStart('llm_generation', { model: 'gpt-oss-20b' });
  * try {
  *   const result = await generateWithLLM(prompt);
  *   logger.phaseComplete('llm_generation', { tokensUsed: usage });

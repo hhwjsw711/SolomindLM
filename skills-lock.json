@@ -25,6 +25,36 @@
       "source": "get-convex/agent-skills",
       "sourceType": "github",
       "computedHash": "7cc29991c446d2ea574dc9abb5fb85c0c9a7f3ef3af4c94454eef45017bda794"
+    },
+    "together-audio": {
+      "source": "togethercomputer/skills",
+      "sourceType": "github",
+      "computedHash": "f4d515b68ff0c03d4d26ccd330ea8636c985bfacbdad69912e239084b9cf4778"
+    },
+    "together-chat-completions": {
+      "source": "togethercomputer/skills",
+      "sourceType": "github",
+      "computedHash": "23b006ff3f361d86bd88dd4e6086e837b2143c1ee119a66d0a164fbed4078b40"
+    },
+    "together-embeddings": {
+      "source": "togethercomputer/skills",
+      "sourceType": "github",
+      "computedHash": "06f28d1f507db80dbd67979ec21471cf6cae0a278add381ced615140b827cbb0"
+    },
+    "together-evaluations": {
+      "source": "togethercomputer/skills",
+      "sourceType": "github",
+      "computedHash": "6c23a0c7a847a01d549b90a5ada3cdf1fc3e7ab6f774148a4ed8ab30e3a3a8c4"
+    },
+    "together-images": {
+      "source": "togethercomputer/skills",
+      "sourceType": "github",
+      "computedHash": "bf83ae93846bc7ad85cdfd0828c584cc032c36ac5f6a3d2effad35fb343528d3"
+    },
+    "together-video": {
+      "source": "togethercomputer/skills",
+      "sourceType": "github",
+      "computedHash": "f13b0384b037dffc56752060c5fd82318ff0031a509af198f3c6344b4ac7cb56"
     }
   }
 }

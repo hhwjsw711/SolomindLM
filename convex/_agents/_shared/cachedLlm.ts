@@ -13,6 +13,7 @@ import { CACHE_TTL, withJitter } from "../../_services/cache/cache";
 import { hashInput } from "../../_services/cache/cacheCrypto";
 import { internal } from "../../_generated/api";
 import { env } from "../../_lib/env";
+import { mergeModelKwargs } from "./llm_factory.js";
 
 // ============================================================
 // Types
@@ -30,9 +31,8 @@ export interface LLMOptions {
   maxTokens?: number;
   responseFormat?: { type: "text" | "json_object" };
   /**
-   * When false: sends `chat_template_kwargs: { thinking: false }` — same shape as LangChain
-   * `ChatTogetherAI` (used by chat). Avoids GPT-OSS + `tool_choice` / extra reasoning fields that
-   * differ from that proven path.
+   * When false: `mergeModelKwargs(model, "fast")` (GPT-OSS: reasoning_effort low; Qwen: thinking off).
+   * When true: `mergeModelKwargs(model, "smart")` (GPT-OSS: reasoning_effort medium; Qwen: thinking on).
    */
   reasoningEnabled?: boolean;
   /**
@@ -147,9 +147,10 @@ function togetherChatRequestBody(options: LLMOptions): Record<string, unknown> {
   if (options.responseFormat) {
     body.response_format = options.responseFormat;
   }
-  // Match @langchain/community ChatTogetherAI `modelKwargs.chat_template_kwargs` (chat uses this and works).
   if (options.reasoningEnabled === false) {
-    body.chat_template_kwargs = { thinking: false };
+    Object.assign(body, mergeModelKwargs(options.model, "fast"));
+  } else if (options.reasoningEnabled === true) {
+    Object.assign(body, mergeModelKwargs(options.model, "smart"));
   }
   // Together marks GPT-OSS as no tool calling; omit tool_choice so the payload matches plain invokes.
   if (

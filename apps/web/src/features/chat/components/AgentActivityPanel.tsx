@@ -1,15 +1,20 @@
 import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
-import { ChevronDown, Check, Search, AlertTriangle, CircleHelp } from 'lucide-react';
+import { ChevronDown, CircleCheck, FileBox, AlertTriangle } from 'lucide-react';
 import type {
   MessageToolCall,
   AgentGroundingCheck,
   ChatActivityPhase,
+  ReferenceChunk,
 } from '@/shared/types/index';
-import { getStatusIcon, getStatusMessage } from '../utils/messageStatus';
+import { getStatusMessage } from '../utils/messageStatus';
+import { aggregateRetrievalSources } from '../utils/aggregateRetrievalSources';
 
 const STORAGE_KEY = 'solomind-chat-activity-open';
 
-const QUERY_PREVIEW_CHARS = 72;
+const SOURCE_BADGE_CLASS =
+  'shrink-0 justify-self-end rounded border border-border/60 bg-muted/25 px-1.5 py-px text-[10px] font-medium uppercase tracking-wide text-foreground/65 dark:border-border/55 dark:bg-muted/20 dark:text-foreground/60';
+
+const SOURCE_BADGE_LINK_CLASS = `${SOURCE_BADGE_CLASS} cursor-pointer no-underline transition-colors hover:bg-muted/45 hover:text-foreground/85 dark:hover:bg-muted/35 dark:hover:text-foreground/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-card`;
 
 export interface AgentActivityPanelProps {
   isStreaming: boolean;
@@ -22,85 +27,10 @@ export interface AgentActivityPanelProps {
   activityPhases: Array<{ status: string; message: string }>;
   toolCalls: MessageToolCall[];
   groundingChecks: AgentGroundingCheck[];
+  /** Chunks retrieved for this turn (streaming or persisted) — drives Claude-style source list */
+  references?: ReferenceChunk[] | null;
   /** Router asked for more detail — avoid showing "Response complete" for this turn */
   clarificationResponse?: boolean;
-}
-
-function toolLabel(tool: string): string {
-  if (tool === 'search_documents') return 'Search documents';
-  if (tool === 'ask_clarification') return 'Ask clarification';
-  return tool.replace(/_/g, ' ');
-}
-
-/**
- * Tool-call cards were rendered after all phase rows, so "Search documents" appeared after
- * generating/complete even though the agent finishes retrieval before "Reading passages".
- * Split phases so tool summaries sit after HyDE/embed/rank and before reading/formulation.
- */
-function splitPhasesForSearchToolDetails(
-  phases: Array<{ status: string; message: string }>,
-  hasToolCalls: boolean
-): { pipeline: typeof phases; postSearch: typeof phases } {
-  const readingIdx = phases.findIndex((p) => p.status === 'reading');
-  if (readingIdx >= 0) {
-    return {
-      pipeline: phases.slice(0, readingIdx),
-      postSearch: phases.slice(readingIdx),
-    };
-  }
-  if (hasToolCalls) {
-    const lastRankingIdx = phases.findLastIndex((p) => p.status === 'ranking');
-    if (lastRankingIdx >= 0) {
-      return {
-        pipeline: phases.slice(0, lastRankingIdx + 1),
-        postSearch: phases.slice(lastRankingIdx + 1),
-      };
-    }
-  }
-  return { pipeline: phases, postSearch: [] };
-}
-
-/** Canonical RAG step order so a briefly out-of-order trace (e.g. status/detail vs phases) cannot show "Formulating" before HyDE/search prep. */
-const RAG_DISPLAY_ORDER: Record<string, number> = {
-  /** Sub-query / search strategy step before retrieval (distinct from post-read `thinking`). */
-  planning: 5,
-  retrieving: 10,
-  embedding: 20,
-  ranking: 30,
-  reading: 40,
-  thinking: 50,
-  generating: 60,
-  writing: 70,
-};
-
-function sortTimelinePhasesForRagDisplay(
-  phases: Array<{ status: string; message: string }>
-): Array<{ status: string; message: string }> {
-  if (phases.length <= 1) return phases;
-  const rank = (s: string) => RAG_DISPLAY_ORDER[s] ?? 1000;
-  return [...phases]
-    .map((p, i) => ({ p, i }))
-    .sort((a, b) => rank(a.p.status) - rank(b.p.status) || a.i - b.i)
-    .map(({ p }) => p);
-}
-
-function phaseRowLine(step: { status: string; message: string }): string {
-  return (
-    step.message?.trim() ||
-    getStatusMessage(step.status) ||
-    step.status.replace(/_/g, ' ')
-  );
-}
-
-/** Avoid repeating the same line as the collapsible header inside the list. */
-function dropFirstPhaseIfMatchesHeader(
-  phases: Array<{ status: string; message: string }>,
-  headerLabel: string
-): Array<{ status: string; message: string }> {
-  const h = headerLabel.trim();
-  if (!h || phases.length === 0) return phases;
-  if (phaseRowLine(phases[0]) === h) return phases.slice(1);
-  return phases;
 }
 
 export const AgentActivityPanel = React.memo<AgentActivityPanelProps>(
@@ -113,6 +43,7 @@ export const AgentActivityPanel = React.memo<AgentActivityPanelProps>(
     activityPhases,
     toolCalls,
     groundingChecks,
+    references,
     clarificationResponse,
   }) => {
     const panelId = useId();
@@ -128,13 +59,24 @@ export const AgentActivityPanel = React.memo<AgentActivityPanelProps>(
       (g) => !g.passed || g.issues.length > 0
     );
 
+    const hasSearchDocuments = useMemo(
+      () => toolCalls.some((tc) => tc.tool === 'search_documents'),
+      [toolCalls]
+    );
+    const useClaudeLayout =
+      hasSearchDocuments || (references != null && references.length > 0);
+
+    const aggregatedSources = useMemo(
+      () => aggregateRetrievalSources(references),
+      [references]
+    );
+
     const [expanded, setExpanded] = useState(() => {
       if (typeof sessionStorage !== 'undefined') {
         const stored = sessionStorage.getItem(STORAGE_KEY);
         if (stored === '0') return false;
         if (stored === '1') return true;
       }
-      // Finished turns: keep trace available but collapsed by default (expand for grounding warnings).
       const doneHistorical =
         !isStreaming &&
         (historicalPhase === 'completed' ||
@@ -145,7 +87,6 @@ export const AgentActivityPanel = React.memo<AgentActivityPanelProps>(
       }
       return true;
     });
-    const [expandedQueries, setExpandedQueries] = useState<Record<number, boolean>>({});
 
     useEffect(() => {
       if (!isStreaming) return;
@@ -170,42 +111,49 @@ export const AgentActivityPanel = React.memo<AgentActivityPanelProps>(
       });
     }, [isStreaming]);
 
-    const toggleQuery = useCallback((index: number) => {
-      setExpandedQueries((prev) => ({ ...prev, [index]: !prev[index] }));
-    }, []);
-
-    const phaseLabel = useMemo(() => {
+    const { headerPrimary, headerMeta } = useMemo(() => {
       const currentPhase = (activityPhase ?? historicalPhase ?? undefined) as string | undefined;
 
       if (clarificationResponse) {
-        return 'Need a bit more context';
+        return { headerPrimary: 'Need a bit more context', headerMeta: null as string | null };
       }
 
-      // For completed searches with tool calls, always show passage count
-      // This takes priority over historicalDetail which might say "Reading X passages..."
-      if (toolCalls.length > 0) {
-        const allDone = toolCalls.every((tc) => tc.status === 'done');
-        if (allDone || currentPhase === 'completed') {
-          // Use the maximum resultCount (cumulative total from last search) instead of sum
-          const totalPassages = Math.max(
-            ...toolCalls.map((tc) => tc.resultCount ?? 0)
-          );
-          if (totalPassages > 0) {
-            return `Searched ${totalPassages} passage${totalPassages === 1 ? '' : 's'}`;
-          }
+      if (useClaudeLayout) {
+        const searchTcs = toolCalls.filter((tc) => tc.tool === 'search_documents');
+        const searchTc = searchTcs[0] ?? toolCalls[0];
+        const q = searchTc?.query?.trim() ?? '';
+        const searching =
+          isStreaming && searchTcs.some((tc) => tc.status === 'searching');
+
+        let primary: string;
+        if (q) {
+          primary = `Searched sources for "${q}"`;
+        } else if (aggregatedSources.length > 0 || (references?.length ?? 0) > 0) {
+          primary = 'Searched sources';
+        } else if (searching || hasSearchDocuments) {
+          primary = 'Searching your materials…';
+        } else {
+          primary = 'Searched sources';
         }
+
+        const n = aggregatedSources.length;
+        const meta = n > 0 ? `${n} result${n === 1 ? '' : 's'}` : null;
+        return { headerPrimary: primary, headerMeta: meta };
       }
 
-      // Fall back to generic "Response complete" for completed without tool calls
       if (currentPhase === 'completed') {
-        return 'Response complete';
+        return { headerPrimary: 'Response complete', headerMeta: null as string | null };
       }
 
-      if (activityDetail?.trim()) return activityDetail.trim();
-      if (historicalDetail?.trim()) return historicalDetail.trim();
+      if (activityDetail?.trim()) {
+        return { headerPrimary: activityDetail.trim(), headerMeta: null as string | null };
+      }
+      if (historicalDetail?.trim()) {
+        return { headerPrimary: historicalDetail.trim(), headerMeta: null as string | null };
+      }
 
       const fallback = getStatusMessage(currentPhase);
-      return fallback ?? 'Working…';
+      return { headerPrimary: fallback ?? 'Working…', headerMeta: null as string | null };
     }, [
       activityPhase,
       activityDetail,
@@ -213,36 +161,12 @@ export const AgentActivityPanel = React.memo<AgentActivityPanelProps>(
       historicalDetail,
       toolCalls,
       clarificationResponse,
+      useClaudeLayout,
+      hasSearchDocuments,
+      aggregatedSources.length,
+      references?.length,
+      isStreaming,
     ]);
-
-    const phaseIcon = clarificationResponse ? (
-      <CircleHelp className="w-3.5 h-3.5 text-muted-foreground" />
-    ) : (
-      getStatusIcon((activityPhase ?? historicalPhase ?? undefined) as string | undefined)
-    );
-
-    /** Header already shows final completion; keep timeline focused on work steps */
-    const timelinePhases = useMemo(
-      () => activityPhases.filter((p) => p.status !== 'completed'),
-      [activityPhases]
-    );
-    const sortedTimelinePhases = useMemo(
-      () => sortTimelinePhasesForRagDisplay(timelinePhases),
-      [timelinePhases]
-    );
-    const displayPhasesForSplit = useMemo(
-      () => dropFirstPhaseIfMatchesHeader(sortedTimelinePhases, phaseLabel),
-      [sortedTimelinePhases, phaseLabel]
-    );
-    const { pipeline, postSearch } = useMemo(
-      () =>
-        splitPhasesForSearchToolDetails(
-          displayPhasesForSplit,
-          toolCalls.length > 0
-        ),
-      [displayPhasesForSplit, toolCalls.length]
-    );
-    const totalTimelinePhaseRows = pipeline.length + postSearch.length;
 
     const hasActivity =
       isStreaming ||
@@ -252,35 +176,51 @@ export const AgentActivityPanel = React.memo<AgentActivityPanelProps>(
       !!activityPhase ||
       !!activityDetail ||
       !!historicalPhase ||
-      !!historicalDetail;
+      !!historicalDetail ||
+      (references != null && references.length > 0);
 
     if (!hasActivity) return null;
 
+    const turnComplete =
+      !isStreaming && (activityPhase ?? historicalPhase) === 'completed';
+
+    const searchFullyDone =
+      hasSearchDocuments &&
+      toolCalls.every(
+        (tc) => tc.tool !== 'search_documents' || tc.status === 'done'
+      );
+    const showClaudeDone =
+      useClaudeLayout && turnComplete && (searchFullyDone || aggregatedSources.length > 0);
+
     return (
-      <div
-        className="mb-3 w-full max-w-4xl rounded-lg border border-border/60 bg-[color-mix(in_oklch,var(--muted)_35%,transparent)] dark:bg-[color-mix(in_oklch,var(--muted)_22%,transparent)] shadow-[inset_0_1px_0_0_color-mix(in_oklch,var(--foreground)_6%,transparent)]"
-        data-agent-activity-panel
-      >
+      <div className="mb-0 w-full min-w-0 max-w-4xl" data-agent-activity-panel>
         <button
           type="button"
           id={`${panelId}-trigger`}
           aria-expanded={expanded}
           aria-controls={`${panelId}-region`}
+          aria-label={
+            headerMeta ? `${headerPrimary}, ${headerMeta}` : headerPrimary
+          }
           onClick={togglePanel}
-          className="flex w-full items-center gap-2 px-3 py-2.5 text-left font-sans text-xs font-medium tracking-wide text-foreground/85 transition-colors hover:bg-accent/25 dark:hover:bg-accent/15 rounded-t-lg"
+          className="group/trigger block w-full max-w-full border-0 bg-transparent p-0 py-0.5 text-left font-sans text-sm font-normal leading-snug text-foreground/78 shadow-none outline-none ring-0 transition-[color,opacity] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:text-foreground/72 dark:hover:text-foreground"
         >
-          <span
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-background/80 text-muted-foreground shadow-sm border border-border/50"
-            aria-hidden
-          >
-            {phaseIcon}
+          <span className="wrap-break-word leading-snug">
+            <span className="text-foreground/82 dark:text-foreground/78">
+              {headerPrimary}
+            </span>
+            {headerMeta ? (
+              <span className="whitespace-nowrap tabular-nums text-muted-foreground">
+                {' '}
+                {headerMeta}
+              </span>
+            ) : null}
+            <ChevronDown
+              className={`ml-0.5 inline-block h-3.5 w-3.5 align-middle text-muted-foreground/55 transition-[color,transform] duration-200 ease-out group-hover/trigger:text-muted-foreground/80 ${expanded ? 'rotate-180' : ''}`}
+              strokeWidth={2}
+              aria-hidden
+            />
           </span>
-          <span className="min-w-0 flex-1 truncate">{phaseLabel}</span>
-          <ChevronDown
-            className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ease-out ${expanded ? 'rotate-180' : ''}`}
-            strokeWidth={2}
-            aria-hidden
-          />
         </button>
 
         {expanded && (
@@ -288,158 +228,87 @@ export const AgentActivityPanel = React.memo<AgentActivityPanelProps>(
             id={`${panelId}-region`}
             role="region"
             aria-labelledby={`${panelId}-trigger`}
-            className="border-t border-border/50 px-3 pb-3 pt-1 font-sans text-xs text-foreground/80"
+            className="mt-2 min-w-0 max-w-full font-sans text-[11px] text-foreground/75"
           >
-            {(totalTimelinePhaseRows > 0 || toolCalls.length > 0) && (
-              <div className="mt-2">
-                <ol className="m-0 list-none space-y-1.5 p-0">
-                  {pipeline.map((step, si) => {
-                    const line =
-                      step.message?.trim() ||
-                      getStatusMessage(step.status) ||
-                      step.status.replace(/_/g, ' ');
-                    const stepIsFinishedInTimeline =
-                      !isStreaming ||
-                      si < totalTimelinePhaseRows - 1 ||
-                      step.status === 'completed';
-                    const iconStatus =
-                      step.status === 'generating' && stepIsFinishedInTimeline
-                        ? 'completed'
-                        : step.status;
-                    return (
-                      <li
-                        key={`p-${step.status}-${si}-${step.message?.slice(0, 24) ?? ''}`}
-                        className="flex gap-2 rounded-md border border-border/35 bg-background/40 px-2 py-1.5 dark:bg-background/25"
-                      >
-                        <span
-                          className="mt-0.5 shrink-0 text-muted-foreground"
-                          aria-hidden
-                        >
-                          {getStatusIcon(iconStatus)}
-                        </span>
-                        <span className="min-w-0 leading-snug text-foreground/88">{line}</span>
-                      </li>
-                    );
-                  })}
-                  {(() => {
-                    // Group tool calls by query to combine duplicate searches
-                    const groupedToolCalls = toolCalls.reduce((acc, tc, originalIndex) => {
-                      const key = `${tc.tool}:${tc.query}`;
-                      if (!acc[key]) {
-                        acc[key] = {
-                          tool: tc.tool,
-                          query: tc.query,
-                          status: tc.status,
-                          resultCount: 0,
-                          originalIndices: [],
-                          totalCount: 0
-                        };
-                      }
-                      acc[key].resultCount = Math.max(acc[key].resultCount, tc.resultCount ?? 0);
-                      acc[key].originalIndices.push(originalIndex);
-                      acc[key].totalCount += 1;
-                      if (tc.status === 'searching') {
-                        acc[key].status = 'searching';
-                      }
-                      return acc;
-                    }, {} as Record<string, {
-                      tool: string;
-                      query: string;
-                      status: 'searching' | 'done';
-                      resultCount: number;
-                      originalIndices: number[];
-                      totalCount: number;
-                    }>);
+            {useClaudeLayout && (
+              <div className="flex min-w-0 max-w-full items-start gap-2">
+                <FileBox
+                  className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/80"
+                  strokeWidth={1.75}
+                  aria-hidden
+                />
+                <div className="min-w-0 flex-1 border-l border-border/60 pl-2.5 dark:border-border/50">
+                  <div className="mb-2 flex min-w-0 items-baseline justify-between gap-3">
+                    <span className="min-w-0 flex-1 truncate text-[11px] text-foreground/65 dark:text-foreground/60">
+                      {headerPrimary}
+                    </span>
+                    {aggregatedSources.length > 0 ? (
+                      <span className="shrink-0 tabular-nums text-muted-foreground">
+                        {aggregatedSources.length} result
+                        {aggregatedSources.length === 1 ? '' : 's'}
+                      </span>
+                    ) : null}
+                  </div>
 
-                    return Object.values(groupedToolCalls).map((group, groupIndex) => {
-                      const { tool, query, status, resultCount, totalCount } = group;
-                      const long = query.length > QUERY_PREVIEW_CHARS;
-                      const useIndex = group.originalIndices[0];
-                      const open = expandedQueries[useIndex] ?? false;
-                      const display =
-                        !long || open ? query : `${query.slice(0, QUERY_PREVIEW_CHARS)}…`;
-                      const isMultiple = totalCount > 1;
-
-                      return (
-                        <li
-                          key={`t-${tool}-${query}-${groupIndex}`}
-                          className="rounded-md border border-border/40 bg-background/50 px-2.5 py-2 dark:bg-background/30"
-                        >
-                          <div className="flex items-start gap-2">
-                            <span className="mt-0.5 shrink-0 text-muted-foreground" aria-hidden>
-                              {status === 'searching' ? (
-                                <Search className="h-3.5 w-3.5 animate-pulse" />
-                              ) : (
-                                <Check className="h-3.5 w-3.5 text-vintage-green-600 dark:text-vintage-green-500" />
-                              )}
+                  <div className="box-border min-w-0 max-w-full overflow-hidden rounded-md border border-border/55 bg-card px-3 py-2 shadow-none dark:border-border/50">
+                    {aggregatedSources.length === 0 ? (
+                      <p className="m-0 min-w-0 text-[11px] leading-snug text-muted-foreground">
+                        {isStreaming && !searchFullyDone
+                          ? 'Searching your materials…'
+                          : 'No matching sections found in your sources.'}
+                      </p>
+                    ) : (
+                      <ul className="m-0 min-w-0 list-none divide-y divide-border/35 p-0 dark:divide-border/40">
+                        {aggregatedSources.map((src) => (
+                          <li
+                            key={src.sourceId}
+                            className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-2 py-2 first:pt-0 last:pb-0"
+                          >
+                            <span className="min-w-0 truncate text-[12px] leading-snug text-foreground/85 dark:text-foreground/80">
+                              {src.title}
                             </span>
-                            <div className="min-w-0 flex-1">
-                              <div className="font-semibold text-foreground/90">
-                                {toolLabel(tool)}
-                                {isMultiple && (
-                                  <span className="ml-1.5 text-xs text-muted-foreground/70 font-normal">
-                                    ({totalCount} searches)
-                                  </span>
-                                )}
-                              </div>
-                              <div className="mt-0.5 wrap-break-word text-muted-foreground leading-relaxed">
-                                {display}
-                              </div>
-                              {long && (
-                                <button
-                                  type="button"
-                                  onClick={() => toggleQuery(useIndex)}
-                                  className="mt-1 text-sm font-medium text-primary hover:underline"
-                                >
-                                  {open ? 'Show less' : 'Show full query'}
-                                </button>
-                              )}
-                              {status === 'done' && (
-                                <div className="mt-1 text-sm text-muted-foreground/90">
-                                  {resultCount} passage{resultCount === 1 ? '' : 's'} retrieved
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </li>
-                      );
-                    });
-                  })()}
-                  {postSearch.map((step, si) => {
-                    const globalSi = pipeline.length + si;
-                    const line =
-                      step.message?.trim() ||
-                      getStatusMessage(step.status) ||
-                      step.status.replace(/_/g, ' ');
-                    const stepIsFinishedInTimeline =
-                      !isStreaming ||
-                      globalSi < totalTimelinePhaseRows - 1 ||
-                      step.status === 'completed';
-                    const iconStatus =
-                      step.status === 'generating' && stepIsFinishedInTimeline
-                        ? 'completed'
-                        : step.status;
-                    return (
-                      <li
-                        key={`s-${step.status}-${si}-${step.message?.slice(0, 24) ?? ''}`}
-                        className="flex gap-2 rounded-md border border-border/35 bg-background/40 px-2 py-1.5 dark:bg-background/25"
-                      >
-                        <span
-                          className="mt-0.5 shrink-0 text-muted-foreground"
-                          aria-hidden
-                        >
-                          {getStatusIcon(iconStatus)}
-                        </span>
-                        <span className="min-w-0 leading-snug text-foreground/88">{line}</span>
-                      </li>
-                    );
-                  })}
-                </ol>
+                            <span className="shrink-0 whitespace-nowrap text-right text-[11px] text-muted-foreground">
+                              {src.sectionCount} relevant section
+                              {src.sectionCount === 1 ? '' : 's'}
+                            </span>
+                            {src.openUrl ? (
+                              <a
+                                href={src.openUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={SOURCE_BADGE_LINK_CLASS}
+                                aria-label={`Open ${src.title} in a new tab`}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {src.badgeLabel}
+                              </a>
+                            ) : (
+                              <span className={SOURCE_BADGE_CLASS}>{src.badgeLabel}</span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+
+                  {showClaudeDone ? (
+                    <div className="mt-2 flex items-center gap-1.5 text-muted-foreground">
+                      <CircleCheck
+                        className="h-3.5 w-3.5 shrink-0 text-vintage-green-600 dark:text-vintage-green-500"
+                        strokeWidth={2}
+                        aria-hidden
+                      />
+                      <span className="text-[11px] font-medium text-foreground/70">Done</span>
+                    </div>
+                  ) : null}
+                </div>
               </div>
             )}
 
             {showGroundingCallout && (
-              <div className="mt-3 rounded-md border border-amber-700/25 bg-amber-50 px-2.5 py-2 dark:border-amber-400/35 dark:bg-amber-950/70">
+              <div
+                className={`border-l-2 border-amber-600/45 bg-amber-50/90 py-2 pl-3 pr-2 dark:border-amber-400/50 dark:bg-amber-950/45 ${useClaudeLayout ? 'mt-3' : 'mt-2'}`}
+              >
                 <div className="flex items-start gap-2 text-amber-950 dark:text-amber-50">
                   <AlertTriangle
                     className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-800 dark:text-amber-300"
@@ -448,11 +317,11 @@ export const AgentActivityPanel = React.memo<AgentActivityPanelProps>(
                   <div className="min-w-0 space-y-1">
                     {hardGroundingChecks.map((g, gi) => (
                       <div key={gi}>
-                        <p className="font-medium leading-snug text-amber-950 dark:text-amber-50">
+                        <p className="text-[11px] font-medium leading-snug text-amber-950 dark:text-amber-50">
                           {g.message}
                         </p>
                         {g.issues.length > 0 && (
-                          <ul className="mt-1 list-disc pl-4 text-sm leading-snug text-amber-900 dark:text-amber-100/95">
+                          <ul className="mt-1 list-disc pl-3.5 text-[11px] leading-snug text-amber-900 dark:text-amber-100/95">
                             {g.issues.map((issue, ii) => (
                               <li key={ii}>{issue}</li>
                             ))}
@@ -466,7 +335,7 @@ export const AgentActivityPanel = React.memo<AgentActivityPanelProps>(
             )}
 
             {softGroundingChecks.length > 0 && (
-              <div className="mt-2 rounded-md border border-border/40 bg-muted/20 px-2.5 py-2 text-muted-foreground">
+              <div className="mt-2 border-l border-border/30 py-1 pl-3 text-muted-foreground/85">
                 {softGroundingChecks.map((g, gi) => (
                   <p key={gi} className="text-[11px] leading-snug">
                     {g.message}

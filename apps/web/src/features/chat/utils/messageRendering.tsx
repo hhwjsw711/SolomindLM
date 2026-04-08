@@ -32,8 +32,12 @@ export function renderMessageWithReferences(
   const processedContent = replaceCitationMarkersOutsideMath(sanitizedContent);
 
   return (
-    <div className="prose font-serif text-base leading-relaxed space-y-2 max-w-none">
-      <Suspense fallback={<div className="animate-pulse h-4 bg-secondary/30 rounded w-full" />}>
+    <Suspense
+      fallback={
+        <div className="prose max-w-none font-serif animate-pulse h-4 rounded bg-secondary/30" />
+      }
+    >
+      <div className="prose max-w-none space-y-2 font-serif text-base leading-relaxed">
         <MarkdownRenderer
           components={{
             img: () => null,
@@ -79,7 +83,7 @@ export function renderMessageWithReferences(
         >
           {processedContent}
         </MarkdownRenderer>
-      </Suspense>
-    </div>
+      </div>
+    </Suspense>
   );
 }

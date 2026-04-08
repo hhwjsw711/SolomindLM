@@ -4,7 +4,9 @@ import { ChatTogetherAI } from '@langchain/community/chat_models/togetherai';
 import { END, START, StateGraph, type Send } from '@langchain/langgraph';
 
 import { env } from '../../_lib/env.js';
+import { AGENT_LANGGRAPH_RECURSION_LIMIT } from '../_shared/agent_graph_limits.js';
 import { countTokens } from '../_shared/index.js';
+import { mergeModelKwargs } from '../_shared/llm_factory.js';
 
 import { GRAPH_CONFIG } from './config.js';
 import { validateInput } from './inputValidation.js';
@@ -31,7 +33,7 @@ export class ReportGraph {
       temperature: 0.3,
       timeout: GRAPH_CONFIG.MAP_TIMEOUT_MS,
       maxTokens: parseInt(env.REPORT_MAP_MAX_OUTPUT_TOKENS || '8192', 10),
-      modelKwargs: { chat_template_kwargs: { thinking: false } },
+      modelKwargs: mergeModelKwargs(mapModel, 'fast'),
     });
 
     this.smartLlm = new ChatTogetherAI({
@@ -40,6 +42,7 @@ export class ReportGraph {
       temperature: 0.5,
       timeout: GRAPH_CONFIG.REDUCE_TIMEOUT_MS,
       maxTokens: parseInt(env.REPORT_REDUCE_MAX_OUTPUT_TOKENS || '32000', 10),
+      modelKwargs: mergeModelKwargs(reduceModel, 'smart'),
     });
 
     this.fastLlmStructured = createStructuredLLM(this.fastLlm, MapOutputSchema);
@@ -104,6 +107,6 @@ export class ReportGraph {
     builder.addEdge('reduce' as never, 'merge_results' as never);
     builder.addEdge('merge_results' as never, END as never);
 
-    return builder.compile();
+    return builder.compile().withConfig({ recursionLimit: AGENT_LANGGRAPH_RECURSION_LIMIT });
   }
 }

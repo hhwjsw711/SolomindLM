@@ -398,6 +398,11 @@
   max-width: 65ch;
 }
 
+/* Flush first block (chat: no dead space below agent activity / above first heading) */
+.prose > :first-child {
+  margin-top: 0;
+}
+
 .prose p {
   margin-top: 1.25em;
   margin-bottom: 1.25em;
@@ -672,6 +677,11 @@
 
 .prose :where(h1, h2, h3, h4, h5, h6) + * {
   margin-top: 0;
+}
+
+/* After headings, margin collapse leaves only the heading’s bottom margin; add padding so body text isn’t glued to the title */
+.prose :where(h1, h2, h3, h4) + :where(p, ul, ol) {
+  padding-top: 0.45em;
 }
 
 .prose :where(ul, ol) > :where(li) > :where(ul, ol) {

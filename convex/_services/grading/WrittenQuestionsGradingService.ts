@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { env } from '../../_lib/env';
 import { createServiceLogger } from '../../_lib/logging/serviceLogger';
 import { invokeWithTimeout, invokeWithRetry } from '../../_agents/_shared/index.js';
+import { mergeModelKwargs } from '../../_agents/_shared/llm_factory.js';
 
 export interface WrittenQuestion {
   id: string;
@@ -44,11 +45,12 @@ export class WrittenQuestionsGradingService {
   private llm: ChatTogetherAI;
 
   constructor() {
+    const model = env.SMART_LLM || env.FAST_LLM;
     this.llm = new ChatTogetherAI({
       apiKey: env.TOGETHER_AI_API_KEY,
-      model: env.SMART_LLM || env.FAST_LLM,
+      model,
       temperature: 0.3, // Lower temperature for more consistent grading
-      modelKwargs: { chat_template_kwargs: { thinking: false } },
+      modelKwargs: mergeModelKwargs(model, 'smart'),
     });
   }
 

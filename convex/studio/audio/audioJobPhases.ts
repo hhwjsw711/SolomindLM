@@ -14,11 +14,15 @@ import {
 } from '../../_agents/_shared/logging';
 import { ChatTogetherAI } from '@langchain/community/chat_models/togetherai';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
-import OpenAI from 'openai';
+import {
+  createTogetherTtsClient,
+  synthesizeSpeechToBuffer,
+} from '../../_services/ai/togetherTts.js';
 import {
   packChunks,
   validateChunks,
 } from '../../_agents/_shared/index';
+import { mergeModelKwargs } from '../../_agents/_shared/llm_factory';
 import {
   getMapPrompt,
   getReducePrompt,
@@ -72,7 +76,7 @@ export type FinalizeAudioOverviewPhaseArgs = {
   notebookId: Id<'notebooks'>;
 };
 
-/** Voice configuration (OpenAI TTS-1) */
+/** Kokoro (or other Together TTS) voice IDs per host */
 const VOICES = {
   host_a: env.AUDIO_VOICE_HOST_A,
   host_b: env.AUDIO_VOICE_HOST_B,
@@ -89,7 +93,7 @@ function createMapLLM(): ChatTogetherAI {
     model: env.FAST_LLM,
     temperature: 0.3,
     timeout: CONFIG.PER_CHUNK_TIMEOUT_MS,
-    modelKwargs: { chat_template_kwargs: { thinking: false } },
+    modelKwargs: mergeModelKwargs(env.FAST_LLM, 'fast'),
   });
 }
 
@@ -100,7 +104,7 @@ function createReduceLLM(): ChatTogetherAI {
     temperature: 0.6,
     maxTokens: CONFIG.REDUCE_MAX_OUTPUT_TOKENS,
     timeout: CONFIG.REDUCE_TIMEOUT_MS,
-    modelKwargs: { chat_template_kwargs: { thinking: false } },
+    modelKwargs: mergeModelKwargs(env.SMART_LLM, 'smart'),
   });
 }
 
@@ -613,8 +617,7 @@ export async function runFinalizeAudioOverviewPhase(
         },
       });
 
-      // Synthesize audio using OpenAI TTS
-      const openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
+      const ttsClient = createTogetherTtsClient();
       const results: { index: number; buffer: Buffer | null }[] = [];
       const BATCH_SIZE = 5;
 
@@ -623,22 +626,16 @@ export async function runFinalizeAudioOverviewPhase(
 
         const batchPromises = batchLines.map(async (line, batchIdx) => {
           const globalIndex = i + batchIdx;
-          const voice = (line.speaker === 'host_a' ? VOICES.host_a : VOICES.host_b) as "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer";
+          const voice =
+            line.speaker === "host_a" ? VOICES.host_a : VOICES.host_b;
 
           try {
-            const mp3 = await Promise.race([
-              openai.audio.speech.create({
-                model: 'tts-1',
-                voice,
-                input: line.text,
-                response_format: 'mp3',
-              }),
-              new Promise<never>((_, reject) =>
-                setTimeout(() => reject(new Error('TTS timeout')), CONFIG.TTS_TIMEOUT_MS)
-              ),
-            ]);
-
-            const buffer = Buffer.from(await mp3.arrayBuffer());
+            const buffer = await synthesizeSpeechToBuffer(ttsClient, {
+              model: env.AUDIO_TTS_MODEL,
+              input: line.text,
+              voice,
+              timeoutMs: CONFIG.TTS_TIMEOUT_MS,
+            });
             return { index: globalIndex, buffer };
           } catch (error) {
             console.log(`[AudioJob] Failed line ${globalIndex + 1}`);

@@ -11,8 +11,10 @@
  * - Conditional routing between nodes
  */
 
-import { StateGraph, START, END, Annotation, CompiledStateGraph } from '@langchain/langgraph';
+import { StateGraph, START, END } from '@langchain/langgraph';
 import type { Send } from '@langchain/langgraph';
+
+import { AGENT_LANGGRAPH_RECURSION_LIMIT } from './agent_graph_limits.js';
 
 // ============================================================
 // Types
@@ -153,7 +155,7 @@ export function buildMapReduceGraph<TState extends Record<string, unknown>>(
     }
   }
 
-  return builder.compile();
+  return builder.compile().withConfig({ recursionLimit: AGENT_LANGGRAPH_RECURSION_LIMIT });
 }
 
 /**
@@ -202,7 +204,7 @@ export function buildLinearGraph<TState extends Record<string, unknown>>(
     builder.addEdge(config.nodes[config.nodes.length - 1].name as never, END as never);
   }
 
-  return builder.compile();
+  return builder.compile().withConfig({ recursionLimit: AGENT_LANGGRAPH_RECURSION_LIMIT });
 }
 
 /**
@@ -256,7 +258,7 @@ export function buildCustomGraph<TState extends Record<string, unknown>>(
     }
   }
 
-  return builder.compile();
+  return builder.compile().withConfig({ recursionLimit: AGENT_LANGGRAPH_RECURSION_LIMIT });
 }
 
 /**

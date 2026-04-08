@@ -13,6 +13,7 @@ import {
   createJobLogger,
   createErrorMetadata,
 } from '../../_agents/_shared/logging';
+import { mergeModelKwargs } from '../../_agents/_shared/llm_factory';
 import { ChatTogetherAI } from '@langchain/community/chat_models/togetherai';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { z } from 'zod';
@@ -133,7 +134,7 @@ function createMapLLM(): ChatTogetherAI {
     model: env.FAST_LLM,
     temperature: 0.4,
     timeout: CONFIG.PER_CHUNK_TIMEOUT_MS,
-    modelKwargs: { chat_template_kwargs: { thinking: false } },
+    modelKwargs: mergeModelKwargs(env.FAST_LLM, 'fast'),
     maxTokens: parseInt(env.SLIDES_MAX_TOKENS || '8000', 10),
   });
 }
@@ -145,6 +146,7 @@ function createReduceLLM(): ChatTogetherAI {
     temperature: 0.3,
     timeout: CONFIG.REDUCE_TIMEOUT_MS,
     maxTokens: parseInt(env.SLIDES_MAX_TOKENS || '8000', 10),
+    modelKwargs: mergeModelKwargs(env.SMART_LLM, 'smart'),
   });
 }
 
@@ -155,6 +157,7 @@ function createRefineLLM(): ChatTogetherAI {
     temperature: 0.4,
     timeout: CONFIG.REFINE_TIMEOUT_MS,
     maxTokens: parseInt(env.SLIDES_MAX_TOKENS || '8000', 10),
+    modelKwargs: mergeModelKwargs(env.SMART_LLM, 'smart'),
   });
 }
 

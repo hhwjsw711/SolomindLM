@@ -38,6 +38,7 @@ import {
   invokeWithTimeout,
   sanitizeUserInput,
 } from '../../_agents/_shared/index';
+import { mergeModelKwargs } from '../../_agents/_shared/llm_factory';
 import { invokeStudioLlm, createLangSmithRunConfig } from '../_job/invokeStudioLlm';
 
 // ============================================================
@@ -96,7 +97,7 @@ function createMapLLM(): ChatTogetherAI {
     model: env.FAST_LLM,
     temperature: 0.3,
     timeout: CONFIG.PER_CHUNK_TIMEOUT_MS,
-    modelKwargs: { chat_template_kwargs: { thinking: false } },
+    modelKwargs: mergeModelKwargs(env.FAST_LLM, 'fast'),
   });
 }
 
@@ -107,7 +108,7 @@ function createReduceLLM(): ChatTogetherAI {
     temperature: 0.3,
     timeout: CONFIG.REDUCE_TIMEOUT_MS,
     maxTokens: CONFIG.REDUCE_MAX_TOKENS,
-    modelKwargs: { chat_template_kwargs: { thinking: false } },
+    modelKwargs: mergeModelKwargs(env.SMART_LLM, 'smart'),
   });
 }
 

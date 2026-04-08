@@ -6,6 +6,8 @@
 import { ChatTogetherAI } from '@langchain/community/chat_models/togetherai';
 import { END, START, StateGraph, type Send } from '@langchain/langgraph';
 
+import { AGENT_LANGGRAPH_RECURSION_LIMIT } from '../_shared/agent_graph_limits.js';
+import { mergeModelKwargs } from '../_shared/llm_factory.js';
 import { createAgentGraphLogger } from '../_shared/logging.js';
 
 import { validateChunks } from './chunkHelpers.js';
@@ -43,7 +45,7 @@ export class MindMapGraph {
       model: mapModel,
       temperature: 0.1,
       maxTokens: 8000,
-      modelKwargs: { chat_template_kwargs: { thinking: false } },
+      modelKwargs: mergeModelKwargs(mapModel, 'fast'),
     });
 
     this.smartLlm = new ChatTogetherAI({
@@ -51,6 +53,7 @@ export class MindMapGraph {
       model: reduceModel,
       temperature: 0.3,
       maxTokens: 16000,
+      modelKwargs: mergeModelKwargs(reduceModel, 'smart'),
     });
   }
 
@@ -151,7 +154,7 @@ export class MindMapGraph {
     builder.addEdge(NODES.MAP_PROCESS as any, NODES.REDUCE_NODE as any);
     builder.addEdge(NODES.REDUCE_NODE as any, END);
 
-    return builder.compile();
+    return builder.compile().withConfig({ recursionLimit: AGENT_LANGGRAPH_RECURSION_LIMIT });
   }
 }
 

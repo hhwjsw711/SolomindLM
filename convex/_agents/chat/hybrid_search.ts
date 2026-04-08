@@ -26,6 +26,7 @@ export interface KeywordSearchRawResult {
   chunkIndex: number;
   documentId?: string;
   sourceTitle?: string;
+  sourceUrl?: string;
   // Chunk metadata for enhanced RAG context
   metadata?: ChunkMetadata;
 }
@@ -242,7 +243,9 @@ export class HybridSearchHandler extends VectorSearchHandler {
         return {
           id: String(index + 1),
           sourceId: String(r._id),
+          documentId: r.documentId,
           sourceTitle: r.sourceTitle ?? 'Document',
+          sourceUrl: r.sourceUrl,
           content: r.content,
           chunkIndex: r.chunkIndex,
           similarity: r._score ?? r.similarity ?? r.rrfScore,
@@ -285,7 +288,9 @@ export class HybridSearchHandler extends VectorSearchHandler {
           finalResults = limited.map((r, index) => ({
             id: String(index + 1),
             sourceId: String(r._id),
+            documentId: r.documentId,
             sourceTitle: r.sourceTitle ?? 'Document',
+            sourceUrl: r.sourceUrl,
             content: r.content,
             chunkIndex: r.chunkIndex,
             similarity: r._score ?? 0,

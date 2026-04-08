@@ -53,6 +53,37 @@ export interface LLMInstances {
 }
 
 // ============================================================
+// Together model kwargs
+// ============================================================
+
+/** Map = fast extraction; smart = reduce / synthesis (medium reasoning on GPT-OSS). */
+export type TogetherModelPhase = 'fast' | 'smart';
+
+/**
+ * Kwargs for Together chat/completions: GPT-OSS uses `reasoning_effort`; hybrid
+ * Qwen / DeepSeek-style models use `chat_template_kwargs.thinking`.
+ * `chat_template_kwargs` is not applied to `openai/*` (ignored for GPT-OSS).
+ *
+ * GPT-OSS: fast → `low`, smart → `medium` (Together’s balanced default).
+ *
+ * @see .agents/skills/together-chat-completions/references/reasoning-models.md
+ */
+export function mergeModelKwargs(
+  model: string,
+  phase: TogetherModelPhase,
+): Record<string, unknown> {
+  if (model.startsWith('openai/gpt-oss-')) {
+    return { reasoning_effort: phase === 'fast' ? 'low' : 'medium' };
+  }
+  if (model.startsWith('openai/')) {
+    return {};
+  }
+  return {
+    chat_template_kwargs: { thinking: phase === 'smart' },
+  };
+}
+
+// ============================================================
 // Factory Functions
 // ============================================================
 
@@ -85,13 +116,18 @@ export interface LLMInstances {
  * ```
  */
 export function createLLMs(config: LLMConfig): LLMInstances {
+  const fastModelKwargs = mergeModelKwargs(config.mapModel, 'fast');
+  const reduceModelKwargs = config.reduceModel
+    ? mergeModelKwargs(config.reduceModel, 'smart')
+    : {};
+
   // Fast model for map phase (parallel processing, lower temp for consistency)
   const fastLlm = new ChatTogetherAI({
     apiKey: config.apiKey,
     model: config.mapModel,
     temperature: config.temperatures?.map ?? 0.3,
     maxTokens: config.maxTokens?.map,
-    modelKwargs: { chat_template_kwargs: { thinking: false } },
+    modelKwargs: fastModelKwargs,
   });
 
   // Smart model for reduce phase (quality synthesis, higher temp for creativity)
@@ -101,7 +137,7 @@ export function createLLMs(config: LLMConfig): LLMInstances {
         model: config.reduceModel,
         temperature: config.temperatures?.reduce ?? 0.6,
         maxTokens: config.maxTokens?.reduce,
-        modelKwargs: { chat_template_kwargs: { thinking: false } },
+        modelKwargs: reduceModelKwargs,
       })
     : fastLlm;
 
@@ -128,13 +164,17 @@ export function createLLMs(config: LLMConfig): LLMInstances {
 export function createLLM(config: Omit<LLMConfig, 'reduceModel' | 'temperatures' | 'maxTokens'> & {
   temperatures?: number;
   maxTokens?: number;
+  /** Default `fast` when omitted. */
+  phase?: TogetherModelPhase;
 }): ChatTogetherAI {
+  const modelKwargs = mergeModelKwargs(config.mapModel, config.phase ?? 'fast');
+
   return new ChatTogetherAI({
     apiKey: config.apiKey,
     model: config.mapModel,
     temperature: config.temperatures ?? 0.3,
     maxTokens: config.maxTokens,
-    modelKwargs: { chat_template_kwargs: { thinking: false } },
+    modelKwargs,
   });
 }
 
@@ -173,7 +213,7 @@ export function createLLMsFromEnv(
 
   return createLLMs({
     apiKey,
-    mapModel: options.mapModel || env.FAST_LLM || 'Qwen/Qwen3.5-9B',
+    mapModel: options.mapModel || env.FAST_LLM || 'gpt-oss-20b',
     reduceModel: options.reduceModel || env.SMART_LLM,
     temperatures: {
       map: options.mapTemperature,

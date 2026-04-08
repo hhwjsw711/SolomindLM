@@ -19,6 +19,7 @@ import { MAP_SYSTEM_PROMPT, MAP_PROMPTS, REDUCE_SYSTEM_PROMPT, REDUCE_PROMPTS } 
 import { MapOutputSchema, type MapOutput } from '../../_agents/report/nodes';
 import { z } from 'zod';
 import { sanitizeUserInput } from '../../_agents/_shared/index';
+import { mergeModelKwargs } from '../../_agents/_shared/llm_factory';
 import { invokeStudioLlm, createLangSmithRunConfig } from '../_job/invokeStudioLlm';
 
 interface MapOutputInvoker {
@@ -47,7 +48,7 @@ function createMapLLM(): ChatTogetherAI {
     temperature: 0.3,
     timeout: CONFIG.PER_CHUNK_TIMEOUT_MS,
     maxTokens: parseInt(env.REPORT_MAP_MAX_OUTPUT_TOKENS || '16384', 10), // Increased from 8192 to prevent truncation
-    modelKwargs: { chat_template_kwargs: { thinking: false } },
+    modelKwargs: mergeModelKwargs(env.FAST_LLM, 'fast'),
   });
 }
 
@@ -58,6 +59,7 @@ function createReduceLLM(): ChatTogetherAI {
     temperature: 0.5,
     timeout: CONFIG.REDUCE_TIMEOUT_MS,
     maxTokens: CONFIG.MAX_OUTPUT_TOKENS,
+    modelKwargs: mergeModelKwargs(env.SMART_LLM, 'smart'),
   });
 }
 

@@ -24,6 +24,7 @@ interface VectorSearchResult {
   content: string;
   embedding: number[];
   sourceTitle: string;
+  sourceUrl?: string;
   // Chunk metadata for enhanced RAG context
   metadata?: ChunkMetadata;
 }
@@ -304,12 +305,30 @@ export async function streamChatResponse(
     }
 
     const documentIds = [...new Set(rowsWithoutTitle.map((r) => r.documentId))];
-    const docTitles = await ctx.runQuery(internal.documents.index.getDocumentsByIds, { documentIds }) as { _id: Id<"documents">; fileName: string }[];
-    const titleMap = new Map<Id<"documents">, string>(docTitles.map((d: { _id: Id<"documents">; fileName: string }) => [d._id, d.fileName]));
+    const docRows = (await ctx.runQuery(internal.documents.index.getDocumentsByIds, {
+      documentIds,
+    })) as {
+      _id: Id<"documents">;
+      fileName: string;
+      fileUrl?: string;
+      fileType?: string;
+    }[];
+    const titleMap = new Map<Id<"documents">, string>(
+      docRows.map((d) => [d._id, d.fileName])
+    );
+    const sourceUrlMap = new Map<Id<"documents">, string>();
+    for (const d of docRows) {
+      const u = d.fileUrl?.trim();
+      if (!u) continue;
+      if (d.fileType === "url" || d.fileType === "youtube") {
+        sourceUrlMap.set(d._id, u);
+      }
+    }
 
     const rows: VectorSearchResult[] = rowsWithoutTitle.map((r) => ({
       ...r,
       sourceTitle: (titleMap.get(r.documentId) ?? "Document") as string,
+      sourceUrl: sourceUrlMap.get(r.documentId),
     }));
 
     // REFACTORED: Apply documentIds filter FIRST, then threshold

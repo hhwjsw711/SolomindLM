@@ -3,7 +3,9 @@
 import { ChatTogetherAI } from '@langchain/community/chat_models/togetherai';
 import { END, START, StateGraph } from '@langchain/langgraph';
 
+import { AGENT_LANGGRAPH_RECURSION_LIMIT } from '../_shared/agent_graph_limits.js';
 import { countTokens } from '../_shared/index.js';
+import { mergeModelKwargs } from '../_shared/llm_factory.js';
 import { createAgentGraphLogger } from '../_shared/logging.js';
 
 import {
@@ -31,7 +33,7 @@ export class FlashcardGraph {
       apiKey,
       model: mapModel,
       temperature: 0.3,
-      modelKwargs: { chat_template_kwargs: { thinking: false } },
+      modelKwargs: mergeModelKwargs(mapModel, 'fast'),
     });
 
     this.smartLlm = new ChatTogetherAI({
@@ -40,7 +42,7 @@ export class FlashcardGraph {
       temperature: 0.3,
       timeout: FLASHCARD_CONFIG.REDUCE_TIMEOUT_MS,
       maxTokens: FLASHCARD_CONFIG.REDUCE_MAX_TOKENS,
-      modelKwargs: { chat_template_kwargs: { thinking: false } },
+      modelKwargs: mergeModelKwargs(reduceModel, 'smart'),
     });
 
     this.fastLlmStructured = createStructuredLLM(this.fastLlm, FlashcardArraySchema);
@@ -79,6 +81,6 @@ export class FlashcardGraph {
     builder.addEdge('collapse' as any, 'reduce' as any);
     builder.addEdge('reduce' as any, END as any);
 
-    return builder.compile();
+    return builder.compile().withConfig({ recursionLimit: AGENT_LANGGRAPH_RECURSION_LIMIT });
   }
 }

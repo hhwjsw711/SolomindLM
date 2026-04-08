@@ -30,6 +30,7 @@ import {
   getSelectionIdsPrompt,
 } from '../../_agents/written_questions/postprocess';
 import { sanitizeUserInput } from '../../_agents/_shared/index';
+import { mergeModelKwargs } from '../../_agents/_shared/llm_factory';
 import { invokeStudioLlm, createLangSmithRunConfig } from '../_job/invokeStudioLlm';
 
 // ============================================================
@@ -124,7 +125,7 @@ function createMapLLM(): ChatTogetherAI {
     model: env.FAST_LLM,
     temperature: 0.4,
     timeout: CONFIG.PER_CHUNK_TIMEOUT_MS,
-    modelKwargs: { chat_template_kwargs: { thinking: false } },
+    modelKwargs: mergeModelKwargs(env.FAST_LLM, 'fast'),
     maxTokens: 8000,
   });
 }
@@ -136,6 +137,7 @@ function createReduceLLM(): ChatTogetherAI {
     temperature: 0.3,
     timeout: CONFIG.REDUCE_TIMEOUT_MS,
     maxTokens: parseInt(env.WRITTEN_QUESTIONS_REDUCE_MAX_TOKENS || '32000', 10),
+    modelKwargs: mergeModelKwargs(env.SMART_LLM, 'smart'),
   });
 }
 

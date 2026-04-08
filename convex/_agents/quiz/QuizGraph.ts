@@ -6,7 +6,9 @@
 import { ChatTogetherAI } from '@langchain/community/chat_models/togetherai';
 import { END, START, StateGraph } from '@langchain/langgraph';
 
+import { AGENT_LANGGRAPH_RECURSION_LIMIT } from '../_shared/agent_graph_limits.js';
 import { countTokens } from '../_shared/index.js';
+import { mergeModelKwargs } from '../_shared/llm_factory.js';
 
 import { GRAPH_CONFIG } from './config.js';
 import { collapse } from './nodeCollapse.js';
@@ -37,7 +39,7 @@ export class QuizGraph {
       model: mapModel,
       temperature: 0.4,
       maxTokens: GRAPH_CONFIG.MAP_MAX_TOKENS,
-      modelKwargs: { chat_template_kwargs: { thinking: false } },
+      modelKwargs: mergeModelKwargs(mapModel, 'fast'),
     });
 
     this.smartLlm = new ChatTogetherAI({
@@ -45,6 +47,7 @@ export class QuizGraph {
       model: reduceModel,
       temperature: 0.3,
       maxTokens: GRAPH_CONFIG.REDUCE_MAX_TOKENS,
+      modelKwargs: mergeModelKwargs(reduceModel, 'smart'),
     });
 
     this.expandLlm = new ChatTogetherAI({
@@ -52,6 +55,7 @@ export class QuizGraph {
       model: reduceModel,
       temperature: 0.3,
       maxTokens: GRAPH_CONFIG.EXPAND_MAX_TOKENS,
+      modelKwargs: mergeModelKwargs(reduceModel, 'smart'),
     });
 
     this.fastLlmCandidateStructured = createStructuredLLM<QuizCandidateResponse>(
@@ -117,6 +121,6 @@ export class QuizGraph {
     builder.addEdge('collapse' as any, 'reduce' as any);
     builder.addEdge('reduce' as any, END as any);
 
-    return builder.compile();
+    return builder.compile().withConfig({ recursionLimit: AGENT_LANGGRAPH_RECURSION_LIMIT });
   }
 }

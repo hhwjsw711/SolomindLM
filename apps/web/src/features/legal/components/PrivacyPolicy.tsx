@@ -80,10 +80,10 @@ export const PrivacyPolicy: React.FC = () => {
             <span className="text-foreground">Convex</span> — backend database, auth tables, file storage, and server logic.
           </li>
           <li>
-            <span className="text-foreground">Together AI</span> — large language model inference for chat and many generation flows.
+            <span className="text-foreground">Together AI</span> — large language model inference for chat, many generation flows, and text-to-speech for audio overviews.
           </li>
           <li>
-            <span className="text-foreground">OpenAI</span> — text embeddings for search, text-to-speech for audio overviews, and image generation for slide visuals where that pipeline is used.
+            <span className="text-foreground">OpenAI</span> — text embeddings for search and image generation for slide visuals where that pipeline is used.
           </li>
           <li>
             <span className="text-foreground">ZeroEntropy</span> — optional reranking over retrieved passages for relevance.

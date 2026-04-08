@@ -644,19 +644,30 @@ export const keywordSearch = internalQuery({
     }
 
     const uniqueDocIds = [...new Set(filtered.map((r) => r.documentId))];
-    const docTitleMap = new Map<typeof filtered[0]["documentId"], string>();
+    type DocId = NonNullable<(typeof filtered)[0]["documentId"]>;
+    const docMetaMap = new Map<
+      DocId,
+      { fileName: string; sourceUrl?: string }
+    >();
     for (const id of uniqueDocIds) {
       const doc = await ctx.db.get(id);
-      docTitleMap.set(id, doc?.fileName ?? "Document");
+      const fileName = doc?.fileName ?? "Document";
+      const u = doc?.fileUrl?.trim();
+      const sourceUrl =
+        u && (doc?.fileType === "url" || doc?.fileType === "youtube") ? u : undefined;
+      docMetaMap.set(id, { fileName, sourceUrl });
     }
 
-    return filtered.map((r) => ({
+    return filtered.map((r) => {
+      const meta = r.documentId ? docMetaMap.get(r.documentId) : undefined;
+      return {
       _id: r._id,
       _score: 0,
       content: r.content,
       chunkIndex: r.chunkIndex,
       documentId: r.documentId,
-      sourceTitle: docTitleMap.get(r.documentId) ?? "Document",
+      sourceTitle: meta?.fileName ?? "Document",
+      sourceUrl: meta?.sourceUrl,
       // Include chunk metadata for enhanced RAG context
       metadata: {
         totalChunks: r.totalChunks,
@@ -676,7 +687,8 @@ export const keywordSearch = internalQuery({
         hasBulletList: r.hasBulletList,
         hasNumberedList: r.hasNumberedList,
       },
-    }));
+    };
+    });
   },
 });
 
@@ -714,7 +726,12 @@ export const getDocumentsByIds = internalQuery({
     return Promise.all(
       uniqueIds.map(async (id) => {
         const doc = await ctx.db.get(id);
-        return { _id: id, fileName: doc?.fileName ?? "Document" };
+        return {
+          _id: id,
+          fileName: doc?.fileName ?? "Document",
+          fileUrl: doc?.fileUrl,
+          fileType: doc?.fileType,
+        };
       })
     );
   },

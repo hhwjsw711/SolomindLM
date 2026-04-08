@@ -2,10 +2,10 @@ import { X } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
 
 const toastStyles = {
-  success: 'bg-green-500 border-green-600 text-white',
-  error: 'bg-destructive border-destructive/80 text-white',
-  info: 'bg-primary border-primary/80 text-primary-foreground',
-  loading: 'bg-muted border-border text-foreground',
+  success: 'bg-vintage-green-50 border-vintage-green-200 text-vintage-green-700',
+  error: 'bg-vintage-red-50 border-vintage-red-200 text-vintage-red-700',
+  info: 'bg-vintage-blue-50 border-vintage-blue-200 text-vintage-blue-700',
+  loading: 'bg-vintage-amber-50 border-vintage-amber-200 text-vintage-amber-800',
 };
 
 export function ToastContainer() {

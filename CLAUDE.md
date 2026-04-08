@@ -98,13 +98,13 @@ bun run convex:env:push:dry    # Dry run for env push
 
 ### AI Services Integration
 
-**LLMs:** Qwen3 80B (smart model), Mistral (fast model)
+**LLMs:** openai/gpt-oss-120b (smart model), openai/gpt-oss-20b (fast model)
 **Embeddings:** LangChain integration
 **Reranking:** ZeroEntropy
 **OCR:** Mistral for images
 **Web Search:** Tavily API
 **Content Extraction:** Supadata (YouTube, TikTok, Instagram, X, web scraping)
-**Audio:** Eleven Labs (shimmer, echo voices)
+**Audio overviews (TTS):** Together AI (Kokoro and related models; voices via `AUDIO_VOICE_HOST_*`)
 
 ### Processing Pipelines
 
@@ -138,7 +138,7 @@ bun run convex:env:push:dry    # Dry run for env push
 
 **Required env variables:**
 - `CONVEX_DEPLOYMENT` - Convex deployment URL
-- AI service keys (Qwen, Mistral, Tavily, Supadata, Eleven Labs)
+- AI service keys (Together AI, OpenAI for embeddings/slides, Mistral, Tavily, Supadata, ZeroEntropy, etc.)
 
 ## Git Workflow
 
@@ -176,6 +176,10 @@ bun run convex:env:push:dry    # Dry run for env push
 - **Agent caching** - Agent results are cached; increment version in `cacheVersions` table when prompts change to invalidate cache
 
 ## Required Skills
+
+**Canonical location:** `.agents/skills/<skill-name>/SKILL.md` (single copy in git). Add or edit skills only there. Cursor and other agents should use that path.
+
+**Claude Code** expects skills under `.claude/skills/`, but `.claude/` is gitignored. After cloning, run `bun run link:claude-skills` once to create a junction (Windows) or symlink (macOS/Linux) from `.claude/skills` to `.agents/skills`.
 
 **Always invoke these skills at the specified triggers.**
 

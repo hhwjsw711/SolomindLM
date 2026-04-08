@@ -33,7 +33,11 @@ export interface ChunkMetadata {
 export interface ReferenceChunk {
   id: string;
   sourceId: string;
+  /** Notebook document (same for all chunks from one file); use for UI grouping */
+  documentId?: string;
   sourceTitle: string;
+  /** Original URL for `url` / `youtube` documents — use for opening in browser (fileName may be title or hostname only) */
+  sourceUrl?: string;
   content: string;
   chunkIndex: number;
   similarity?: number;

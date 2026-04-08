@@ -357,8 +357,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         {/* Messages Area */}
         <div
           ref={messagesContainerRef}
-          className={`flex-1 min-h-0 relative chat-panel-graph-grid ${
-            messages.length === 0 ? 'overflow-y-auto overflow-x-hidden' : 'overflow-hidden'
+          className={`flex min-h-0 w-full min-w-0 flex-1 relative chat-panel-graph-grid ${
+            messages.length === 0 ? 'overflow-y-auto overflow-x-hidden' : 'overflow-x-hidden overflow-y-hidden'
           }`}
         >
           {messages.length === 0 ? (
@@ -376,10 +376,11 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
           ) : (
             <Virtuoso
               ref={virtuosoRef}
+              className="min-h-0 w-full min-w-0"
               style={{ height: '100%' }}
               data={memoizedMessages}
               itemContent={(_index, message) => (
-                <div className="px-3 py-3 sm:px-4 md:px-6">
+                <div className="max-w-full min-w-0 overflow-x-hidden px-3 py-3 sm:px-4 md:px-6">
                   <MessageBubble
                     message={message}
                     isAssistantStreamActive={message.id === '__streaming__' ? isLoading : false}

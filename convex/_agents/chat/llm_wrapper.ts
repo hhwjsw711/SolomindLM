@@ -11,6 +11,7 @@ import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages
 import type { ReferenceChunk } from '../../storage/ChatHistoryService';
 import { createLangSmithRunConfig } from '../_shared/index.js';
 import { uncachedLlmCall } from '../_shared/cachedLlm.js';
+import { mergeModelKwargs } from '../_shared/llm_factory.js';
 import { extractUniqueSortedCitationIndices } from '../_shared/citationExtract.js';
 import { buildGroundingPrompt, estimateTokens, isComplexQuery } from './chat_llm_grounding.js';
 import { CORE_SYSTEM_PROMPT, MINIMAL_FEW_SHOT, STRICT_GROUNDING_PREFIX } from './chat_llm_prompts.js';
@@ -29,8 +30,6 @@ export { ChatResponseSchema } from './chat_llm_types.js';
 export class ChatLLMWrapper {
   private llm: ChatTogetherAI;
   private fastLlm: ChatTogetherAI;
-  /** Temp-0 smart LLM used for deterministic tool-calling/routing decisions. */
-  private decisionLlm: ChatTogetherAI;
   /** Together model id for uncached follow-up calls (reasoning disabled). */
   private readonly fastLlmModelId: string;
   /** Primary generation model — used as fallback when fast model returns repeated 503s, etc. */
@@ -38,44 +37,28 @@ export class ChatLLMWrapper {
   private tokenBudget: number = 7000; // Reserve tokens for generation
 
   constructor(config: LLMWrapperConfig) {
-    // Smart model: allow template "thinking" / reasoning where the provider supports it
-    // (e.g. hybrid Qwen, DeepSeek V3.1 on Together — see chat_template_kwargs in API).
+    // Smart vs fast: `mergeModelKwargs` — GPT-OSS uses reasoning_effort; Qwen-style uses chat_template thinking.
     this.llm = new ChatTogetherAI({
       apiKey: config.apiKey,
       model: config.model,
       temperature: config.temperature ?? 0.1,
-      modelKwargs: { chat_template_kwargs: { thinking: true } },
+      modelKwargs: mergeModelKwargs(config.model, 'smart'),
     });
     this.fastLlm = config.fastModel
       ? new ChatTogetherAI({
           apiKey: config.fastApiKey ?? config.apiKey,
           model: config.fastModel,
           temperature: 0.1,
-          modelKwargs: { chat_template_kwargs: { thinking: false } },
+          modelKwargs: mergeModelKwargs(config.fastModel, 'fast'),
         })
       : this.llm;
     this.fastLlmModelId = config.fastModel ?? config.model;
     this.smartLlmModelId = config.model;
-    // Deterministic routing — temp=0; disable thinking so tool JSON stays reliable
-    this.decisionLlm = new ChatTogetherAI({
-      apiKey: config.apiKey,
-      model: config.model,
-      temperature: 0,
-      modelKwargs: { chat_template_kwargs: { thinking: false } },
-    });
-  }
-
-  /**
-   * Returns the decision LLM with bound tools for the tool-calling loop.
-   * Centralises ownership so ChatAgent doesn't need its own ChatTogetherAI instance.
-   */
-  bindDecisionTools(tools: any[]): any {
-    return (this.decisionLlm as any).bindTools(tools);
   }
 
   /**
    * Generates a direct conversational response without RAG context.
-   * Used when the routing LLM decides no document search is needed
+   * Used when the deterministic router decides no document search is needed
    * (e.g. greetings, meta-questions about the app).
    */
   async generateDirectResponse(

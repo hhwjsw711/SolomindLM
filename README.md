@@ -16,13 +16,13 @@ AI-powered research platform for multi-source content ingestion, RAG-based chat,
 | Frontend | React 19, Vite, TypeScript, TailwindCSS 4, Radix UI |
 | Backend | Convex 1.31+, TypeScript, LangChain |
 | Auth | @convex-dev/auth |
-| LLMs | Qwen3 80B, Mistral |
+| LLMs | openai/gpt-oss-120b, openai/gpt-oss-20b |
 | Embeddings | OpenAI (text-embedding-3-small) |
 | Reranking | ZeroEntropy (zerank-2) |
 | OCR | Mistral |
 | Web Search | Tavily |
 | Content Extraction | Supadata |
-| Audio | Eleven Labs |
+| Audio (TTS) | Together AI |
 
 ## Getting Started
 
@@ -43,7 +43,7 @@ bun install
 
 ```env
 CONVEX_DEPLOYMENT=<your-convex-deployment-url>
-# AI service keys: Qwen, Mistral, Tavily, Supadata, Eleven Labs, ZeroEntropy
+# AI service keys: Together AI, OpenAI (embeddings), Mistral, Tavily, Supadata, ZeroEntropy
 ```
 
 **Web frontend** — copy `apps/web/.env.example` to `apps/web/.env.local` and fill in:

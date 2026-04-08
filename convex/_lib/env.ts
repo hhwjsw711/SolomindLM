@@ -9,7 +9,7 @@ export const env = {
 
   // Together AI
   TOGETHER_AI_API_KEY: process.env.TOGETHER_AI_API_KEY || '',
-  FAST_LLM: process.env.FAST_LLM || 'Qwen/Qwen3.5-9B',
+  FAST_LLM: process.env.FAST_LLM || 'openai/gpt-oss-120b',
   SMART_LLM: process.env.SMART_LLM || 'openai/gpt-oss-120b',
 
   // Tavily (web search)
@@ -43,8 +43,11 @@ export const env = {
   /** Max completion tokens for script-writing (reduce); too low yields finish_reason=length and empty content */
   AUDIO_REDUCE_MAX_OUTPUT_TOKENS: process.env.AUDIO_REDUCE_MAX_OUTPUT_TOKENS || '16384',
   AUDIO_TTS_TIMEOUT_MS: process.env.AUDIO_TTS_TIMEOUT_MS || '300000',
-  AUDIO_VOICE_HOST_A: process.env.AUDIO_VOICE_HOST_A || 'shimmer',
-  AUDIO_VOICE_HOST_B: process.env.AUDIO_VOICE_HOST_B || 'echo',
+  /** Together AI TTS model (e.g. Kokoro). */
+  AUDIO_TTS_MODEL: process.env.AUDIO_TTS_MODEL || 'hexgrad/Kokoro-82M',
+  /** Kokoro voice IDs — see Together text-to-speech docs. */
+  AUDIO_VOICE_HOST_A: process.env.AUDIO_VOICE_HOST_A || 'af_sky',
+  AUDIO_VOICE_HOST_B: process.env.AUDIO_VOICE_HOST_B || 'am_echo',
 
   // Flashcards
   FLASHCARD_MAP_CHUNK_TOKENS: process.env.FLASHCARD_MAP_CHUNK_TOKENS || '5000',
@@ -127,14 +130,10 @@ export const env = {
   CHAT_RERANK_THRESHOLD: process.env.CHAT_RERANK_THRESHOLD ?? '10',
   CHAT_RERANK_TOP_N: process.env.CHAT_RERANK_TOP_N ?? '7',
   CHAT_MAX_RESULTS: process.env.CHAT_MAX_RESULTS ?? '7',
-  /** Max search_documents executions per user chat message (ChatAgent Phase 1). */
-  CHAT_MAX_SEARCH_CALLS: process.env.CHAT_MAX_SEARCH_CALLS ?? '5',
   /** Top merged chunks passed to the answer model (citation indices match references). */
   CHAT_MAX_CONTEXT_CHUNKS: process.env.CHAT_MAX_CONTEXT_CHUNKS ?? '15',
   /** Estimated-token budget for prior conversation turns (not including the current user message). */
   CHAT_HISTORY_TOKEN_BUDGET: process.env.CHAT_HISTORY_TOKEN_BUDGET ?? '4000',
-  /** When true, skip router + parallel RAG; use legacy Phase 1 tool loop in ChatAgent. */
-  CHAT_LEGACY_TOOL_LOOP: process.env.CHAT_LEGACY_TOOL_LOOP ?? 'false',
   /** Grounding: async (stream-first + warn), sync (validate + strict retry before stream), off. */
   CHAT_GROUNDING_MODE: process.env.CHAT_GROUNDING_MODE ?? 'async',
   /** Whole-answer vs cited-chunks embedding similarity bar (grounding_validator). */

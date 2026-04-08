@@ -122,8 +122,10 @@ export {
   createLLMs,
   createLLM,
   createLLMsFromEnv,
+  mergeModelKwargs,
   type LLMConfig,
   type LLMInstances,
+  type TogetherModelPhase,
 } from './llm_factory.js';
 
 // Node builder
@@ -136,6 +138,7 @@ export {
 } from './node_builder.js';
 
 // Graph builder
+export { AGENT_LANGGRAPH_RECURSION_LIMIT } from './agent_graph_limits.js';
 export {
   buildMapReduceGraph,
   buildLinearGraph,
