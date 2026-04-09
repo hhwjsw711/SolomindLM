@@ -16,11 +16,12 @@ import { GRAPH_CONFIG } from './config.js';
 import { callStatusUpdate } from './nodeSplit.js';
 import { expandQuestion, finalizeQuestions } from './postprocess.js';
 import {
+  applySelectedCandidateIndices,
   getCandidateSelectionPrompt,
-  QuizCandidateArraySchema,
+  QuizCandidateIndexSelectionSchema,
   REDUCE_SELECT_SYSTEM_PROMPT,
   type QuizCandidate,
-  type QuizCandidateResponse,
+  type QuizCandidateIndexSelection,
   type QuizQuestion,
 } from './prompts.js';
 import { detectSimilarQuestions, heuristicDedupe } from './quizHeuristics.js';
@@ -124,9 +125,9 @@ export async function reduce(
     });
 
     try {
-      const structuredLlm = deps.smartLlm.withStructuredOutput<QuizCandidateResponse>(
-        QuizCandidateArraySchema,
-        { name: 'quiz_candidate_selection' }
+      const structuredLlm = deps.smartLlm.withStructuredOutput<QuizCandidateIndexSelection>(
+        QuizCandidateIndexSelectionSchema,
+        { name: 'quiz_candidate_index_selection' }
       );
 
       const selectionPrompt = getCandidateSelectionPrompt({
@@ -136,7 +137,7 @@ export async function reduce(
         focus: state.focus,
       });
 
-      const response: QuizCandidateResponse = await invokeWithRetry(
+      const response: QuizCandidateIndexSelection = await invokeWithRetry(
         () => invokeWithTimeout(
           () => (structuredLlm as any).invoke([
             new SystemMessage(REDUCE_SELECT_SYSTEM_PROMPT),
@@ -169,18 +170,23 @@ export async function reduce(
         'QuizReduce'
       );
 
-      selectedCandidates = response.questions;
+      selectedCandidates = applySelectedCandidateIndices(
+        dedupedCandidates,
+        response.selectedIndices ?? [],
+        state.questionCount,
+      );
 
       logger.info(`LLM refinement complete: ${dedupedCandidates.length} → ${selectedCandidates.length} candidates`, {
         agent: 'QuizGraph',
         phase: 'reduce_llm_success',
         selectedCount: selectedCandidates.length,
+        rawIndexCount: (response.selectedIndices ?? []).length,
         originalCount: totalCandidatesBefore,
         dedupedCount: dedupedCandidates.length,
       });
 
       if (selectedCandidates.length === 0) {
-        throw new Error('LLM returned zero candidates');
+        throw new Error('LLM returned zero resolvable candidates');
       }
     } catch (error) {
       logger.phaseError(

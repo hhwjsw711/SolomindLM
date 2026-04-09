@@ -18,12 +18,17 @@ import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { z } from 'zod';
 import {
   getCandidateMapPrompt,
+  getCandidateMapRecoveryPrompt,
+  getCandidateMapTopUpPrompt,
   getCandidateSelectionPrompt,
   getExpandPrompt,
+  applySelectedCandidateIndices,
   QuizCandidateArraySchema,
+  QuizCandidateIndexSelectionSchema,
   QuizQuestionArraySchema,
   QuizQuestionSchema,
   type QuizCandidate,
+  type QuizCandidateIndexSelection,
   type QuizCandidateResponse,
   type QuizQuestion,
   type QuizQuestionResponse,
@@ -72,7 +77,30 @@ const CONFIG = {
   MAX_QUESTIONS_PER_CHUNK: 20,
   BUFFER_MULTIPLIER: 1.2,
   EXPAND_CONCURRENCY: 5,
+  /** Extra map rounds when the model returns empty or too few candidates */
+  MAP_MAX_ROUNDS: 3,
 } as const;
+
+function normalizeQuizCandidateDedupeKey(c: QuizCandidate): string {
+  const t = `${c.topic}`.toLowerCase().replace(/\s+/g, ' ').trim();
+  const q = c.question.toLowerCase().replace(/\s+/g, ' ').trim().slice(0, 220);
+  return `${t}|${q}`;
+}
+
+function appendUniqueCandidates(
+  acc: QuizCandidate[],
+  incoming: QuizCandidate[],
+  cap: number,
+): void {
+  const seen = new Set(acc.map(normalizeQuizCandidateDedupeKey));
+  for (const c of incoming) {
+    if (acc.length >= cap) return;
+    const key = normalizeQuizCandidateDedupeKey(c);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    acc.push(c);
+  }
+}
 
 export type QuizGenerationPhaseArgs = {
   quizId: Id<'quizzes'>;
@@ -324,62 +352,103 @@ export async function runProcessQuizMapChunkPhase(
     const structuredLLM = createCandidateLLM(llm);
 
     const sanitizedFocus = focus ? sanitizeUserInput(focus) : undefined;
-    const prompt = getCandidateMapPrompt({ chunk, questionCount, questionsPerChunk, difficulty, focus: sanitizedFocus });
 
-    // DIAGNOSTIC: Log chunk info and prompt preview
-    console.log(`[QuizJob] ${chunkId} Calling LLM (${prompt.length} chars)`);
     console.log(`[QuizJob] ${chunkId} Chunk preview: ${chunk.substring(0, 200)}...`);
     console.log(`[QuizJob] ${chunkId} Target questions: ${questionsPerChunk}, Difficulty: ${difficulty}`);
 
-    const startTime = Date.now();
-    let response;
-    try {
-      response = await invokeStudioLlm({
-        invoke: () =>
-          (structuredLLM as any).invoke(
-            [new SystemMessage(MAP_CANDIDATES_SYSTEM_PROMPT), new HumanMessage(prompt)],
-            createLangSmithRunConfig({
-              runName: 'QuizJob.MapCandidates',
-              tags: ['agent', 'quiz', 'map'],
-              metadata: {
-                chunkIndex,
+    const candidates: QuizCandidate[] = [];
+    let totalMapElapsedMs = 0;
+
+    for (let round = 1; round <= CONFIG.MAP_MAX_ROUNDS; round++) {
+      const need = questionsPerChunk - candidates.length;
+      if (need <= 0) break;
+
+      const prompt =
+        round === 1
+          ? getCandidateMapPrompt({ chunk, questionCount, questionsPerChunk, difficulty, focus: sanitizedFocus })
+          : candidates.length === 0
+            ? getCandidateMapRecoveryPrompt({
+                chunk,
                 questionCount,
+                need: questionsPerChunk,
                 difficulty,
-                focus: focus || 'none',
-              },
-            })
-          ),
-        timeoutMs: CONFIG.PER_CHUNK_TIMEOUT_MS,
-        phaseLabel: 'QuizMap',
-        onRetry: (attempt, error) => {
-          console.log(`[QuizJob] ${chunkId} Retry attempt ${attempt}/3: ${error.message}`);
-        },
-      });
-    } catch (error) {
-      console.log(`[QuizJob] ${chunkId} LLM invocation failed: ${error}`);
-      throw error;
+                focus: sanitizedFocus,
+              })
+            : getCandidateMapTopUpPrompt({
+                chunk,
+                questionCount,
+                need,
+                difficulty,
+                focus: sanitizedFocus,
+                existingCandidates: candidates,
+              });
+
+      console.log(
+        `[QuizJob] ${chunkId} Map round ${round}/${CONFIG.MAP_MAX_ROUNDS} — need ${need}, prompt ${prompt.length} chars`,
+      );
+
+      const roundStart = Date.now();
+      let response: QuizCandidateResponse;
+      try {
+        response = await invokeStudioLlm({
+          invoke: () =>
+            (structuredLLM as any).invoke(
+              [new SystemMessage(MAP_CANDIDATES_SYSTEM_PROMPT), new HumanMessage(prompt)],
+              createLangSmithRunConfig({
+                runName: `QuizJob.MapCandidates.r${round}`,
+                tags: ['agent', 'quiz', 'map'],
+                metadata: {
+                  chunkIndex,
+                  questionCount,
+                  difficulty,
+                  focus: focus || 'none',
+                  mapRound: round,
+                },
+              })
+            ),
+          timeoutMs: CONFIG.PER_CHUNK_TIMEOUT_MS,
+          phaseLabel: 'QuizMap',
+          onRetry: (attempt, error) => {
+            console.log(`[QuizJob] ${chunkId} Retry attempt ${attempt}/3: ${error.message}`);
+          },
+        });
+      } catch (error) {
+        console.log(`[QuizJob] ${chunkId} LLM invocation failed (round ${round}): ${error}`);
+        throw error;
+      }
+
+      const roundElapsed = Date.now() - roundStart;
+      totalMapElapsedMs += roundElapsed;
+
+      const incoming = (response as QuizCandidateResponse).questions ?? [];
+      const beforeLen = candidates.length;
+      appendUniqueCandidates(candidates, incoming, questionsPerChunk);
+
+      console.log(
+        `[QuizJob] ${chunkId} Round ${round} done in ${roundElapsed}ms — raw ${incoming.length}, merged ${beforeLen}→${candidates.length}/${questionsPerChunk}`,
+      );
+
+      if (incoming.length === 0) {
+        console.log(`[QuizJob] ${chunkId} WARNING: round ${round} returned 0 candidates`);
+        console.log(`[QuizJob] ${chunkId} Full response:`, JSON.stringify(response, null, 2));
+      }
+
+      if (candidates.length >= questionsPerChunk) break;
     }
 
-    const elapsed = Date.now() - startTime;
-    console.log(`[QuizJob] ${chunkId} LLM completed in ${elapsed}ms`);
+    console.log(`[QuizJob] ${chunkId} Map phase total ${totalMapElapsedMs}ms, final candidates: ${candidates.length}`);
 
-    // Store result
-    const candidates = (response as QuizCandidateResponse).questions;
-    
-    // DIAGNOSTIC: Log candidate details
-    console.log(`[QuizJob] ${chunkId} Raw response candidates: ${candidates.length}`);
     if (candidates.length > 0) {
       candidates.forEach((c, i) => {
         console.log(`[QuizJob] ${chunkId}   Candidate ${i + 1}: [${c.difficulty}] ${c.topic} - ${c.question.substring(0, 60)}...`);
       });
     } else {
-      console.log(`[QuizJob] ${chunkId} WARNING: LLM returned 0 candidates!`);
-      console.log(`[QuizJob] ${chunkId} Full response:`, JSON.stringify(response, null, 2));
+      console.log(`[QuizJob] ${chunkId} WARNING: after ${CONFIG.MAP_MAX_ROUNDS} rounds still 0 candidates`);
     }
 
     const result = {
       candidates,
-      processingTimeMs: elapsed,
+      processingTimeMs: totalMapElapsedMs,
     };
 
     await ctx.runMutation(internal.studio.jobMutations.quizzes.storeQuizMapResult, {
@@ -390,7 +459,7 @@ export async function runProcessQuizMapChunkPhase(
 
     logger.info(`Map chunk completed`, {
       chunkIndex,
-      elapsed,
+      elapsed: totalMapElapsedMs,
       candidatesGenerated: candidates.length,
     });
 
@@ -555,10 +624,10 @@ export async function runFinalizeQuizPhase(
       },
     });
 
-    // Selection phase with LLM - select best candidates
+    // Selection phase: LLM returns 1-based candidate IDs (not full-object echo — reduces position bias)
     const selectLLM = createReduceLLM();
-    const structuredSelectLLM = selectLLM.withStructuredOutput(QuizCandidateArraySchema, {
-      name: 'quiz_candidate_selection',
+    const structuredSelectLLM = selectLLM.withStructuredOutput(QuizCandidateIndexSelectionSchema, {
+      name: 'quiz_candidate_index_selection',
     });
 
     const sanitizedFocus = focus ? sanitizeUserInput(focus) : undefined;
@@ -597,12 +666,19 @@ export async function runFinalizeQuizPhase(
       retry: { maxAttempts: 2, baseDelayMs: 1000 },
     });
 
-    let selectedCandidates = (selectionResponse as QuizCandidateResponse).questions;
-    console.log(`[QuizJob] Selection completed in ${Date.now() - startTime}ms, selected ${selectedCandidates.length} candidates`);
+    const indexPayload = selectionResponse as QuizCandidateIndexSelection;
+    let selectedCandidates = applySelectedCandidateIndices(
+      allCandidates,
+      indexPayload.selectedIndices ?? [],
+      questionCount,
+    );
+    console.log(
+      `[QuizJob] Selection completed in ${Date.now() - startTime}ms, resolved ${selectedCandidates.length} candidates (raw indices: ${(indexPayload.selectedIndices ?? []).length})`,
+    );
 
     // DIAGNOSTIC: Log selected candidates
     if (selectedCandidates.length === 0) {
-      console.log(`[QuizJob] WARNING: Selection phase returned 0 candidates!`);
+      console.log(`[QuizJob] WARNING: Selection phase resolved 0 candidates!`);
       console.log(`[QuizJob] FALLBACK: Using all ${allCandidates.length} input candidates instead of failing.`);
       selectedCandidates = allCandidates.slice(0, questionCount);
       console.log(`[QuizJob] Fallback: Using ${selectedCandidates.length} candidates for expansion`);

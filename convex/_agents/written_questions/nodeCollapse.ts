@@ -44,7 +44,7 @@ export async function collapse(state: OverallStateType): Promise<Partial<Overall
       const expectedPoints = state.questionType === 'short' ? 5 : 12;
       questions = questions.map(q => ({
         ...q,
-        id: (q.id && q.id.trim()) ? q.id : randomUUID(),
+        id: randomUUID(),
         questionType: state.questionType as 'short' | 'essay',
         rubric: {
           ...q.rubric,

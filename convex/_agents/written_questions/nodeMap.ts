@@ -112,7 +112,7 @@ export async function mapProcess(
     const expectedPoints = questionType === 'short' ? 5 : 12;
     validQuestions = validQuestions.map(q => ({
       ...q,
-      id: (q.id && q.id.trim()) ? q.id : randomUUID(),
+      id: randomUUID(),
       questionType: questionType as 'short' | 'essay',
       rubric: {
         ...q.rubric,

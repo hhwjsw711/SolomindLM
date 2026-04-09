@@ -134,11 +134,6 @@ export default defineConfig(({ mode }) => {
               return 'icons';
             }
 
-            // PDF generation
-            if (id.includes('node_modules/html2pdf')) {
-              return 'pdf';
-            }
-
             // Math/KaTeX
             if (id.includes('node_modules/katex')) {
               return 'katex';

@@ -55,15 +55,26 @@ export type QuizQuestion = z.infer<typeof QuizQuestionSchema>;
 export interface QuizCandidateResponse { questions: QuizCandidate[]; }
 export interface QuizQuestionResponse { questions: QuizQuestion[]; }
 
+/** Reduce phase: model returns 1-based indices into the candidate list (avoids echoing full objects / position bias). */
+export const QuizCandidateIndexSelectionSchema = z.object({
+  selectedIndices: z
+    .array(z.number().int())
+    .describe('1-based indices matching the ID labels in the selection prompt (e.g. ID 3 → 3).'),
+});
+
+export type QuizCandidateIndexSelection = z.infer<typeof QuizCandidateIndexSelectionSchema>;
+
 // ============================================================
 // SYSTEM PROMPTS
 // ============================================================
 
 /** System prompt for map phase candidate generation */
-export const MAP_CANDIDATES_SYSTEM_PROMPT = 'You are a professional educator drafting quiz question candidates.';
+export const MAP_CANDIDATES_SYSTEM_PROMPT =
+  'You are a professional educator drafting quiz question candidates. You MUST return the requested number of items in the questions array whenever the passage contains any technical, statistical, or instructional content. Empty arrays are not acceptable for non-trivial excerpts—you must derive conceptual questions from definitions, code output, notation, procedures, comparisons, and assumptions stated or implied in the text.';
 
 /** System prompt for reduce phase candidate selection */
-export const REDUCE_SELECT_SYSTEM_PROMPT = 'You are a quiz curator selecting diverse, high-quality candidate questions for study sets.';
+export const REDUCE_SELECT_SYSTEM_PROMPT =
+  'You are a quiz curator selecting diverse, high-quality candidate questions for study sets. You choose by the numeric candidate ID (1-based index) from the list—do not favor early IDs unless they are genuinely strongest. Return only the selectedIndices array.';
 
 /** System prompt for expand phase distractor generation */
 export const EXPAND_QUESTION_SYSTEM_PROMPT = `You are a professional educator creating rigorous multiple-choice questions.
@@ -93,7 +104,12 @@ export const getCandidateMapPrompt = (params: {
 • "Why does method A outperform method B in this context?"`,
   };
 
-  return `Extract ${questionsPerChunk} testable concepts from this document (difficulty: ${difficulty.toUpperCase()}${focus ? `, focus: ${focus}` : ''}).
+  return `Extract exactly ${questionsPerChunk} testable concepts from this document (difficulty: ${difficulty.toUpperCase()}${focus ? `, focus: ${focus}` : ''}).
+
+**CRITICAL — OUTPUT COUNT:**
+• The JSON field "questions" MUST be an array of exactly ${questionsPerChunk} objects (not fewer, not zero).
+• If the excerpt has code, R output, LaTeX, slide titles, or figure captions, ask what they *mean* (interpretation, assumptions, when to use, notation, model order, comparison of methods)—do not skip the section as "non-quizzable."
+• Placeholder text like "Examples forthcoming" still has surrounding context: quiz that context.
 
 **QUESTION TYPES (in priority order):**
 1. **Conceptual:** Why something works, principles, relationships
@@ -124,6 +140,62 @@ For each concept:
 ${MARKDOWN_MATH_NOTATION_FOR_APP}
 
 **CONTENT:**
+${chunk}`;
+};
+
+/** Follow-up when the model returned zero candidates — stronger obligation to produce items */
+export const getCandidateMapRecoveryPrompt = (params: {
+  chunk: string;
+  questionCount: number;
+  need: number;
+  difficulty: string;
+  focus?: string;
+}): string => {
+  const { chunk, need, difficulty, focus } = params;
+  return `The previous attempt incorrectly returned zero quiz candidates. You must fix this.
+
+Generate exactly ${need} distinct candidates (difficulty: ${difficulty.toUpperCase()}${focus ? `, focus: ${focus}` : ''}). The "questions" array MUST contain ${need} objects.
+
+**HOW TO FIND MATERIAL:**
+• Definitions, theorems, assumptions, notation (e.g. ARMA, ACF, conditional expectation, ML vs OLS).
+• Code or software output: ask about interpretation (coefficients, orders, residuals, forecasts), not row numbers.
+• Slides or sparse pages: quiz the narrative around any equation, bullet, or caption present.
+
+**OUTPUT:** Same JSON shape as before (topic, question, correctAnswer, contextSnippet, difficulty).
+
+${MARKDOWN_MATH_NOTATION_FOR_APP}
+
+**CONTENT:**
+${chunk}`;
+};
+
+/** Additional candidates when the first pass returned too few */
+export const getCandidateMapTopUpPrompt = (params: {
+  chunk: string;
+  questionCount: number;
+  need: number;
+  difficulty: string;
+  focus?: string;
+  existingCandidates: QuizCandidate[];
+}): string => {
+  const { chunk, need, difficulty, focus, existingCandidates } = params;
+  const avoidList = existingCandidates
+    .map(
+      (c, i) =>
+        `${i + 1}. [${c.topic}] ${c.question.replace(/\s+/g, ' ').trim().slice(0, 160)}`,
+    )
+    .join('\n');
+
+  return `You already drafted ${existingCandidates.length} quiz candidates from this excerpt. Produce exactly ${need} **additional** distinct candidates (difficulty: ${difficulty.toUpperCase()}${focus ? `, focus: ${focus}` : ''}).
+
+**DO NOT** repeat or lightly rephrase these (cover different subtopics, formulas, or procedures):
+${avoidList}
+
+**OUTPUT:** Return ONLY the ${need} new items in "questions" (same JSON shape: topic, question, correctAnswer, contextSnippet, difficulty).
+
+${MARKDOWN_MATH_NOTATION_FOR_APP}
+
+**CONTENT (same excerpt):**
 ${chunk}`;
 };
 
@@ -226,9 +298,44 @@ export const getCandidateSelectionPrompt = (params: {
 ${focus ? `**FOCUS:** ${focus}\n` : ''}**CANDIDATES:**
 ${candidatesList}
 
-**OUTPUT:** Return selected ${targetCount} candidates as JSON array.
-If fewer than ${targetCount} meet quality standards, return all good candidates (minimum 1).`;
+**OUTPUT (STRICT):**
+Return a JSON object with a single property "selectedIndices": an array of exactly ${targetCount} distinct integers.
+Each integer must be a candidate ID from above (1 through ${candidates.length}). Pick the best set for conceptual depth, diversity across topics, and match to difficulty—not the first IDs in the list unless those are truly the strongest.
+If you cannot find ${targetCount} that meet minimum quality, still return ${targetCount} IDs using the best available (prefer conceptual questions over trivial lookups).`;
 };
+
+/**
+ * Map 1-based indices from the selection LLM onto the original candidate array, with backfill if indices are invalid or duplicate.
+ */
+export function applySelectedCandidateIndices(
+  candidates: QuizCandidate[],
+  selectedIndices: number[],
+  targetCount: number,
+): QuizCandidate[] {
+  const n = candidates.length;
+  if (n === 0 || targetCount <= 0) return [];
+
+  const resolved: QuizCandidate[] = [];
+  const seenIdx = new Set<number>();
+
+  for (const raw of selectedIndices) {
+    if (resolved.length >= targetCount) break;
+    const oneBased = Math.round(raw);
+    if (!Number.isFinite(oneBased) || oneBased < 1 || oneBased > n) continue;
+    const idx = oneBased - 1;
+    if (seenIdx.has(idx)) continue;
+    seenIdx.add(idx);
+    resolved.push(candidates[idx]);
+  }
+
+  for (let i = 0; i < n && resolved.length < targetCount; i++) {
+    if (seenIdx.has(i)) continue;
+    seenIdx.add(i);
+    resolved.push(candidates[i]);
+  }
+
+  return resolved.slice(0, targetCount);
+}
 
 // ============================================================
 // UTILITY FUNCTIONS

@@ -15,6 +15,7 @@ import {
 } from '../../_agents/_shared/logging';
 import { ChatTogetherAI } from '@langchain/community/chat_models/togetherai';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { randomUUID } from 'crypto';
 import { z } from 'zod';
 import {
   getMapPrompt,
@@ -359,8 +360,11 @@ export async function runProcessWrittenQuestionsMapChunkPhase(
       const elapsed = Date.now() - startTime;
       console.log(`[WrittenQuestionsJob] ${chunkId} LLM completed in ${elapsed}ms`);
 
-      // Store result
-      const questions = (response as WrittenQuestionsResponse).questions;
+      // Assign fresh IDs per question so IDs are unique across parallel map chunks (models often repeat schemes like "1"–"5").
+      const questions = (response as WrittenQuestionsResponse).questions.map((q) => ({
+        ...q,
+        id: randomUUID(),
+      }));
       const result = {
         questions,
         processingTimeMs: elapsed,

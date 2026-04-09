@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useAuth } from '@/features/auth/AuthContext';
 import { useNotebookContext } from '@/features/notebooks/NotebookContext';
 import { useSourcesContext } from '@/features/sources/SourcesContext';

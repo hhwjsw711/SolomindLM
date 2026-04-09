@@ -10,12 +10,12 @@ import { z } from 'zod';
  */
 export const MapOutputSchema = z.object({
   topics: z.array(z.string())
-    .min(1, 'At least one topic is required')
-    .max(5, 'Maximum 5 topics allowed')
+    .min(1, { error: 'At least one topic is required' })
+    .max(5, { error: 'Maximum 5 topics allowed' })
     .describe('3-5 key topics that this section covers, ordered by importance'),
   summary: z.string()
-    .min(50, 'Summary must be at least 50 characters')
-    .max(10000, 'Summary must not exceed 10000 characters')
+    .min(50, { error: 'Summary must be at least 50 characters' })
+    .max(10000, { error: 'Summary must not exceed 10000 characters' })
     .describe('The complete structured summary including all sections (Key Insights, Main Themes, Supporting Evidence, etc.)'),
 });
 
