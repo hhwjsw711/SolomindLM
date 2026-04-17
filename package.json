@@ -4,7 +4,9 @@
   "private": true,
   "packageManager": "bun@1.2.2",
   "workspaces": {
-    "packages": ["apps/web"]
+    "packages": [
+      "apps/web"
+    ]
   },
   "engines": {
     "node": ">=20.0.0",

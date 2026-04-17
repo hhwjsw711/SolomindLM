@@ -20,9 +20,7 @@ export const generateTitle = internalAction({
     }
 
     const truncatedContent =
-      args.chunk.length > 500
-        ? args.chunk.substring(0, 500) + "..."
-        : args.chunk;
+      args.chunk.length > 500 ? args.chunk.substring(0, 500) + "..." : args.chunk;
 
     const prompt = `Generate a single, concise title (max 10 words) for the following content. Output ONLY the title with no preamble, no list, no introduction, and no quotation marks.
 
@@ -62,7 +60,7 @@ Title:`;
         if (env.SMART_LLM !== env.FAST_LLM) {
           console.warn(
             "[TitleGenerator] fast model failed, retrying with smart model:",
-            firstError,
+            firstError
           );
           title = await titleFromModel(env.SMART_LLM);
         } else {

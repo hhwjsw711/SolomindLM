@@ -18,10 +18,7 @@ export default defineConfig(
       ...reactHooks.configs.recommended.rules,
       "react-refresh/only-export-components": "warn",
       "@typescript-eslint/no-explicit-any": "warn",
-      "@typescript-eslint/no-unused-vars": [
-        "warn",
-        { argsIgnorePattern: "^_" },
-      ],
+      "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
       // React 19 + react-hooks v7: these flag many valid patterns (URL sync, ref mirrors,
       // latest-props-in-callback). Keep as warnings so `eslint .` stays clean; tighten over time.
       "react-hooks/set-state-in-effect": "warn",
@@ -41,5 +38,5 @@ export default defineConfig(
       "node_modules/**",
       "archive/**",
     ],
-  },
+  }
 );

@@ -1,8 +1,8 @@
-"use node"
+"use node";
 
-import { ChatTogetherAI } from '@langchain/community/chat_models/togetherai';
-import type { HumanMessage, SystemMessage } from '@langchain/core/messages';
-import { z } from 'zod';
+import { ChatTogetherAI } from "@langchain/community/chat_models/togetherai";
+import type { HumanMessage, SystemMessage } from "@langchain/core/messages";
+import { z } from "zod";
 
 /**
  * Interface for the structured LLM to avoid deep type instantiation.

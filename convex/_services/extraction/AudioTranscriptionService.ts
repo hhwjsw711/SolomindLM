@@ -52,7 +52,11 @@ export class AudioTranscriptionService {
 
           if (!response.ok) {
             const details = data ? JSON.stringify(data) : response.statusText;
-            logger.apiError("together", "/audio/transcriptions", new Error(`HTTP ${response.status}`));
+            logger.apiError(
+              "together",
+              "/audio/transcriptions",
+              new Error(`HTTP ${response.status}`)
+            );
             throw createExternalServiceErrorFromResponse(
               "together",
               response.status,
