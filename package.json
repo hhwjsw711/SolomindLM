@@ -35,7 +35,7 @@
     "test:web": "bun run --cwd apps/web test",
     "test:web:watch": "bun run --cwd apps/web test:watch",
     "test:web:coverage": "bun run --cwd apps/web test:coverage",
-    "test:convex": "cd convex && bun run test"
+    "test:convex": "bun run --cwd convex test"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

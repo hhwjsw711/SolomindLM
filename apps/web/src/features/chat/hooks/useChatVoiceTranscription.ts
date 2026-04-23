@@ -51,15 +51,18 @@ export function useChatVoiceTranscription({
   const mimeTypeRef = useRef<string | null>(null);
   const elapsedTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const maxDurationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const recordingStartRef = useRef<number>(0);
+  const mountedRef = useRef(true);
+
+  // Single helper that sets both the ref and React state together,
+  // eliminating the fragile dual-write pattern.
   const voiceStateRef = useRef<ChatVoiceState>("idle");
-  const stopAndUploadRef = useRef<(() => Promise<void>) | null>(null);
+  const setBoth = useCallback((s: ChatVoiceState) => {
+    voiceStateRef.current = s;
+    setVoiceState(s);
+  }, []);
 
-  useEffect(() => {
-    voiceStateRef.current = voiceState;
-  }, [voiceState]);
-
-  const clearRecordingTimers = useCallback(() => {
+  // Stable callbacks that are safe to use in useCallback deps without causing re-creation.
+  const clearTimers = useCallback(() => {
     if (elapsedTimerRef.current) {
       clearInterval(elapsedTimerRef.current);
       elapsedTimerRef.current = null;
@@ -70,7 +73,7 @@ export function useChatVoiceTranscription({
     }
   }, []);
 
-  const stopMediaStream = useCallback(() => {
+  const stopStream = useCallback(() => {
     if (mediaStreamRef.current) {
       mediaStreamRef.current.getTracks().forEach((t) => t.stop());
       mediaStreamRef.current = null;
@@ -78,13 +81,17 @@ export function useChatVoiceTranscription({
   }, []);
 
   const resetRecording = useCallback(() => {
-    clearRecordingTimers();
+    clearTimers();
     setElapsedMs(0);
-    recordingStartRef.current = 0;
     mediaRecorderRef.current = null;
     chunksRef.current = [];
     mimeTypeRef.current = null;
-  }, [clearRecordingTimers]);
+  }, [clearTimers]);
+
+  const goToIdle = useCallback(() => {
+    setBoth("idle");
+    resetRecording();
+  }, [setBoth, resetRecording]);
 
   const stopAndUpload = useCallback(async () => {
     const recorder = mediaRecorderRef.current;
@@ -92,7 +99,7 @@ export function useChatVoiceTranscription({
       return;
     }
 
-    clearRecordingTimers();
+    clearTimers();
 
     await new Promise<void>((resolve, reject) => {
       if (recorder.state === "inactive") {
@@ -112,27 +119,22 @@ export function useChatVoiceTranscription({
       }
     });
 
-    stopMediaStream();
-    voiceStateRef.current = "transcribing";
-    setVoiceState("transcribing");
+    stopStream();
+    setBoth("transcribing");
 
     const mimeType = mimeTypeRef.current || "audio/webm";
     const blob = new Blob(chunksRef.current, { type: mimeType });
     chunksRef.current = [];
 
-    if (blob.size < 1) {
+    if (blob.size === 0) {
       onError("No audio captured. Try again.");
-      voiceStateRef.current = "idle";
-      setVoiceState("idle");
-      resetRecording();
+      goToIdle();
       return;
     }
 
     if (!notebookId) {
       onError("No notebook selected");
-      voiceStateRef.current = "idle";
-      setVoiceState("idle");
-      resetRecording();
+      goToIdle();
       return;
     }
 
@@ -147,20 +149,25 @@ export function useChatVoiceTranscription({
         throw new Error("Failed to upload audio");
       }
       const { storageId } = (await uploadResponse.json()) as { storageId: string };
+      if (!storageId) {
+        throw new Error("Upload failed — unexpected response");
+      }
       const { text } = await transcribeChatAudio({
         storageId: storageId as Id<"_storage">,
         notebookId,
       });
+      if (!mountedRef.current) return;
       if (text.trim()) {
         onTranscribed(text);
+      } else {
+        onError("No speech detected in the recording. Try again.");
       }
     } catch (e) {
+      if (!mountedRef.current) return;
       const message = e instanceof Error ? e.message : "Transcription failed";
       onError(message);
     } finally {
-      voiceStateRef.current = "idle";
-      setVoiceState("idle");
-      resetRecording();
+      if (mountedRef.current) goToIdle();
     }
   }, [
     generateUploadUrl,
@@ -168,14 +175,10 @@ export function useChatVoiceTranscription({
     notebookId,
     onError,
     onTranscribed,
-    resetRecording,
-    stopMediaStream,
-    clearRecordingTimers,
+    goToIdle,
+    stopStream,
+    clearTimers,
   ]);
-
-  useEffect(() => {
-    stopAndUploadRef.current = stopAndUpload;
-  }, [stopAndUpload]);
 
   const startRecording = useCallback(async () => {
     if (disabled || !notebookId || voiceStateRef.current !== "idle") {
@@ -214,31 +217,30 @@ export function useChatVoiceTranscription({
       }
     };
 
-    recordingStartRef.current = Date.now();
+    setBoth("recording");
     setElapsedMs(0);
-    voiceStateRef.current = "recording";
-    setVoiceState("recording");
 
+    let elapsed = 0;
     elapsedTimerRef.current = setInterval(() => {
-      setElapsedMs(Date.now() - recordingStartRef.current);
+      elapsed += 200;
+      setElapsedMs(elapsed);
     }, 200);
 
     maxDurationTimerRef.current = setTimeout(() => {
-      if (voiceStateRef.current === "recording" && stopAndUploadRef.current) {
-        void stopAndUploadRef.current();
+      if (voiceStateRef.current === "recording") {
+        void stopAndUpload();
       }
     }, MAX_RECORDING_MS);
 
     try {
       recorder.start();
     } catch {
-      clearRecordingTimers();
-      stopMediaStream();
+      clearTimers();
+      stopStream();
       onError("Could not start recording");
-      setVoiceState("idle");
-      resetRecording();
+      goToIdle();
     }
-  }, [disabled, notebookId, onError, clearRecordingTimers, stopMediaStream, resetRecording]);
+  }, [disabled, notebookId, onError, clearTimers, stopStream, goToIdle, setBoth, stopAndUpload]);
 
   const toggleRecording = useCallback(async () => {
     if (disabled || !notebookId) {
@@ -258,7 +260,8 @@ export function useChatVoiceTranscription({
 
   useEffect(() => {
     return () => {
-      clearRecordingTimers();
+      mountedRef.current = false;
+      clearTimers();
       if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
         try {
           mediaRecorderRef.current.stop();
@@ -266,9 +269,9 @@ export function useChatVoiceTranscription({
           // ignore
         }
       }
-      stopMediaStream();
+      stopStream();
     };
-  }, [clearRecordingTimers, stopMediaStream]);
+  }, [clearTimers, stopStream]);
 
   return {
     voiceState,

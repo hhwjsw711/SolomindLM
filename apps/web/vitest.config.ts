@@ -10,6 +10,11 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "@convex/_generated/api": path.resolve(__dirname, "./src/convex-generated-api.d.ts"),
+      "@convex/_generated/dataModel": path.resolve(
+        __dirname,
+        "./src/convex-generated-dataModel.d.ts"
+      ),
       "@convex": path.resolve(__dirname, "../../convex"),
     },
   },
