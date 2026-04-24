@@ -214,10 +214,27 @@ export async function collapseConcepts(
 
   const allConcepts = state.mapOutputs.flat();
 
-  // Simple deduplication by concept name
-  const uniqueConcepts = Array.from(
-    new Map(allConcepts.map((c) => [c.name.toLowerCase(), c])).values()
-  );
+  // Fuzzy merge by slug (handles "Golden Rule" vs "Golden Rule (Test Set Isolation)")
+  const seen = new Map<string, ConceptExtraction>();
+  for (const concept of allConcepts) {
+    const slug = slugifyConceptName(concept.name);
+    if (!slug) continue;
+    const existing = seen.get(slug);
+    if (!existing) {
+      seen.set(slug, concept);
+    } else {
+      // Keep the one with higher importance, or longer description if equal
+      const order = { high: 0, medium: 1, low: 2 };
+      if (
+        order[concept.importance] < order[existing.importance] ||
+        (concept.importance === existing.importance &&
+          concept.description.length > existing.description.length)
+      ) {
+        seen.set(slug, concept);
+      }
+    }
+  }
+  const uniqueConcepts = Array.from(seen.values());
 
   // Sort by importance
   const importanceOrder = { high: 0, medium: 1, low: 2 };
@@ -251,30 +268,77 @@ export async function collapseConcepts(
 // ============================================================
 
 function slugifyConceptName(name: string): string {
-  return name.toLowerCase().trim().replace(/\s+/g, "-");
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/\s*\(.*?\)\s*/g, " ") // strip parentheticals: "Golden Rule (Test)" → "golden-rule"
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
 }
 
 function buildWikiArticleFromGeneration(
   concept: ConceptExtraction,
   state: OverallStateType,
-  gen: { summary: string; relatedConcepts: string[]; content: string }
-): WikiArticle {
+  gen: { summary: string; relatedConcepts: string[]; content: string; hasSourceCoverage?: boolean }
+): WikiArticle | null {
   const slug = slugifyConceptName(concept.name) || "concept";
   const docIds = (state.documentIds || []).map(String);
+
+  // Build set of valid concept names for validation
+  const validConceptNames = new Set(
+    (state.collapsedConcepts || []).map(c => c.name.toLowerCase())
+  );
+
   const related = (gen.relatedConcepts || [])
     .map((r) => {
       const t = r.trim().replace(/^\[\[|\]\]$/g, "");
       if (!t) return "";
+      // Only keep if the concept name exists in our actual concept list
+      if (!validConceptNames.has(t.toLowerCase())) return "";
       if (t.startsWith("concepts/")) return t;
       return `concepts/${slugifyConceptName(t)}`;
     })
     .filter(Boolean);
-  const summary = (gen.summary || concept.summary || "").trim().slice(0, 200);
+
+  // Use LLM-generated summary if available and doesn't contain negative language
+  let summary = (gen.summary || concept.summary || "").trim().slice(0, 200);
+  const negativePatterns = [
+    "cannot generate",
+    "does not contain",
+    "provided source does not",
+    "cannot create",
+    "source excerpt does not contain",
+    "based solely on",
+    "so a wiki article cannot be generated"
+  ];
+
+  // If summary contains negative language, use concept summary instead
+  if (negativePatterns.some(pattern => summary.toLowerCase().includes(pattern))) {
+    summary = concept.summary || "";
+  }
+
+  let content = gen.content.trim();
+
+  // Validate and fix wikilinks in content (remove hallucinated links)
+  content = validateAndFixWikilinks(content, validConceptNames);
+
+  // If LLM explicitly says no source coverage and content is very short, skip article
+  if (gen.hasSourceCoverage === false) {
+    const wordCount = content.trim().split(/\s+/).length;
+    if (wordCount < 50) {
+      // Skip this article - source doesn't have enough content
+      return null;
+    }
+  }
+
   return {
     path: `concepts/${slug}`,
     type: "concept",
     title: concept.name,
-    content: gen.content.trim(),
+    content,
     frontmatter: {
       slug,
       summary,
@@ -283,6 +347,23 @@ function buildWikiArticleFromGeneration(
       lastUpdated: new Date().toISOString(),
     },
   };
+}
+
+/**
+ * Validate and fix wikilinks in article content.
+ * Removes link syntax from hallucinated concept links that don't exist.
+ */
+function validateAndFixWikilinks(content: string, validConceptNames: Set<string>): string {
+  // Match [[wikilink]] pattern (including nested brackets in link text)
+  return content.replace(/\[\[([^\]]+)\]\]/g, (match, linkText) => {
+    const conceptName = linkText.trim();
+    // Check if this concept exists in our valid list
+    if (validConceptNames.has(conceptName.toLowerCase())) {
+      return match; // Keep valid links
+    }
+    // Remove link syntax from invalid/hallucinated links
+    return conceptName;
+  });
 }
 
 /** Markdown table cell: no pipes or newlines */
@@ -340,29 +421,69 @@ async function mapConceptIndicesWithConcurrency(
   return results.filter((a): a is WikiArticle => a !== undefined);
 }
 
+const STOP_WORDS = new Set([
+  "the","and","for","are","but","not","you","all","can","had","her","was",
+  "one","our","out","with","this","that","from","they","will","have","been",
+  "more","when","into","some","than","them","very","just","over","such",
+  "your","about","would","which","their","should","could","after","before",
+  "between","under","above","below","through","during","without","within",
+  "upon","among","against",
+]);
+
+function extractKeywords(text: string): string[] {
+  return [
+    ...new Set(
+      text
+        .toLowerCase()
+        .split(/[\s,.\-()]+/)
+        .filter((w) => w.length > 3 && !STOP_WORDS.has(w))
+    ),
+  ];
+}
+
+function findExcerptByTerm(content: string, term: string, maxChars: number): string {
+  const needle = term.trim().toLowerCase();
+  if (needle.length <= 2) return "";
+  const idx = content.toLowerCase().indexOf(needle);
+  if (idx === -1) return "";
+  const radius = Math.floor(maxChars / 2);
+  const start = Math.max(0, idx - radius);
+  const end = Math.min(content.length, idx + radius);
+  let excerpt = content.slice(start, end);
+  if (start > 0) excerpt = `[…]${excerpt}`;
+  if (end < content.length) excerpt = `${excerpt}[…]`;
+  return excerpt.slice(0, maxChars);
+}
+
 function buildRelevantContentForConcept(
   state: OverallStateType,
   concept: { name: string; summary: string; description: string }
 ): string {
   const joined = (state.chunks || []).join("\n\n---\n\n");
   const maxChars = WIKI_CONFIG.MAX_RELEVANT_CONTENT_CHARS;
-  let excerpt =
-    joined.length > maxChars
-      ? `${joined.slice(0, maxChars)}\n\n[…sources truncated for generation…]`
+
+  // Strategy 1: exact concept name match
+  let excerpt = findExcerptByTerm(joined, concept.name, maxChars);
+
+  // Strategy 2: keyword search from description (catches "train_test_split" for "Data Splitting")
+  if (excerpt.length < 2000) {
+    const keywords = extractKeywords(concept.name + " " + concept.description);
+    for (const kw of keywords) {
+      const candidate = findExcerptByTerm(joined, kw, maxChars);
+      if (candidate.length > excerpt.length) excerpt = candidate;
+    }
+  }
+
+  // Strategy 3: fallback to full joined content, then concept description
+  if (excerpt.length < 500) {
+    excerpt = joined.length > maxChars
+      ? `${joined.slice(0, maxChars)}\n\n[…sources truncated…]`
       : joined;
+  }
   if (!excerpt.trim()) {
     excerpt = `${concept.summary}\n\n${concept.description}`;
   }
-  const needle = concept.name.trim();
-  if (needle.length > 2 && joined.includes(needle)) {
-    const idx = joined.indexOf(needle);
-    const radius = Math.floor(maxChars / 2);
-    const start = Math.max(0, idx - radius);
-    const end = Math.min(joined.length, idx + radius);
-    excerpt = joined.slice(start, end);
-    if (start > 0) excerpt = `[…]${excerpt}`;
-    if (end < joined.length) excerpt = `${excerpt}[…]`;
-  }
+
   return excerpt.length > maxChars ? excerpt.slice(0, maxChars) : excerpt;
 }
 
@@ -401,10 +522,15 @@ export async function synthesizeArticlesForIndices(
 
     try {
       const relevantContent = buildRelevantContentForConcept(state, concept);
+      const existingConceptNames = (state.collapsedConcepts || [])
+        .map(c => c.name)
+        .sort()
+        .join(", ");
       const prompt = getArticleGenerationPrompt({
         concept,
         relevantContent,
         sources: state.documentIds,
+        existingArticles: existingConceptNames,
       });
 
       const result = await invokeWithRetry(
@@ -444,8 +570,35 @@ export async function synthesizeArticlesForIndices(
       const article = buildWikiArticleFromGeneration(
         concept,
         state,
-        result as { summary: string; relatedConcepts: string[]; content: string }
+        result as { summary: string; relatedConcepts: string[]; content: string; hasSourceCoverage?: boolean }
       );
+
+      // Skip article if buildWikiArticleFromGeneration returned null (insufficient source coverage)
+      if (article === null) {
+        logger.info(`Skipping article for ${concept.name} - insufficient source coverage`, {
+          agent: "WikiGraph",
+          phase: "synthesize_articles",
+          conceptName: concept.name,
+          reason: "hasSourceCoverage=false and low word count",
+        });
+        return undefined;
+      }
+
+      // Drop under-populated articles rather than saving stubs
+      const minWordCount =
+        concept.importance === "high" ? 150 :
+        concept.importance === "low"  ? 40  : 80;
+      const wordCount = article.content.trim().split(/\s+/).length;
+      if (wordCount < minWordCount) {
+        logger.info(`Skipping stub article for "${concept.name}"`, {
+          agent: "WikiGraph",
+          phase: "synthesize_articles",
+          conceptName: concept.name,
+          wordCount,
+          minRequired: minWordCount,
+        });
+        return undefined;
+      }
 
       logger.info(`Article generated for ${concept.name} in ${Date.now() - startTime}ms`, {
         agent: "WikiGraph",
@@ -566,20 +719,35 @@ export async function detectConnections(
       "WikiConnectionDetection"
     );
 
-    // Convert connections to articles
-    const connectionArticles: WikiArticle[] = (result as any).connections.map((conn: any) => ({
-      path: conn.path,
-      type: "connection" as const,
-      title: conn.title,
-      content: `# ${conn.title}\n\n${conn.relationship}`,
-      frontmatter: {
-        slug: conn.path.split("/").pop() || conn.path,
-        summary: conn.relationship.substring(0, 200),
-        sources: state.documentIds,
-        relatedConcepts: conn.concepts,
-        lastUpdated: new Date().toISOString(),
-      },
-    }));
+    // Convert connections to articles, filtering out low-quality ones
+    const minConnectionWords = 50;
+    const connectionArticles: WikiArticle[] = (result as any).connections
+      .filter((conn: any) => {
+        const wordCount = conn.relationship.trim().split(/\s+/).length;
+        if (wordCount < minConnectionWords) {
+          logger.warn(`Connection "${conn.title}" too short (${wordCount} words), filtering out`, {
+            agent: "WikiGraph",
+            phase: "detect_connections",
+            wordCount,
+            minRequired: minConnectionWords,
+          });
+          return false;
+        }
+        return true;
+      })
+      .map((conn: any) => ({
+        path: conn.path,
+        type: "connection" as const,
+        title: conn.title,
+        content: `# ${conn.title}\n\n${conn.relationship}`,
+        frontmatter: {
+          slug: conn.path.split("/").pop() || conn.path,
+          summary: conn.relationship.substring(0, 200),
+          sources: state.documentIds,
+          relatedConcepts: conn.concepts,
+          lastUpdated: new Date().toISOString(),
+        },
+      }));
 
     logger.phaseComplete("detect_connections", {
       connectionsDetected: connectionArticles.length,

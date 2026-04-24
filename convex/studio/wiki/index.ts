@@ -19,6 +19,7 @@ import {
   createWikiArticle,
   updateWikiArticle,
 } from "../../_model/wiki";
+import * as scheduler from "./scheduler";
 
 // ============================================================
 // PUBLIC QUERIES
@@ -181,6 +182,33 @@ export const cancelGeneration = mutation({
   },
 });
 
+/**
+ * Toggle auto-update setting for a wiki
+ */
+export const setAutoUpdate = mutation({
+  args: {
+    wikiId: v.id("wikis"),
+    autoUpdate: v.boolean(),
+  },
+  handler: async (ctx: any, args: any) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("User must be authenticated");
+    }
+
+    const wiki = await getWiki(ctx, args.wikiId);
+    if (!wiki) {
+      throw new Error("Wiki not found");
+    }
+
+    await ctx.db.patch(args.wikiId, {
+      autoUpdate: args.autoUpdate,
+    });
+
+    return { wikiId: args.wikiId, autoUpdate: args.autoUpdate };
+  },
+});
+
 // ============================================================
 // INTERNAL MUTATIONS (called from jobs)
 // ============================================================
@@ -320,3 +348,75 @@ export const getArticlesInternal = internalQuery({
     return await getWikiArticles(ctx, args.wikiId);
   },
 });
+
+const claimRegenerationRunResultValidator = v.union(
+  v.object({
+    ok: v.literal(true),
+    mode: v.union(v.literal("already_active"), v.literal("claimed_debounced")),
+  }),
+  v.object({
+    ok: v.literal(false),
+    reason: v.string(),
+  })
+);
+
+/**
+ * Ensure this regeneration run is allowed to proceed: either the wiki was
+ * already marked generating (manual refresh path) or we claim a debounced
+ * auto-update run by transitioning to generating with this runId.
+ */
+export const claimRegenerationRun = internalMutation({
+  args: {
+    wikiId: v.id("wikis"),
+    runId: v.number(),
+  },
+  returns: claimRegenerationRunResultValidator,
+  handler: async (ctx, args) => {
+    const wiki = await ctx.db.get(args.wikiId);
+    if (!wiki) {
+      return { ok: false as const, reason: "wiki_not_found" };
+    }
+
+    if (wiki.status === "generating" && wiki.generationRunId === args.runId) {
+      return { ok: true as const, mode: "already_active" as const };
+    }
+
+    if (wiki.status === "generating" && wiki.generationRunId !== args.runId) {
+      return { ok: false as const, reason: "superseded" };
+    }
+
+    const nextRun = (wiki.generationRunId ?? 0) + 1;
+    if (args.runId !== nextRun) {
+      if (wiki.pendingJobId && args.runId < nextRun) {
+        await ctx.db.patch(args.wikiId, { pendingJobId: undefined });
+      }
+      return { ok: false as const, reason: "stale_run" };
+    }
+
+    if (!wiki.autoUpdate) {
+      if (wiki.pendingJobId) {
+        await ctx.db.patch(args.wikiId, { pendingJobId: undefined });
+      }
+      return { ok: false as const, reason: "auto_update_disabled" };
+    }
+
+    if (!wiki.pendingJobId) {
+      return { ok: false as const, reason: "not_debounced" };
+    }
+
+    await ctx.db.patch(args.wikiId, {
+      status: "generating",
+      generationRunId: args.runId,
+      error: undefined,
+    });
+
+    return { ok: true as const, mode: "claimed_debounced" as const };
+  },
+});
+
+// ============================================================
+// SCHEDULER EXPORTS
+// ============================================================
+
+export const scheduleWikiUpdate = scheduler.scheduleWikiUpdate;
+export const clearPendingJob = scheduler.clearPendingJob;

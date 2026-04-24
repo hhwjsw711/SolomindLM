@@ -46,6 +46,8 @@ export interface Wiki {
   };
   error?: string;
   generationRunId?: number;
+  autoUpdate?: boolean;
+  pendingJobId?: string; // ID of scheduled job (string type from Convex scheduler)
   articles?: WikiArticle[];
 }
 
@@ -87,5 +89,13 @@ export function useCancelWikiGeneration() {
 
   return async (wikiId: string | Id<"wikis">) => {
     return await cancel({ wikiId: wikiId as Id<"wikis"> });
+  };
+}
+
+export function useSetAutoUpdate() {
+  const setAutoUpdate = useMutation(api.studio.wiki.index.setAutoUpdate);
+
+  return async (wikiId: string | Id<"wikis">, autoUpdate: boolean) => {
+    return await setAutoUpdate({ wikiId: wikiId as Id<"wikis">, autoUpdate });
   };
 }

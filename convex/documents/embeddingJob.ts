@@ -369,6 +369,18 @@ export const docEmbedding = internalAction({
         status: "completed",
       });
 
+      // Best-effort: debounced wiki auto-update must not fail the embedding job
+      try {
+        await ctx.runMutation(internal.studio.wiki.index.scheduleWikiUpdate, {
+          notebookId,
+        });
+      } catch (wikiScheduleErr) {
+        logger.warn("Wiki auto-update schedule failed after embed (non-fatal)", {
+          notebookId,
+          error: wikiScheduleErr instanceof Error ? wikiScheduleErr.message : String(wikiScheduleErr),
+        });
+      }
+
       logger.jobComplete({
         title,
         chunkCount: chunksWithMetadata.length,

@@ -338,6 +338,10 @@ export default defineSchema({
     error: v.optional(v.string()), // Error message if failed
     /** Incremented on each refresh/cancel so in-flight jobs can detect stale runs */
     generationRunId: v.optional(v.number()),
+    /** User toggle: automatically regenerate wiki when sources are added (debounced) */
+    autoUpdate: v.optional(v.boolean()),
+    /** ID of scheduled job that will regenerate wiki after debounce period (stored as string since that's what ctx.scheduler.runAfter returns) */
+    pendingJobId: v.optional(v.string()),
   })
     .index("by_notebook", ["notebookId"])
     .index("by_user", ["userId"])

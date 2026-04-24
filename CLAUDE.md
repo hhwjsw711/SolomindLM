@@ -229,6 +229,32 @@ bun run convex:env:push:dry    # Dry run for env push
 | `langgraph-langchain`      | Modifying agents in `convex/_agents/` or working with LangGraph |
 | `langsmith`                | Setting up tracing/observability for agents                     |
 
+### Critical Rules for Agent Prompts
+
+**🚨 KEEP ALL AGENT PROMPTS GENERALIZED**
+
+When modifying agent prompts in `convex/_agents/*/prompts.ts`:
+
+- ✅ **DO**: Use domain-agnostic examples and patterns
+- ✅ **DO**: Describe concepts in terms of "what's being taught" vs "what's being used to teach"
+- ❌ **DO NOT**: Add examples specific to ML, chemistry, history, or any particular subject
+- ❌ **DO NOT**: Reference specific datasets, examples, or use cases from a single notebook
+- ❌ **DO NOT**: Assume the user is working with machine learning or any specific domain
+
+**Why:** Users upload ANY type of source material (biology notes, history textbooks, code documentation, etc.). Prompts must work for ALL content types, not just the current test case.
+
+**Example of WRONG prompt:**
+```
+❌ "If chunk shows movie reviews → extract 'Sentiment Analysis', not 'Film Analysis'"
+```
+
+**Example of CORRECT prompt:**
+```
+✅ "Extract the technique being demonstrated, not the example content itself"
+```
+
+If you're unsure whether a prompt change is domain-specific, ASK THE USER before making changes.
+
 ### Frontend & AI Generation Skills
 
 | Skill                | When                                                       |

@@ -154,11 +154,15 @@ http.route({
     const pathParts = url.pathname.split("/");
     const storageId = pathParts[pathParts.length - 1] as any;
 
+    const headerLog: Record<string, string> = {};
+    request.headers.forEach((value, key) => {
+      headerLog[key] = value;
+    });
     console.log("[Audio HTTP] Request received:", {
       pathname: url.pathname,
       storageId,
       searchParams: url.search,
-      headers: Object.fromEntries(request.headers.entries()),
+      headers: headerLog,
     });
 
     try {

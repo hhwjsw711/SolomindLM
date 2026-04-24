@@ -545,6 +545,7 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
                     : undefined
               }
               hideInclusionToggle={Boolean(viewingWikiPath)}
+              onOpenWikiConcept={handleOpenWikiArticle}
             />
           ) : (
             <SourceList
@@ -574,7 +575,7 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
               canRefreshAll={canRefreshAll}
               isRefreshing={isRefreshingAll}
               beforeSearch={
-                <div className="p-3 pb-2">
+                <div className="px-3 pt-3 pb-1">
                   <WikiCard
                     wiki={wiki}
                     isPending={isWikiPending}

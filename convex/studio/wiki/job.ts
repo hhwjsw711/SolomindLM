@@ -99,13 +99,22 @@ export const regenerateWiki = internalAction({
     userId: v.id("users"),
     runId: v.number(),
   },
-  handler: async (ctx: any, args: any) => {
+  handler: async (ctx: any, args: any): Promise<Record<string, unknown>> => {
     const { wikiId, notebookId, userId, runId } = args;
 
     try {
-      if (!(await isWikiRunActive(ctx, wikiId, runId))) {
-        return { wikiId, skipped: true as const };
+      const claim = await ctx.runMutation(internal.studio.wiki.index.claimRegenerationRun, {
+        wikiId,
+        runId,
+      });
+      if (!claim.ok) {
+        return { wikiId, skipped: true as const, reason: claim.reason };
       }
+
+      // Clear pending job ID since we're now running
+      await ctx.runMutation(internal.studio.wiki.index.clearPendingJob, {
+        wikiId,
+      });
 
       // Actions have no ctx.db — load documents via internal query (auth-checked).
       const documents = await ctx.runQuery(

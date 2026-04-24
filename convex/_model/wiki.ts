@@ -98,6 +98,28 @@ export async function createWikiArticle(
     wordCount?: number;
   }
 ) {
+  // Guard against duplicate paths within the same wiki
+  const existing = await ctx.db
+    .query("wikiArticles")
+    .withIndex("by_path", (q: any) => q.eq("wikiId", data.wikiId).eq("path", data.path))
+    .first();
+
+  if (existing) {
+    // Append numeric suffix rather than silently clobbering
+    let suffix = 2;
+    let uniquePath = `${data.path}-${suffix}`;
+    while (
+      await ctx.db
+        .query("wikiArticles")
+        .withIndex("by_path", (q: any) => q.eq("wikiId", data.wikiId).eq("path", uniquePath))
+        .first()
+    ) {
+      suffix++;
+      uniquePath = `${data.path}-${suffix}`;
+    }
+    data = { ...data, path: uniquePath };
+  }
+
   const now = Date.now();
   const articleId = await ctx.db.insert("wikiArticles", {
     wikiId: data.wikiId,

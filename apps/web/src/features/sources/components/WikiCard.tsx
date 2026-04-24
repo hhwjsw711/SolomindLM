@@ -1,15 +1,14 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useLayoutEffect, useCallback } from "react";
 import {
   BookOpen,
-  ChevronRight,
-  ChevronDown,
-  Folder,
   RefreshCw,
-  FileText,
   Loader2,
   Square,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
-import type { Wiki } from "../services/wikiApi";
+import type { Wiki, WikiArticle } from "../services/wikiApi";
+import { useSetAutoUpdate } from "../services/wikiApi";
 
 interface WikiCardProps {
   wiki: Wiki | null | undefined;
@@ -17,72 +16,56 @@ interface WikiCardProps {
   onCreateWiki: () => void;
   onRegenerateWiki?: () => void;
   onCancelGeneration?: () => void;
-  /** Open a wiki article in the sources panel viewer (path from API, e.g. concepts/foo). */
   onOpenArticle?: (path: string) => void;
 }
 
-interface WikiPage {
-  id: string;
-  name: string;
-  path: string;
-  type: "file" | "folder";
-  children?: WikiPage[];
-}
+type CategoryTab = "concepts" | "connections" | "qa" | "index";
 
-const WikiTreeItem: React.FC<{
-  page: WikiPage;
-  level: number;
-  onOpenArticle?: (path: string) => void;
-}> = ({ page, level, onOpenArticle }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const isFolder = page.type === "folder";
+const TAB_LABELS: Record<CategoryTab, string> = {
+  concepts: "Concepts",
+  connections: "Connections",
+  qa: "Q&A",
+  index: "Index",
+};
+
+const expandedStorageKey = (wikiId: string) => `wiki-card-expanded:${wikiId}`;
+
+const ArticleRow: React.FC<{
+  article: WikiArticle;
+  onOpen: (path: string) => void;
+}> = ({ article, onOpen }) => {
+  const connectionCount = article.frontmatter?.relatedConcepts?.length ?? 0;
+  const sourceCount = article.sources?.length ?? 0;
 
   return (
-    <div>
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          if (isFolder) {
-            setIsExpanded(!isExpanded);
-          } else {
-            onOpenArticle?.(page.path);
-          }
-        }}
-        className={`w-full flex items-center gap-1.5 py-1 px-2 rounded hover:bg-secondary/50 transition-colors text-left ${
-          level > 0 ? "ml-4" : ""
-        }`}
-        style={{ paddingLeft: `${level * 12 + 8}px` }}
-      >
-        {isFolder ? (
-          <>
-            {isExpanded ? (
-              <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-            ) : (
-              <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-            )}
-            <Folder
-              className={`w-4 h-4 ${isExpanded ? "text-primary" : "text-muted-foreground"}`}
-            />
-          </>
-        ) : (
-          <FileText className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-        )}
-        <span className="text-sm text-foreground truncate">{page.name}</span>
-      </button>
-      {isFolder && isExpanded && page.children && (
-        <div className="mt-0.5">
-          {page.children.map((child) => (
-            <WikiTreeItem
-              key={child.id}
-              page={child}
-              level={level + 1}
-              onOpenArticle={onOpenArticle}
-            />
-          ))}
+    <button
+      type="button"
+      onClick={() => onOpen(article.path)}
+      className="w-full text-left px-2.5 py-2 rounded-md hover:bg-secondary/50 transition-colors group"
+    >
+      <div className="flex items-start gap-2">
+        <p className="text-sm text-foreground leading-snug truncate flex-1">{article.title}</p>
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+          {connectionCount > 0 && (
+            <span className="flex items-center gap-0.5" title={`Connected to ${connectionCount} concept${connectionCount > 1 ? 's' : ''}`}>
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500" aria-hidden />
+              {connectionCount}
+            </span>
+          )}
+          {sourceCount > 0 && (
+            <span className="flex items-center gap-0.5" title={`Built from ${sourceCount} source${sourceCount > 1 ? 's' : ''}`}>
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500" aria-hidden />
+              {sourceCount}
+            </span>
+          )}
         </div>
+      </div>
+      {article.frontmatter?.summary && (
+        <p className="text-xs text-muted-foreground leading-relaxed line-clamp-1 mt-0.5">
+          {article.frontmatter.summary}
+        </p>
       )}
-    </div>
+    </button>
   );
 };
 
@@ -94,255 +77,319 @@ export const WikiCard: React.FC<WikiCardProps> = ({
   onCancelGeneration,
   onOpenArticle,
 }) => {
+  const [activeTab, setActiveTab] = useState<CategoryTab>("concepts");
   const [isExpanded, setIsExpanded] = useState(false);
+  const [optimisticAutoUpdate, setOptimisticAutoUpdate] = useState<boolean | undefined>(undefined);
+  const setAutoUpdateMutation = useSetAutoUpdate();
 
-  // Build wiki structure from articles
-  const wikiStructure = useMemo(() => {
-    if (!wiki?.articles || wiki.articles.length === 0) {
-      return [];
+  const wikiId = wiki?._id;
+
+  useLayoutEffect(() => {
+    if (!wikiId) return;
+    try {
+      const s = sessionStorage.getItem(expandedStorageKey(wikiId));
+      if (s === "true") setIsExpanded(true);
+      else if (s === "false") setIsExpanded(false);
+    } catch {
+      // ignore
     }
+  }, [wikiId]);
 
-    // Group articles by type and path
-    const grouped: Record<string, WikiPage[]> = {};
-
-    wiki.articles.forEach((article) => {
-      if (article.type === "index" || article.type === "log") {
-        // Root level files
-        if (!grouped.root) grouped.root = [];
-        grouped.root.push({
-          id: article.path,
-          name: article.title,
-          path: article.path,
-          type: "file",
-        });
-      } else if (article.type === "concept") {
-        // Concepts folder
-        if (!grouped.concepts) grouped.concepts = [];
-        grouped.concepts.push({
-          id: article.path,
-          name: article.title,
-          path: article.path,
-          type: "file",
-        });
-      } else if (article.type === "connection") {
-        // Connections folder
-        if (!grouped.connections) grouped.connections = [];
-        grouped.connections.push({
-          id: article.path,
-          name: article.title,
-          path: article.path,
-          type: "file",
-        });
-      } else if (article.type === "qa") {
-        // QA folder
-        if (!grouped.qa) grouped.qa = [];
-        grouped.qa.push({
-          id: article.path,
-          name: article.title,
-          path: article.path,
-          type: "file",
-        });
-      }
-    });
-
-    // Build tree structure
-    const tree: WikiPage[] = [];
-
-    // Add concepts folder
-    if (grouped.concepts && grouped.concepts.length > 0) {
-      tree.push({
-        id: "concepts",
-        name: "Concepts",
-        path: "concepts",
-        type: "folder",
-        children: grouped.concepts,
+  const setExpanded = useCallback(
+    (value: boolean | ((prev: boolean) => boolean)) => {
+      setIsExpanded((prev) => {
+        const next = typeof value === "function" ? (value as (p: boolean) => boolean)(prev) : value;
+        if (wikiId) {
+          try {
+            sessionStorage.setItem(expandedStorageKey(wikiId), next ? "true" : "false");
+          } catch {
+            // ignore
+          }
+        }
+        return next;
       });
-    }
+    },
+    [wikiId]
+  );
 
-    // Add connections folder
-    if (grouped.connections && grouped.connections.length > 0) {
-      tree.push({
-        id: "connections",
-        name: "Connections",
-        path: "connections",
-        type: "folder",
-        children: grouped.connections,
-      });
-    }
+  const currentAutoUpdate = optimisticAutoUpdate ?? wiki?.autoUpdate ?? false;
 
-    // Add QA folder
-    if (grouped.qa && grouped.qa.length > 0) {
-      tree.push({
-        id: "qa",
-        name: "QA",
-        path: "qa",
-        type: "folder",
-        children: grouped.qa,
-      });
-    }
-
-    // Add root level files (index, log, etc.)
-    if (grouped.root) {
-      tree.push(...grouped.root);
-    }
-
-    return tree;
+  const articlesByCategory = useMemo(() => {
+    if (!wiki?.articles) return { concepts: [], connections: [], qa: [], index: [] };
+    return {
+      concepts: wiki.articles.filter((a) => a.type === "concept"),
+      connections: wiki.articles.filter((a) => a.type === "connection"),
+      qa: wiki.articles.filter((a) => a.type === "qa"),
+      index: wiki.articles.filter((a) => a.type === "index" || a.type === "log"),
+    };
   }, [wiki?.articles]);
 
+  const availableTabs = useMemo(
+    () =>
+      (Object.keys(articlesByCategory) as CategoryTab[]).filter(
+        (k) => articlesByCategory[k].length > 0
+      ),
+    [articlesByCategory]
+  );
+
+  const resolvedTab =
+    availableTabs.includes(activeTab) ? activeTab : (availableTabs[0] ?? "concepts");
+
+  const handleAutoUpdateToggle = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!wiki) return;
+    const next = !currentAutoUpdate;
+    setOptimisticAutoUpdate(next);
+    try {
+      await setAutoUpdateMutation(wiki._id, next);
+    } catch {
+      setOptimisticAutoUpdate(undefined);
+    }
+  };
+
+  // ── Empty state ──────────────────────────────────────────────────────────
   if (!wiki) {
     return (
       <button
+        type="button"
         onClick={onCreateWiki}
-        className="w-full group flex flex-col bg-card/50 border border-dashed border-border/50 rounded-lg hover:bg-card hover:border-border hover:shadow-md transition-all"
+        className="w-full group flex items-center gap-3 py-3 px-3 bg-card border border-dashed border-border rounded-lg hover:border-primary/40 hover:bg-secondary/20 transition-colors text-left"
       >
-        <div className="flex items-center gap-3 py-4 px-3">
-          <div className="text-muted-foreground group-hover:text-primary transition-colors shrink-0 flex items-center justify-center">
-            <BookOpen className="w-6 h-6" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h4 className="text-base font-medium text-foreground truncate leading-tight">
-              Create Knowledge Wiki
-            </h4>
-            <p className="text-sm text-muted-foreground uppercase tracking-wide font-sans">
-              Map out all your sources
-            </p>
-          </div>
+        <BookOpen className="w-5 h-5 text-muted-foreground group-hover:text-primary shrink-0 transition-colors" />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-foreground leading-snug">Knowledge Base</p>
+          <p className="text-xs text-muted-foreground uppercase tracking-wide font-sans mt-0.5">
+            Click to generate
+          </p>
         </div>
+        <ChevronRight className="w-4 h-4 text-muted-foreground/40 shrink-0 group-hover:text-muted-foreground transition-colors" />
       </button>
     );
   }
 
-  const wikiStatus = wiki.status;
-  const isDraft = wikiStatus === "draft";
-  const isGenerating = wikiStatus === "generating" || Boolean(isPending);
-  const isCompleted = wikiStatus === "completed";
-  const isFailed = wikiStatus === "failed";
+  const isDraft = wiki.status === "draft";
+  const isGenerating = wiki.status === "generating" || Boolean(isPending);
+  const isCompleted = wiki.status === "completed";
+  const isFailed = wiki.status === "failed";
 
-  const showRefresh =
-    Boolean(onRegenerateWiki) && !isGenerating && (isDraft || isCompleted || isFailed);
-  const showStop = Boolean(onCancelGeneration) && isGenerating;
-
-  const cardClass =
-    "bg-card border rounded-lg transition-colors" +
-    (isGenerating ? " border-primary/50 bg-primary/[0.06] shadow-sm" : " border-border");
+  const totalArticles = wiki.metadata?.articleCounts?.total ?? wiki.articles?.length ?? 0;
+  const lastRefreshed = wiki.lastRefreshedAt
+    ? new Date(wiki.lastRefreshedAt).toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+      })
+    : null;
 
   return (
-    <div className={cardClass} aria-busy={isGenerating}>
+    <div
+      className={`bg-card border rounded-lg overflow-hidden transition-colors ${
+        isGenerating ? "border-primary/40" : "border-border"
+      }`}
+      aria-busy={isGenerating}
+    >
+      {/* Header row */}
       <div
-        role="button"
-        tabIndex={0}
-        onClick={() => setIsExpanded(!isExpanded)}
+        role={isCompleted || isFailed ? "button" : undefined}
+        tabIndex={isCompleted || isFailed ? 0 : undefined}
+        onClick={() => (isCompleted || isFailed) && setExpanded((v) => !v)}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
-            setIsExpanded(!isExpanded);
+            if (isCompleted || isFailed) setExpanded((v) => !v);
           }
         }}
-        className="w-full group flex items-center gap-3 py-4 px-3 min-h-13 hover:bg-secondary/30 transition-colors cursor-pointer"
+        className={`flex items-center gap-3 py-3 px-3 ${
+          isCompleted || isFailed
+            ? "cursor-pointer hover:bg-secondary/30 transition-colors"
+            : ""
+        }`}
       >
-        <div className="text-primary shrink-0 flex items-center justify-center">
+        <div className="text-primary shrink-0">
           {isGenerating ? (
-            <Loader2 className="w-6 h-6 animate-spin" aria-hidden />
+            <Loader2 className="w-5 h-5 animate-spin" aria-hidden />
           ) : (
-            <BookOpen className="w-6 h-6" aria-hidden />
+            <BookOpen className="w-5 h-5" aria-hidden />
           )}
         </div>
+
         <div className="flex-1 min-w-0">
-          <h4 className="text-base font-medium text-foreground truncate leading-tight">
-            {wiki.title || "Knowledge Wiki"}
+          <h4 className="text-sm font-medium text-foreground leading-snug">
+            {wiki.title || "Knowledge Base"}
           </h4>
-          {isGenerating && (
-            <p className="text-sm text-primary font-medium uppercase tracking-wide font-sans">
-              Building your wiki…
-            </p>
-          )}
-          {!isGenerating && isFailed && (
-            <p className="text-sm text-muted-foreground uppercase tracking-wide font-sans">
-              Generation failed
-            </p>
-          )}
-          {!isGenerating && isDraft && (
-            <p className="text-sm text-muted-foreground uppercase tracking-wide font-sans">
-              Not generated yet
-            </p>
-          )}
-          {!isGenerating && isCompleted && wiki.metadata?.articleCounts && (
-            <p className="text-sm text-muted-foreground uppercase tracking-wide font-sans">
-              {wiki.metadata.articleCounts.total} articles
-            </p>
-          )}
-          {!isGenerating && isCompleted && !wiki.metadata?.articleCounts && (
-            <p className="text-sm text-muted-foreground uppercase tracking-wide font-sans">
-              Up to date
-            </p>
-          )}
+          <div className="text-xs text-muted-foreground uppercase tracking-wide font-sans mt-0.5">
+            {isGenerating && <span className="text-primary">Building wiki…</span>}
+            {!isGenerating && isFailed && "Generation failed"}
+            {!isGenerating && isDraft && "Not generated yet"}
+            {!isGenerating && isCompleted && (
+              <>
+                {totalArticles > 0 ? `${totalArticles} articles` : "Ready"}
+                {lastRefreshed && <span className="ml-2 opacity-60">· {lastRefreshed}</span>}
+                {currentAutoUpdate && (
+                  <span className="ml-2 text-primary">· Auto-update on</span>
+                )}
+                {wiki.pendingJobId && !currentAutoUpdate && (
+                  <span className="ml-2 text-primary">· Update scheduled</span>
+                )}
+              </>
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-1 shrink-0">
-          {showStop && (
+
+        <div
+          className="flex items-center gap-1 shrink-0"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Auto-update toggle */}
+          {!isDraft && (
+            <button
+              type="button"
+              role="switch"
+              aria-checked={currentAutoUpdate}
+              title={currentAutoUpdate ? "Disable auto-update" : "Enable auto-update"}
+              onClick={handleAutoUpdateToggle}
+              className={`relative h-4 w-7 shrink-0 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 ${
+                currentAutoUpdate ? "bg-primary" : "bg-muted"
+              }`}
+            >
+              <span
+                className={`pointer-events-none absolute top-0.5 block h-3 w-3 rounded-full bg-background shadow-sm ring-1 ring-black/10 transition-transform dark:ring-white/10 ${
+                  currentAutoUpdate ? "left-[calc(100%-0.875rem)]" : "left-0.5"
+                }`}
+                aria-hidden
+              />
+            </button>
+          )}
+
+          {/* Stop generation */}
+          {isGenerating && onCancelGeneration && (
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                onCancelGeneration?.();
+                onCancelGeneration();
               }}
-              className="p-1.5 hover:bg-destructive/15 rounded-lg transition-colors text-muted-foreground hover:text-destructive"
+              className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
               title="Stop generation"
             >
-              <Square className="w-4 h-4 fill-current" />
+              <Square className="w-3.5 h-3.5 fill-current" />
             </button>
           )}
-          {showRefresh && (
+
+          {/* Regenerate */}
+          {!isGenerating && onRegenerateWiki && (
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                onRegenerateWiki?.();
+                onRegenerateWiki();
               }}
-              className="p-1.5 hover:bg-secondary rounded-lg transition-colors text-muted-foreground hover:text-foreground"
-              title={isDraft ? "Generate knowledge base" : "Regenerate knowledge base"}
+              className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+              title={isDraft ? "Generate wiki" : "Regenerate wiki"}
             >
-              <RefreshCw className="w-4 h-4" />
+              <RefreshCw className="w-3.5 h-3.5" />
             </button>
           )}
-          {isExpanded ? (
-            <ChevronDown className="w-5 h-5 text-muted-foreground" aria-hidden />
-          ) : (
-            <ChevronRight className="w-5 h-5 text-muted-foreground" aria-hidden />
+
+          {/* Expand chevron */}
+          {(isCompleted || isFailed) && (
+            <div className="text-muted-foreground pointer-events-none">
+              {isExpanded ? (
+                <ChevronDown className="w-4 h-4" />
+              ) : (
+                <ChevronRight className="w-4 h-4" />
+              )}
+            </div>
           )}
         </div>
       </div>
 
+      {/* Generating progress */}
       {isGenerating && (
         <div className="px-3 pb-3 space-y-2">
-          <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+          <div className="h-1 rounded-full bg-muted overflow-hidden">
             <div
-              className="h-full w-1/2 rounded-full bg-primary/80 animate-pulse motion-reduce:animate-none"
-              style={{ animationDuration: "1.2s" }}
+              className="h-full w-1/2 rounded-full bg-primary/70 animate-pulse motion-reduce:animate-none"
+              style={{ animationDuration: "1.4s" }}
             />
           </div>
-          <p className="text-xs text-center text-muted-foreground leading-snug">
-            Compiling articles from your sources. This can take a minute.
+          <p className="text-xs text-muted-foreground text-center">
+            Compiling articles from your sources…
           </p>
         </div>
       )}
 
-      {!isGenerating && isFailed && wiki.error && (
-        <div className="px-3 pb-2">
-          <p className="text-xs text-destructive/90 leading-snug line-clamp-3">{wiki.error}</p>
+      {/* Error */}
+      {!isGenerating && isFailed && isExpanded && wiki.error && (
+        <div className="px-3 pb-3">
+          <p className="text-xs text-destructive/80 leading-relaxed line-clamp-3 mb-2">
+            {wiki.error}
+          </p>
+          {onRegenerateWiki && (
+            <button
+              type="button"
+              onClick={onRegenerateWiki}
+              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <RefreshCw className="w-3 h-3" />
+              Try again
+            </button>
+          )}
         </div>
       )}
 
-      {isExpanded && (
-        <div className="px-3 pb-3">
-          {wikiStructure.length > 0 ? (
-            <div className="pt-2 border-t border-border/50">
-              {wikiStructure.map((page) => (
-                <WikiTreeItem key={page.id} page={page} level={0} onOpenArticle={onOpenArticle} />
-              ))}
-            </div>
+      {/* Article browser */}
+      {isCompleted && isExpanded && (
+        <div className="border-t border-border">
+          {availableTabs.length > 0 ? (
+            <>
+              {/* Tabs */}
+              <div className="flex border-b border-border px-1 pt-1">
+                {availableTabs.map((tab) => {
+                  const isActive = resolvedTab === tab;
+                  const count = articlesByCategory[tab].length;
+                  return (
+                    <button
+                      key={tab}
+                      type="button"
+                      onClick={() => setActiveTab(tab)}
+                      className={`px-2.5 py-1.5 text-xs font-medium transition-colors border-b-2 -mb-px ${
+                        isActive
+                          ? "border-primary text-foreground"
+                          : "border-transparent text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {TAB_LABELS[tab]}{" "}
+                      <span className={isActive ? "text-primary" : "text-muted-foreground/60"}>
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Article list */}
+              <div className="p-1.5 max-h-96 overflow-y-auto space-y-0.5">
+                {articlesByCategory[resolvedTab].map((article) => (
+                  <ArticleRow
+                    key={article.path}
+                    article={article}
+                    onOpen={onOpenArticle ?? (() => {})}
+                  />
+                ))}
+              </div>
+            </>
           ) : (
-            <div className="pt-4 pb-2 text-center text-sm text-muted-foreground">
-              {isGenerating ? "Generating wiki articles…" : "No articles generated yet"}
+            <div className="px-3 py-5 text-center">
+              <p className="text-xs text-muted-foreground">No articles yet</p>
+              {onRegenerateWiki && (
+                <button
+                  type="button"
+                  onClick={onRegenerateWiki}
+                  className="mt-2 text-xs text-primary hover:underline"
+                >
+                  Generate now
+                </button>
+              )}
             </div>
           )}
         </div>

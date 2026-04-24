@@ -5,6 +5,29 @@ import { sanitizeMarkdown } from "@/shared/utils";
 import { useGetSignedUrl } from "../services/documentsApi";
 import { PdfViewer } from "./PdfViewer";
 
+// Regex to match [[concept]] links
+const CONCEPT_LINK_REGEX = /\[\[([^\]]+)\]\]/g;
+const WIKI_CONCEPT_HREF_PREFIX = "#wiki-concept:";
+
+// Pre-process content to convert [[concept]] to clickable markdown
+const preprocessContentWithConceptLinks = (
+  content: string,
+  onOpenWikiConcept?: (conceptPath: string) => void
+): string => {
+  if (!onOpenWikiConcept) return content;
+
+  return content.replace(CONCEPT_LINK_REGEX, (_match, conceptName) => {
+    // Create a slug from the concept name
+    const conceptPath = `concepts/${conceptName
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, '') // Remove special chars
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/-+/g, '-') // Replace multiple hyphens with single
+      .trim()}`;
+    return `[${conceptName}](${WIKI_CONCEPT_HREF_PREFIX}${conceptPath})`;
+  });
+};
+
 const MarkdownRenderer = lazy(() =>
   import("@/shared/components/MarkdownRenderer").then((m) => ({ default: m.default }))
 );
@@ -21,6 +44,8 @@ interface SourceViewerProps {
   error: string | undefined;
   /** Wiki (and similar) viewers are not chat sources — hide the include/exclude control. */
   hideInclusionToggle?: boolean;
+  /** Handler for clicking wiki concept links like [[Machine Learning]] */
+  onOpenWikiConcept?: (conceptPath: string) => void;
 }
 
 export const SourceViewer: React.FC<SourceViewerProps> = ({
@@ -31,6 +56,7 @@ export const SourceViewer: React.FC<SourceViewerProps> = ({
   isLoading,
   error,
   hideInclusionToggle,
+  onOpenWikiConcept,
 }) => {
   const isPdfSource = source.type === "PDF";
   const canShowPdf = isPdfSource && pdfStorageId;
@@ -175,7 +201,28 @@ export const SourceViewer: React.FC<SourceViewerProps> = ({
                 <MarkdownRenderer
                   components={{
                     img: () => null,
-                    a: ({ children }) => <span className="text-foreground">{children}</span>,
+                    a: ({ href, children }) => {
+                      // Handle wiki concept links
+                      if (href?.startsWith(WIKI_CONCEPT_HREF_PREFIX)) {
+                        const conceptPath = href.replace(WIKI_CONCEPT_HREF_PREFIX, "");
+                        return (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              console.log('Concept link clicked:', conceptPath);
+                              onOpenWikiConcept?.(conceptPath);
+                            }}
+                            className="text-primary hover:text-primary/80 hover:underline font-medium cursor-pointer"
+                            title={`Go to ${String(children)} concept`}
+                          >
+                            {children}
+                          </button>
+                        );
+                      }
+                      return <span className="text-foreground">{children}</span>;
+                    },
                     video: () => null,
                     audio: () => null,
                     iframe: () => null,
@@ -199,7 +246,7 @@ export const SourceViewer: React.FC<SourceViewerProps> = ({
                     ),
                   }}
                 >
-                  {sanitizeMarkdown(content || "No content available.")}
+                  {sanitizeMarkdown(preprocessContentWithConceptLinks(content || "No content available.", onOpenWikiConcept))}
                 </MarkdownRenderer>
               </Suspense>
             </div>
