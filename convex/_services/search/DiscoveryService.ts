@@ -49,6 +49,7 @@ export interface DiscoveryRequest {
       hasFullText?: boolean;
     };
   };
+  /** Cap on merged list; split evenly across each selected source type (e.g. 20 with web+academic → 10 each). */
   maxResults: number;
   sortBy?: "relevance" | "date" | "citations";
 }
@@ -212,12 +213,6 @@ export const discover = action({
       userId: userId ?? undefined,
     });
     const startTime = Date.now();
-    logger.operationStart({
-      sourceTypes: sourceTypes.join(","),
-      maxResults,
-      sortBy,
-      queryLen: query.length,
-    });
 
     // Determine which source types to search
     const searchWeb = sourceTypes.includes("web");
@@ -225,18 +220,29 @@ export const discover = action({
     const searchFinance = sourceTypes.includes("finance");
     const searchAcademic = sourceTypes.includes("academic");
 
+    const tavilyTopics: Array<"web" | "news" | "finance"> = [];
+    if (searchWeb) tavilyTopics.push("web");
+    if (searchNews) tavilyTopics.push("news");
+    if (searchFinance) tavilyTopics.push("finance");
+
+    const numSearchChannels = tavilyTopics.length + (searchAcademic ? 1 : 0);
+    const maxPerChannel =
+      numSearchChannels > 0 ? Math.ceil(maxResults / numSearchChannels) : maxResults;
+
+    logger.operationStart({
+      sourceTypes: sourceTypes.join(","),
+      maxResults,
+      maxPerChannel,
+      sortBy,
+      queryLen: query.length,
+    });
+
     // Prepare search promises for parallel execution with timing
     const searchPromises: Promise<{
       sourceType: string;
       results: UnifiedDiscoveryResult[];
       duration: number;
     }>[] = [];
-
-    // Tavily searches (web, news, finance)
-    const tavilyTopics: Array<"web" | "news" | "finance"> = [];
-    if (searchWeb) tavilyTopics.push("web");
-    if (searchNews) tavilyTopics.push("news");
-    if (searchFinance) tavilyTopics.push("finance");
 
     // For each Tavily topic, create a search promise with timing
     for (const topic of tavilyTopics) {
@@ -247,7 +253,7 @@ export const discover = action({
         internal._services.search.TavilySearchService.discoverSourcesInternal,
         {
           query,
-          maxResults: maxResults,
+          maxResults: maxPerChannel,
           topic: tavilyTopic,
           timeRange: timeRange as any,
           searchDepth: "basic",
@@ -289,7 +295,7 @@ export const discover = action({
         internal._services.search.OpenAlexSearchService.discoverAcademicPapersInternal,
         {
           query,
-          maxResults: maxResults,
+          maxResults: maxPerChannel,
           publicationYearFrom: academicFilters?.publicationYearFrom,
           publicationYearTo: academicFilters?.publicationYearTo,
           minCitations: academicFilters?.minCitations,
@@ -360,7 +366,7 @@ export const discover = action({
       totalCount: finalResults.length,
       sourceTypeCounts: searchResults.reduce(
         (acc, { sourceType, results }) => {
-          acc[sourceType] = Math.min(results.length, Math.ceil(maxResults / searchResults.length));
+          acc[sourceType] = Math.min(results.length, maxPerChannel);
           return acc;
         },
         {} as Record<string, number>

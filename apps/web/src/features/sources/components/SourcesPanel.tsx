@@ -657,6 +657,10 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
         userId={userId}
         noteId={noteId}
         onDocumentUploaded={onDocumentUploaded}
+        onAddSourcesClick={() => {
+          setIsDiscoverOpen(false);
+          setIsAddModalOpen(true);
+        }}
       />
 
       <GoogleDrivePicker ref={googleDriveRef} onFilesSelected={handleGoogleDriveFiles} />

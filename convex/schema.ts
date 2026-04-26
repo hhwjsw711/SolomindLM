@@ -332,6 +332,7 @@ export default defineSchema({
     notebookId: v.id("notebooks"),
     title: v.string(), // "Knowledge Base"
     status: v.string(), // 'draft' | 'generating' | 'completed' | 'failed'
+    autoUpdate: v.optional(v.boolean()),
     generatedAt: v.number(),
     lastRefreshedAt: v.optional(v.number()),
     metadata: v.optional(v.any()), // article counts, stats
@@ -472,6 +473,85 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_timestamp", ["timestamp"])
     .index("by_source_types", ["sourceTypes"]),
+
+  // Deep Research - user-approved research plans
+  researchPlans: defineTable({
+    userId: v.id("users"),
+    notebookId: v.id("notebooks"),
+    conversationId: v.id("conversations"),
+    messageId: v.id("messages"),
+    query: v.string(),
+    subQuestions: v.array(
+      v.object({
+        id: v.string(),
+        question: v.string(),
+        searchQueries: v.array(v.string()),
+        sourceChannels: v.array(v.string()), // "notebook" | "web" | "academic" | "news"
+      })
+    ),
+    sourcePolicy: v.object({
+      channels: v.array(v.string()),
+      domainAllowlist: v.optional(v.array(v.string())),
+      dateRange: v.optional(v.object({ start: v.number(), end: v.number() })),
+      maxResultsPerChannel: v.optional(v.number()),
+      credibilityTier: v.optional(v.string()), // "primary" | "secondary" | "any"
+      requirePrimarySources: v.optional(v.boolean()),
+      recencyDays: v.optional(v.number()),
+      dedupeStrategy: v.optional(v.string()), // "strict" | "semantic" | "off"
+    }),
+    status: v.string(), // "draft" | "approved" | "rejected"
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_conversation", ["conversationId"])
+    .index("by_user", ["userId"])
+    .index("by_status", ["status"]),
+
+  // Deep Research - execution state (separate from plans for re-runs)
+  researchRuns: defineTable({
+    planId: v.id("researchPlans"),
+    userId: v.id("users"),
+    notebookId: v.id("notebooks"),
+    conversationId: v.id("conversations"),
+    status: v.string(), // "pending" | "running" | "completed" | "failed" | "cancelled"
+    currentIteration: v.number(),
+    maxIterations: v.number(), // hard cap, default 2
+    streamId: v.optional(v.string()),
+    resultMessageId: v.optional(v.id("messages")),
+    error: v.optional(v.string()),
+    startedAt: v.optional(v.number()),
+    completedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_plan", ["planId"])
+    .index("by_user", ["userId"])
+    .index("by_status", ["status"]),
+
+  // Deep Research - typed, queryable evidence per run
+  researchEvidence: defineTable({
+    runId: v.id("researchRuns"),
+    subQuestionId: v.string(),
+    sourceType: v.string(), // "notebook" | "web" | "academic" | "news"
+    sourceTitle: v.string(),
+    sourceUrl: v.optional(v.string()),
+    content: v.string(),
+    relevanceScore: v.optional(v.number()),
+    credibilityTier: v.optional(v.string()),
+    iteration: v.number(), // which pass found this evidence
+    metadata: v.optional(
+      v.object({
+        documentId: v.optional(v.id("documents")),
+        chunkIndex: v.optional(v.number()),
+        domain: v.optional(v.string()),
+        publishedAt: v.optional(v.number()),
+      })
+    ),
+    createdAt: v.number(),
+  })
+    .index("by_run", ["runId"])
+    .index("by_run_and_subquestion", ["runId", "subQuestionId"])
+    .index("by_source_type", ["sourceType"]),
 
   // Note: Direct scheduling used instead of jobs table
   // Jobs are scheduled directly via ctx.scheduler.runAfter() from mutations

@@ -7,6 +7,8 @@ import {
   FileText,
   MoreVertical,
   Download,
+  History,
+  ChevronLeft,
 } from "lucide-react";
 import { useConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { DropdownMenu } from "@/shared/ui/DropdownMenu";
@@ -21,7 +23,12 @@ import { MessageBubble } from "./MessageBubble";
 import { ReferenceTooltip } from "./ReferenceTooltip";
 import { ChatEmptyState } from "./ChatEmptyState";
 import { ChatInput } from "./ChatInput";
+import { ConversationList } from "./ConversationList";
 import { useSourcesContext } from "../../sources/SourcesContext";
+import { ResearchPlanMessage } from "./ResearchPlanMessage";
+import { useAuthToken } from "@convex-dev/auth/react";
+import { useMutation } from "convex/react";
+import { api } from "@convex/_generated/api";
 
 interface ChatPanelProps {
   isLeftOpen: boolean;
@@ -57,6 +64,12 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     sourceSummary,
     suggestions,
     isLoadingSuggestions,
+    activeConversationId,
+    conversations,
+    onSelectConversation,
+    onCreateConversation,
+    onRenameConversation,
+    onDeleteConversation,
   } = useChatStreamingContext();
   const { sources } = useSourcesContext();
   const [hoveredRefId, setHoveredRefId] = useState<number | null>(null);
@@ -67,6 +80,45 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   const [inputMessage, setInputMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const [deepResearchEnabled, setDeepResearchEnabled] = useState(false);
+  const [sourceFilters, setSourceFilters] = useState<string[]>(["notebook"]);
+  const [showConversationList, setShowConversationList] = useState(false);
+
+  const { confirm, ConfirmDialogComponent } = useConfirmDialog();
+  const { success, error: toastError } = useToast();
+  const saveChat = useSaveChat();
+
+  const authToken = useAuthToken();
+
+  const approvePlanMutation = useMutation(api.research.index.approveResearchPlan);
+  const rejectPlanMutation = useMutation(api.research.index.rejectResearchPlan);
+
+  const handleApproveResearchPlan = useCallback(async (planId: string) => {
+    try {
+      await approvePlanMutation({ planId: planId as any });
+      const convexUrl = import.meta.env.VITE_CONVEX_URL;
+      if (!convexUrl) return;
+      await fetch(`${convexUrl}/research/execute`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        },
+        body: JSON.stringify({ planId }),
+      });
+    } catch (err) {
+      console.error("[ResearchPlan] Approve failed:", err);
+      toastError("Failed to start research execution");
+    }
+  }, [approvePlanMutation, authToken, toastError]);
+
+  const handleRejectResearchPlan = useCallback(async (planId: string) => {
+    try {
+      await rejectPlanMutation({ planId: planId as any });
+    } catch (err) {
+      console.error("[ResearchPlan] Reject failed:", err);
+    }
+  }, [rejectPlanMutation]);
 
   const chatInputDisabled = isSending || isLoading || remoteGenerationBlocksSend;
 
@@ -74,10 +126,6 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   const tooltipRef = useRef<HTMLDivElement>(null);
   const hideTooltipTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const virtuosoRef = useRef<any>(null);
-
-  const { confirm, ConfirmDialogComponent } = useConfirmDialog();
-  const { success, error: toastError } = useToast();
-  const saveChat = useSaveChat();
 
   // --- Chat action handlers ---
 
@@ -236,18 +284,24 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     const trimmed = inputMessage.trim();
     if (!trimmed || chatInputDisabled || !notebookId || !onSendMessage) return;
 
-    // Check if user has selected any sources
-    const selectedSources = sources?.filter((s) => s.selected) ?? [];
-    if (selectedSources.length === 0) {
-      toastError("Please select at least one source before asking a question");
-      return;
+    // Deep research only needs notebook sources selected for notebook channel
+    if (!deepResearchEnabled) {
+      const selectedSources = sources?.filter((s) => s.selected) ?? [];
+      if (selectedSources.length === 0) {
+        toastError("Please select at least one source before asking a question");
+        return;
+      }
     }
 
     setIsSending(true);
     setInputMessage("");
-    onSendMessage(trimmed);
+    onSendMessage(
+      trimmed,
+      deepResearchEnabled || undefined,
+      deepResearchEnabled ? { channels: sourceFilters } : undefined
+    );
     setIsSending(false);
-  }, [inputMessage, chatInputDisabled, notebookId, onSendMessage, sources, toastError]);
+  }, [inputMessage, chatInputDisabled, notebookId, onSendMessage, sources, toastError, deepResearchEnabled, sourceFilters]);
 
   const handleSendChip = useCallback(
     (text: string) => {
@@ -314,6 +368,17 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
           <div className="flex items-center gap-2 text-foreground">
             <MessageCircle className="w-4 h-4" />
             <span className="font-display font-bold text-sm tracking-wide uppercase">Chat</span>
+            <button
+              onClick={() => setShowConversationList(!showConversationList)}
+              className={`p-1.5 rounded transition-colors ${
+                showConversationList
+                  ? "bg-zinc-700 text-zinc-100"
+                  : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
+              }`}
+              title="Conversation history"
+            >
+              <History className="w-3.5 h-3.5" />
+            </button>
           </div>
           <div className="flex items-center gap-2">
             {!isLeftOpen && (
@@ -377,6 +442,29 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         </div>
 
         {/* Messages Area */}
+        <div className="flex flex-1 min-h-0">
+          {/* Conversation sidebar */}
+          {showConversationList && (
+            <div className="w-56 shrink-0 border-r border-border bg-background/60 overflow-y-auto">
+              <div className="flex items-center justify-between px-2 py-2 border-b border-border">
+                <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">Threads</span>
+                <button
+                  onClick={() => setShowConversationList(false)}
+                  className="p-0.5 text-zinc-500 hover:text-zinc-300"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <ConversationList
+                conversations={conversations}
+                activeConversationId={activeConversationId}
+                onSelect={onSelectConversation}
+                onCreate={onCreateConversation}
+                onRename={onRenameConversation}
+                onDelete={onDeleteConversation}
+              />
+            </div>
+          )}
         <div
           ref={messagesContainerRef}
           className={`flex min-h-0 w-full min-w-0 flex-1 relative chat-panel-graph-grid ${
@@ -405,6 +493,14 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
               data={memoizedMessages}
               itemContent={(_index, message) => (
                 <div className="max-w-full min-w-0 overflow-x-hidden px-3 py-3 sm:px-4 md:px-6">
+                  {message.researchPlan ? (
+                    <ResearchPlanMessage
+                      planId={message.researchPlan.planId}
+                      subQuestions={(message.researchPlan.subQuestions as any[]) ?? []}
+                      onApprove={handleApproveResearchPlan}
+                      onReject={handleRejectResearchPlan}
+                    />
+                  ) : (
                   <MessageBubble
                     message={message}
                     isAssistantStreamActive={message.id === "__streaming__" ? isLoading : false}
@@ -415,6 +511,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                     onSendFollowUp={handleSendChip}
                     onRetry={onRetry}
                   />
+                  )}
                 </div>
               )}
               components={{ Footer: () => <div className="h-56" /> }}
@@ -446,6 +543,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             />
           )}
         </div>
+        </div>
 
         {/* Input Area */}
         <div className="absolute bottom-8 left-0 right-0 px-4 flex justify-center z-20">
@@ -455,6 +553,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             onSend={handleSendMessage}
             disabled={chatInputDisabled}
             notebookId={notebookId}
+            deepResearchEnabled={deepResearchEnabled}
+            onToggleDeepResearch={() => setDeepResearchEnabled((prev) => !prev)}
+            sourceFilters={sourceFilters}
+            onSourceFilterChange={setSourceFilters}
             onAppendTranscription={(text) => {
               setInputMessage((prev) => {
                 const t = text.trim();

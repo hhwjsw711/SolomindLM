@@ -1,0 +1,63 @@
+"use node";
+
+import { runPlanGraph, runExecuteGraph } from "./graph";
+import type { ResearchNodeDeps } from "./nodes";
+import type { SubQuestion, SourcePolicy, ResearchContext, ResearchStreamChunk } from "./types";
+import { createLLM } from "../_shared/llm_factory";
+
+export type { SubQuestion, SourcePolicy, ResearchContext, ResearchStreamChunk };
+
+// Public interface for the deep research agent.
+// Phase 1: generate a research plan (sub-questions + search strategy)
+// Phase 2: execute the plan (retrieve evidence + write response)
+
+export class ResearchAgent {
+  private deps: ResearchNodeDeps;
+
+  constructor(deps: ResearchNodeDeps) {
+    this.deps = deps;
+  }
+
+  // Phase 1: Generate plan
+  async generatePlan(
+    query: string,
+    sourcePolicy: SourcePolicy
+  ): Promise<SubQuestion[]> {
+    return runPlanGraph(query, sourcePolicy, this.deps);
+  }
+
+  // Phase 2: Execute plan
+  async *executeResearch(
+    query: string,
+    subQuestions: SubQuestion[],
+    sourcePolicy: SourcePolicy,
+    context: ResearchContext
+  ): AsyncGenerator<ResearchStreamChunk> {
+    const result = await runExecuteGraph(query, subQuestions, sourcePolicy, context, this.deps);
+
+    // Stream the final response token-by-token
+    if (result.finalResponse) {
+      // Split into chunks for smooth streaming
+      const chunkSize = 20;
+      for (let i = 0; i < result.finalResponse.length; i += chunkSize) {
+        yield {
+          type: "token",
+          data: result.finalResponse.slice(i, i + chunkSize),
+        };
+      }
+
+      // Yield references
+      const references = result.evidence.map((e, idx) => ({
+        id: String(idx + 1),
+        sourceTitle: e.sourceTitle,
+        sourceUrl: e.sourceUrl,
+        sourceType: e.sourceType,
+        content: e.content.slice(0, 200),
+      }));
+
+      yield { type: "references", data: references };
+    }
+
+    yield { type: "done" };
+  }
+}

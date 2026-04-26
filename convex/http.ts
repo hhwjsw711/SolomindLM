@@ -291,12 +291,13 @@ http.route({
           notebookId: string;
           message: string;
           documentIds?: string[];
+          conversationId?: string;
         };
       } catch (error) {
         return errorResponse("Invalid JSON body", 400);
       }
 
-      const { notebookId, message, documentIds } = body;
+      const { notebookId, message, documentIds, conversationId: bodyConversationId } = body;
 
       // Validate request
       if (!notebookId || typeof notebookId !== "string") {
@@ -329,6 +330,7 @@ http.route({
       const conversationId = await ctx.runMutation(internal.chat.index.ensureConversation, {
         notebookId: notebookId as any,
         userId: userId as any,
+        conversationId: bodyConversationId ? (bodyConversationId as any) : undefined,
       });
 
       // Chunks are added *during* generation by the node action (runWithStreamId) via
@@ -343,6 +345,7 @@ http.route({
         notebookId,
         message,
         documentIds: documentIds ?? undefined,
+        conversationId: bodyConversationId ? (bodyConversationId as any) : undefined,
       });
 
       const { readable, writable } = new TransformStream();
@@ -386,6 +389,117 @@ http.route({
       console.error("[Chat route] Unexpected error:", error);
       const errorMessage = error instanceof Error ? error.message : "Internal server error";
       return errorResponse(errorMessage, 500);
+    }
+  }),
+});
+
+// ============================================================
+// Deep Research Execute Endpoint
+// ============================================================
+
+http.route({
+  path: "/research/execute",
+  method: "OPTIONS",
+  handler: httpAction(async (ctx, request) => {
+    const origin = request.headers.get("origin");
+    return new Response(null, {
+      status: 204,
+      headers: getCorsHeaders(origin),
+    });
+  }),
+});
+
+http.route({
+  path: "/research/execute",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const origin = request.headers.get("origin");
+    const corsHeaders = getCorsHeaders(origin);
+
+    const errorResponse = (message: string, status: number) =>
+      new Response(JSON.stringify({ error: message }), {
+        status,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+
+    const identity = await ctx.auth.getUserIdentity();
+    const userId = identity?.subject?.split("|")[0];
+    if (!userId) return errorResponse("Please log in", 401);
+
+    try {
+      let body;
+      try {
+        body = (await request.json()) as { planId: string };
+      } catch {
+        return errorResponse("Invalid JSON body", 400);
+      }
+
+      const { planId } = body;
+      if (!planId || typeof planId !== "string") {
+        return errorResponse("planId is required", 400);
+      }
+
+      const plan = await ctx.runQuery(internal.research.index.getPlanInternal, {
+        planId: planId as any,
+      });
+      if (!plan) return errorResponse("Plan not found", 404);
+      if (plan.userId !== (userId as any)) return errorResponse("Not authorized", 403);
+      if (plan.status !== "approved") return errorResponse("Plan not approved", 400);
+
+      const streamId = await streaming.createStream(ctx);
+
+      const runId = await ctx.runMutation(internal.research.index.createResearchRun, {
+        planId: planId as any,
+        userId,
+        notebookId: plan.notebookId,
+        conversationId: plan.conversationId,
+        streamId,
+      });
+
+      await ctx.scheduler.runAfter(0, internal.chat.stream.runResearchExecute, {
+        streamId,
+        runId,
+        userId,
+      });
+
+      const { readable, writable } = new TransformStream();
+      const writer = writable.getWriter();
+      const encoder = new TextEncoder();
+      const pollIntervalMs = 50;
+      const maxWaitMs = 180_000;
+      const start = Date.now();
+      let lastLength = 0;
+
+      (async () => {
+        try {
+          while (Date.now() - start < maxWaitMs) {
+            const { text, status } = await ctx.runQuery(
+              components.persistentTextStreaming.lib.getStreamText,
+              { streamId }
+            );
+            if (text.length > lastLength) {
+              await writer.write(encoder.encode(text.slice(lastLength)));
+              lastLength = text.length;
+            }
+            if (status === "done" || status === "error" || status === "timeout") break;
+            await new Promise((r) => setTimeout(r, pollIntervalMs));
+          }
+        } finally {
+          await writer.close();
+        }
+      })();
+
+      const response = new Response(readable);
+      Object.entries(corsHeaders).forEach(([key, value]) => {
+        response.headers.set(key, value);
+      });
+      return response;
+    } catch (error) {
+      console.error("[Research Execute route] Unexpected error:", error);
+      return errorResponse(
+        error instanceof Error ? error.message : "Internal server error",
+        500
+      );
     }
   }),
 });

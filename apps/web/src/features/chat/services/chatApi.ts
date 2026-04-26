@@ -42,6 +42,8 @@ export interface ParsedStreamData {
   followUps?: string[];
   clarification?: { question: string };
   error?: { message: string; type?: string };
+  researchPlan?: { planId: string; subQuestions: unknown[]; sourcePolicy: unknown };
+  researchProgress?: { phase: string; subQuestionId?: string; sourcesFound?: number };
   isDone: boolean;
 }
 
@@ -79,6 +81,8 @@ export interface SendMessageCallbacks {
   onGroundingChecks?: (checks: AgentGroundingCheck[]) => void;
   onFollowUps?: (questions: string[]) => void;
   onClarification?: (question: string) => void;
+  onResearchPlan?: (plan: { planId: string; subQuestions: unknown[]; sourcePolicy: unknown }) => void;
+  onResearchProgress?: (progress: { phase: string; subQuestionId?: string; sourcesFound?: number }) => void;
   onComplete: () => void;
   onError: (error: string | ChatError) => void;
 }
@@ -197,6 +201,18 @@ export function parseStreamBody(body: string): ParsedStreamData {
       } catch {
         // Ignore parse errors
       }
+    } else if (line.startsWith("__RESEARCH_PLAN:")) {
+      try {
+        result.researchPlan = JSON.parse(line.slice("__RESEARCH_PLAN:".length));
+      } catch {
+        // Ignore parse errors
+      }
+    } else if (line.startsWith("__RESEARCH_PROGRESS:")) {
+      try {
+        result.researchProgress = JSON.parse(line.slice("__RESEARCH_PROGRESS:".length));
+      } catch {
+        // Ignore parse errors
+      }
     } else if (line.startsWith("__DONE")) {
       result.isDone = true;
     } else {
@@ -251,10 +267,12 @@ export function useChatHistory(notebookId: string | null) {
  * Note: This functionality is not yet implemented in the Convex API
  */
 export function useRenameConversation() {
-  // TODO: Implement updateTitle mutation in convex/chat.ts
-  return async (_conversationId: string, _title: string) => {
-    throw new Error("Rename conversation is not yet implemented");
-  };
+  const renameMutation = useMutation(api.chat.messages.renameConversation);
+  return useCallback(
+    (conversationId: string, title: string) =>
+      renameMutation({ conversationId: conversationId as Id<"conversations">, title }),
+    [renameMutation]
+  );
 }
 
 /**
@@ -298,7 +316,10 @@ export function useSendMessage() {
       notebookId: string,
       message: string,
       callbacks: SendMessageCallbacks,
-      documentIds?: string[]
+      documentIds?: string[],
+      deepResearch?: boolean,
+      sourcePolicy?: { channels: string[] },
+      conversationId?: string
     ) => {
       let tempMessageId: string | null;
 
@@ -312,7 +333,10 @@ export function useSendMessage() {
 
       const releaseGenerationIfSafe = async () => {
         try {
-          await releaseChatGeneration({ notebookId: notebookId as Id<"notebooks"> });
+          await releaseChatGeneration({
+            notebookId: notebookId as Id<"notebooks">,
+            conversationId: conversationId ? (conversationId as Id<"conversations">) : undefined,
+          });
         } catch {
           // Best-effort: server job may have already decremented the refcount
         }
@@ -325,6 +349,7 @@ export function useSendMessage() {
           notebookId: notebookId as Id<"notebooks">,
           message,
           documentIds,
+          conversationId: conversationId ? (conversationId as Id<"conversations">) : undefined,
         });
 
         tempMessageId = result.tempMessageId;
@@ -346,6 +371,9 @@ export function useSendMessage() {
             notebookId,
             message,
             documentIds,
+            conversationId: conversationId || undefined,
+            deepResearch: deepResearch || undefined,
+            sourcePolicy: deepResearch ? sourcePolicy : undefined,
           }),
         });
 
@@ -441,6 +469,12 @@ export function useSendMessage() {
                 lastGroundingJson = gj;
                 callbacks.onGroundingChecks?.(parsed.groundingChecks);
               }
+            }
+            if (parsed.researchPlan) {
+              callbacks.onResearchPlan?.(parsed.researchPlan);
+            }
+            if (parsed.researchProgress) {
+              callbacks.onResearchProgress?.(parsed.researchProgress);
             }
             if (parsed.error) {
               callbacks.onError(parsed.error);

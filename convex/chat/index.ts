@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { query, mutation, internalMutation, internalQuery } from "../_generated/server";
 import { getAuthUserId } from "../auth";
+import type { Id } from "../_generated/dataModel";
 
 /**
  * Get or create a conversation for a notebook
@@ -9,9 +10,19 @@ export const ensureConversation = internalMutation({
   args: {
     notebookId: v.id("notebooks"),
     userId: v.id("users"),
+    conversationId: v.optional(v.id("conversations")),
   },
   handler: async (ctx, args) => {
-    // Look for existing conversation
+    // If conversationId provided, validate and return it
+    if (args.conversationId) {
+      const existing = await ctx.db.get(args.conversationId);
+      if (existing && existing.userId === args.userId && existing.notebookId === args.notebookId) {
+        await ctx.db.patch(existing._id, { updatedAt: Date.now() });
+        return existing._id;
+      }
+    }
+
+    // Fallback: find first or create
     const existing = await ctx.db
       .query("conversations")
       .withIndex("by_user_notebook", (q) =>
@@ -20,14 +31,10 @@ export const ensureConversation = internalMutation({
       .first();
 
     if (existing) {
-      // Update timestamp
-      await ctx.db.patch(existing._id, {
-        updatedAt: Date.now(),
-      });
+      await ctx.db.patch(existing._id, { updatedAt: Date.now() });
       return existing._id;
     }
 
-    // Create new conversation
     const conversationId = await ctx.db.insert("conversations", {
       userId: args.userId,
       notebookId: args.notebookId,

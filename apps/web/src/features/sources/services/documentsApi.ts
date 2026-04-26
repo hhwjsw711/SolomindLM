@@ -194,6 +194,8 @@ export function useGetSignedUrl() {
 /**
  * Unified discovery service that searches across multiple source types
  * Supports web, news, academic, and finance sources with advanced filtering
+ *
+ * `maxResults` is a total cap across all selected types (split evenly per channel, e.g. 20 with web + academic → 10 each).
  */
 export function useUnifiedDiscovery() {
   const discover = useAction(api._services.search.DiscoveryService.discover);

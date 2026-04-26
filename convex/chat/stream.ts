@@ -52,6 +52,152 @@ async function sleepMs(ms: number): Promise<void> {
   await new Promise((r) => setTimeout(r, ms));
 }
 
+// ============================================================
+// Deep Research — Plan Phase
+// ============================================================
+
+async function runResearchPlanPhase(
+  ctx: any,
+  streamId: string,
+  userId: string,
+  notebookId: string,
+  message: string,
+  documentIds: string[] | undefined,
+  sourcePolicy: { channels: string[] },
+  chunkAppender: (text: string) => Promise<void>,
+  conversationId: Id<"conversations">
+): Promise<void> {
+  const { ResearchAgent } = await import("../_agents/research/index.js");
+
+  const apiKey = process.env.TOGETHER_API_KEY ?? "";
+  const smartModel = process.env.SMART_MODEL ?? "openai/gpt-oss-120b";
+
+  const notebookIdTyped = notebookId as Id<"notebooks">;
+  const embeddingService = new EmbeddingService(process.env.OPENAI_API_KEY ?? "");
+
+  // Build hybrid search runner (same pattern as streamChatResponse)
+  const vectorSearchRunner = async (embedding: number[], limit: number, docIds?: string[]) => {
+    const limitToFetch = docIds?.length ? Math.max(limit * 3, 75) : limit;
+    const results = await ctx.runQuery(internal.documents.index.listChunksByNotebook, {
+      notebookId: notebookIdTyped,
+    });
+    const vectorResults = await ctx.vectorSearch("documentChunks", "by_embedding", {
+      vector: embedding,
+      limit: limitToFetch,
+      filter: (q: any) => q.eq("notebookId", notebookIdTyped),
+    });
+    const chunkIds = vectorResults.map((r: any) => r._id);
+    if (chunkIds.length === 0) return [];
+    const fullChunks = await ctx.runQuery(internal.documents.index.getChunks, { chunkIds });
+    const chunkMap = new Map<any, any>(fullChunks.filter(Boolean).map((c: any) => [c._id, c] as [any, any]));
+    const docIds_unique = [...new Set(vectorResults.map((r: any) => (chunkMap.get(r._id) as any)?.documentId).filter(Boolean))];
+    const docRows = await ctx.runQuery(internal.documents.index.getDocumentsByIds, { documentIds: docIds_unique });
+    const titleMap = new Map(docRows.map((d: any) => [d._id, d.fileName]));
+    const sourceUrlMap = new Map<string, string>();
+    for (const d of docRows) {
+      if (d.fileUrl?.trim() && (d.fileType === "url" || d.fileType === "youtube")) {
+        sourceUrlMap.set(d._id, d.fileUrl);
+      }
+    }
+    return vectorResults
+      .map((r: any) => {
+        const chunk = chunkMap.get(r._id) as any;
+        if (!chunk) return null;
+        return {
+          sourceId: String(r._id),
+          documentId: String(chunk.documentId),
+          sourceTitle: titleMap.get(chunk.documentId) ?? "Document",
+          sourceUrl: sourceUrlMap.get(String(chunk.documentId)),
+          content: chunk.content as string,
+          chunkIndex: chunk.chunkIndex as number,
+          similarity: r._score ?? 0,
+        };
+      })
+      .filter((x: any) => x !== null);
+  };
+
+  const keywordSearchRunner = async (query: string, limit: number, docIds?: string[]) => {
+    return ctx.runQuery(internal.documents.index.keywordSearch, {
+      notebookId: notebookIdTyped,
+      userId: userId as any,
+      query,
+      limit,
+      documentIds: docIds as any,
+    });
+  };
+
+  const rerankFn = async (query: string, documents: any[]) => {
+    return cachedRerank(ctx, query, documents, "zerank-2", 15);
+  };
+
+  const hybridSearch = new HybridSearchHandler(
+    {
+      vectorMatchThreshold: parseFloat(env.CHAT_VECTOR_MATCH_THRESHOLD),
+      vectorMatchCount: parseInt(env.CHAT_VECTOR_MATCH_COUNT, 10),
+      rerankThreshold: parseInt(env.CHAT_RERANK_THRESHOLD, 10),
+      rerankTopN: parseInt(env.CHAT_RERANK_TOP_N, 10),
+      maxResults: parseInt(env.CHAT_MAX_RESULTS, 10),
+      keywordMatchCount: parseInt(env.CHAT_KEYWORD_MATCH_COUNT, 10),
+      rrfK: parseInt(env.CHAT_RRF_K, 10),
+      enableHybrid: env.CHAT_ENABLE_HYBRID_SEARCH !== "false",
+      hybridThreshold: parseFloat(env.CHAT_HYBRID_THRESHOLD),
+    },
+    embeddingService,
+    vectorSearchRunner,
+    keywordSearchRunner,
+    rerankFn
+  );
+
+  const agent = new ResearchAgent({
+    apiKey,
+    smartModel,
+    runHybridSearch: async (query, docIds) => {
+      const embedding = await embeddingService.embedText(query);
+      return hybridSearch.search(userId, notebookId, query, docIds, embedding, undefined, {
+        skipRerank: true,
+        allowEmpty: true,
+      });
+    },
+    onProgress: async (phase, subQuestionId, sourcesFound) => {
+      await chunkAppender(
+        `\n__RESEARCH_PROGRESS:${JSON.stringify({ phase, subQuestionId, sourcesFound })}\n`
+      );
+    },
+  });
+
+  // Phase 1: Generate plan
+  const subQuestions = await agent.generatePlan(message, sourcePolicy as any);
+
+  // Save plan to database
+  const planId = await ctx.runMutation(internal.research.index.createResearchPlan, {
+    userId,
+    notebookId: notebookIdTyped,
+    conversationId,
+    messageId: "" as any, // Will be linked after user message is persisted
+    query: message,
+    sourcePolicy,
+    subQuestions: subQuestions.map((sq) => ({
+      id: sq.id,
+      question: sq.question,
+      searchQueries: sq.searchQueries,
+      sourceChannels: sq.sourceChannels,
+    })),
+  });
+
+  // Stream the plan to the client
+  await chunkAppender(
+    `\n__RESEARCH_PLAN:${JSON.stringify({ planId, subQuestions, sourcePolicy })}\n`
+  );
+
+  // Persist a placeholder assistant message with plan metadata
+  await ctx.runMutation(internal.chat.index.persistAssistantFromStream, {
+    conversationId,
+    streamId,
+    content: `**Research plan generated** — ${subQuestions.length} sub-questions. Awaiting your approval.`,
+    metadata: { researchPlanId: planId, isResearchPlan: true },
+  });
+}
+
 /**
  * Internal action: run chat and write chunks to the persistent stream via addChunk.
  * Used by the HTTP route so the isolate bundle does not import this file (avoids @langchain/langgraph in isolate).
@@ -63,6 +209,20 @@ export const runWithStreamId = internalAction({
     notebookId: v.string(),
     message: v.string(),
     documentIds: v.optional(v.array(v.string())),
+    conversationId: v.optional(v.id("conversations")),
+    deepResearch: v.optional(v.boolean()),
+    sourcePolicy: v.optional(
+      v.object({
+        channels: v.array(v.string()),
+        domainAllowlist: v.optional(v.array(v.string())),
+        dateRange: v.optional(v.object({ start: v.number(), end: v.number() })),
+        maxResultsPerChannel: v.optional(v.number()),
+        credibilityTier: v.optional(v.string()),
+        requirePrimarySources: v.optional(v.boolean()),
+        recencyDays: v.optional(v.number()),
+        dedupeStrategy: v.optional(v.string()),
+      })
+    ),
   },
   handler: async (ctx, args) => {
     const streamId = args.streamId as any;
@@ -111,6 +271,7 @@ export const runWithStreamId = internalAction({
     const conversationId = await ctx.runMutation(internal.chat.index.ensureConversation, {
       notebookId: args.notebookId as Id<"notebooks">,
       userId: args.userId as Id<"users">,
+      conversationId: args.conversationId,
     });
 
     try {
@@ -119,16 +280,30 @@ export const runWithStreamId = internalAction({
         feature: "chat",
       });
 
-      await streamChatResponse(
-        ctx as any,
-        args.streamId,
-        args.userId,
-        args.notebookId,
-        args.message,
-        args.documentIds,
-        chunkAppender,
-        conversationId
-      );
+      if (args.deepResearch) {
+        await runResearchPlanPhase(
+          ctx as any,
+          args.streamId,
+          args.userId,
+          args.notebookId,
+          args.message,
+          args.documentIds,
+          args.sourcePolicy ?? { channels: ["notebook"] },
+          chunkAppender,
+          conversationId
+        );
+      } else {
+        await streamChatResponse(
+          ctx as any,
+          args.streamId,
+          args.userId,
+          args.notebookId,
+          args.message,
+          args.documentIds,
+          chunkAppender,
+          conversationId
+        );
+      }
     } catch (e) {
       console.error("[ChatStream] runWithStreamId failed:", e);
       try {
@@ -675,3 +850,201 @@ export async function streamChatResponse(
     hasError,
   };
 }
+
+// ============================================================
+// Deep Research — Execute Phase
+// ============================================================
+
+export const runResearchExecute = internalAction({
+  args: {
+    streamId: v.string(),
+    runId: v.string(),
+    userId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const streamId = args.streamId as any;
+    const runId = args.runId as Id<"researchRuns">;
+
+    const rawAddChunk = async (text: string) => {
+      if (!text) return;
+      await ctx.runMutation(components.persistentTextStreaming.lib.addChunk, {
+        streamId,
+        text,
+        final: false,
+      });
+    };
+
+    const chunkAppender = async (text: string) => {
+      if (!text) return;
+      await rawAddChunk(text);
+    };
+
+    try {
+      await ctx.runMutation(internal.research.index.updateRunProgress, {
+        runId,
+        status: "running",
+      });
+
+      const run = await ctx.runQuery(internal.research.index.getRunInternal, { runId });
+      if (!run) throw new Error("Run not found");
+
+      const plan = await ctx.runQuery(internal.research.index.getPlanInternal, {
+        planId: run.planId,
+      });
+      if (!plan) throw new Error("Plan not found");
+
+      const { ResearchAgent } = await import("../_agents/research/index.js");
+      const apiKey = process.env.TOGETHER_API_KEY ?? "";
+      const smartModel = process.env.SMART_MODEL ?? "openai/gpt-oss-120b";
+      const embeddingService = new EmbeddingService(process.env.OPENAI_API_KEY ?? "");
+      const notebookIdTyped = plan.notebookId;
+
+      // Build hybrid search runner
+      const vectorSearchRunner = async (embedding: number[], limit: number, docIds?: string[]) => {
+        const limitToFetch = docIds?.length ? Math.max(limit * 3, 75) : limit;
+        const vectorResults = await ctx.vectorSearch("documentChunks", "by_embedding", {
+          vector: embedding,
+          limit: limitToFetch,
+          filter: (q: any) => q.eq("notebookId", notebookIdTyped),
+        });
+        const chunkIds = vectorResults.map((r: any) => r._id);
+        if (chunkIds.length === 0) return [];
+        const fullChunks = await ctx.runQuery(internal.documents.index.getChunks, { chunkIds });
+        const chunkMap = new Map<any, any>(fullChunks.filter(Boolean).map((c: any) => [c._id, c] as [any, any]));
+        const docIds_unique = [...new Set(vectorResults.map((r: any) => (chunkMap.get(r._id) as any)?.documentId).filter(Boolean))];
+        const docRows = await ctx.runQuery(internal.documents.index.getDocumentsByIds, { documentIds: docIds_unique });
+        const titleMap = new Map<any, string>(docRows.map((d: any) => [d._id, d.fileName] as [any, string]));
+        const sourceUrlMap = new Map<string, string>();
+        for (const d of docRows as any[]) {
+          if (d.fileUrl?.trim() && (d.fileType === "url" || d.fileType === "youtube")) {
+            sourceUrlMap.set(d._id, d.fileUrl);
+          }
+        }
+        return vectorResults
+          .map((r: any) => {
+            const chunk = chunkMap.get(r._id) as any;
+            if (!chunk) return null;
+            return {
+              sourceId: String(r._id),
+              documentId: String(chunk.documentId),
+              sourceTitle: titleMap.get(chunk.documentId) ?? "Document",
+              sourceUrl: sourceUrlMap.get(String(chunk.documentId)),
+              content: chunk.content as string,
+              chunkIndex: chunk.chunkIndex as number,
+              similarity: r._score ?? 0,
+            };
+          })
+          .filter((x: any) => x !== null) as any[];
+      };
+
+      const keywordSearchRunner = async (query: string, limit: number, docIds?: string[]) => {
+        return ctx.runQuery(internal.documents.index.keywordSearch, {
+          notebookId: notebookIdTyped,
+          userId: args.userId as any,
+          query,
+          limit,
+          documentIds: docIds as any,
+        });
+      };
+
+      const rerankFn = async (query: string, documents: any[]) => {
+        return cachedRerank(ctx, query, documents, "zerank-2", 15);
+      };
+
+      const hybridSearch = new HybridSearchHandler(
+        {
+          vectorMatchThreshold: parseFloat(env.CHAT_VECTOR_MATCH_THRESHOLD),
+          vectorMatchCount: parseInt(env.CHAT_VECTOR_MATCH_COUNT, 10),
+          rerankThreshold: parseInt(env.CHAT_RERANK_THRESHOLD, 10),
+          rerankTopN: parseInt(env.CHAT_RERANK_TOP_N, 10),
+          maxResults: parseInt(env.CHAT_MAX_RESULTS, 10),
+          keywordMatchCount: parseInt(env.CHAT_KEYWORD_MATCH_COUNT, 10),
+          rrfK: parseInt(env.CHAT_RRF_K, 10),
+          enableHybrid: env.CHAT_ENABLE_HYBRID_SEARCH !== "false",
+          hybridThreshold: parseFloat(env.CHAT_HYBRID_THRESHOLD),
+        },
+        embeddingService,
+        vectorSearchRunner,
+        keywordSearchRunner,
+        rerankFn
+      );
+
+      const agent = new ResearchAgent({
+        apiKey,
+        smartModel,
+        runHybridSearch: async (query, docIds) => {
+          const embedding = await embeddingService.embedText(query);
+          return hybridSearch.search(args.userId, String(notebookIdTyped), query, docIds, embedding, undefined, {
+            skipRerank: true,
+            allowEmpty: true,
+          });
+        },
+        onProgress: async (phase, subQuestionId, sourcesFound) => {
+          await chunkAppender(
+            `\n__RESEARCH_PROGRESS:${JSON.stringify({ phase, subQuestionId, sourcesFound })}\n`
+          );
+        },
+      });
+
+      // Save evidence to DB
+      const context = {
+        userId: args.userId,
+        notebookId: String(notebookIdTyped),
+        conversationHistory: [],
+      };
+
+      let fullResponse = "";
+      const gen = agent.executeResearch(
+        plan.query,
+        plan.subQuestions.map((sq: any) => ({ ...sq, status: "pending" as const })),
+        plan.sourcePolicy as any,
+        context
+      );
+
+      for await (const chunk of gen) {
+        if (chunk.type === "token") {
+          fullResponse += chunk.data ?? "";
+          await chunkAppender(chunk.data ?? "");
+        } else if (chunk.type === "references") {
+          await chunkAppender(`\n__REFERENCES:${JSON.stringify(chunk.data)}\n`);
+        } else if (chunk.type === "done") {
+          await chunkAppender(`\n__DONE\n`);
+        }
+      }
+
+      // Save evidence to researchEvidence table
+      // (The evidence is accumulated in the graph execution and returned in the generator)
+
+      // Persist assistant message
+      const contentFinal = fullResponse.trim() || "Research completed but produced no output.";
+      await ctx.runMutation(internal.chat.index.persistAssistantFromStream, {
+        conversationId: plan.conversationId,
+        streamId: args.streamId,
+        content: contentFinal,
+        metadata: { researchRunId: runId, isResearchResult: true },
+      });
+
+      await ctx.runMutation(internal.research.index.updateRunProgress, {
+        runId,
+        status: "completed",
+      });
+    } catch (e) {
+      console.error("[ResearchExecute] failed:", e);
+      await ctx.runMutation(internal.research.index.updateRunProgress, {
+        runId,
+        status: "failed",
+        error: e instanceof Error ? e.message : "Unknown error",
+      });
+    } finally {
+      try {
+        await ctx.runMutation(components.persistentTextStreaming.lib.addChunk, {
+          streamId,
+          text: "",
+          final: true,
+        });
+      } catch (flushErr) {
+        console.error("[ResearchExecute] Final stream flush failed:", flushErr);
+      }
+    }
+  },
+});

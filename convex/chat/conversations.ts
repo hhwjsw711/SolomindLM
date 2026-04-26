@@ -65,6 +65,28 @@ export const list = query({
 });
 
 /**
+ * List all conversations for a specific notebook, ordered by most recently updated
+ */
+export const listForNotebook = query({
+  args: {
+    notebookId: v.id("notebooks"),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+
+    const conversations = await ctx.db
+      .query("conversations")
+      .withIndex("by_user_notebook", (q) =>
+        q.eq("userId", userId).eq("notebookId", args.notebookId)
+      )
+      .collect();
+
+    return conversations.sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
+  },
+});
+
+/**
  * Internal: Get conversation without auth check
  */
 export const getInternal = internalQuery({

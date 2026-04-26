@@ -91,6 +91,8 @@ export interface Message {
   clarificationQuestion?: string;
   /** Saved assistant turn: full trace from backend */
   agentTrace?: ChatAgentTrace;
+  /** Deep research plan metadata for plan-approval messages */
+  researchPlan?: { planId: string; subQuestions: unknown[]; sourcePolicy: unknown };
 }
 
 export interface StudioTool {
