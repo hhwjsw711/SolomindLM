@@ -13,6 +13,10 @@
     "node": ">=20.0.0",
     "bun": ">=1.2.2"
   },
+  "overrides": {
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
   "scripts": {
     "dev": "bun run --elide-lines=0 --filter \"./apps/**\" dev",
     "dev:web": "bun run --cwd apps/web dev",
