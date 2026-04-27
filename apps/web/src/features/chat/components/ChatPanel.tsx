@@ -145,7 +145,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       else next.add(id);
       try {
         localStorage.setItem("chat-pinned-ids", JSON.stringify([...next]));
-      } catch {}
+      } catch {
+        // localStorage may be unavailable in some environments
+      }
       return next;
     });
   }, []);

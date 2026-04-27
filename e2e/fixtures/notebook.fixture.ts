@@ -54,6 +54,7 @@ export const test = authTest.extend<NotebookFixtures>({
     // Chat placeholder depends on deep-research toggle (see ChatInput.tsx)
     await expect(page.getByPlaceholder(CHAT_TEXTAREA_PLACEHOLDER)).toBeVisible({ timeout: 45_000 });
 
+    // eslint-disable-next-line react-hooks/rules-of-hooks -- Playwright fixture `use`, not React hook
     await use(page);
 
     // Teardown: remove notebook created for this test (best-effort)
