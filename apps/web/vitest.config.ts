@@ -24,5 +24,9 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
+    // CI has no apps/web .env; chatApi.ts validates CONVEX URL at import time
+    env: {
+      VITE_CONVEX_URL: "https://ci-placeholder.convex.cloud",
+    },
   },
 });
