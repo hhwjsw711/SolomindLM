@@ -1,0 +1,12 @@
+{
+  "caseId": "studio-audio-script-agentic-patterns-20",
+  "runner": "audioScript",
+  "configHash": "2ea9cdcb673a",
+  "latencyMs": 274439,
+  "tokenUsage": {
+    "prompt": 0,
+    "completion": 0,
+    "total": 0
+  },
+  "committedAt": "2026-04-29T03:03:08.460Z"
+}
