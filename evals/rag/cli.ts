@@ -11,8 +11,10 @@
 import { readFileSync, writeFileSync, mkdirSync } from "fs";
 import { dirname, join } from "path";
 import { getFixture, listFixtureIds } from "./fixtures";
-import { runEval, createConvexChatInvoker } from "./runners";
+import { runEval, createConvexChatInvoker, createConvexStudioInvokers } from "./runners";
 import type { ChatAgentInvoker } from "./runners/chatRunner";
+import type { StudioInvoker } from "./runners/convexStudioInvoker";
+import type { StudioRunnerKind, RunnerKind } from "./types";
 import { scoreAllMetrics } from "./metrics/scorers";
 import { generateReport, formatReport } from "./reports";
 import type { EvalBaseline, EvalRunArtifact, MetricResult } from "./types";
@@ -23,6 +25,8 @@ interface CliOptions {
   caseId?: string;
   /** Run fixtures whose id starts with this prefix (e.g. "ml-" for NotebookLM ML suite) */
   idPrefix?: string;
+  /** Restrict to fixtures whose `runner` matches one of these kinds */
+  runners?: RunnerKind[];
   dryRun: boolean;
   full: boolean;
   verbose: boolean;
@@ -31,6 +35,35 @@ interface CliOptions {
   exportArtifacts: boolean;
   /** Directory for exported artifacts (default: evals/rag/generated) */
   artifactsDir: string;
+}
+
+const ALL_RUNNERS: ReadonlySet<RunnerKind> = new Set<RunnerKind>([
+  "chat",
+  "research",
+  "both",
+  "report",
+  "flashcards",
+  "quiz",
+  "mindmap",
+  "slides",
+  "spreadsheet",
+  "writtenQuestions",
+  "audioScript",
+]);
+
+function parseRunners(value: string): RunnerKind[] {
+  const parts = value
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  for (const p of parts) {
+    if (!ALL_RUNNERS.has(p as RunnerKind)) {
+      throw new Error(
+        `Unknown runner kind "${p}". Valid: ${Array.from(ALL_RUNNERS).join(", ")}`
+      );
+    }
+  }
+  return parts as RunnerKind[];
 }
 
 function parseArgs(args: string[]): CliOptions {
@@ -48,6 +81,9 @@ function parseArgs(args: string[]): CliOptions {
         break;
       case "--prefix":
         opts.idPrefix = args[++i];
+        break;
+      case "--runner":
+        opts.runners = parseRunners(args[++i]);
         break;
       case "--dry-run":
         opts.dryRun = true;
@@ -88,6 +124,7 @@ Usage:
 Options:
   --case <id>              Run a specific fixture by id
   --prefix <str>           Run fixtures whose id starts with prefix (e.g. ml-)
+  --runner <kinds>         Comma-separated runner filter (chat,research,flashcards,…)
   --dry-run                Validate fixtures without running agents
   --full                   Run all fixtures with verbose output
   --verbose, -v            Show detailed metric output
@@ -178,14 +215,22 @@ async function main(): Promise<void> {
     if (opts.idPrefix) {
       fixtureIds = fixtureIds.filter((id) => id.startsWith(opts.idPrefix!));
     }
+    if (opts.runners && opts.runners.length > 0) {
+      const allowed = new Set(opts.runners);
+      fixtureIds = fixtureIds.filter((id) => allowed.has(getFixture(id).runner));
+    }
   }
   if (opts.caseId && opts.idPrefix) {
     console.warn("Warning: --prefix is ignored when --case is set.");
+  }
+  if (opts.caseId && opts.runners) {
+    console.warn("Warning: --runner is ignored when --case is set.");
   }
   console.log(`Running ${fixtureIds.length} fixture(s)...${opts.dryRun ? " (dry-run)" : ""}\n`);
 
   // Real mode runs against your dev Convex deployment (never rely on accidental prod URLs)
   let chatInvoker: ChatAgentInvoker | undefined;
+  let studioInvokers: Partial<Record<StudioRunnerKind, StudioInvoker>> | undefined;
   if (!opts.dryRun) {
     const convexUrl = process.env.RAG_EVAL_CONVEX_URL?.trim();
     const evalSecret = process.env.RAG_EVAL_SECRET?.trim();
@@ -202,6 +247,7 @@ async function main(): Promise<void> {
     }
     console.log(`Using Convex at ${convexUrl} (eval mode)`);
     chatInvoker = createConvexChatInvoker(convexUrl, { evalSecret });
+    studioInvokers = createConvexStudioInvokers(convexUrl, { evalSecret });
   }
 
   const allMetrics: MetricResult[] = [];
@@ -223,7 +269,11 @@ async function main(): Promise<void> {
     // Run the eval — throws in real mode if no invoker registered
     let results;
     try {
-      results = await runEval(fixture, { dryRun: opts.dryRun, chatInvoker });
+      results = await runEval(fixture, {
+        dryRun: opts.dryRun,
+        chatInvoker,
+        studioInvokers,
+      });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       console.error(`  FATAL: ${message}`);

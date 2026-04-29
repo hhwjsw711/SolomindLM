@@ -650,9 +650,26 @@ export function citationValidity(
 /**
  * End-to-end chat can include HyDE, multi-subquery retrieval, rerank, and long structured answers.
  * Without a baseline, use a generous ceiling so latency reflects product behavior, not harness noise.
+ *
+ * Studio kinds run map-reduce over an entire notebook (and audio adds TTS on top), so their
+ * inherent latency floors are well above chat. The gate per runner reflects observed steady-state
+ * cost so a healthy run reads "pass", not "fail-by-design".
  */
-const STATIC_LATENCY_MS_GATE = 60000;
 const STATIC_TOTAL_TOKENS_GATE = 4000;
+const DEFAULT_LATENCY_MS_GATE = 60000;
+const PER_RUNNER_LATENCY_MS_GATE: Record<string, number> = {
+  chat: 60000,
+  research: 120000,
+  both: 120000,
+  report: 90000,
+  flashcards: 90000,
+  quiz: 90000,
+  mindmap: 90000,
+  slides: 240000,
+  spreadsheet: 90000,
+  writtenQuestions: 90000,
+  audioScript: 240000,
+};
 
 /**
  * Checks latency and token cost against a baseline or static gates.
@@ -699,14 +716,16 @@ export function latencyCostBudget(
     );
   }
 
-  // No baseline: use static gates.
-  const latencyOk = latencyMs <= STATIC_LATENCY_MS_GATE;
+  // No baseline: use static gates (per-runner where defined).
+  const latencyGate =
+    PER_RUNNER_LATENCY_MS_GATE[artifact.runner] ?? DEFAULT_LATENCY_MS_GATE;
+  const latencyOk = latencyMs <= latencyGate;
   const tokensOk = totalTokens <= STATIC_TOTAL_TOKENS_GATE;
 
   let status: MetricStatus;
   if (latencyOk && tokensOk) status = "pass";
   else if (
-    latencyMs <= STATIC_LATENCY_MS_GATE * 2 &&
+    latencyMs <= latencyGate * 2 &&
     totalTokens <= STATIC_TOTAL_TOKENS_GATE * 2
   )
     status = "warn";
@@ -715,7 +734,7 @@ export function latencyCostBudget(
   const score =
     latencyOk && tokensOk
       ? 1
-      : latencyMs <= STATIC_LATENCY_MS_GATE * 2 &&
+      : latencyMs <= latencyGate * 2 &&
           totalTokens <= STATIC_TOTAL_TOKENS_GATE * 2
         ? 0.5
         : 0;
@@ -726,11 +745,11 @@ export function latencyCostBudget(
     artifact,
     status,
     score,
-    `Latency ${latencyMs}ms (gate ${STATIC_LATENCY_MS_GATE}ms), tokens ${totalTokens} (gate ${STATIC_TOTAL_TOKENS_GATE}). No baseline.`,
+    `Latency ${latencyMs}ms (gate ${latencyGate}ms), tokens ${totalTokens} (gate ${STATIC_TOTAL_TOKENS_GATE}). No baseline.`,
     {
       latencyMs,
       totalTokens,
-      latencyGate: STATIC_LATENCY_MS_GATE,
+      latencyGate,
       tokenGate: STATIC_TOTAL_TOKENS_GATE,
       latencyOk,
       tokensOk,

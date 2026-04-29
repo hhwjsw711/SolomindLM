@@ -10,6 +10,7 @@ import { mlMultiDocFixtures } from "./ml/multiDoc";
 import { mlTechnicalFixtures } from "./ml/technical";
 import { mlSummarizationFixtures } from "./ml/summarization";
 import { mlExplanationFixtures } from "./ml/explanation";
+import { STUDIO_FIXTURES } from "./studio";
 
 // Export scenario category types and helpers
 export { SCENARIO_CATEGORIES, inferCategory } from "./scenarioCategories";
@@ -39,6 +40,8 @@ export const FIXTURES: Record<string, EvalFixture> = {
   ...Object.fromEntries(mlTechnicalFixtures.map((f) => [f.id, f])),
   ...Object.fromEntries(mlSummarizationFixtures.map((f) => [f.id, f])),
   ...Object.fromEntries(mlExplanationFixtures.map((f) => [f.id, f])),
+  // Studio fixtures
+  ...Object.fromEntries(STUDIO_FIXTURES.map((f) => [f.id, f])),
 };
 
 /** Get a fixture by id, throws if not found */

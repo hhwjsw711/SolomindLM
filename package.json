@@ -45,6 +45,8 @@
     "test:e2e:ui": "bunx playwright test --ui",
     "eval:rag": "bun run evals/rag/cli.ts",
     "eval:rag:dry": "bun run evals/rag/cli.ts --dry-run",
+    "eval:studio": "bun run evals/rag/cli.ts --runner report,flashcards,quiz,mindmap,spreadsheet,writtenQuestions,audioScript",
+    "eval:studio:dry": "bun run evals/rag/cli.ts --dry-run --runner report,flashcards,quiz,mindmap,spreadsheet,writtenQuestions,audioScript",
     "eval:rag:bootstrap-env": "node scripts/bootstrap-rag-eval-env.js",
     "eval:ragas": "conda run -n solomindlm-rag-evals python evals/ragas/run_ragas.py",
     "e2e:convex:cleanup": "node scripts/cleanup-e2e.mjs",

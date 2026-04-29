@@ -1,6 +1,9 @@
 /**
  * Aggregator that runs all deterministic metrics and returns a flat
  * MetricResult[] for a single fixture/artifact pair.
+ *
+ * Runner-aware: studio runners produce no chunks/citations, so the
+ * retrieval-only metrics are skipped and studio-specific scorers run instead.
  */
 import type {
   EvalFixture,
@@ -17,6 +20,11 @@ import {
   citationValidity,
   latencyCostBudget,
 } from "./index";
+import { scoreStudioMetrics } from "./studio";
+
+function isRagRunner(runner: EvalRunArtifact["runner"]): boolean {
+  return runner === "chat" || runner === "research";
+}
 
 /**
  * Run every deterministic metric for a single eval case.
@@ -31,16 +39,21 @@ export function scoreAllMetrics(
 ): MetricResult[] {
   const results: MetricResult[] = [];
 
-  // Single-result metrics
+  // Always-on: text-level recall and latency/cost.
   results.push(expectedItemRecall(fixture, artifact, baseline));
-  results.push(retrievalPrecisionAtK(fixture, artifact, baseline));
-  results.push(retrievalNdcgAtK(fixture, artifact, baseline));
-  results.push(abstentionCorrectness(fixture, artifact, baseline));
-  results.push(citationValidity(fixture, artifact, baseline));
   results.push(latencyCostBudget(fixture, artifact, baseline));
 
-  // Multi-result metric: retrievalItemRecall returns 3 results (pre/post/selected)
-  results.push(...retrievalItemRecall(fixture, artifact, baseline));
+  if (isRagRunner(artifact.runner)) {
+    // RAG-only metrics: depend on retrieval chunks/citations.
+    results.push(retrievalPrecisionAtK(fixture, artifact, baseline));
+    results.push(retrievalNdcgAtK(fixture, artifact, baseline));
+    results.push(abstentionCorrectness(fixture, artifact, baseline));
+    results.push(citationValidity(fixture, artifact, baseline));
+    results.push(...retrievalItemRecall(fixture, artifact, baseline));
+  } else {
+    // Studio runners: structural scorers keyed on studioOutput.
+    results.push(...scoreStudioMetrics(fixture, artifact, baseline));
+  }
 
   return results;
 }
