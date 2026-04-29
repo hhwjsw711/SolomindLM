@@ -253,6 +253,10 @@ Rules:
 1. **Columns:** Auto-detect the best columns to represent the data.
 2. **Rows:** One row per distinct entity/subject.
 3. **Density:** Consolidate details to avoid sparse rows.
+4. **Coverage-First:** If the source enumerates a discrete, named list of items
+   (e.g. "20 patterns", "the 7 principles", "frameworks: X, Y, Z"), every named
+   item MUST appear as its own row. Never drop a named item because its row
+   would look similar to another named item's row.
 4. **CSV Formatting (RFC 4180):**
    - Enclose EVERY field in double quotes ("field")
    - If a field contains double quotes, escape them by doubling ("")

@@ -307,11 +307,21 @@ export const getCandidateSelectionPrompt = (params: {
   const candidatesList = formatCandidatesAsText(candidates);
 
   return `Select ${targetCount} high-quality candidates from ${candidates.length} options.
+You can only PICK from the candidate IDs below — you cannot invent new questions.
+
+**COVERAGE-FIRST RULE (when picking, prioritize breadth):**
+If the candidates collectively cover a discrete, named list of items (e.g. "20
+patterns", "the 7 principles", "frameworks: X, Y, Z"), each named item is a
+distinct concept. Two candidates about different named items are NOT duplicates
+even if their question structure is parallel — both are eligible. Before picking
+a second candidate for the same named item, prefer a candidate covering a not-yet-
+selected named item. If the pool does not contain ${targetCount} unique named-
+item coverages, fill the remainder with the strongest remaining candidates.
 
 **QUALITY THRESHOLD:**
 •✅ Good: Conceptual questions, comparisons, process questions
 •❌ Bad: Fact lookup ("What value is in row 5?"), missing context references
-•❌ Duplicates: Keep strongest version of similar concepts
+•❌ Duplicates: Keep strongest version of similar concepts (only when about the SAME named item)
 
 **DIFFICULTY BALANCE:**
 • Target: ${difficulty.toUpperCase()} (aim for 70%+)

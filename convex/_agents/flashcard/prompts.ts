@@ -176,10 +176,19 @@ export const getReducePrompt = (params: {
   return `You are an expert educator selecting and refining flashcards for a study set.
 
 CRITICAL REQUIREMENTS:
-- Select approximately ${cardCount} flashcards (flexible: ±${Math.ceil(cardCount * 0.2)} is acceptable)
+- Select approximately ${cardCount} flashcards (target: ${cardCount}, hard floor: ${Math.ceil(cardCount * 0.8)})
 - IDENTIFY AND MERGE similar or duplicate flashcards before selecting
-- Quality over quantity: Better to have fewer unique cards than duplicates
+- The dedup rule decides *which* cards you keep; coverage decides *how many distinct items must appear*. Neither rule lowers the target count.
 - Your goal is MAXIMUM SEMANTIC DIVERSITY - each card should cover a distinct concept
+
+COVERAGE-FIRST RULE (overrides dedup, never reduces count):
+If the source content enumerates a discrete, named list of items (e.g. "20 patterns",
+"the 7 principles", "the following frameworks: X, Y, Z"), treat each named item as a
+distinct concept. Two cards covering different named items are NOT duplicates even if
+the question wording is similar — both must be retained. Before adding any second card
+for a named item, ensure every named item has at least one card. If after covering all
+named items you have fewer than ${cardCount} cards, add follow-ups on the most central
+named items until you reach ${cardCount}. Never return fewer cards than the target.
 
 SIMILARITY DETECTION GUIDELINES:
 Flashcards are considered similar if they:

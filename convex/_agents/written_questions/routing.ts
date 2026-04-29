@@ -15,9 +15,13 @@ export function routeToMap(state: OverallStateType): Send[] | "collapse" {
   }
 
   const chunkCount = state.chunks.length;
-  const MIN_QUESTIONS_PER_CHUNK = 2;
-  const BUFFER_MULTIPLIER = 1.5;
-  const MAX_QUESTIONS_PER_CHUNK = 15;
+  const MIN_QUESTIONS_PER_CHUNK = 3;
+  // 2.5× over-generation gives the heuristic + LLM dedup steps enough headroom
+  // to land at or above `questionCount`. With 1.5× we routinely shrank to ~13
+  // for a target of 20 on list-style sources, because near-duplicate
+  // wordings collapse aggressively after dedupe.
+  const BUFFER_MULTIPLIER = 2.5;
+  const MAX_QUESTIONS_PER_CHUNK = 20;
 
   const questionsPerChunk = Math.max(
     MIN_QUESTIONS_PER_CHUNK,

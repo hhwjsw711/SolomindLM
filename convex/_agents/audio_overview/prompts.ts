@@ -72,6 +72,14 @@ For EACH major point, extract:
 
 Extract at least 8-12 dialogue beats from this chunk to ensure rich conversation material.
 
+NAMED-LIST COVERAGE:
+If the chunk enumerates a discrete, named list of items (e.g. "the 20 patterns",
+"the 7 principles", "frameworks: X, Y, Z"), produce one dedicated beat per named
+item that appears in this chunk. Use the exact name verbatim in the beat. Do not
+collapse named items into a single beat or skip any named item that the chunk
+introduces — the downstream reducer needs the names preserved to build a complete
+script.
+
 Focus on:
 - Surprising facts or data points that would make listeners say "Wow!"
 - Controversial statements or counterintuitive ideas that could spark debate
@@ -179,6 +187,15 @@ ANTI-REPETITION RULES:
   - Example: If "BFS" was covered, you can still discuss "DFS comparison" or "optimality proofs"
 - Use DIFFERENT examples and analogies - don't reuse them from earlier parts
 - Each chunk should feel like a progression forward, not a restatement
+
+NAMED-LIST COVERAGE (overrides depth-vs-breadth tradeoff):
+If the dialogue beats reference a discrete, named list of items from the source
+(e.g. "20 patterns", "7 principles", "frameworks: X, Y, Z"), the script MUST
+mention every named item by its exact name at least once before ending. Use
+quick consecutive turns to name-check items the script has not yet covered if
+the deeper beats only landed on a subset. A natural way to do this is a brief
+"so what's the full list?" style turn near the end where one host names the
+remaining items. Do not omit a named item to preserve narrative flow.
 
 {coveredTopicsPrompt}
 

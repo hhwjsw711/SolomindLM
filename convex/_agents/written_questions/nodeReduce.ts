@@ -101,22 +101,43 @@ export async function reduce(
   );
 
   if (dedupedQuestions.length <= state.questionCount) {
-    logger.info(`Skipping LLM reduce, using ${dedupedQuestions.length} questions directly`, {
-      agent: "WrittenQuestionsGraph",
-      phase: "reduce_skip",
-      totalQuestionsExtracted: dedupedQuestions.length,
-      targetQuestionCount: state.questionCount,
-      reason: "Question pool is already at or below target after heuristic dedupe",
-    });
+    // Heuristic dedupe collapsed near-identical wordings — but the upstream
+    // map step usually emitted enough material to cover targetCount unique
+    // *items*, just with rephrased duplicates. Pad from the raw pool (skipping
+    // exact-duplicate normalized question text) so the final output still
+    // reaches the target count.
+    const padded: WrittenQuestion[] = [...dedupedQuestions];
+    if (padded.length < state.questionCount) {
+      const seenIds = new Set(padded.map((q) => q.id));
+      for (const candidate of allQuestions) {
+        if (padded.length >= state.questionCount) break;
+        if (seenIds.has(candidate.id)) continue;
+        padded.push(candidate);
+        seenIds.add(candidate.id);
+      }
+    }
 
-    const result = finalizeQuestions(dedupedQuestions, state, logger);
+    logger.info(
+      `Skipping LLM reduce, using ${padded.length} questions directly (${dedupedQuestions.length} after dedupe, padded to ${padded.length} from raw pool of ${allQuestions.length})`,
+      {
+        agent: "WrittenQuestionsGraph",
+        phase: "reduce_skip",
+        totalQuestionsExtracted: padded.length,
+        dedupedQuestionCount: dedupedQuestions.length,
+        rawPoolSize: allQuestions.length,
+        targetQuestionCount: state.questionCount,
+        reason: "Question pool is already at or below target after heuristic dedupe",
+      }
+    );
+
+    const result = finalizeQuestions(padded, state, logger);
     return {
       ...result,
       progress: {
         phase: "reduce",
         percentage: 100,
-        message: `Completed: ${dedupedQuestions.length} questions generated`,
-        itemsGenerated: dedupedQuestions.length,
+        message: `Completed: ${padded.length} questions generated`,
+        itemsGenerated: padded.length,
       },
     };
   }

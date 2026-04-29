@@ -48,27 +48,23 @@ Select questions that test analysis and synthesis.`;
 
   const pointsInstruction = questionType === "short" ? "5 points" : "12 points";
 
-  return `You are an expert educator selecting and refining written questions for an assessment.
+  return `You are an expert educator picking written questions for an assessment.
 
-CRITICAL REQUIREMENTS:
-- Select approximately ${targetCount} questions (flexible: ±${Math.ceil(targetCount * 0.2)} is acceptable)
-- IDENTIFY AND MERGE similar or duplicate questions before selecting
-- Quality over quantity: Better to have ${Math.ceil(targetCount * 0.8)} unique questions than ${targetCount} with duplicates
-- Your goal is MAXIMUM SEMANTIC DIVERSITY - each question should test a distinct concept
+YOUR TASK: From the candidate pool below, return EXACTLY ${targetCount} questions
+chosen as-is (no rewriting, no merging). The count is non-negotiable — if the pool
+has fewer than ${targetCount} acceptable items, fill with the strongest remaining
+candidates so the output still has ${targetCount} entries.
 
-SIMILARITY DETECTION GUIDELINES:
-Questions are considered similar if they:
-- Ask about the same concept using different wording (e.g., "What is X?" vs "Define X")
-- Test the same comparison/contrast (e.g., "Difference between A and B" vs "Compare A and B")
-- Have the same core answer despite surface-level differences
-- Cover overlapping content that could be combined
-
-MERGING STRATEGY:
-When you find similar questions:
-- Combine the best elements from each version
-- Create a single, clearer question
-- Ensure the merged question is self-contained
-- Keep the most comprehensive rubric
+PICKING ORDER (apply in this order, in one pass):
+1. Group the pool by which named source-item each question covers (use the
+   topic groups below as a hint, plus your own read of the question text).
+2. Pick the strongest one question per named item until every named item has
+   one (this is the coverage floor — never drop a named item to avoid a
+   surface-level duplicate).
+3. Keep filling until you reach ${targetCount}: prefer the strongest second
+   question for the most central named items, then anything left in the pool.
+4. When two candidates are about the SAME named item and ask the same thing,
+   keep the one with the clearer wording / more complete rubric.
 
 ${questionTypeGuidance}
 
