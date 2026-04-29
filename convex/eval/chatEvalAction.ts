@@ -24,6 +24,7 @@ import { EmbeddingService } from "../_services/processing/EmbeddingServiceClient
 import { env } from "../_lib/env";
 import type { ReferenceChunk } from "../storage/ChatHistoryService";
 import type { VectorSearchRawResult } from "../_agents/chat/vector_search";
+import { assertRagEvalGate } from "./_gate";
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -48,26 +49,6 @@ export interface ChatEvalResult {
 interface VectorSearchHit {
   _id: Id<"documentChunks">;
   _score: number;
-}
-
-function assertRagEvalGate(evalSecret: string): void {
-  if (process.env.RAG_EVALS_ENABLED !== "true") {
-    throw new Error("RAG evals are disabled (set RAG_EVALS_ENABLED=true on this deployment to enable).");
-  }
-  const expected = process.env.RAG_EVAL_SECRET ?? "";
-  if (!expected || expected.length < 16) {
-    throw new Error("RAG_EVAL_SECRET must be set to a strong value (min 16 chars) on this deployment.");
-  }
-  if (evalSecret.length !== expected.length) {
-    throw new Error("Invalid eval credentials.");
-  }
-  let diff = 0;
-  for (let i = 0; i < expected.length; i++) {
-    diff |= evalSecret.charCodeAt(i) ^ expected.charCodeAt(i);
-  }
-  if (diff !== 0) {
-    throw new Error("Invalid eval credentials.");
-  }
 }
 
 // ─── Action ──────────────────────────────────────────────────
