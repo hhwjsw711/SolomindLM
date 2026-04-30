@@ -559,7 +559,18 @@ export function useChatStream({ activeNotebookId, activeConversationId, sources,
     }
     // Also stop the regular send message stream
     stopSendMessage();
-  }, [stopSendMessage]);
+
+    // Signal server-side cancellation so background generation does not persist
+    // a late assistant message after local abort.
+    if (activeNotebookId && activeNotebookId !== "new") {
+      void releaseChatGenerationMutation({
+        notebookId: activeNotebookId as Id<"notebooks">,
+        conversationId: activeConversationId ? (activeConversationId as Id<"conversations">) : undefined,
+      }).catch(() => {
+        // Best-effort cancellation; stream may have already completed.
+      });
+    }
+  }, [stopSendMessage, activeNotebookId, activeConversationId, releaseChatGenerationMutation]);
 
   const sourceSuggestions = useSourceSuggestions(
     activeNotebookId && activeNotebookId !== "new" ? activeNotebookId : null,

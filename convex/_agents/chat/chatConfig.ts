@@ -12,6 +12,8 @@ export const AVAILABLE_SMART_MODEL_IDS = [
   "deepseek-ai/DeepSeek-V4-Pro",
   "MiniMaxAI/MiniMax-M2.7",
   "google/gemma-4-31B-it",
+  "Qwen/Qwen3.5-397B-A17B",
+  "zai-org/GLM-5.1",
 ] as const;
 
 export type SmartModelId = typeof AVAILABLE_SMART_MODEL_IDS[number];

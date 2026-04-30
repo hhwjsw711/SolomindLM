@@ -9,7 +9,9 @@ export type SmartModelBrand =
   | "moonshot"
   | "deepseek"
   | "minimax"
-  | "google";
+  | "google"
+  | "qwen"
+  | "zai";
 
 export interface SmartModel {
   id: string;
@@ -51,6 +53,18 @@ export const AVAILABLE_SMART_MODELS: SmartModel[] = [
     name: "Gemma 4 31B",
     description: "Google's efficient instruction-tuned model",
     brand: "google",
+  },
+  {
+    id: "Qwen/Qwen3.5-397B-A17B",
+    name: "Qwen3.5 397B A17B",
+    description: "Large MoE model with very long context",
+    brand: "qwen",
+  },
+  {
+    id: "zai-org/GLM-5.1",
+    name: "GLM 5.1",
+    description: "Z.ai general-purpose chat with strong reasoning",
+    brand: "zai",
   },
 ];
 

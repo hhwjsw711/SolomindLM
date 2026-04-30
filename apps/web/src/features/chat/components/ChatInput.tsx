@@ -6,6 +6,7 @@ import {
   Plus,
   Search,
   Telescope,
+  Monitor,
   BookOpen,
   Globe,
   Newspaper,
@@ -32,6 +33,8 @@ interface ChatInputProps {
   onChange: (value: string) => void;
   onSend: () => void;
   disabled?: boolean;
+  /** True when Convex reports in-flight generation for this conversation but this session is not the one consuming the stream (another tab/device). */
+  waitingOnRemoteGeneration?: boolean;
   isStreaming?: boolean;
   onStop?: () => void;
   notebookId?: string | null;
@@ -50,6 +53,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   onChange,
   onSend,
   disabled,
+  waitingOnRemoteGeneration = false,
   isStreaming = false,
   onStop,
   notebookId,
@@ -383,13 +387,17 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg p-0 transition-all shadow-md active:translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 ${
             isStreaming
               ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              : deepResearchEnabled
-                ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                : "bg-primary text-primary-foreground hover:bg-primary/90"
+              : waitingOnRemoteGeneration
+                ? "border border-border bg-muted text-muted-foreground shadow-none"
+                : deepResearchEnabled
+                  ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                  : "bg-primary text-primary-foreground hover:bg-primary/90"
           }`}
           title={
             isStreaming
               ? "Stop generating"
+              : waitingOnRemoteGeneration
+                ? "A response is generating in another tab or device. Switch there to stop, or wait for it to finish."
               : value.trim()
                 ? deepResearchEnabled
                   ? "Start deep research (Enter)"
@@ -397,10 +405,12 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 : "Type a message to send"
           }
         >
-          {disabled ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
-          ) : isStreaming ? (
+          {isStreaming ? (
             <Square className="w-4 h-4 fill-current" />
+          ) : waitingOnRemoteGeneration ? (
+            <Monitor className="w-5 h-5 animate-pulse" aria-hidden />
+          ) : disabled ? (
+            <Loader2 className="w-5 h-5 animate-spin" />
           ) : deepResearchEnabled ? (
             <Search className="w-5 h-5" />
           ) : (

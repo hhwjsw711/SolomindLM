@@ -88,6 +88,24 @@ export const releaseChatGenerationInternal = internalMutation({
 });
 
 /**
+ * Returns whether a chat generation is still active for a conversation.
+ * Stream actions poll this to honor user-initiated stops.
+ */
+export const isChatGenerationActiveInternal = internalQuery({
+  args: {
+    conversationId: v.id("conversations"),
+  },
+  returns: v.boolean(),
+  handler: async (ctx, args) => {
+    const c = await ctx.db.get(args.conversationId);
+    if (!c) {
+      return false;
+    }
+    return (c.chatGenerationInFlight ?? 0) > 0;
+  },
+});
+
+/**
  * Get all conversations for a user
  */
 export const list = query({

@@ -204,6 +204,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   }, [rejectPlanMutation]);
 
   const chatInputDisabled = isSending || isLoading || remoteGenerationBlocksSend;
+  const waitingOnRemoteGeneration =
+    remoteGenerationBlocksSend && !isLoading && !isSending;
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
@@ -766,6 +768,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             onSend={handleSendMessage}
             disabled={chatInputDisabled}
             isStreaming={isLoading}
+            waitingOnRemoteGeneration={waitingOnRemoteGeneration}
             onStop={onStopChat}
             notebookId={notebookId}
             deepResearchEnabled={deepResearchEnabled}

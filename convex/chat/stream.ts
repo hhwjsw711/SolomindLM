@@ -885,6 +885,8 @@ export async function streamChatResponse(
   };
 
   const includeNotebook = (sourcePolicy?.channels ?? ["notebook"]).includes("notebook");
+  const isGenerationActive = async (): Promise<boolean> =>
+    await ctx.runQuery(internal.chat.index.isChatGenerationActiveInternal, { conversationId });
 
   try {
     // Stream response chunks using ChatAgent
@@ -902,6 +904,13 @@ export async function streamChatResponse(
       message,
       streamId
     )) {
+      if (!(await isGenerationActive())) {
+        chatStreamLog.info("stream_cancelled", {
+          streamId,
+          detail: "in_flight_refcount_cleared",
+        });
+        break;
+      }
       if (chunk.type === "token") {
         fullResponse += chunk.data ?? "";
 
@@ -990,6 +999,18 @@ export async function streamChatResponse(
       limit: 1,
     }
   );
+  const generationStillActive = await isGenerationActive();
+  if (!generationStillActive) {
+    chatStreamLog.info("assistant_persist_skipped", {
+      streamId,
+      detail: "generation_cancelled",
+    });
+    return {
+      fullResponse,
+      references,
+      hasError: false,
+    };
+  }
   const clarificationBody =
     agentTrace.clarification?.trim() &&
     `**Could you clarify?**\n\n${agentTrace.clarification.trim()}`;

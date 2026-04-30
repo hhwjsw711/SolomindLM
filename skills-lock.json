@@ -61,6 +61,18 @@
       "sourceType": "github",
       "computedHash": "16c53e80cacd65369acfd8a4f5cf06a60083cc6d980127b4b2e384b81ce0e547"
     },
+    "firecrawl-build-scrape": {
+      "source": "firecrawl/skills",
+      "sourceType": "github",
+      "skillPath": "skills/firecrawl-build-scrape/SKILL.md",
+      "computedHash": "3c8788d791e11957870301f8a36e1c281a8a74cdc034f1137a9166054bf76c35"
+    },
+    "firecrawl-build-search": {
+      "source": "firecrawl/skills",
+      "sourceType": "github",
+      "skillPath": "skills/firecrawl-build-search/SKILL.md",
+      "computedHash": "52d7ab2732f22550c08c86244abbe99c9af319d86887104b768fdb6e413a6d05"
+    },
     "framework-selection": {
       "source": "langchain-ai/langchain-skills",
       "sourceType": "github",
