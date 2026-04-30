@@ -1,6 +1,7 @@
 import React from "react";
-import { LogIn, LogOut, Sun, Moon } from "lucide-react";
+import { LogIn, LogOut, Sun, Moon, ListChecks } from "lucide-react";
 import type { User } from "../AuthContext";
+import { LanguageSelector } from "./LanguageSelector";
 
 interface AvatarDropdownProps {
   user: User | null;
@@ -9,6 +10,8 @@ interface AvatarDropdownProps {
   onLogout: () => void;
   theme: "light" | "dark";
   toggleTheme: () => void;
+  onShowChecklist?: () => void;
+  showChecklistDismissed?: boolean;
 }
 
 export const AvatarDropdown: React.FC<AvatarDropdownProps> = ({
@@ -18,6 +21,8 @@ export const AvatarDropdown: React.FC<AvatarDropdownProps> = ({
   onLogout,
   theme,
   toggleTheme,
+  onShowChecklist,
+  showChecklistDismissed,
 }) => {
   const handleLogout = async () => {
     await onLogout();
@@ -51,6 +56,20 @@ export const AvatarDropdown: React.FC<AvatarDropdownProps> = ({
           )}
           <span>{theme === "light" ? "Dark mode" : "Light mode"}</span>
         </button>
+
+        {/* Language Selector */}
+        <LanguageSelector isAuthenticated={isAuthenticated} />
+
+        {isAuthenticated && showChecklistDismissed && onShowChecklist && (
+          <button
+            onClick={onShowChecklist}
+            className="w-full px-4 py-2.5 text-left hover:bg-accent transition-colors flex items-center gap-3 text-sm font-sans"
+            role="menuitem"
+          >
+            <ListChecks className="w-4 h-4 text-muted-foreground shrink-0" />
+            <span>Show getting-started checklist</span>
+          </button>
+        )}
 
         {/* Login/Logout */}
         <button

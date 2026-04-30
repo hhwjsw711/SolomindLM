@@ -48,6 +48,7 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
 
   const { miniPlayerVisible, miniPlayerData, onPlayAudio, onCloseMiniPlayer, onExpandAudioPlayer } =
     useAudioPlayerContext();
+
   // State
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
   const [isMindMapExpanded, setIsMindMapExpanded] = useState(false);

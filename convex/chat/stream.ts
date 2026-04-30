@@ -694,10 +694,21 @@ export async function streamChatResponse(
     rerankFn
   );
 
+  let userPrefs: { outputLanguage?: string } | null = null;
+  try {
+    userPrefs = await ctx.runQuery(
+      internal.userPreferences.index.getPreferencesByUserId,
+      { userId: userId as any },
+    );
+  } catch (e) {
+    console.warn("[chat] user preference fetch failed, using default language", e instanceof Error ? e.message : String(e));
+  }
+
   const agent = new ChatAgent({
     vectorSearchHandler: hybridSearch,
     globalRerankFn,
     smartModel: resolvedSmartModel,
+    outputLanguage: userPrefs?.outputLanguage,
     fetchDocumentFn: async (documentId: string) => {
       // Fetch all chunks for the document and stitch them together
       const chunks = await ctx.runQuery(internal.documents.index.listChunksByDocument, {

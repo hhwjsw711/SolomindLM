@@ -29,6 +29,7 @@ import type * as _agents__shared_graph_builder from "../_agents/_shared/graph_bu
 import type * as _agents__shared_index from "../_agents/_shared/index.js";
 import type * as _agents__shared_jobHelpers from "../_agents/_shared/jobHelpers.js";
 import type * as _agents__shared_langsmith from "../_agents/_shared/langsmith.js";
+import type * as _agents__shared_languageInstruction from "../_agents/_shared/languageInstruction.js";
 import type * as _agents__shared_llm_factory from "../_agents/_shared/llm_factory.js";
 import type * as _agents__shared_logging from "../_agents/_shared/logging.js";
 import type * as _agents__shared_markdownMathPrompt from "../_agents/_shared/markdownMathPrompt.js";
@@ -256,6 +257,10 @@ import type * as notebooks_index from "../notebooks/index.js";
 import type * as notebooks_sharing from "../notebooks/sharing.js";
 import type * as notes_index from "../notes/index.js";
 import type * as notes_userNotes from "../notes/userNotes.js";
+import type * as onboarding_constants from "../onboarding/constants.js";
+import type * as onboarding_mutations from "../onboarding/mutations.js";
+import type * as onboarding_progress from "../onboarding/progress.js";
+import type * as onboarding_state from "../onboarding/state.js";
 import type * as push_index from "../push/index.js";
 import type * as research_index from "../research/index.js";
 import type * as research_mapEvidenceForDb from "../research/mapEvidenceForDb.js";
@@ -310,6 +315,7 @@ import type * as studio_writtenQuestions_grading from "../studio/writtenQuestion
 import type * as studio_writtenQuestions_index from "../studio/writtenQuestions/index.js";
 import type * as studio_writtenQuestions_job from "../studio/writtenQuestions/job.js";
 import type * as studio_writtenQuestions_writtenQuestionsJobPhases from "../studio/writtenQuestions/writtenQuestionsJobPhases.js";
+import type * as userPreferences_index from "../userPreferences/index.js";
 
 import type {
   ApiFromModules,
@@ -339,6 +345,7 @@ declare const fullApi: ApiFromModules<{
   "_agents/_shared/index": typeof _agents__shared_index;
   "_agents/_shared/jobHelpers": typeof _agents__shared_jobHelpers;
   "_agents/_shared/langsmith": typeof _agents__shared_langsmith;
+  "_agents/_shared/languageInstruction": typeof _agents__shared_languageInstruction;
   "_agents/_shared/llm_factory": typeof _agents__shared_llm_factory;
   "_agents/_shared/logging": typeof _agents__shared_logging;
   "_agents/_shared/markdownMathPrompt": typeof _agents__shared_markdownMathPrompt;
@@ -566,6 +573,10 @@ declare const fullApi: ApiFromModules<{
   "notebooks/sharing": typeof notebooks_sharing;
   "notes/index": typeof notes_index;
   "notes/userNotes": typeof notes_userNotes;
+  "onboarding/constants": typeof onboarding_constants;
+  "onboarding/mutations": typeof onboarding_mutations;
+  "onboarding/progress": typeof onboarding_progress;
+  "onboarding/state": typeof onboarding_state;
   "push/index": typeof push_index;
   "research/index": typeof research_index;
   "research/mapEvidenceForDb": typeof research_mapEvidenceForDb;
@@ -620,6 +631,7 @@ declare const fullApi: ApiFromModules<{
   "studio/writtenQuestions/index": typeof studio_writtenQuestions_index;
   "studio/writtenQuestions/job": typeof studio_writtenQuestions_job;
   "studio/writtenQuestions/writtenQuestionsJobPhases": typeof studio_writtenQuestions_writtenQuestionsJobPhases;
+  "userPreferences/index": typeof userPreferences_index;
 }>;
 
 /**

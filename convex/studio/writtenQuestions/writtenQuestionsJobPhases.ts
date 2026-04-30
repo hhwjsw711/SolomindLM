@@ -29,6 +29,7 @@ import {
 } from "../../_agents/written_questions/postprocess";
 import { sanitizeUserInput } from "../../_agents/_shared/index";
 import { mergeModelKwargs } from "../../_agents/_shared/llm_factory";
+import { withLanguageInstruction } from "../../_agents/_shared/languageInstruction";
 import { invokeStudioLlm, createLangSmithRunConfig } from "../_job/invokeStudioLlm";
 
 // ============================================================
@@ -360,6 +361,17 @@ export async function runProcessWrittenQuestionsMapChunkPhase(
       return;
     }
 
+    let userPrefs: { outputLanguage?: string } | null = null;
+    try {
+      userPrefs = await ctx.runQuery(
+        internal.userPreferences.index.getPreferencesByUserId,
+        { userId: userId as any },
+      );
+    } catch (e) {
+      console.warn("[writtenQuestions] user preference fetch failed, using default language", e instanceof Error ? e.message : String(e));
+    }
+    const language = userPrefs?.outputLanguage;
+
     // Process with LLM using structured output
     const llm = createMapLLM();
     const structuredLLM = createQuestionsLLM(llm);
@@ -380,7 +392,7 @@ export async function runProcessWrittenQuestionsMapChunkPhase(
     const response = await invokeStudioLlm({
       invoke: () =>
         (structuredLLM as any).invoke(
-          [new SystemMessage(MAP_SYSTEM_PROMPT), new HumanMessage(prompt)],
+          [new SystemMessage(withLanguageInstruction(MAP_SYSTEM_PROMPT, language)), new HumanMessage(prompt)],
           createLangSmithRunConfig({
             runName: "WrittenQuestionsJob.MapProcess",
             tags: ["agent", "written_questions", "map"],
@@ -575,6 +587,17 @@ export async function runFinalizeWrittenQuestionsPhase(
       return;
     }
 
+    let userPrefs: { outputLanguage?: string } | null = null;
+    try {
+      userPrefs = await ctx.runQuery(
+        internal.userPreferences.index.getPreferencesByUserId,
+        { userId: userId as any },
+      );
+    } catch (e) {
+      console.warn("[writtenQuestions] user preference fetch failed, using default language", e instanceof Error ? e.message : String(e));
+    }
+    const language = userPrefs?.outputLanguage;
+
     const mapResults = (writtenQuestion.metadata?.mapResults as Record<string, string>) || {};
 
     // Separate successful and failed results
@@ -645,7 +668,7 @@ export async function runFinalizeWrittenQuestionsPhase(
       const selectionResponse = await invokeStudioLlm({
         invoke: () =>
           structuredSelectLLM.invoke(
-            [new SystemMessage(REDUCE_SELECT_SYSTEM_PROMPT), new HumanMessage(selectionPrompt)],
+            [new SystemMessage(withLanguageInstruction(REDUCE_SELECT_SYSTEM_PROMPT, language)), new HumanMessage(selectionPrompt)],
             createLangSmithRunConfig({
               runName: "WrittenQuestionsJob.Select",
               tags: ["agent", "written_questions", "select"],

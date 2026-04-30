@@ -41,11 +41,40 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_user", ["userId"])
+    .index("by_user_and_createdAt", ["userId", "createdAt"])
     .index("by_folder", ["folderId"])
     .searchIndex("search_title", {
       searchField: "title",
       filterFields: ["userId", "folderId"],
     }),
+
+  userOnboarding: defineTable({
+    userId: v.id("users"),
+    tourStatus: v.union(
+      v.literal("pending"),
+      v.literal("active"),
+      v.literal("skipped"),
+      v.literal("completed"),
+    ),
+    currentStepId: v.optional(
+      v.union(
+        v.literal("createNotebook"),
+        v.literal("addSource"),
+        v.literal("askQuestion"),
+        v.literal("generateArtifact"),
+      ),
+    ),
+    tourNotebookId: v.optional(v.id("notebooks")),
+    checklistDismissed: v.boolean(),
+    startedAt: v.optional(v.number()),
+    completedAt: v.optional(v.number()),
+  }).index("by_user", ["userId"]),
+
+  userPreferences: defineTable({
+    userId: v.id("users"),
+    outputLanguage: v.optional(v.string()),
+    updatedAt: v.number(),
+  }).index("by_user", ["userId"]),
 
   // Share links: opaque token (stored as hash) for collaborate or fork-only access
   notebookShareLinks: defineTable({

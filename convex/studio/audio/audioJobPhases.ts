@@ -28,6 +28,7 @@ import {
 } from "../../_agents/audio_overview/prompts";
 import type { DialogueLine } from "../../_agents/audio_overview/state";
 import { sanitizeUserInput, countTokens } from "../../_agents/_shared/index";
+import { withLanguageInstruction } from "../../_agents/_shared/languageInstruction";
 import { collapseStringOutputsByTokens } from "../_job/collapseStringOutputsByTokens";
 import { invokeStudioLlm, createLangSmithRunConfig } from "../_job/invokeStudioLlm";
 
@@ -261,6 +262,17 @@ export async function runProcessAudioMapChunkPhase(
       return;
     }
 
+    let userPrefs: { outputLanguage?: string } | null = null;
+    try {
+      userPrefs = await ctx.runQuery(
+        internal.userPreferences.index.getPreferencesByUserId,
+        { userId: userId as any },
+      );
+    } catch (e) {
+      console.warn("[audio] user preference fetch failed, using default language", e instanceof Error ? e.message : String(e));
+    }
+    const language = userPrefs?.outputLanguage;
+
     // Process with LLM - extract dialogue beats
     const llm = createMapLLM();
     const metadata = (audioOverview.metadata ?? {}) as {
@@ -280,7 +292,7 @@ export async function runProcessAudioMapChunkPhase(
     const response = await invokeStudioLlm({
       invoke: () =>
         (llm as any).invoke(
-          [new SystemMessage(MAP_SYSTEM_PROMPT), new HumanMessage(prompt)],
+          [new SystemMessage(withLanguageInstruction(MAP_SYSTEM_PROMPT, language)), new HumanMessage(prompt)],
           createLangSmithRunConfig({
             runName: "AudioJob.ExtractBeats",
             tags: ["agent", "audio-overview", "map"],
@@ -443,6 +455,17 @@ export async function runFinalizeAudioOverviewPhase(
       return;
     }
 
+    let userPrefs: { outputLanguage?: string } | null = null;
+    try {
+      userPrefs = await ctx.runQuery(
+        internal.userPreferences.index.getPreferencesByUserId,
+        { userId: userId as any },
+      );
+    } catch (e) {
+      console.warn("[audio] user preference fetch failed, using default language", e instanceof Error ? e.message : String(e));
+    }
+    const language = userPrefs?.outputLanguage;
+
     const mapResults = (audioOverview.metadata?.mapResults as Record<string, string>) || {};
 
     // Separate successful and failed results
@@ -538,7 +561,7 @@ export async function runFinalizeAudioOverviewPhase(
     const response = await invokeStudioLlm({
       invoke: () =>
         (llm as any).invoke(
-          [new SystemMessage(REDUCE_SYSTEM_PROMPT), new HumanMessage(reducePrompt)],
+          [new SystemMessage(withLanguageInstruction(REDUCE_SYSTEM_PROMPT, language)), new HumanMessage(reducePrompt)],
           createLangSmithRunConfig({
             runName: "AudioJob.WriteScript",
             tags: ["agent", "audio-overview", "reduce"],

@@ -31,6 +31,7 @@ import {
   type SlideSelectionResponse,
 } from "../../_agents/slides/prompts";
 import { invokeWithTimeout, allWithConcurrency } from "../../_agents/_shared/index";
+import { withLanguageInstruction } from "../../_agents/_shared/languageInstruction";
 import { invokeStudioLlm, createLangSmithRunConfig } from "../_job/invokeStudioLlm";
 
 // ============================================================
@@ -571,6 +572,17 @@ export async function runProcessSlideDeckMapChunkPhase(
       return;
     }
 
+    let userPrefs: { outputLanguage?: string } | null = null;
+    try {
+      userPrefs = await ctx.runQuery(
+        internal.userPreferences.index.getPreferencesByUserId,
+        { userId: userId as any },
+      );
+    } catch (e) {
+      console.warn("[slides] user preference fetch failed, using default language", e instanceof Error ? e.message : String(e));
+    }
+    const language = userPrefs?.outputLanguage;
+
     // Process with LLM using structured output
     const llm = createMapLLM();
     const structuredLLM = createCandidateLLM(llm);
@@ -588,7 +600,7 @@ export async function runProcessSlideDeckMapChunkPhase(
     const response = await invokeStudioLlm({
       invoke: () =>
         (structuredLLM as any).invoke(
-          [new SystemMessage(MAP_CONCEPTS_SYSTEM_PROMPT), new HumanMessage(prompt)],
+          [new SystemMessage(withLanguageInstruction(MAP_CONCEPTS_SYSTEM_PROMPT, language)), new HumanMessage(prompt)],
           createLangSmithRunConfig({
             runName: "SlideDeckJob.MapConcepts",
             tags: ["agent", "slides", "map"],
@@ -764,6 +776,17 @@ export async function runFinalizeSlideDeckPhase(
       return;
     }
 
+    let userPrefs: { outputLanguage?: string } | null = null;
+    try {
+      userPrefs = await ctx.runQuery(
+        internal.userPreferences.index.getPreferencesByUserId,
+        { userId: userId as any },
+      );
+    } catch (e) {
+      console.warn("[slides] user preference fetch failed, using default language", e instanceof Error ? e.message : String(e));
+    }
+    const language = userPrefs?.outputLanguage;
+
     const mapResults = (slideDeck.metadata?.mapResults as Record<string, string>) || {};
 
     // Separate successful and failed results
@@ -844,7 +867,7 @@ export async function runFinalizeSlideDeckPhase(
         const selectionResponse = await invokeStudioLlm({
           invoke: () =>
             (structuredSelectLLM as any).invoke(
-              [new SystemMessage(SLIDE_SELECTION_SYSTEM_PROMPT), new HumanMessage(selectionPrompt)],
+              [new SystemMessage(withLanguageInstruction(SLIDE_SELECTION_SYSTEM_PROMPT, language)), new HumanMessage(selectionPrompt)],
               createLangSmithRunConfig({
                 runName: "SlideDeckJob.Select",
                 tags: ["agent", "slides", "select"],
@@ -903,7 +926,7 @@ export async function runFinalizeSlideDeckPhase(
             const refinedSlideRaw = await invokeStudioLlm({
               invoke: () =>
                 (structuredRefineLLM as any).invoke(
-                  [new SystemMessage(REFINE_SLIDES_SYSTEM_PROMPT), new HumanMessage(refinePrompt)],
+                  [new SystemMessage(withLanguageInstruction(REFINE_SLIDES_SYSTEM_PROMPT, language)), new HumanMessage(refinePrompt)],
                   createLangSmithRunConfig({
                     runName: "SlideDeckJob.Refine",
                     tags: ["agent", "slides", "refine"],

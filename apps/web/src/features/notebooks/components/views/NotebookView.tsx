@@ -32,6 +32,7 @@ export function NotebookView() {
   const [mobileActiveTab, setMobileActiveTab] = useState<"sources" | "chat" | "studio">("sources");
   const [isSourcesOpen, setIsSourcesOpen] = useState(true);
   const [isStudioOpen, setIsStudioOpen] = useState(true);
+
   const [sourceFocusRequest, setSourceFocusRequest] = useState<SourcesPanelFocusRequest | null>(
     null
   );
@@ -136,6 +137,7 @@ export function NotebookView() {
           </button>
           <div className="w-px h-6 bg-border"></div>
           <button
+            data-onboarding="studio-panel-toggle"
             onClick={() => setMobileActiveTab("studio")}
             className={`flex-1 py-3 px-4 text-sm font-semibold transition-colors ${
               mobileActiveTab === "studio"

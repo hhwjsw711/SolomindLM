@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useServiceErrorToast } from "../hooks/useServiceErrorToast";
 import { useLocation, useNavigate } from "react-router-dom";
 import { User as UserIcon, Share2 } from "lucide-react";
+import { useMutation, useQuery } from "convex/react";
+import { api } from "@convex/_generated/api";
 import { useAuth } from "../../features/auth/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { DropdownMenu } from "./DropdownMenu";
@@ -34,11 +37,27 @@ export const Header: React.FC<HeaderProps> = ({
   const { user, isAuthenticated, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
 
+  const onboardingState = useQuery(api.onboarding.state.getOnboardingState, {});
+  const showChecklistMutation = useMutation(
+    api.onboarding.mutations.showChecklist,
+  );
+
+  const showChecklistDismissed =
+    !!onboardingState &&
+    "_id" in onboardingState &&
+    onboardingState.checklistDismissed === true &&
+    onboardingState.tourStatus !== "completed";
+
   const [isEditing, setIsEditing] = useState(false);
   const [inputValue, setInputValue] = useState(title);
   const inputRef = useRef<HTMLInputElement>(null);
   const spanRef = useRef<HTMLSpanElement>(null);
   const [inputWidth, setInputWidth] = useState(0);
+
+  const { showError } = useServiceErrorToast();
+  const logOnboardingError = (action: string, error: unknown) => {
+    console.error(`[onboarding] ${action}`, error);
+  };
 
   // Sync internal state if prop changes
   useEffect(() => {
@@ -82,6 +101,13 @@ export const Header: React.FC<HeaderProps> = ({
       setInputValue(title);
     }
     setIsEditing(false);
+  };
+
+  const handleShowChecklist = () => {
+    void showChecklistMutation({}).catch((error) => {
+      logOnboardingError("failed to show checklist", error);
+      showError(error);
+    });
   };
 
   return (
@@ -211,6 +237,8 @@ export const Header: React.FC<HeaderProps> = ({
             onLogout={signOut}
             theme={theme}
             toggleTheme={toggleTheme}
+            onShowChecklist={handleShowChecklist}
+            showChecklistDismissed={showChecklistDismissed}
           />
         </DropdownMenu>
       </div>
