@@ -19,11 +19,18 @@ export interface AcademicPaper {
 
 export class AcademicLoaderService {
   private mistralOCR: MistralOCRService;
-  private webLoader: WebLoaderService;
+  private loadWebPage: (url: string) => Promise<{ title: string; content: string }>;
 
-  constructor() {
+  constructor(
+    loadWebPage?: (url: string) => Promise<{ title: string; content: string }>
+  ) {
     this.mistralOCR = new MistralOCRService(env.MISTRAL_API_KEY);
-    this.webLoader = new WebLoaderService();
+    this.loadWebPage =
+      loadWebPage ??
+      (async (url: string) => {
+        const loader = new WebLoaderService();
+        return loader.loadWebPageWithMeta(url);
+      });
   }
 
   async loadPaper(
@@ -49,11 +56,11 @@ export class AcademicLoaderService {
       }
     }
 
-    // 2. If no PDF but URL exists, use WebLoaderService.loadWebPageWithMeta to scrape
+    // 2. If no PDF but URL exists, use loadWebPage to scrape
     if (paper.url) {
       try {
         logger.info("Attempting web scrape", { url: paper.url });
-        const result = await this.webLoader.loadWebPageWithMeta(paper.url);
+        const result = await this.loadWebPage(paper.url);
         logger.operationComplete({
           method: "web_scrape",
           contentLength: result.content.length,

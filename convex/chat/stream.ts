@@ -245,9 +245,10 @@ async function runResearchPlanPhase(
       }));
     },
     loadWebPage: async (url: string) => {
-      const { WebLoaderService } = await import("../_services/extraction/WebLoaderService.js");
-      const loader = new WebLoaderService();
-      return loader.loadWebPageWithMeta(url);
+      return ctx.runAction(
+        internal._services.extractors.scrapeWebPageInternal,
+        { url }
+      );
     },
     loadPaper: async (paper) => {
       const { AcademicLoaderService } = await import("../_services/extraction/AcademicLoaderService.js");
@@ -1479,9 +1480,10 @@ export const runResearchExecute = internalAction({
           }));
         },
         loadWebPage: async (url: string) => {
-          const { WebLoaderService } = await import("../_services/extraction/WebLoaderService.js");
-          const loader = new WebLoaderService();
-          return loader.loadWebPageWithMeta(url);
+          return ctx.runAction(
+            internal._services.extractors.scrapeWebPageInternal,
+            { url }
+          );
         },
         loadPaper: async (paper) => {
           const { AcademicLoaderService } = await import("../_services/extraction/AcademicLoaderService.js");

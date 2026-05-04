@@ -4,7 +4,6 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { MistralOCRService } from "../_services/extraction/MistralOCRService";
 import { AudioTranscriptionService } from "../_services/extraction/AudioTranscriptionService";
-import { WebLoaderService } from "../_services/extraction/WebLoaderService";
 import { AcademicLoaderService } from "../_services/extraction/AcademicLoaderService";
 import {
   extractDocumentMetadata,
@@ -136,12 +135,16 @@ export const docEmbedding = internalAction({
       currentPhase = "extraction";
 
       const mistralOCR = new MistralOCRService(process.env.MISTRAL_API_KEY || "");
-      const webLoader = new WebLoaderService();
-      const academicLoader = new AcademicLoaderService();
+      const academicLoader = new AcademicLoaderService(async (url: string) =>
+        ctx.runAction(internal._services.extractors.scrapeWebPageInternal, { url })
+      );
 
       if (docDetails.fileType === "youtube") {
         logger.info("Extracting YouTube transcript");
-        const meta = await webLoader.loadSocialTranscriptWithMeta(docDetails.fileUrl || "");
+        const meta = await ctx.runAction(
+          internal._services.extractors.getSocialTranscriptInternal,
+          { url: docDetails.fileUrl || "" }
+        );
         extractedText = meta.content;
         if (meta.title?.trim()) extractedTitle = meta.title.trim();
         logger.phaseComplete("extraction", {
@@ -230,7 +233,10 @@ export const docEmbedding = internalAction({
         logger.info("Extracting web page content");
         const rawUrl = docDetails.fileUrl || "";
         effectiveFileUrl = rawUrl;
-        const meta = await webLoader.loadWebPageWithMeta(rawUrl);
+        const meta = await ctx.runAction(
+          internal._services.extractors.scrapeWebPageInternal,
+          { url: rawUrl }
+        );
         extractedText = meta.content;
         if (meta.title?.trim()) extractedTitle = meta.title.trim();
         logger.phaseComplete("extraction", {

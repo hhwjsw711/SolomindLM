@@ -242,16 +242,31 @@ export class WebLoaderService {
       logger.info("Started async transcript job", {
         jobId: (transcriptResult as { jobId: string }).jobId,
       });
-      return this.pollForTranscriptWithMeta((transcriptResult as { jobId: string }).jobId);
+      return this.pollForTranscriptWithMeta(
+        (transcriptResult as { jobId: string }).jobId,
+        url
+      );
     }
 
-    const result = transcriptResult as string | { content?: string; title?: string };
-    const title =
-      typeof result === "object" && result && "title" in result ? (result.title ?? "") : "";
+    const title = await this.fetchTitleFromMetadata(url);
+    const result = transcriptResult as string | { content?: string };
     const text =
       typeof result === "string" ? result : (result?.content ?? JSON.stringify(result ?? ""));
-    logger.operationComplete({ charCount: text.length });
+    logger.operationComplete({ charCount: text.length, title });
     return { title, content: this.stripMedia(text) };
+  }
+
+  /**
+   * Fetch video/post title from Supadata metadata API.
+   * Works across YouTube, TikTok, Instagram, X (Twitter).
+   */
+  private async fetchTitleFromMetadata(url: string): Promise<string> {
+    try {
+      const metadata = await (this.supadata as any).metadata({ url });
+      return metadata?.title ?? "";
+    } catch {
+      return "";
+    }
   }
 
   /**
@@ -259,6 +274,7 @@ export class WebLoaderService {
    */
   private async pollForTranscriptWithMeta(
     jobId: string,
+    url: string,
     maxAttempts = 30
   ): Promise<TranscriptMeta> {
     const logger = createServiceLogger("web_loader", "pollTranscript");
@@ -268,11 +284,11 @@ export class WebLoaderService {
       const jobResult = await this.supadata.transcript.getJobStatus(jobId);
 
       if (jobResult.status === "completed") {
-        const result = jobResult.result as { content?: string; title?: string } | undefined;
+        const result = jobResult.result as { content?: string } | undefined;
         const content = result?.content;
-        const title = (result as { title?: string } | undefined)?.title ?? "";
         const text = typeof content === "string" ? content : JSON.stringify(content ?? "");
-        logger.operationComplete({ charCount: text.length, jobId });
+        const title = await this.fetchTitleFromMetadata(url);
+        logger.operationComplete({ charCount: text.length, jobId, title });
         return { title, content: this.stripMedia(text) };
       } else if (jobResult.status === "failed") {
         throw new Error(

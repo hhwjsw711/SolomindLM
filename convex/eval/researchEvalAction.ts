@@ -234,27 +234,18 @@ export const runResearchEval = action({
         return allResults;
       },
       loadWebPage: async (url: string) => {
-        const cacheKey = `web::${url}`;
-        const cached = searchCache.get(cacheKey);
-        if (cached && cached.length === 1) return cached[0];
-
-        const { WebLoaderService } = await import("../_services/extraction/WebLoaderService.js");
-        const loader = new WebLoaderService();
-        const result = await loader.loadWebPageWithMeta(url);
-        searchCache.set(cacheKey, [result]);
-        return result;
+        return ctx.runAction(
+          internal._services.extractors.scrapeWebPageInternal,
+          { url }
+        );
       },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       loadPaper: async (paper: any) => {
-        const cacheKey = `paper::${paper.url}`;
-        const cached = searchCache.get(cacheKey);
-        if (cached && cached.length === 1) return cached[0];
-
         const { AcademicLoaderService } = await import("../_services/extraction/AcademicLoaderService.js");
-        const loader = new AcademicLoaderService();
-        const result = await loader.loadPaper(paper);
-        searchCache.set(cacheKey, [result]);
-        return result;
+        const loader = new AcademicLoaderService(async (url: string) =>
+          ctx.runAction(internal._services.extractors.scrapeWebPageInternal, { url })
+        );
+        return loader.loadPaper(paper);
       },
       onProgress: async () => {},
     };
