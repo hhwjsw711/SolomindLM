@@ -434,7 +434,7 @@ export interface FolderItem {
   id: string;
   name: string;
   description?: string;
-  color?: string; // e.g. 'bg-blue-500'
+  color?: string; // e.g. 'bg-vintage-brown-300'
   icon?: string;
   notebookCount: number;
   created_at: string | number;

@@ -45,7 +45,7 @@ export function useCreateNotebook() {
           year: "numeric",
         }),
         sourceCount: 0,
-        coverColor: args.coverColor || "bg-yellow-500",
+        coverColor: args.coverColor || "bg-vintage-brown-300",
         icon: args.icon || "Folder",
         isFeatured: args.isFeatured || false,
         isSharedNotebook: false,
