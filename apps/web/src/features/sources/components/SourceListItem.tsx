@@ -183,14 +183,14 @@ export const SourceListItem: React.FC<SourceListItemProps> = ({
               {isMenuOpen && (
                 <>
                   <div
-                    className="fixed inset-0 z-[100]"
+                    className="fixed inset-0 z-100"
                     onClick={(e) => {
                       e.stopPropagation();
                       e.preventDefault();
                       onMenuOpen("");
                     }}
                   />
-                  <div className="absolute right-0 top-full mt-1 z-[110] min-w-[140px] rounded-lg border border-border bg-card shadow-xl overflow-hidden">
+                  <div className="absolute right-0 top-full mt-1 z-110 min-w-[140px] rounded-lg border border-border bg-card shadow-xl overflow-hidden">
                     {source.remoteRefreshKind && (
                       <button
                         type="button"

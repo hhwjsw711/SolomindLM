@@ -63,9 +63,14 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({ file, className = "" }) =>
   const [zoom, setZoom] = useState(1);
   const [visiblePages, setVisiblePages] = useState<Set<number>>(new Set([1]));
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageInput, setPageInput] = useState("1");
   const [showOutline, setShowOutline] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const pageRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+  const pageInputEditingRef = useRef(false);
+  /** Programmatic scroll in progress — do not sync page field from observer (it flickers mid-scroll). */
+  const scrollTargetPageRef = useRef<number | null>(null);
+  const scrollTargetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pageWidth = BASE_PAGE_WIDTH * zoom;
 
   const onDocumentLoadSuccess = useCallback(({ numPages }: { numPages: number }) => {
@@ -86,18 +91,104 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({ file, className = "" }) =>
     setError(null);
     setVisiblePages(new Set([1]));
     setCurrentPage(1);
+    setPageInput("1");
     setShowOutline(false);
+    scrollTargetPageRef.current = null;
+    if (scrollTargetTimeoutRef.current !== null) {
+      clearTimeout(scrollTargetTimeoutRef.current);
+      scrollTargetTimeoutRef.current = null;
+    }
   }, [file]);
 
-  // Observe page slots and only mark as visible when in viewport (reduces lag by rendering fewer pages)
-  // Also track the most-visible page for the page counter.
-  // Reduced rootMargin from 200px to 50px so fewer off-screen pages are eagerly rendered.
+  /** Page whose area interacts most with the scrollport — avoids stale IntersectionObserver ratio maps (wrong page index). */
+  const updatePageFromScroll = useCallback(() => {
+    const container = containerRef.current;
+    if (!container || numPages < 1) return;
+    const cRect = container.getBoundingClientRect();
+    let best = 1;
+    let bestVisible = -1;
+    for (let i = 1; i <= numPages; i++) {
+      const el = pageRefs.current.get(i);
+      if (!el) continue;
+      const r = el.getBoundingClientRect();
+      const visible = Math.min(r.bottom, cRect.bottom) - Math.max(r.top, cRect.top);
+      if (visible > bestVisible + 0.5) {
+        bestVisible = visible;
+        best = i;
+      }
+    }
+    setCurrentPage((p) => (p === best ? p : best));
+  }, [numPages]);
+
+  useEffect(() => {
+    if (pageInputEditingRef.current) return;
+    if (scrollTargetPageRef.current !== null) return;
+    setPageInput(String(currentPage));
+  }, [currentPage]);
+
+  const finishProgrammaticScroll = useCallback(() => {
+    const target = scrollTargetPageRef.current;
+    if (target === null) return;
+    scrollTargetPageRef.current = null;
+    if (scrollTargetTimeoutRef.current !== null) {
+      clearTimeout(scrollTargetTimeoutRef.current);
+      scrollTargetTimeoutRef.current = null;
+    }
+    setPageInput(String(target));
+    requestAnimationFrame(() => {
+      updatePageFromScroll();
+    });
+  }, [updatePageFromScroll]);
+
+  useEffect(() => {
+    return () => {
+      if (scrollTargetTimeoutRef.current !== null) {
+        clearTimeout(scrollTargetTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || numPages === 0) return;
+    el.addEventListener("scrollend", finishProgrammaticScroll, { passive: true });
+    return () => el.removeEventListener("scrollend", finishProgrammaticScroll);
+  }, [numPages, finishProgrammaticScroll]);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || numPages === 0) return;
+    let raf = 0;
+    const schedule = () => {
+      if (raf !== 0) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        if (scrollTargetPageRef.current !== null) return;
+        updatePageFromScroll();
+      });
+    };
+    el.addEventListener("scroll", schedule, { passive: true });
+    schedule();
+    return () => {
+      el.removeEventListener("scroll", schedule);
+      if (raf !== 0) cancelAnimationFrame(raf);
+    };
+  }, [numPages, updatePageFromScroll]);
+
+  useEffect(() => {
+    if (numPages === 0) return;
+    const id = requestAnimationFrame(() => {
+      updatePageFromScroll();
+    });
+    return () => cancelAnimationFrame(id);
+  }, [zoom, numPages, updatePageFromScroll]);
+
+  // Observe page slots and only mark as visible when in viewport (reduces lag by rendering fewer pages).
+  // Do not derive currentPage here — ratio map only updates a subset of pages per callback, so "best ratio" is often wrong.
   useEffect(() => {
     if (numPages === 0) return;
     const container = containerRef.current;
     if (!container) return;
-
-    const intersectionRatios = new Map<number, number>();
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -107,23 +198,9 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({ file, className = "" }) =>
             const pageNum = Number((e.target as HTMLElement).dataset.page);
             if (e.isIntersecting) next.add(pageNum);
             else next.delete(pageNum);
-            intersectionRatios.set(pageNum, e.intersectionRatio);
           }
           return next;
         });
-
-        // Determine the page with the highest intersection ratio
-        let bestPage = 1;
-        let bestRatio = 0;
-        for (const [pageNum, ratio] of intersectionRatios) {
-          if (ratio > bestRatio) {
-            bestRatio = ratio;
-            bestPage = pageNum;
-          }
-        }
-        if (bestRatio > 0) {
-          setCurrentPage(bestPage);
-        }
       },
       { root: container, rootMargin: "50px", threshold: [0, 0.25, 0.5, 0.75, 1] }
     );
@@ -141,25 +218,45 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({ file, className = "" }) =>
     setZoom((z) => Math.min(ZOOM_MAX, Math.round((z + ZOOM_STEP) * 10) / 10));
   }, []);
 
-  const handleOutlineItemClick = useCallback(({ pageNumber }: { pageNumber?: number }) => {
-    if (!pageNumber || !containerRef.current) return;
-    const el = pageRefs.current.get(pageNumber);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-    setShowOutline(false);
-  }, []);
-
   const goToPage = useCallback(
     (page: number) => {
       const target = Math.max(1, Math.min(numPages, page));
       const el = pageRefs.current.get(target);
       if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        scrollTargetPageRef.current = target;
+        if (scrollTargetTimeoutRef.current !== null) {
+          clearTimeout(scrollTargetTimeoutRef.current);
+        }
+        // scrollend is not available in all browsers; unblock input sync shortly after jump.
+        scrollTargetTimeoutRef.current = setTimeout(finishProgrammaticScroll, 120);
+        // "auto" avoids long smooth-scroll windows where intersection ratios flicker (e.g. shows 22 while jumping to 25).
+        el.scrollIntoView({ behavior: "auto", block: "start" });
       }
     },
-    [numPages]
+    [finishProgrammaticScroll, numPages]
   );
+
+  const handleOutlineItemClick = useCallback(
+    ({ pageNumber }: { pageNumber?: number }) => {
+      if (!pageNumber) return;
+      goToPage(pageNumber);
+      setShowOutline(false);
+    },
+    [goToPage]
+  );
+
+  const commitPageInput = useCallback(() => {
+    if (numPages < 1) return;
+    const raw = pageInput.trim();
+    const parsed = raw === "" ? currentPage : Number.parseInt(raw, 10);
+    if (!Number.isFinite(parsed)) {
+      setPageInput(String(currentPage));
+      return;
+    }
+    const clamped = Math.max(1, Math.min(numPages, parsed));
+    goToPage(clamped);
+    setPageInput(String(clamped));
+  }, [currentPage, goToPage, numPages, pageInput]);
 
   if (error) {
     return (
@@ -211,9 +308,37 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({ file, className = "" }) =>
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
-                <span className="min-w-[3.5rem] select-none text-center text-xs tabular-nums text-muted-foreground">
-                  {currentPage} / {numPages}
-                </span>
+                <div className="flex items-center gap-1 text-xs tabular-nums text-muted-foreground">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    aria-label="Go to page"
+                    title="Type a page number and press Enter"
+                    value={pageInput}
+                    onChange={(e) => setPageInput(e.target.value.replace(/\D/g, ""))}
+                    onFocus={() => {
+                      pageInputEditingRef.current = true;
+                    }}
+                    onBlur={() => {
+                      pageInputEditingRef.current = false;
+                      commitPageInput();
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        (e.target as HTMLInputElement).blur();
+                      }
+                    }}
+                    className={cn(
+                      "h-7 w-11 shrink-0 select-text rounded-md border border-border bg-background px-1 text-center text-xs font-medium tabular-nums text-foreground",
+                      "outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                    )}
+                  />
+                  <span className="select-none" aria-hidden>
+                    /
+                  </span>
+                  <span className="min-w-[2ch] select-none text-center">{numPages}</span>
+                </div>
                 <button
                   onClick={() => goToPage(currentPage + 1)}
                   disabled={currentPage >= numPages}
