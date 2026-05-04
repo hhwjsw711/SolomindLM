@@ -527,8 +527,7 @@ export function useChatStream({ activeNotebookId, activeConversationId, sources,
           content: "",
           timestamp: new Date(),
           status: "thinking",
-          statusDetail:
-            "Generating a response… This may be streaming in another tab or device. Detailed tool steps appear in the tab that sent the message.",
+          statusDetail: "Searching...",
         });
       }
     }
