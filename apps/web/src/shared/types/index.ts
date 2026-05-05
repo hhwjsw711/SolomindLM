@@ -35,6 +35,13 @@ export interface Source {
   };
 }
 
+export interface MentionedSource {
+  documentId: string;
+  title: string;
+  startIndex: number;
+  endIndex: number;
+}
+
 export interface ReferenceChunk {
   id: number;
   sourceId: string;
