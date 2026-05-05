@@ -24,7 +24,7 @@ import { AVAILABLE_SMART_MODELS, findSmartModelById } from "@/shared/constants/m
 import { ModelBrandIcon } from "@/shared/components/icons/ModelBrandIcon";
 import type { ChatSettings } from "@/shared/types";
 import { Source, MentionedSource } from "@/shared/types/index";
-import { filterSourcesByQuery, syncMentions } from "../utils/mentions";
+import { filterSourcesByQuery } from "../utils/mentions";
 import { QuoteBlocks } from "./QuoteBlocks";
 
 const SOURCE_FILTERS = [
@@ -185,7 +185,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   const selectMention = useCallback(
     (source: Source) => {
-      if (!textareaRef.current || !onMentionedSourcesChange || !mentionedSources) return;
+      if (!textareaRef.current || !onMentionedSourcesChange) return;
 
       const cursorPos = textareaRef.current.selectionStart;
       const text = value;
@@ -193,36 +193,26 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
       if (!mentionInfo) return;
 
-      const mentionText = `@${source.title}`;
-      const newText = text.slice(0, mentionInfo.startIndex) + mentionText + text.slice(cursorPos);
-
+      // Strip the @query draft; attachment is shown only as the chip (IDs sent on submit).
+      const newText = text.slice(0, mentionInfo.startIndex) + text.slice(cursorPos);
       onChange(newText);
 
-      const newMention: MentionedSource = {
-        documentId: source.id,
-        title: source.title,
-        startIndex: mentionInfo.startIndex,
-        endIndex: mentionInfo.startIndex + mentionText.length,
-      };
+      const prev = mentionedSources ?? [];
+      if (!prev.some((m) => m.documentId === source.id)) {
+        const newMention: MentionedSource = {
+          documentId: source.id,
+          title: source.title,
+        };
+        onMentionedSourcesChange([...prev, newMention]);
+      }
 
-      console.log("[Mention] Selected source:", {
-        title: source.title,
-        documentId: source.id,
-        allMentions: [...mentionedSources, newMention].map((m) => ({
-          title: m.title,
-          documentId: m.documentId,
-        })),
-      });
-
-      onMentionedSourcesChange([...mentionedSources, newMention]);
       setMentionDropdownOpen(false);
       setMentionQuery("");
 
-      // Focus textarea and position cursor after the mention
       requestAnimationFrame(() => {
         if (textareaRef.current) {
-          const newCursorPos = mentionInfo.startIndex + mentionText.length;
-          textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
+          const pos = mentionInfo.startIndex;
+          textareaRef.current.setSelectionRange(pos, pos);
           textareaRef.current.focus();
         }
       });
@@ -296,77 +286,48 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       >
         {quotes && quotes.length > 0 && <QuoteBlocks />}
 
-        {/* Attached file tags */}
-        {mentionedSources && mentionedSources.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 px-3 pt-1">
-            {mentionedSources.map((mention, index) => (
-              <div
-                key={`${mention.documentId}-${index}`}
-                className="inline-flex items-center gap-1.5 rounded-md bg-primary/10 border border-primary/20 px-2 py-1 text-xs font-medium text-primary"
-              >
-                <FileText className="w-3 h-3 shrink-0" />
-                <span className="truncate max-w-[150px]">{mention.title}</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    // Remove the mention text from the textarea
-                    const before = value.slice(0, mention.startIndex);
-                    const after = value.slice(mention.endIndex);
-                    const newValue = before + after;
-                    onChange(newValue);
-
-                    // Remove from mentioned sources
-                    const newMentions = mentionedSources.filter((_, i) => i !== index);
-                    // Update indices for remaining mentions
-                    const removedLength = mention.endIndex - mention.startIndex;
-                    const adjustedMentions = newMentions.map((m) =>
-                      m.startIndex > mention.startIndex
-                        ? {
-                            ...m,
-                            startIndex: m.startIndex - removedLength,
-                            endIndex: m.endIndex - removedLength,
-                          }
-                        : m
-                    );
-                    onMentionedSourcesChange?.(adjustedMentions);
-                  }}
-                  className="shrink-0 rounded-full hover:bg-primary/20 p-0.5 transition-colors"
-                  title="Remove attachment"
+        {/* Attached source mentions — same row as the prompt; pt-2 matches textarea py-2 so text baselines line up */}
+        <div className="flex min-w-0 flex-wrap items-start gap-x-2 gap-y-1.5 px-3 pt-1">
+          {mentionedSources && mentionedSources.length > 0 ? (
+            <div className="flex shrink-0 flex-wrap items-center gap-x-1.5 gap-y-1.5 self-start pt-2">
+              {mentionedSources.map((mention, index) => (
+                <div
+                  key={`${mention.documentId}-${index}`}
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-primary/20 bg-primary/10 px-2 py-1 font-sans text-xs font-medium leading-tight text-primary"
                 >
-                  <X className="w-3 h-3" />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <textarea
+                  <FileText className="h-3 w-3 shrink-0" />
+                  <span className="max-w-[150px] truncate">{mention.title}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!onMentionedSourcesChange || !mentionedSources) return;
+                      onMentionedSourcesChange(mentionedSources.filter((_, i) => i !== index));
+                    }}
+                    className="shrink-0 rounded-full p-0.5 transition-colors hover:bg-primary/20"
+                    title="Remove attachment"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : null}
+          <textarea
           ref={textareaRef}
           placeholder={
             deepResearchEnabled
               ? "Ask a complex research question with multi-step investigation..."
               : "Ask a question about your sources..."
           }
-          className="w-full min-w-0 bg-transparent border-none py-2 px-3 resize-none outline-none text-foreground placeholder:text-muted-foreground/70 min-h-[44px] max-h-[160px] font-serif text-base @min-[400px]/chat-input:text-lg"
+          className="min-h-[44px] max-h-[160px] min-w-0 flex-1 bg-transparent border-none py-2 outline-none resize-none text-foreground placeholder:text-muted-foreground/70 font-serif text-base @min-[400px]/chat-input:text-lg"
           rows={1}
           value={value}
-          onChange={(e) => {
-            const newValue = e.target.value;
-            const cursorPos = e.target.selectionStart;
-            onChange(newValue);
+            onChange={(e) => {
+              const newValue = e.target.value;
+              const cursorPos = e.target.selectionStart;
+              onChange(newValue);
 
-            // Sync mentions with new text
-            if (mentionedSources && onMentionedSourcesChange) {
-              const synced = syncMentions(newValue, mentionedSources);
-              if (
-                synced.length !== mentionedSources.length ||
-                synced.some((m, i) => m.startIndex !== mentionedSources[i].startIndex)
-              ) {
-                onMentionedSourcesChange(synced);
-              }
-            }
-
-            // Detect if we're in a mention
+              // Detect if we're in a mention
             const mentionInfo = detectMention(newValue, cursorPos);
             if (mentionInfo) {
               setMentionQuery(mentionInfo.query);
@@ -379,6 +340,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           onKeyDown={handleKeyDown}
           disabled={disabled}
         />
+        </div>
 
         {/* Mention dropdown */}
         {mentionDropdownOpen && filteredSources.length > 0 && (

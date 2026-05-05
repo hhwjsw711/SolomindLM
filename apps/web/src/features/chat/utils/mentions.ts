@@ -10,33 +10,6 @@ export function filterSourcesByQuery(sources: Source[], query: string): Source[]
 }
 
 /**
- * Sync mentioned sources with current text.
- * Removes mentions whose text no longer matches, updates indices for valid ones.
- */
-export function syncMentions(text: string, mentions: MentionedSource[]): MentionedSource[] {
-  return mentions
-    .map((mention) => {
-      const expectedText = `@${mention.title}`;
-      // Check if mention still exists at recorded position
-      if (text.slice(mention.startIndex, mention.endIndex) === expectedText) {
-        return mention;
-      }
-      // Try to find it elsewhere in the text
-      const newIndex = text.indexOf(expectedText);
-      if (newIndex !== -1) {
-        return {
-          ...mention,
-          startIndex: newIndex,
-          endIndex: newIndex + expectedText.length,
-        };
-      }
-      // Mention no longer exists in text
-      return null;
-    })
-    .filter((m): m is MentionedSource => m !== null);
-}
-
-/**
  * Combine mentioned document IDs with sidebar-selected IDs, deduplicated
  */
 export function combineDocumentIds(mentionedIds: string[], selectedIds: string[]): string[] {
@@ -48,4 +21,26 @@ export function combineDocumentIds(mentionedIds: string[], selectedIds: string[]
  */
 export function getDocumentIdsFromMentions(mentions: MentionedSource[]): string[] {
   return mentions.map((m) => m.documentId);
+}
+
+function mentionDisplayToken(title: string): string {
+  const t = title.replace(/\s+/g, " ").trim();
+  return t ? `@${t}` : "";
+}
+
+/**
+ * Prefix persisted user message text with @SourceTitle tokens so chat history stays readable.
+ * Document IDs are still sent separately via {@link getDocumentIdsFromMentions}.
+ */
+export function prependAttachedSourceMentionsToMessage(
+  body: string,
+  mentions: MentionedSource[]
+): string {
+  if (mentions.length === 0) return body;
+  const tokens = mentions.map((m) => mentionDisplayToken(m.title)).filter(Boolean);
+  if (tokens.length === 0) return body;
+  const prefix = tokens.join(" ");
+  const trimmed = body.trim();
+  if (!trimmed) return prefix;
+  return `${prefix}\n\n${trimmed}`;
 }

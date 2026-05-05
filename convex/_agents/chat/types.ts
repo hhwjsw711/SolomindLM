@@ -62,7 +62,11 @@ export interface ChatAgentOptions {
   /** Override the smart model (instead of using env.SMART_LLM) */
   smartModel?: string;
   /** Fetch full document content for single-document list queries */
-  fetchDocumentFn?: (documentId: string) => Promise<{ content: string } | null>;
+  fetchDocumentFn?: (documentId: string) => Promise<{
+    content: string;
+    title?: string;
+    sourceUrl?: string;
+  } | null>;
   /** BCP-47 language code to pass to the LLM wrapper for system prompt language injection. */
   outputLanguage?: string;
 }

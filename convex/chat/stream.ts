@@ -847,6 +847,13 @@ export async function streamChatResponse(
       });
       if (!chunks || chunks.length === 0) return null;
 
+      const doc = await ctx.runQuery(internal.documents.index.getDocumentInternal, {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        documentId: documentId as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        userId: userId as any,
+      });
+
       // Sort by chunk index and join content
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -859,6 +866,8 @@ export async function streamChatResponse(
         documentId: documentId as any,
         content,
         chunkCount: chunks.length,
+        title: doc?.fileName,
+        sourceUrl: doc?.fileUrl?.trim() ? doc.fileUrl : undefined,
       };
     },
   });

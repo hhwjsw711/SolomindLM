@@ -33,7 +33,7 @@ import { useSourcesContext } from "../../sources/useSourcesContext";
 import { ResearchPlanMessage } from "./ResearchPlanMessage";
 import { CONVEX_SITE_URL } from "../services/chatApi";
 import { MentionedSource } from "@/shared/types/index";
-import { getDocumentIdsFromMentions } from "../utils/mentions";
+import { getDocumentIdsFromMentions, prependAttachedSourceMentionsToMessage } from "../utils/mentions";
 import { useAuthToken } from "@convex-dev/auth/react";
 import { useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
@@ -453,15 +453,11 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({
       clearQuotes();
     }
 
+    messageWithQuotes = prependAttachedSourceMentionsToMessage(messageWithQuotes, mentionedSources);
+
     // Separate mentioned sources (full content) from sidebar-selected sources (RAG)
     const attachedDocumentIds = getDocumentIdsFromMentions(mentionedSources);
     const selectedIds = sources?.filter((s) => s.selected).map((s) => s.id) ?? [];
-
-    console.log("[Chat] Sending message:", {
-      attachedDocumentIds,
-      selectedIds,
-      messageText: messageWithQuotes.slice(0, 100),
-    });
 
     setIsSending(true);
     setInputMessage("");
@@ -503,7 +499,9 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({
       const attachedDocumentIds = getDocumentIdsFromMentions(mentionedSources);
       const selectedIds = sources?.filter((s) => s.selected).map((s) => s.id) ?? [];
 
-      onSendMessage(text, undefined, { channels: sourceFilters }, selectedIds, attachedDocumentIds);
+      const messageText = prependAttachedSourceMentionsToMessage(text.trim(), mentionedSources);
+
+      onSendMessage(messageText, undefined, { channels: sourceFilters }, selectedIds, attachedDocumentIds);
     },
     [
       chatInputDisabled,
