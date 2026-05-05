@@ -19,6 +19,7 @@ export interface FieldOfStudyCategory {
 export interface AcademicFiltersProps {
   filters: AcademicFilterState;
   onChange: (filters: AcademicFilterState) => void;
-  variant: "sidebar" | "dropdown";
+  /** sidebar: sources rail · dropdown: standalone popover · embedded: inside parent panel · modal: filters dialog body */
+  variant: "sidebar" | "dropdown" | "embedded" | "modal";
   onApply?: () => void;
 }

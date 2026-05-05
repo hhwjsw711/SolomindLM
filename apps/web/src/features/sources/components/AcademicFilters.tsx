@@ -61,30 +61,41 @@ export const AcademicFilters: React.FC<AcademicFiltersProps> = ({
   })).filter((category) => category.fields.length > 0);
 
   const isSidebar = variant === "sidebar";
+  const isEmbedded = variant === "embedded";
+  const isModal = variant === "modal";
 
   const containerClass = isSidebar
     ? "h-full overflow-y-auto p-5 space-y-5 border-r border-border/50 bg-card/30"
-    : "w-80 max-h-[70vh] overflow-y-auto p-4 space-y-4 bg-card border border-border rounded-xl shadow-lg";
+    : isModal
+      ? "w-full max-h-[min(70vh,28rem)] overflow-y-auto overflow-x-hidden space-y-4 py-1 pr-1"
+      : isEmbedded
+        ? "w-full max-h-[min(50vh,22rem)] overflow-y-auto overflow-x-hidden space-y-4 pr-0.5"
+        : "w-80 max-h-[70vh] overflow-y-auto p-4 space-y-4 bg-card border border-border rounded-xl shadow-lg";
 
   return (
     <div className={containerClass}>
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
-          <h3 className="text-sm font-semibold">Academic Filters</h3>
+      {/* Header (hidden when embedded — parent panel owns the section label) */}
+      {!isEmbedded && !isModal && (
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
+            <h3 className="text-sm font-semibold">Academic Filters</h3>
+          </div>
+          <button
+            type="button"
+            onClick={() => onChange(DEFAULT_ACADEMIC_FILTERS)}
+            className="text-xs text-muted-foreground hover:text-destructive transition-colors"
+          >
+            Reset
+          </button>
         </div>
-        <button
-          onClick={() => onChange(DEFAULT_ACADEMIC_FILTERS)}
-          className="text-xs text-muted-foreground hover:text-destructive transition-colors"
-        >
-          Reset
-        </button>
-      </div>
+      )}
 
-      {/* Database Selection */}
+      {/* Database Selection (composer exposes DB separately when academic is on) */}
+      {variant !== "modal" && (
       <div>
         <button
+          type="button"
           onClick={() => toggleSection("database")}
           className="flex items-center justify-between w-full text-sm font-medium mb-2"
         >
@@ -132,6 +143,7 @@ export const AcademicFilters: React.FC<AcademicFiltersProps> = ({
           </div>
         )}
       </div>
+      )}
 
       {/* Publication Year */}
       <div>
@@ -376,10 +388,15 @@ export const AcademicFilters: React.FC<AcademicFiltersProps> = ({
       </div>
 
       {/* Apply button (for dropdown variant) */}
-      {!isSidebar && onApply && (
+      {!isSidebar && !isEmbedded && onApply && (
         <button
           onClick={onApply}
-          className="w-full py-2.5 bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors"
+          type="button"
+          className={`w-full py-3 text-sm font-semibold rounded-xl transition-colors ${
+            isModal
+              ? "bg-foreground text-background hover:bg-foreground/90"
+              : "bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg py-2.5 font-medium"
+          }`}
         >
           Apply Filters
         </button>
