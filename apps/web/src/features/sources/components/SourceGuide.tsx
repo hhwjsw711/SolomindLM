@@ -1,6 +1,7 @@
 import React, { useId, useState } from "react";
 import { Loader2, Compass, ChevronUp, ChevronDown } from "lucide-react";
 import { useSourceGuide } from "../hooks/useSourceGuide";
+import { sanitizeHtml } from "@/shared/utils";
 
 interface SourceGuideProps {
   documentId: string;
@@ -74,9 +75,11 @@ export const SourceGuide: React.FC<SourceGuideProps> = ({ documentId, onTopicCli
                 <div
                   className="font-serif text-sm leading-relaxed text-foreground/95 [&_strong]:font-semibold [&_strong]:text-foreground"
                   dangerouslySetInnerHTML={{
-                    __html: summary
-                      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-                      .replace(/\n/g, "<br/>"),
+                    __html: sanitizeHtml(
+                      summary
+                        .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+                        .replace(/\n/g, "<br/>")
+                    ),
                   }}
                 />
               )}

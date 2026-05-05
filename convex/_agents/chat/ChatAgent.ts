@@ -607,7 +607,6 @@ export class ChatAgent {
     const userAttachedNotebook = notebookChunks.filter((c) => c.metadata?.userAttached === true);
     const restNotebook = notebookChunks.filter((c) => !c.metadata?.userAttached);
     const pinnedTokens = userAttachedNotebook.reduce((sum, c) => sum + countTokens(c.content), 0);
-    const baseTokenBudget = isListQuery ? LIST_QUERY_CONTEXT_TOKEN_BUDGET : CONTEXT_TOKEN_BUDGET;
     const chunkCapTotal = isListQuery ? LIST_QUERY_MAX_SELECTED_CHUNKS : MAX_CHUNKS_HARD_LIMIT;
     const maxForRest = Math.max(0, chunkCapTotal - userAttachedNotebook.length);
 
