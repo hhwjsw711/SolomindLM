@@ -132,6 +132,16 @@ export const generateSourceGuide = action({
       return;
     }
 
+    // Claim generation lock to prevent duplicate LLM calls from concurrent clients
+    const claimed = await ctx.runMutation(
+      internal.documents.index.startSourceGuideGeneration,
+      { documentId: args.documentId }
+    );
+    if (!claimed) {
+      console.warn("[sourceGuide] Generation already in progress:", args.documentId);
+      return;
+    }
+
     // Get content
     let content = document.extractedMarkdown || "";
     if (!content) {

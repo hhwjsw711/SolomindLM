@@ -149,6 +149,8 @@ export default defineSchema({
         generatedAt: v.number(),
       })
     ),
+    /** Timestamp when source guide generation started (race-condition guard) */
+    sourceGuideGenerationStartedAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

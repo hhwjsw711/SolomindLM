@@ -1086,12 +1086,17 @@ export const getSourceGuide = query({
       };
     }
 
-    // Signal that generation should start
-    if (document.status === "completed") {
+    // Signal that generation should start (only if not already in progress)
+    const GENERATION_TIMEOUT_MS = 120_000; // 2 minutes
+    const isInProgress =
+      document.sourceGuideGenerationStartedAt != null &&
+      Date.now() - document.sourceGuideGenerationStartedAt < GENERATION_TIMEOUT_MS;
+
+    if (document.status === "completed" && !isInProgress) {
       return { summary: null, topics: null, isGenerating: true };
     }
 
-    return { summary: null, topics: null, isGenerating: false };
+    return { summary: null, topics: null, isGenerating: isInProgress };
   },
 });
 
@@ -1114,6 +1119,29 @@ export const setSourceGuide = internalMutation({
         topics: args.topics,
         generatedAt: Date.now(),
       },
+      sourceGuideGenerationStartedAt: undefined,
     });
+  },
+});
+
+export const startSourceGuideGeneration = internalMutation({
+  args: {
+    documentId: v.id("documents"),
+  },
+  handler: async (ctx, args) => {
+    const document = await ctx.db.get(args.documentId);
+    if (!document) return false;
+    if (document.sourceGuide) return false;
+
+    const GENERATION_TIMEOUT_MS = 120_000;
+    const isInProgress =
+      document.sourceGuideGenerationStartedAt != null &&
+      Date.now() - document.sourceGuideGenerationStartedAt < GENERATION_TIMEOUT_MS;
+    if (isInProgress) return false;
+
+    await ctx.db.patch(args.documentId, {
+      sourceGuideGenerationStartedAt: Date.now(),
+    });
+    return true;
   },
 });

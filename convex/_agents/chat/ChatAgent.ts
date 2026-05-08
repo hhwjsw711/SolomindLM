@@ -20,6 +20,7 @@ import { routeChatMessage } from "./chatRouter.js";
 import type { ChatAgentContext, ChatAgentOptions, GlobalRerankFn, StreamChunk } from "./types.js";
 import { countTokens } from "../_shared/tokenizer";
 import {
+  ATTACHED_DOC_MAX_CHARS,
   CONTEXT_TOKEN_BUDGET,
   FOLLOWUP_GENERATION_TIMEOUT_MS,
   LIST_QUERY_CONTEXT_TOKEN_BUDGET,
@@ -467,28 +468,33 @@ export class ChatAgent {
         const loaded = await this.fetchFullDocumentContent(docId);
         if (loaded) {
           const { content: fullText, title: docTitle, sourceUrl: docUrl } = loaded;
-          // Log first 200 chars to identify which doc was fetched
           logger.info("Attached document fetched", {
             documentId: docId,
-            contentPreview: fullText.slice(0, 200).replace(/\n/g, " "),
+            title: docTitle,
             contentLength: fullText.length,
           });
           const displayTitle = (docTitle ?? "").trim() || "Attached document";
+          // Cap attached document content to prevent context overflow
+          const cappedText =
+            fullText.length > ATTACHED_DOC_MAX_CHARS
+              ? fullText.slice(0, ATTACHED_DOC_MAX_CHARS) +
+                "\n\n[Content truncated due to length]"
+              : fullText;
           allChunks.push({
             id: `full-${docId}`,
             sourceId: String(docId),
             documentId: docId,
             sourceTitle: displayTitle,
             ...(docUrl ? { sourceUrl: docUrl } : {}),
-            content: fullText,
+            content: cappedText,
             chunkIndex: -1,
             similarity: 1.0,
             metadata: {
               totalChunks: 1,
               relativePosition: 0.5,
-              chunkLengthChars: fullText.length,
-              wordCount: fullText.split(/\s+/).length,
-              sentenceCount: fullText.split(/[.!?]+/).length,
+              chunkLengthChars: cappedText.length,
+              wordCount: cappedText.split(/\s+/).length,
+              sentenceCount: cappedText.split(/[.!?]+/).length,
               userAttached: true,
             },
           });

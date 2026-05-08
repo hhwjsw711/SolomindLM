@@ -42,6 +42,9 @@ export const LIST_QUERY_MAX_SELECTED_CHUNKS = 12;
 /** Tighter context budget for lists — many short chunks were packing 30+ passages before the chunk cap. */
 export const LIST_QUERY_CONTEXT_TOKEN_BUDGET = 5200;
 
+/** Max characters per attached document to prevent context overflow (~3000 tokens). */
+export const ATTACHED_DOC_MAX_CHARS = 12000;
+
 /** Larger retrieval pool for subqueries to maximize coverage before reranking (reduced from 6 for better precision) */
 export const SUBQUERY_POOL_MULTIPLIER = 5;
 
