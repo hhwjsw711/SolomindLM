@@ -135,6 +135,17 @@ export const generateSourceGuide = action({
       return;
     }
 
+    // Rate limit check
+    try {
+      await ctx.runMutation(internal._lib.limits.checkDailyLimitInternal, {
+        userId,
+        feature: "sourceGuide",
+      });
+    } catch (limitErr) {
+      console.warn("[sourceGuide] Rate limit reached:", limitErr);
+      return;
+    }
+
     // Truncate to avoid exceeding context window (~8000 chars is safe)
     const truncatedContent = content.slice(0, 8000);
 
@@ -168,6 +179,16 @@ Output ONLY a single JSON object. No markdown fences, no explanation.`;
         summary: parsed.summary.slice(0, 500),
         topics: parsed.topics.slice(0, 6),
       });
+
+      // Consume rate limit token after confirmed storage
+      try {
+        await ctx.runMutation(internal._lib.limits.consumeDailyLimitInternal, {
+          userId,
+          feature: "sourceGuide",
+        });
+      } catch (consumeErr) {
+        console.warn("[sourceGuide] Failed to consume rate limit (non-fatal):", consumeErr);
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       if (message.startsWith("LLM API error:")) {

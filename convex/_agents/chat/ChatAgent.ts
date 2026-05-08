@@ -474,21 +474,35 @@ export class ChatAgent {
             contentLength: fullText.length,
           });
           const displayTitle = (docTitle ?? "").trim() || "Attached document";
+          // Cap attached document content to protect context window budget
+          const MAX_ATTACHED_CONTENT_CHARS = 12000;
+          const truncatedText =
+            fullText.length > MAX_ATTACHED_CONTENT_CHARS
+              ? fullText.slice(0, MAX_ATTACHED_CONTENT_CHARS) +
+                "\n\n[Content truncated due to length]"
+              : fullText;
+          if (fullText.length > MAX_ATTACHED_CONTENT_CHARS) {
+            logger.info("Attached document truncated", {
+              documentId: docId,
+              originalLength: fullText.length,
+              truncatedLength: truncatedText.length,
+            });
+          }
           allChunks.push({
             id: `full-${docId}`,
             sourceId: String(docId),
             documentId: docId,
             sourceTitle: displayTitle,
             ...(docUrl ? { sourceUrl: docUrl } : {}),
-            content: fullText,
+            content: truncatedText,
             chunkIndex: -1,
             similarity: 1.0,
             metadata: {
               totalChunks: 1,
               relativePosition: 0.5,
-              chunkLengthChars: fullText.length,
-              wordCount: fullText.split(/\s+/).length,
-              sentenceCount: fullText.split(/[.!?]+/).length,
+              chunkLengthChars: truncatedText.length,
+              wordCount: truncatedText.split(/\s+/).length,
+              sentenceCount: truncatedText.split(/[.!?]+/).length,
               userAttached: true,
             },
           });

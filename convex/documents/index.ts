@@ -492,6 +492,7 @@ export const prepareDocumentReembed = internalMutation({
       maxHeadingLevel: undefined,
       metadata: undefined,
       extractedMarkdown: undefined,
+      sourceGuide: undefined,
       ...(before?.fileType === "paper_record" ? { ingestionStatus: "pending" as const } : {}),
       updatedAt: Date.now(),
     });

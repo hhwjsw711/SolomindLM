@@ -1,6 +1,6 @@
 import { useQuery, useAction } from "convex/react";
 import { api } from "@convex/_generated/api";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 export function useSourceGuide(documentId: string | null) {
   const guide = useQuery(
@@ -8,10 +8,15 @@ export function useSourceGuide(documentId: string | null) {
     documentId ? { documentId: documentId as any } : "skip"
   );
   const generateGuide = useAction(api.documents.sourceGuide.generateSourceGuide as any);
+  const triggeredRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (guide?.isGenerating && documentId) {
-      generateGuide({ documentId: documentId as any });
+      // Debounce: only trigger once per document per session
+      if (!triggeredRef.current.has(documentId)) {
+        triggeredRef.current.add(documentId);
+        generateGuide({ documentId: documentId as any });
+      }
     }
   }, [guide?.isGenerating, documentId, generateGuide]);
 
