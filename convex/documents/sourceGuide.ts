@@ -13,19 +13,6 @@ import { getAuthUserId } from "../auth";
 import { uncachedLlmCall } from "../_agents/_shared/cachedLlm";
 import { env } from "../_lib/env";
 
-// ── Constants ───────────────────────────────────────────────────────
-
-/** Minimum content length (chars) before a guide is worth generating. */
-const MIN_CONTENT_LENGTH = 100;
-/** Characters to send to the LLM (safe under fast-model context window). */
-const MAX_PROMPT_CONTENT_CHARS = 8_000;
-/** Max tokens for the LLM response. */
-const MAX_RESPONSE_TOKENS = 512;
-/** Max characters to store for a summary. */
-const MAX_SUMMARY_CHARS = 500;
-/** Max topic chips to store. */
-const MAX_TOPICS = 6;
-
 /** Best-effort fixes before JSON.parse (models sometimes emit trailing commas). */
 function repairJsonObjectText(json: string): string {
   return json.replace(/,\s*}/g, "}").replace(/,\s*]/g, "]");
@@ -87,7 +74,7 @@ async function generateSourceGuideWithModel(
       { role: "user", content: prompt },
     ],
     temperature: 0.5,
-    maxTokens: MAX_RESPONSE_TOKENS,
+    maxTokens: 512,
     responseFormat: { type: "json_object" },
     reasoningEnabled: false,
     toolChoice: "none",
@@ -132,16 +119,6 @@ export const generateSourceGuide = action({
       return;
     }
 
-    // Claim generation lock to prevent duplicate LLM calls from concurrent clients
-    const claimed = await ctx.runMutation(
-      internal.documents.index.startSourceGuideGeneration,
-      { documentId: args.documentId }
-    );
-    if (!claimed) {
-      console.warn("[sourceGuide] Generation already in progress:", args.documentId);
-      return;
-    }
-
     // Get content
     let content = document.extractedMarkdown || "";
     if (!content) {
@@ -153,13 +130,24 @@ export const generateSourceGuide = action({
       content = chunks.map((c: { content: string }) => c.content).join("\n\n");
     }
 
-    if (content.length < MIN_CONTENT_LENGTH) {
+    if (content.length < 100) {
       console.warn("[sourceGuide] Content too short, skipping:", args.documentId);
       return;
     }
 
+    // Rate limit check
+    try {
+      await ctx.runMutation(internal._lib.limits.checkDailyLimitInternal, {
+        userId,
+        feature: "sourceGuide",
+      });
+    } catch (limitErr) {
+      console.warn("[sourceGuide] Rate limit reached:", limitErr);
+      return;
+    }
+
     // Truncate to avoid exceeding context window (~8000 chars is safe)
-    const truncatedContent = content.slice(0, MAX_PROMPT_CONTENT_CHARS);
+    const truncatedContent = content.slice(0, 8000);
 
     const prompt = `You are an AI study assistant analyzing a source document. Given the document content below, generate a JSON response with exactly these keys:
 - "summary": A concise 2-3 sentence overview of the document, highlighting the most important concepts and takeaways. Use bold formatting (markdown **bold**) for key terms.
@@ -188,9 +176,19 @@ Output ONLY a single JSON object. No markdown fences, no explanation.`;
 
       await ctx.runMutation(internal.documents.index.setSourceGuide, {
         documentId: args.documentId,
-        summary: parsed.summary.slice(0, MAX_SUMMARY_CHARS),
-        topics: parsed.topics.slice(0, MAX_TOPICS),
+        summary: parsed.summary.slice(0, 500),
+        topics: parsed.topics.slice(0, 6),
       });
+
+      // Consume rate limit token after confirmed storage
+      try {
+        await ctx.runMutation(internal._lib.limits.consumeDailyLimitInternal, {
+          userId,
+          feature: "sourceGuide",
+        });
+      } catch (consumeErr) {
+        console.warn("[sourceGuide] Failed to consume rate limit (non-fatal):", consumeErr);
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       if (message.startsWith("LLM API error:")) {

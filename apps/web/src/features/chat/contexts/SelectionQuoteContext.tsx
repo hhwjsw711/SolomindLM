@@ -53,9 +53,7 @@ export const SelectionQuoteProvider: React.FC<SelectionQuoteProviderProps> = ({ 
         return [
           ...prev,
           {
-            id: typeof crypto !== "undefined" && crypto.randomUUID
-              ? crypto.randomUUID()
-              : `${Date.now()}-${Math.random().toString(36).slice(2, 11)}-${Math.random().toString(36).slice(2, 11)}`,
+            id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
             text: trimmed,
             sourceType,
             sourceId,

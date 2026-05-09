@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-04  
 **Status:** Approved  
-**Scope:** Frontend + backend — `attachedDocumentIds` plumbed through HTTP stream to ChatAgent for RAG
+**Scope:** Frontend only (web app) — no Convex schema changes
 
 ---
 

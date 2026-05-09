@@ -26,6 +26,17 @@ describe("filterSourcesByQuery", () => {
   it("returns empty array when no match", () => {
     expect(filterSourcesByQuery(mockSources, "xyz")).toEqual([]);
   });
+
+  it("handles query with only whitespace", () => {
+    expect(filterSourcesByQuery(mockSources, "   ")).toEqual(mockSources);
+  });
+
+  it("filters special characters in titles", () => {
+    const sources: Source[] = [
+      { id: "4", title: "file[1].txt", type: "TXT", date: "2024-01-01", selected: false },
+    ];
+    expect(filterSourcesByQuery(sources, "[1]")).toEqual(sources);
+  });
 });
 
 describe("combineDocumentIds", () => {
@@ -38,6 +49,10 @@ describe("combineDocumentIds", () => {
     expect(combineDocumentIds(["a"], [])).toEqual(["a"]);
     expect(combineDocumentIds([], [])).toEqual([]);
   });
+
+  it("preserves order (mentioned first, then selected)", () => {
+    expect(combineDocumentIds(["c", "a"], ["b", "a"])).toEqual(["c", "a", "b"]);
+  });
 });
 
 describe("getDocumentIdsFromMentions", () => {
@@ -47,6 +62,10 @@ describe("getDocumentIdsFromMentions", () => {
       { documentId: "2", title: "B" },
     ];
     expect(getDocumentIdsFromMentions(mentions)).toEqual(["1", "2"]);
+  });
+
+  it("returns empty array for empty mentions", () => {
+    expect(getDocumentIdsFromMentions([])).toEqual([]);
   });
 });
 
@@ -74,5 +93,35 @@ describe("prependAttachedSourceMentionsToMessage", () => {
     expect(
       prependAttachedSourceMentionsToMessage("x", [{ documentId: "d", title: "AI\nagent\tpatterns" }])
     ).toBe("@AI agent patterns\n\nx");
+  });
+
+  it("returns only prefix when body is empty", () => {
+    expect(
+      prependAttachedSourceMentionsToMessage("", [{ documentId: "d", title: "Doc" }])
+    ).toBe("@Doc");
+  });
+
+  it("returns only prefix when body is whitespace", () => {
+    expect(
+      prependAttachedSourceMentionsToMessage("   ", [{ documentId: "d", title: "Doc" }])
+    ).toBe("@Doc");
+  });
+
+  it("skips mentions with empty titles", () => {
+    expect(
+      prependAttachedSourceMentionsToMessage("Hello", [
+        { documentId: "a", title: "" },
+        { documentId: "b", title: "Valid" },
+      ])
+    ).toBe("@Valid\n\nHello");
+  });
+
+  it("skips mentions with whitespace-only titles", () => {
+    expect(
+      prependAttachedSourceMentionsToMessage("Hello", [
+        { documentId: "a", title: "   \n\t  " },
+        { documentId: "b", title: "Valid" },
+      ])
+    ).toBe("@Valid\n\nHello");
   });
 });
