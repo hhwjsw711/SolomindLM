@@ -2,7 +2,11 @@
 
 import { internal } from "../../_generated/api";
 
+// These step types are shared across the research agent and literature_review agent.
+// Not all steps are used by every agent; the literature review agent uses most of these,
+// while the research agent currently uses planning, searching, and generating_report.
 export const researchStepTypes = [
+  "planning",
   "searching",
   "deduplicating",
   "ranking",

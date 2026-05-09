@@ -110,7 +110,7 @@ export async function plannerNode(
       deps.ctx,
       deps.researchId,
       "research",
-      "searching",
+      "planning",
       "in_progress",
       "Planning research strategy"
     );
@@ -142,7 +142,7 @@ export async function plannerNode(
       deps.ctx,
       deps.researchId,
       "research",
-      "searching",
+      "planning",
       "completed",
       `Generated ${subQuestions.length} sub-questions`
     );
