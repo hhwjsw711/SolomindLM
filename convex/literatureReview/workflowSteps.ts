@@ -7,6 +7,7 @@ import { createLLM } from "../_agents/_shared/llm_factory.js";
 import { invokeWithHttpRetry } from "../_agents/_shared/retry.js";
 import { createServiceLogger } from "../_lib/logging/serviceLogger.js";
 import { env } from "../_lib/env.js";
+import { cachedRerank } from "../_agents/chat/rerankCache.js";
 import {
   PLAN_REVIEW_SYSTEM_PROMPT,
   PLAN_REVIEW_PROMPT,
@@ -186,10 +187,46 @@ export const rankPapers = internalAction({
     query: v.string(),
   },
   returns: v.object({ papers: v.array(literaturePaperValidator) }),
-  handler: async (_ctx, args) => {
-    void args.query;
-    const sorted = [...args.papers].sort((a, b) => b.score - a.score);
-    return { papers: sorted };
+  handler: async (ctx, args) => {
+    const logger = createServiceLogger("literatureReview", "rankPapers");
+
+    if (args.papers.length === 0) {
+      return { papers: [] };
+    }
+
+    try {
+      const documents = args.papers.map((p, i) => ({
+        id: String(i),
+        content: `${p.title}\n\n${p.abstract}`,
+      }));
+
+      logger.info("Starting ZeroEntropy reranking", {
+        paperCount: args.papers.length,
+        query: args.query.slice(0, 100),
+      });
+
+      const reranked = await cachedRerank(ctx, args.query, documents, "zerank-2", 30);
+
+      const scoreMap = new Map(reranked.map((r, i) => [r.id, { score: r.score ?? (30 - i), index: i }]));
+
+      const sorted = [...args.papers].map((p, i) => ({
+        ...p,
+        score: scoreMap.get(String(i))?.score ?? p.score,
+      })).sort((a, b) => b.score - a.score);
+
+      logger.info("Reranking complete", {
+        paperCount: sorted.length,
+        topScore: sorted[0]?.score,
+      });
+
+      return { papers: sorted };
+    } catch (error) {
+      logger.error("Reranking failed, falling back to original scores", error, {
+        paperCount: args.papers.length,
+      });
+      const sorted = [...args.papers].sort((a, b) => b.score - a.score);
+      return { papers: sorted };
+    }
   },
 });
 
