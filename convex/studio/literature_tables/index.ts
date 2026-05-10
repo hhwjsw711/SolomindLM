@@ -41,7 +41,6 @@ export const confirmLiteratureReviewColumns = mutation({
     });
 
     // Send event to resume the workflow
-    // TODO: Ensure `npx convex dev` has been run so components.workflow is available
     await sendEvent(ctx, (components as any).workflow, {
       name: "columnsConfirmed",
       workflowId: session.workflowId as unknown as WorkflowId,
