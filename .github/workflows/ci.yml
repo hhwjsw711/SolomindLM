@@ -19,6 +19,29 @@ env:
   NODE_OPTIONS: "--max-old-space-size=4096"
 
 jobs:
+  check-secrets:
+    name: Secret Leak Detection
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check for committed env files
+        run: |
+          if git ls-files | grep -E '^\.env($|\.\w+)'; then
+            echo "::error::Committed .env file detected! Remove it and add to .gitignore"
+            exit 1
+          fi
+          echo "No committed env files found ✓"
+
+      - name: Check for common secret patterns
+        run: |
+          # Check for API keys in source code (basic heuristic)
+          if grep -rE '(api[_-]?key|secret|token)\s*=\s*["\''][a-zA-Z0-9]{20,}' --include='*.ts' --include='*.tsx' --include='*.js' apps/ convex/; then
+            echo "::warning::Potential hardcoded secret found in source code"
+          fi
+          echo "Secret scan complete"
+
   typecheck-convex:
     name: Typecheck (Convex)
     runs-on: ubuntu-latest
