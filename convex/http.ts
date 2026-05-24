@@ -309,6 +309,14 @@ http.route({
             requirePrimarySources?: boolean;
             recencyDays?: number;
             dedupeStrategy?: string;
+            academicFilters?: {
+              publicationYearFrom?: number;
+              publicationYearTo?: number;
+              minCitations?: number;
+              openAccessOnly?: boolean;
+              hasFullText?: boolean;
+              fieldOfStudyTerms?: string[];
+            };
           };
         };
       } catch (_error) {
@@ -524,9 +532,9 @@ http.route({
           streamId,
         });
 
-        await ctx.scheduler.runAfter(0, internal.chat.stream.runResearchExecute, {
-          streamId,
+        await ctx.scheduler.runAfter(0, internal.research.workflowSteps.executeResearch, {
           runId,
+          streamId,
           userId,
         });
       }
@@ -565,10 +573,7 @@ http.route({
       return response;
     } catch (error) {
       console.error("[Research Execute route] Unexpected error:", error);
-      return errorResponse(
-        error instanceof Error ? error.message : "Internal server error",
-        500
-      );
+      return errorResponse(error instanceof Error ? error.message : "Internal server error", 500);
     }
   }),
 });
