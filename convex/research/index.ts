@@ -1,10 +1,11 @@
 import { v, ConvexError } from "convex/values";
 import { query, mutation, internalMutation, internalQuery, internalAction } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
-import { components } from "../_generated/api";
+import { components, internal } from "../_generated/api";
 import { PersistentTextStreaming } from "@convex-dev/persistent-text-streaming";
 import { getAuthUserId } from "../auth";
 import { assertCanEditNotebook, assertCanReadNotebook } from "../_lib/notebookAccess";
+import { workflow } from "../_agents/research/DeepResearchGraph.js";
 export { createResearchArtifacts } from "./artifacts";
 
 // ============================================================
@@ -462,5 +463,111 @@ export const patchResearchPlanInternal = internalMutation({
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.planId, args.patch);
+  },
+});
+
+export const startDeepResearch = mutation({
+  args: {
+    notebookId: v.id("notebooks"),
+    conversationId: v.optional(v.id("conversations")),
+    query: v.string(),
+    sourcePolicy: v.optional(
+      v.object({
+        channels: v.array(v.string()),
+        domainAllowlist: v.optional(v.array(v.string())),
+        dateRange: v.optional(v.object({ start: v.number(), end: v.number() })),
+        maxResultsPerChannel: v.optional(v.number()),
+        credibilityTier: v.optional(v.string()),
+        requirePrimarySources: v.optional(v.boolean()),
+        recencyDays: v.optional(v.number()),
+        dedupeStrategy: v.optional(v.string()),
+        academicFilters: v.optional(
+          v.object({
+            publicationYearFrom: v.optional(v.number()),
+            publicationYearTo: v.optional(v.number()),
+            minCitations: v.optional(v.number()),
+            openAccessOnly: v.optional(v.boolean()),
+            hasFullText: v.optional(v.boolean()),
+            fieldOfStudyTerms: v.optional(v.array(v.string())),
+          })
+        ),
+      })
+    ),
+    smartModel: v.optional(v.string()),
+  },
+  returns: v.object({
+    planId: v.id("researchPlans"),
+    conversationId: v.id("conversations"),
+  }),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new ConvexError({ code: "UNAUTHENTICATED", message: "Sign in required" });
+    }
+
+    await assertCanEditNotebook(ctx, args.notebookId, userId);
+
+    // Ensure conversation exists
+    const conversationId: Id<"conversations"> = await ctx.runMutation(
+      internal.chat.index.ensureConversation,
+      {
+        notebookId: args.notebookId,
+        userId,
+        conversationId: args.conversationId,
+      }
+    );
+
+    // Insert user message
+    const userMessageId: Id<"messages"> = await ctx.runMutation(internal.chat.index.addMessage, {
+      conversationId,
+      role: "user",
+      content: args.query,
+    });
+
+    // Insert assistant placeholder
+    const assistantMessageId: Id<"messages"> = await ctx.runMutation(
+      internal.chat.index.addMessage,
+      {
+        conversationId,
+        role: "assistant",
+        content: `Planning deep research...`,
+        metadata: { isDeepResearch: true, status: "planning" as const },
+      }
+    );
+
+    // Create placeholder plan row
+    const planId: Id<"researchPlans"> = await ctx.db.insert("researchPlans", {
+      userId,
+      notebookId: args.notebookId,
+      conversationId,
+      messageId: userMessageId,
+      query: args.query,
+      subQuestions: [],
+      sourcePolicy: args.sourcePolicy ?? { channels: ["notebook"] },
+      status: "planning" as const,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+
+    // Start workflow
+    const workflowId: string = await workflow.start(
+      ctx,
+      internal._agents.research.DeepResearchGraph.deepResearchWorkflow,
+      {
+        query: args.query,
+        notebookId: args.notebookId,
+        userId,
+        conversationId,
+        assistantMessageId,
+        planId,
+        sourcePolicy: args.sourcePolicy ?? { channels: ["notebook"] },
+        smartModel: args.smartModel,
+      }
+    );
+
+    // Patch plan with workflowId
+    await ctx.db.patch(planId, { workflowId, updatedAt: Date.now() });
+
+    return { planId, conversationId };
   },
 });
