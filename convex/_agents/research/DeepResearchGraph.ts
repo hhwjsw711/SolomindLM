@@ -1,5 +1,3 @@
-"use node";
-
 /**
  * DeepResearchGraph
  *
