@@ -6,6 +6,7 @@ import { PersistentTextStreaming } from "@convex-dev/persistent-text-streaming";
 import { getAuthUserId } from "../auth";
 import { assertCanEditNotebook, assertCanReadNotebook } from "../_lib/notebookAccess";
 import { workflow } from "../_agents/research/DeepResearchGraph.js";
+import { sendEvent, type WorkflowId } from "@convex-dev/workflow";
 export { createResearchArtifacts } from "./artifacts";
 
 // ============================================================
@@ -236,6 +237,18 @@ export const approveResearchPlan = mutation({
       status: "approved",
       updatedAt: Date.now(),
     });
+
+    // Resume the workflow if this plan has an associated workflow
+    if (plan.workflowId) {
+      await sendEvent(ctx, components.workflow, {
+        name: "planApproved",
+        workflowId: plan.workflowId as WorkflowId,
+        value: {
+          planId: args.planId,
+          modifiedSubQuestions: args.modifiedSubQuestions,
+        },
+      });
+    }
 
     return args.planId;
   },
