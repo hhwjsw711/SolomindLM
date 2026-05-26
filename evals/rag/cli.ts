@@ -12,16 +12,10 @@ import { readFileSync, writeFileSync, mkdirSync } from "fs";
 import { dirname, join } from "path";
 import { getFixture, listFixtureIds, withSourceMatrix } from "./fixtures";
 import type { SourcePolicyConfig } from "./types";
-import {
-  runEval,
-  createConvexChatInvoker,
-  createConvexLiteratureReviewInvoker,
-  createConvexStudioInvokers,
-} from "./runners";
+import { runEval, createConvexChatInvoker, createConvexStudioInvokers } from "./runners";
 import { createConvexResearchInvoker } from "./runners/convexResearchInvoker";
 import type { ChatAgentInvoker } from "./runners/chatRunner";
 import type { ResearchAgentInvoker } from "./runners/researchRunner";
-import type { LiteratureReviewInvoker } from "./runners/literatureReviewRunner";
 import type { StudioInvoker } from "./runners/convexStudioInvoker";
 import type { StudioRunnerKind, RunnerKind } from "./types";
 import { scoreAllMetrics } from "./metrics/scorers";
@@ -53,7 +47,6 @@ interface CliOptions {
 const ALL_RUNNERS: ReadonlySet<RunnerKind> = new Set<RunnerKind>([
   "chat",
   "research",
-  "literatureReview",
   "both",
   "report",
   "flashcards",
@@ -143,7 +136,7 @@ Usage:
 Options:
   --case <id>              Run a specific fixture by id
   --prefix <str>           Run fixtures whose id starts with prefix (e.g. ml-)
-  --runner <kinds>         Comma-separated runner filter (chat,research,literatureReview,flashcards,…)
+  --runner <kinds>         Comma-separated runner filter (chat,research,flashcards,…)
   --dry-run                Validate fixtures without running agents
   --full                   Run all fixtures with verbose output
   --verbose, -v            Show detailed metric output
@@ -258,7 +251,6 @@ async function main(): Promise<void> {
   // Real mode runs against your dev Convex deployment (never rely on accidental prod URLs)
   let chatInvoker: ChatAgentInvoker | undefined;
   let researchInvoker: ResearchAgentInvoker | undefined;
-  let literatureReviewInvoker: LiteratureReviewInvoker | undefined;
   let studioInvokers: Partial<Record<StudioRunnerKind, StudioInvoker>> | undefined;
   if (!opts.dryRun) {
     const convexUrl = process.env.RAG_EVAL_CONVEX_URL?.trim();
@@ -283,7 +275,6 @@ async function main(): Promise<void> {
     console.log(`Using Convex at ${convexUrl} (eval mode)`);
     chatInvoker = createConvexChatInvoker(convexUrl, { evalSecret });
     researchInvoker = createConvexResearchInvoker(convexUrl, { evalSecret });
-    literatureReviewInvoker = createConvexLiteratureReviewInvoker(convexUrl, { evalSecret });
     studioInvokers = createConvexStudioInvokers(convexUrl, { evalSecret });
   }
 
@@ -305,7 +296,7 @@ async function main(): Promise<void> {
     if (opts.sourceMatrix) {
       const combos = opts.sourceMatrix.split(",").map((s) => s.trim());
       const matrix: SourcePolicyConfig[] = combos.map((combo) => ({
-        channels: combo.split("+") as SourcePolicyConfig["channels"],
+        channels: combo.split("+"),
       }));
       expandedFixtures.push(...withSourceMatrix(fixture, matrix));
     } else {
@@ -327,7 +318,6 @@ async function main(): Promise<void> {
         dryRun: opts.dryRun,
         chatInvoker,
         researchInvoker,
-        literatureReviewInvoker,
         studioInvokers,
       });
     } catch (err) {
@@ -375,11 +365,6 @@ async function main(): Promise<void> {
         );
       }
 
-      if (opts.dryRun) {
-        console.log(`  validated (${artifact.runner})`);
-        continue;
-      }
-
       const metrics = await scoreAllMetrics(fixture, artifact, baseline);
       allMetrics.push(...metrics);
 
@@ -396,15 +381,6 @@ async function main(): Promise<void> {
       }
     }
     console.log("");
-  }
-
-  if (opts.dryRun) {
-    if (runtimeErrorCount > 0) {
-      console.error(`\n${runtimeErrorCount} fixture validation error(s).`);
-      process.exit(2);
-    }
-    console.log("Dry run completed successfully.");
-    return;
   }
 
   // Generate report

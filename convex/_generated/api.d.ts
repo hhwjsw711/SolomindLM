@@ -260,6 +260,7 @@ import type * as documents_paperRecord from "../documents/paperRecord.js";
 import type * as documents_parseBibliography from "../documents/parseBibliography.js";
 import type * as documents_refreshRemote from "../documents/refreshRemote.js";
 import type * as documents_resolveDoi from "../documents/resolveDoi.js";
+import type * as documents_sourceGuide from "../documents/sourceGuide.js";
 import type * as e2e_cleanupNotebooks from "../e2e/cleanupNotebooks.js";
 import type * as e2e_seedFlashcards from "../e2e/seedFlashcards.js";
 import type * as eval__gate from "../eval/_gate.js";
@@ -603,6 +604,7 @@ declare const fullApi: ApiFromModules<{
   "documents/parseBibliography": typeof documents_parseBibliography;
   "documents/refreshRemote": typeof documents_refreshRemote;
   "documents/resolveDoi": typeof documents_resolveDoi;
+  "documents/sourceGuide": typeof documents_sourceGuide;
   "e2e/cleanupNotebooks": typeof e2e_cleanupNotebooks;
   "e2e/seedFlashcards": typeof e2e_seedFlashcards;
   "eval/_gate": typeof eval__gate;

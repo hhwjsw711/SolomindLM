@@ -11,7 +11,7 @@ import type { EvalFixture, EvalRunArtifact, MetricResult } from "../types";
 // ─── Types ─────────────────────────────────────────────────────────
 
 export interface LlmJudgeOptions {
-  /** LLM to use for judging (default: openai/gpt-oss-20b) */
+  /** LLM to use for judging (default: gpt-oss-20b) */
   model?: string;
   /** Optional custom LLM invocation function */
   invoke?: (prompt: string) => Promise<string>;
@@ -25,12 +25,6 @@ export interface JudgeResult {
 
 // ─── Prompts ───────────────────────────────────────────────────────
 
-/** Truncate text for prompt context budget. */
-function truncate(text: string, limit: number): string {
-  if (text.length <= limit) return text;
-  return text.slice(0, limit) + "...";
-}
-
 const CORRECTNESS_PROMPT = (opts: {
   question: string;
   expectedAnswer: string;
@@ -41,13 +35,13 @@ const CORRECTNESS_PROMPT = (opts: {
 **Question:** ${opts.question}
 
 **Expected Answer:**
-${truncate(opts.expectedAnswer, 2000)}
+${opts.expectedAnswer}
 
 **Actual Answer:**
-${truncate(opts.actualAnswer, 3000)}
+${opts.actualAnswer}
 
 **Retrieved Context:**
-${truncate(opts.retrievedContext, 2000)}
+${opts.retrievedContext.slice(0, 3000)}${opts.retrievedContext.length > 3000 ? "..." : ""}
 
 Evaluate on:
 1. **Correctness**: Is the factual information accurate?
@@ -71,10 +65,10 @@ const FAITHFULNESS_PROMPT = (opts: {
 **Question:** ${opts.question}
 
 **Answer:**
-${truncate(opts.answer, 3000)}
+${opts.answer}
 
 **Retrieved Context (the ONLY source you should verify against):**
-${truncate(opts.retrievedContext, 3000)}
+${opts.retrievedContext}
 
 For each claim in the answer, check if it's supported by the context.
 Ignore general knowledge that wasn't asked about.
@@ -97,13 +91,13 @@ const COMPLETENESS_PROMPT = (opts: {
 **Question:** ${opts.question}
 
 **Answer:**
-${truncate(opts.answer, 3000)}
+${opts.answer}
 
 **Expected Behavior:**
 ${opts.expectedBehavior}
 
 **Retrieved Context:**
-${truncate(opts.retrievedContext, 2000)}
+${opts.retrievedContext.slice(0, 3000)}${opts.retrievedContext.length > 3000 ? "..." : ""}
 
 Did the answer fully address the expected behavior?
 Check for:
@@ -181,37 +175,41 @@ function parseJsonResponse(response: string): unknown {
   }
 }
 
-import { createTogetherClient } from "./togetherLlmJudge";
-
 // ─── Default LLM Invocation ───────────────────────────────────────
 
 /**
- * Default LLM invocation - uses Together AI.
+ * Default LLM invocation - attempts to use Together AI if available.
  * Provide an explicit `invoke` function in LlmJudgeOptions for custom behavior.
  */
-async function defaultLlmInvoke(
-  prompt: string,
-  model: string = "openai/gpt-oss-20b"
-): Promise<string> {
-  const client = createTogetherClient({ model });
-  const response = await client.chat.completions.create({
-    model,
-    messages: [
-      {
-        role: "system",
-        content:
-          "You are an expert RAG evaluator. Respond only with valid JSON. " +
-          "Do not include markdown code blocks or additional text.",
-      },
-      { role: "user", content: prompt },
-    ],
-    response_format: { type: "json_object" },
-    max_tokens: 1024,
-    temperature: 0.1,
-  });
-  const content = response.choices[0]?.message?.content;
-  if (!content) throw new Error("Empty response from LLM judge");
-  return content;
+async function defaultLlmInvoke(prompt: string, model: string = "gpt-oss-20b"): Promise<string> {
+  // Try to use Together AI via dynamic import (for eval scripts outside Convex)
+  try {
+    const { createTogetherClient } = await import("./togetherLlmJudge");
+    const client = createTogetherClient({ model });
+    const response = await client.chat.completions.create({
+      model,
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are an expert RAG evaluator. Respond only with valid JSON. " +
+            "Do not include markdown code blocks or additional text.",
+        },
+        { role: "user", content: prompt },
+      ],
+      response_format: { type: "json_object" },
+      max_tokens: 1024,
+      temperature: 0.1,
+    });
+    const content = response.choices[0]?.message?.content;
+    if (!content) throw new Error("Empty response");
+    return content;
+  } catch {
+    throw new Error(
+      "LLM judge integration not available. Provide an `invoke` function in LlmJudgeOptions " +
+        "or ensure TOGETHER_AI_API_KEY is set."
+    );
+  }
 }
 
 // ─── Metrics ───────────────────────────────────────────────────────
@@ -239,7 +237,7 @@ export async function llmJudgeCorrectness(
   }
 
   const invoke = options.invoke ?? defaultLlmInvoke;
-  const model = options.model ?? "openai/gpt-oss-20b";
+  const model = options.model ?? "gpt-oss-20b";
   const retrievedContext = combineChunkContents(artifact.selectedChunks);
 
   try {
@@ -299,7 +297,7 @@ export async function llmJudgeFaithfulness(
   options: LlmJudgeOptions = {}
 ): Promise<MetricResult> {
   const invoke = options.invoke ?? defaultLlmInvoke;
-  const model = options.model ?? "openai/gpt-oss-20b";
+  const model = options.model ?? "gpt-oss-20b";
   const retrievedContext = combineChunkContents(artifact.selectedChunks);
 
   if (retrievedContext.length < 50) {
@@ -366,7 +364,7 @@ export async function llmJudgeCompleteness(
   options: LlmJudgeOptions = {}
 ): Promise<MetricResult> {
   const invoke = options.invoke ?? defaultLlmInvoke;
-  const model = options.model ?? "openai/gpt-oss-20b";
+  const model = options.model ?? "gpt-oss-20b";
   const retrievedContext = combineChunkContents(artifact.selectedChunks);
 
   try {

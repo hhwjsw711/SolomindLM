@@ -54,7 +54,7 @@ async function resolveDocumentIds(
   provided?: Id<"documents">[]
 ): Promise<Id<"documents">[]> {
   if (provided && provided.length > 0) return provided;
-  const docs = await ctx.runQuery(internal.documents.internal.listDocumentsForNotebookReadInternal, {
+  const docs = await ctx.runQuery(internal.documents.index.listDocumentsForNotebookReadInternal, {
     notebookId,
     userId,
   });

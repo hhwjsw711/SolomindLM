@@ -79,7 +79,7 @@ export const FolderCard: React.FC<FolderCardProps> = ({
             {/* Top Decorative Half */}
             <div
               onClick={() => onSelectFolder()}
-              className={`h-[55%] ${folder.color || "bg-blue-500"} bg-opacity-[4%] group-hover:bg-opacity-[6%] transition-colors p-5 relative flex items-start justify-between rounded-t-2xl`}
+              className={`h-[55%] ${folder.color || "bg-vintage-brown-300"} bg-opacity-[4%] group-hover:bg-opacity-[6%] transition-colors p-5 relative flex items-start justify-between rounded-t-2xl`}
             >
               <FolderIcon
                 className={`w-10 h-10 ${(folder.color || "").replace("bg-", "text-")} opacity-55 group-hover:scale-110 transition-transform duration-300 drop-shadow-sm`}
@@ -154,7 +154,7 @@ export const FolderCard: React.FC<FolderCardProps> = ({
           {/* Title Column */}
           <div className="flex items-center gap-3 min-w-0 z-10 pointer-events-none">
             <div
-              className={`w-9 h-9 rounded-md ${folder.color || "bg-blue-500"} bg-opacity-[3%] flex items-center justify-center shrink-0`}
+              className={`w-9 h-9 rounded-md ${folder.color || "bg-vintage-brown-300"} bg-opacity-[3%] flex items-center justify-center shrink-0`}
             >
               <FolderIcon
                 className={`w-4 h-4 ${(folder.color || "").replace("bg-", "text-")} opacity-50`}

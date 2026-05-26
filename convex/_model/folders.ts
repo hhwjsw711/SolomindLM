@@ -60,7 +60,7 @@ export async function createFolder(ctx: MutationCtx, data: FolderCreate): Promis
     userId: data.userId,
     name: data.name.trim(),
     description: data.description,
-    color: data.color ?? "bg-blue-500",
+    color: data.color ?? "bg-vintage-brown-300",
     icon: data.icon ?? "Folder",
     createdAt: now,
     updatedAt: now,

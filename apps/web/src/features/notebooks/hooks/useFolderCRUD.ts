@@ -30,7 +30,7 @@ export function useFolderCRUD({ isAuthenticated, user, onRequireAuth }: UseFolde
     try {
       await createFolder({
         name: "New Folder",
-        color: "bg-blue-500",
+        color: "bg-vintage-brown-300",
         icon: "Folder",
       });
     } catch (error) {

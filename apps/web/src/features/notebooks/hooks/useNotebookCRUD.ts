@@ -41,7 +41,7 @@ export function useNotebookCRUD({
     try {
       const newNotebook = await createNotebook({
         title: "Untitled Notebook",
-        coverColor: "bg-yellow-500",
+        coverColor: "bg-vintage-brown-300",
         icon: "Folder",
       });
       navigate(`/notebook/${newNotebook.id}`);

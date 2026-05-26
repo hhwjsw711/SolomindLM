@@ -11,6 +11,8 @@ export interface Source {
     | "PDF"
     | "TXT"
     | "WEB"
+    /** YouTube ingestion (`fileType: youtube`) — distinct from generic WEB urls */
+    | "YOUTUBE"
     | "DOCX"
     | "PPTX"
     | "IMG"
@@ -26,7 +28,7 @@ export interface Source {
   selected: boolean;
   content?: string;
   status?: "pending" | "processing" | "completed" | "failed";
-  /** Original URL for WEB sources (url or youtube); used to open in new tab */
+  /** Original URL for WEB / YOUTUBE sources; used for embed + open in new tab */
   url?: string;
   /** Kebab Refresh: web page (`url` type, not YouTube) or Google Drive–backed file */
   remoteRefreshKind?: "url" | "drive";
@@ -39,6 +41,12 @@ export interface Source {
   };
   /** AI-generated summary and topics for the source (NotebookLM-style) */
   sourceGuide?: SourceGuide;
+}
+
+/** Attached notebook documents shown as chips; IDs are sent separately (`attachedDocumentIds`). */
+export interface MentionedSource {
+  documentId: string;
+  title: string;
 }
 
 export interface ReferenceChunk {
@@ -459,7 +467,7 @@ export interface FolderItem {
   id: string;
   name: string;
   description?: string;
-  color?: string; // e.g. 'bg-blue-500'
+  color?: string; // e.g. 'bg-vintage-brown-300'
   icon?: string;
   notebookCount: number;
   created_at: string | number;

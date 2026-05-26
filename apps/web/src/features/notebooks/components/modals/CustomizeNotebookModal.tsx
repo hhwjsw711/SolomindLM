@@ -78,7 +78,9 @@ export const CustomizeNotebookModal: React.FC<CustomizeNotebookModalProps> = ({
 }) => {
   const isCreateMode = !notebook;
   const [title, setTitle] = useState(notebook?.title || "");
-  const [selectedColor, setSelectedColor] = useState(notebook?.coverColor || "bg-yellow-500");
+  const [selectedColor, setSelectedColor] = useState(
+    notebook?.coverColor || "bg-vintage-brown-300"
+  );
   const [selectedIcon, setSelectedIcon] = useState(notebook?.icon || "Folder");
 
   // Update state when notebook prop changes (when data is updated in parent)
@@ -86,7 +88,7 @@ export const CustomizeNotebookModal: React.FC<CustomizeNotebookModalProps> = ({
     if (notebook) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setTitle(notebook.title);
-      setSelectedColor(notebook.coverColor || "bg-yellow-500");
+      setSelectedColor(notebook.coverColor || "bg-vintage-brown-300");
       setSelectedIcon(notebook.icon || "Folder");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

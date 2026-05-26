@@ -287,14 +287,16 @@ Create a `.env` file in the project root. See `.env.example` for the template.
 
 #### Optional Services
 
-| Variable                      | Description           | Required For             |
-| ----------------------------- | --------------------- | ------------------------ |
-| `STRIPE_SECRET_KEY`           | Stripe secret key     | Billing/subscriptions    |
-| `STRIPE_WEBHOOK_SECRET`       | Stripe webhook secret | Billing webhooks         |
-| `STRIPE_PRO_MONTHLY_PRICE_ID` | Stripe price ID       | Pro plan (monthly)       |
-| `STRIPE_PRO_YEARLY_PRICE_ID`  | Stripe price ID       | Pro plan (yearly)        |
-| `RESEND_API_KEY`              | Resend email API key  | Email OTP/password reset |
-| `AUTH_RESEND_FROM`            | From email address    | Email sending            |
+| Variable                      | Description            | Required For             |
+| ----------------------------- | ---------------------- | ------------------------ |
+| `STRIPE_SECRET_KEY`           | Stripe secret key      | Billing/subscriptions    |
+| `STRIPE_WEBHOOK_SECRET`       | Stripe webhook secret  | Billing webhooks         |
+| `STRIPE_PRO_MONTHLY_PRICE_ID` | Stripe price ID        | Pro plan (monthly)       |
+| `STRIPE_PRO_YEARLY_PRICE_ID`  | Stripe price ID        | Pro plan (yearly)        |
+| `RESEND_API_KEY`              | Resend email API key   | Email OTP/password reset |
+| `AUTH_RESEND_FROM`            | From email address     | Email sending            |
+| `LANGCHAIN_API_KEY`           | LangSmith API key      | Tracing and monitoring   |
+| `LANGCHAIN_PROJECT`           | LangSmith project name | Tracing organization     |
 
 #### LLM Model Configuration
 

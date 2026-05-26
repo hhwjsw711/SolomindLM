@@ -97,7 +97,8 @@ export function useSendMessage() {
       documentIds?: string[],
       deepResearch?: boolean,
       sourcePolicy?: ChatStreamSourcePolicy,
-      conversationId?: string
+      conversationId?: string,
+      attachedDocumentIds?: string[]
     ) => {
       let tempMessageId: string | null;
 
@@ -163,6 +164,7 @@ export function useSendMessage() {
             userMessageId: result.messageId,
             deepResearch: deepResearch || undefined,
             sourcePolicy: sourcePolicy ?? undefined,
+            attachedDocumentIds: attachedDocumentIds ?? undefined,
           }),
         });
 

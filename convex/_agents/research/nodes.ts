@@ -548,7 +548,6 @@ export async function writerNode(
   const response = await llm.invoke([{ role: "user", content: prompt }]);
   const finalResponse =
     typeof response.content === "string" ? response.content : JSON.stringify(response.content);
-
   if (deps.ctx && deps.researchId) {
     await trackResearchStep(
       deps.ctx,

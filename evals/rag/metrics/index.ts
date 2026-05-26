@@ -664,18 +664,11 @@ export function citationValidity(
  * cost so a healthy run reads "pass", not "fail-by-design".
  */
 const STATIC_TOTAL_TOKENS_GATE = 4000;
-/** Deep Research gathers many evidence chunks; token estimates include full evidence text. */
-const PER_RUNNER_TOTAL_TOKENS_GATE: Record<string, number> = {
-  research: 35000,
-  both: 35000,
-  literatureReview: 50000,
-};
 const DEFAULT_LATENCY_MS_GATE = 60000;
 const PER_RUNNER_LATENCY_MS_GATE: Record<string, number> = {
   chat: 60000,
   research: 120000,
   both: 120000,
-  literatureReview: 300000,
   report: 90000,
   flashcards: 90000,
   quiz: 90000,
@@ -730,20 +723,19 @@ export function latencyCostBudget(
 
   // No baseline: use static gates (per-runner where defined).
   const latencyGate = PER_RUNNER_LATENCY_MS_GATE[artifact.runner] ?? DEFAULT_LATENCY_MS_GATE;
-  const tokenGate =
-    PER_RUNNER_TOTAL_TOKENS_GATE[artifact.runner] ?? STATIC_TOTAL_TOKENS_GATE;
   const latencyOk = latencyMs <= latencyGate;
-  const tokensOk = totalTokens <= tokenGate;
+  const tokensOk = totalTokens <= STATIC_TOTAL_TOKENS_GATE;
 
   let status: MetricStatus;
   if (latencyOk && tokensOk) status = "pass";
-  else if (latencyMs <= latencyGate * 2 && totalTokens <= tokenGate * 2) status = "warn";
+  else if (latencyMs <= latencyGate * 2 && totalTokens <= STATIC_TOTAL_TOKENS_GATE * 2)
+    status = "warn";
   else status = "fail";
 
   const score =
     latencyOk && tokensOk
       ? 1
-      : latencyMs <= latencyGate * 2 && totalTokens <= tokenGate * 2
+      : latencyMs <= latencyGate * 2 && totalTokens <= STATIC_TOTAL_TOKENS_GATE * 2
         ? 0.5
         : 0;
 
@@ -753,12 +745,12 @@ export function latencyCostBudget(
     artifact,
     status,
     score,
-    `Latency ${latencyMs}ms (gate ${latencyGate}ms), tokens ${totalTokens} (gate ${tokenGate}). No baseline.`,
+    `Latency ${latencyMs}ms (gate ${latencyGate}ms), tokens ${totalTokens} (gate ${STATIC_TOTAL_TOKENS_GATE}). No baseline.`,
     {
       latencyMs,
       totalTokens,
       latencyGate,
-      tokenGate,
+      tokenGate: STATIC_TOTAL_TOKENS_GATE,
       latencyOk,
       tokensOk,
       hasBaseline: false,

@@ -78,7 +78,7 @@ export const CustomizeFolderModal: React.FC<CustomizeFolderModalProps> = ({
 }) => {
   const isCreateMode = !folder;
   const [name, setName] = useState(folder?.name || "");
-  const [selectedColor, setSelectedColor] = useState(folder?.color || "bg-blue-500");
+  const [selectedColor, setSelectedColor] = useState(folder?.color || "bg-vintage-brown-300");
   const [selectedIcon, setSelectedIcon] = useState(folder?.icon || "Folder");
 
   // Update state when folder prop changes (when data is updated in parent)
@@ -86,7 +86,7 @@ export const CustomizeFolderModal: React.FC<CustomizeFolderModalProps> = ({
     if (folder) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setName(folder.name);
-      setSelectedColor(folder.color || "bg-blue-500");
+      setSelectedColor(folder.color || "bg-vintage-brown-300");
       setSelectedIcon(folder.icon || "Folder");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

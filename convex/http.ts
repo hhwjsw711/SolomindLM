@@ -296,6 +296,7 @@ http.route({
           notebookId: string;
           message: string;
           documentIds?: string[];
+          attachedDocumentIds?: string[];
           conversationId?: string;
           sourcePolicy?: {
             channels: string[];

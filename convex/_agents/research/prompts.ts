@@ -13,17 +13,17 @@ export const SubQuestionSchema = z.object({
   searchQueries: z
     .array(z.string())
     .min(1)
-    .max(3)
-    .describe("1-3 targeted search queries with distinct angles (synonyms, methods, datasets)"),
+    .max(2)
+    .describe("1-2 highly targeted search queries (fewer precise queries beat many vague ones)"),
   sourceChannels: z.array(z.string()).describe("Target channels: notebook, web, academic, news"),
 });
 
 export const PlannerOutputSchema = z.object({
   subQuestions: z
     .array(SubQuestionSchema)
-    .min(3)
-    .max(5)
-    .describe("3-5 focused sub-questions that cover distinct angles of the research question"),
+    .min(2)
+    .max(3)
+    .describe("2-3 highly focused sub-questions — fewer precise questions beat many vague ones"),
 });
 
 export type PlannerOutput = z.infer<typeof PlannerOutputSchema>;
@@ -34,7 +34,7 @@ export type PlannerOutput = z.infer<typeof PlannerOutputSchema>;
 
 export function buildPlanPrompt(query: string, enabledChannels: SourceChannel[]): string {
   const channelList = enabledChannels.join(", ");
-  return `You are a research planner. Decompose the user's question into 3-5 highly focused sub-questions that together will comprehensively answer it.
+  return `You are a research planner. Decompose the user's question into 2-3 highly focused sub-questions that together will comprehensively answer it.
 
 USER QUESTION:
 ${query}
@@ -43,7 +43,7 @@ ENABLED SOURCE CHANNELS: ${channelList}
 
 For each sub-question:
 - Write a clear, specific question
-- Provide 1-3 search queries per sub-question (distinct angles, not duplicates)
+- Provide exactly 1 search query (highly targeted, not broad)
 - Assign source channels based on where the best evidence would come from (use only from: ${channelList})
   - Use "web" for general facts, concepts, and broad information
   - Use "news" ONLY for current events, recent developments, or time-sensitive facts
@@ -58,7 +58,7 @@ Guidelines:
 - Include at least one sub-question that directly addresses the user's core question
 - AVOID redundant or overlapping sub-questions — each should cover a distinct angle
 - NEVER assign both "web" and "news" to the same sub-question; pick the one that fits better
-- Limit to 3-5 sub-questions total; each must cover a distinct angle`;
+- Limit to 2-3 sub-questions total; fewer focused questions beat many vague ones`;
 }
 
 export function buildWriterPrompt(
@@ -95,15 +95,13 @@ ${query}
 EVIDENCE BY SUB-QUESTION:
 ${subQuestionSection}
 
-OUTPUT FORMAT:
-- Write in Markdown for a chat message (not a formal literature review).
-- Start with a direct answer to the question (2-4 sentences).
-- Use ### subheadings only where they improve readability (e.g. key themes, limitations, practical takeaways).
-- Target 800-1,500 words total.
-- Cite sources inline using [N] notation matching the evidence numbers above. Every substantive claim needs a citation.
-- Do NOT include a References or Sources section (citations and source lists are added by the UI).
-- Do NOT fabricate studies, statistics, URLs, or quotes not supported by the evidence.
-- If evidence is thin or conflicting, say so explicitly.
-- End with a short "Limitations" or "What remains uncertain" subsection when appropriate.
+Requirements:
+- Write in a natural, conversational tone — like you're explaining to a curious colleague
+- Cite sources inline using [N] notation matching the evidence numbers
+- Do NOT fabricate information — only use provided evidence
+- If evidence is missing for a topic, provide the best guidance you can from the available evidence without calling attention to gaps
+- Be SPECIFIC: name concrete techniques, papers, and tools when the evidence supports it
+- Structure with clear headings and bullet points for readability
+- Length: 500-1500 words
 `;
 }

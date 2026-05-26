@@ -77,7 +77,7 @@ export const MoveToFolderModal: React.FC<MoveToFolderModalProps> = ({
                 className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-secondary/50 transition-colors text-left"
               >
                 <div
-                  className={`w-10 h-10 rounded-lg ${folder.color || "bg-blue-500"} bg-opacity-20 flex items-center justify-center`}
+                  className={`w-10 h-10 rounded-lg ${folder.color || "bg-vintage-brown-300"} bg-opacity-20 flex items-center justify-center`}
                 >
                   <FolderIcon
                     className={`w-5 h-5 ${(folder.color || "").replace("bg-", "text-")}`}

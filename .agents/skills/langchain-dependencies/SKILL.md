@@ -1,6 +1,6 @@
 ---
 name: langchain-dependencies
-description: "INVOKE THIS SKILL when setting up a new project or when asked about package versions, installation, or dependency management for LangChain, LangGraph, or Deep Agents. Covers required packages, minimum versions, environment requirements, versioning best practices, and common community tool packages for both Python and TypeScript."
+description: "INVOKE THIS SKILL when setting up a new project or when asked about package versions, installation, or dependency management for LangChain, LangGraph, LangSmith, or Deep Agents. Covers required packages, minimum versions, environment requirements, versioning best practices, and common community tool packages for both Python and TypeScript."
 ---
 
 <overview>
@@ -25,6 +25,7 @@ The LangChain ecosystem is split into focused, independently-versioned packages.
 | --------------- | ---------------- | ----------------- |
 | Runtime minimum | **Python 3.10+** | **Node.js 20+**   |
 | LangChain       | **1.0+ (LTS)**   | **1.0+ (LTS)**    |
+| LangSmith SDK   | >= 0.3.0         | >= 0.3.0          |
 
 </environment-requirements>
 
@@ -40,7 +41,7 @@ Pick **one** agent orchestration layer. You do not need both.
 | **LangGraph**   | Need fine-grained graph control, custom workflows, loops, or branching            | `langgraph` / `@langchain/langgraph`                                 |
 | **Deep Agents** | Want batteries-included planning, memory, file context, and skills out of the box | `deepagents` (depends on LangGraph; installs it as a transitive dep) |
 
-Both sit on top of `langchain` + `langchain-core`.
+Both sit on top of `langchain` + `langchain-core` + `langsmith`.
 </framework-choice>
 
 ---
@@ -55,6 +56,7 @@ Both sit on top of `langchain` + `langchain-core`.
 | ---------------- | ---------------------------------- | ----------- |
 | `langchain`      | Agents, chains, retrieval          | 1.0         |
 | `langchain-core` | Base types & interfaces (peer dep) | 1.0         |
+| `langsmith`      | Tracing, evaluation, datasets      | 0.3.0       |
 
 ### Python — orchestration (pick one)
 
@@ -94,6 +96,7 @@ These packages have tighter compatibility requirements — use the latest availa
 | `langchain-pinecone`       | Pinecone vector store              | Dedicated integration package; prefer latest |
 | `langchain-qdrant`         | Qdrant vector store                | Dedicated integration package; prefer latest |
 | `langchain-weaviate`       | Weaviate vector store              | Dedicated integration package; prefer latest |
+| `langsmith[pytest]`        | pytest plugin for LangSmith        | Requires langsmith >= 0.3.4                  |
 
 > **langchain-community stability note:** This package is NOT on semantic versioning. Minor releases can contain breaking changes. Prefer dedicated integration packages (e.g. `langchain-chroma`, `langchain-tavily`) when they exist — they are independently versioned and more stable.
 
@@ -107,6 +110,7 @@ These packages have tighter compatibility requirements — use the latest availa
 | ----------------- | ---------------------------------- | ----------- |
 | `@langchain/core` | Base types & interfaces (peer dep) | 1.0         |
 | `langchain`       | Agents, chains, retrieval          | 1.0         |
+| `langsmith`       | Tracing, evaluation, datasets      | 0.3.0       |
 
 ### TypeScript — orchestration (pick one)
 
@@ -155,6 +159,7 @@ Minimal dependency set for a LangGraph project (provider-agnostic).
 langchain>=1.0,<2.0
 langchain-core>=1.0,<2.0
 langgraph>=1.0,<2.0
+langsmith>=0.3.0
 
 # Add your model provider, e.g.:
 
@@ -176,7 +181,8 @@ Minimal package.json dependencies for a LangGraph project (provider-agnostic).
   "dependencies": {
     "@langchain/core": "^1.0.0",
     "langchain": "^1.0.0",
-    "@langchain/langgraph": "^1.0.0"
+    "@langchain/langgraph": "^1.0.0",
+    "langsmith": "^0.3.0"
   }
 }
 ````
@@ -192,6 +198,7 @@ Minimal dependency set for a Deep Agents project (provider-agnostic).
 deepagents            # bundles langgraph internally
 langchain>=1.0,<2.0
 langchain-core>=1.0,<2.0
+langsmith>=0.3.0
 
 # Add your model provider, e.g.:
 
@@ -211,7 +218,8 @@ Minimal package.json dependencies for a Deep Agents project (provider-agnostic).
   "dependencies": {
     "deepagents": "latest",
     "@langchain/core": "^1.0.0",
-    "langchain": "^1.0.0"
+    "langchain": "^1.0.0",
+    "langsmith": "^0.3.0"
   }
 }
 ````
@@ -227,6 +235,7 @@ Adding Tavily search and a vector store to a LangGraph project.
 langchain>=1.0,<2.0
 langchain-core>=1.0,<2.0
 langgraph>=1.0,<2.0
+langsmith>=0.3.0
 
 # Web search
 
@@ -261,6 +270,7 @@ Adding Tavily search and a vector store to a LangGraph project.
     "@langchain/core": "^1.0.0",
     "langchain": "^1.0.0",
     "@langchain/langgraph": "^1.0.0",
+    "langsmith": "^0.3.0",
     "@langchain/tavily": "latest",
     "@langchain/pinecone": "latest"
   }
@@ -280,6 +290,7 @@ Adding Tavily search and a vector store to a LangGraph project.
 | ---------------------------------------------------------------------------- | ----------------------- | ----------------------------------- |
 | `langchain`, `langchain-core`                                                | Strict semver (1.0 LTS) | Allow minor: `>=1.0,<2.0`           |
 | `langgraph` / `@langchain/langgraph`                                         | Strict semver (v1 LTS)  | Allow minor: `>=1.0,<2.0`           |
+| `langsmith`                                                                  | Strict semver           | Allow minor: `>=0.3.0`              |
 | Dedicated integration packages (e.g. `langchain-tavily`, `langchain-chroma`) | Independently versioned | Allow minor updates; use latest     |
 | `langchain-community`                                                        | **NOT semver**          | Pin exact minor: `>=0.4.0,<0.5.0`   |
 | `deepagents`                                                                 | Follow project releases | Pin to tested version in production |
@@ -300,6 +311,10 @@ Adding Tavily search and a vector store to a LangGraph project.
 All keys are read from the environment at runtime. Set only the keys for services you actually use.
 
 ```bash
+# LangSmith (always recommended for observability)
+LANGSMITH_API_KEY=<your-key>
+LANGSMITH_PROJECT=<project-name>   # optional, defaults to "default"
+
 # Model provider — set the one(s) you use
 OPENAI_API_KEY=<your-key>
 ANTHROPIC_API_KEY=<your-key>

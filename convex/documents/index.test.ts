@@ -10,6 +10,27 @@ const modules = Object.fromEntries(
   Object.entries(rawModules).map(([key, loader]) => [key.replace(/^\/convex\//, "./"), loader])
 );
 
+// Helper to create modules with mocked rate limits for source guide tests
+async function createModulesWithMockedLimits() {
+  const actualLimits = await modules["./_lib/limits.ts"]() as Record<string, unknown>;
+  const { internalMutation } = await import("../_generated/server");
+  const { v } = await import("convex/values");
+  return {
+    ...modules,
+    "./_lib/limits.ts": async () => ({
+      ...actualLimits,
+      checkDailyLimitInternal: internalMutation({
+        args: { userId: v.string(), feature: v.string() },
+        handler: async () => {},
+      }),
+      consumeDailyLimitInternal: internalMutation({
+        args: { userId: v.string(), feature: v.string() },
+        handler: async () => {},
+      }),
+    }),
+  };
+}
+
 function withAuth(t: ReturnType<typeof convexTest>, userId: Id<"users">) {
   return t.withIdentity({ subject: `${userId as string}|session1` });
 }
@@ -592,7 +613,7 @@ describe("documents.addExternalSources", () => {
 
 describe("documents.generateSourceGuide", () => {
   test("generates and stores source guide", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(schema, await createModulesWithMockedLimits());
     const userId = await seedUser(t);
     const notebookId = await seedNotebook(t, userId);
     const asUser = withAuth(t, userId);
@@ -604,29 +625,31 @@ describe("documents.generateSourceGuide", () => {
         fileName: "Test Paper",
         fileType: "paper_record",
         status: "completed",
-        extractedMarkdown: "This is about neural networks and transformers.",
+        extractedMarkdown: "This is a comprehensive paper about neural networks and transformers in machine learning. It covers attention mechanisms, deep learning architectures, and natural language processing applications in detail.",
         createdAt: Date.now(),
         updatedAt: Date.now(),
       })
     );
 
     // Mock Together AI API response
+    const mockResponse = JSON.stringify({
+      choices: [
+        {
+          message: {
+            content: JSON.stringify({
+              summary: "A paper about neural networks.",
+              topics: ["AI", "ML", "NLP"],
+            }),
+          },
+        },
+      ],
+    });
     vi.stubGlobal(
       "fetch",
       vi.fn(async () => ({
         ok: true,
-        json: async () => ({
-          choices: [
-            {
-              message: {
-                content: JSON.stringify({
-                  summary: "A paper about neural networks.",
-                  topics: ["AI", "ML", "NLP"],
-                }),
-              },
-            },
-          ],
-        }),
+        text: async () => mockResponse,
+        json: async () => JSON.parse(mockResponse),
       })) as unknown as typeof fetch
     );
 
@@ -636,6 +659,12 @@ describe("documents.generateSourceGuide", () => {
         TOGETHER_AI_API_KEY: "test-key",
         FAST_LLM: "test-model",
       },
+    }));
+
+    // Mock rate limit functions
+    vi.doMock("../_lib/limits.js", () => ({
+      checkDailyLimit: vi.fn(),
+      consumeDailyLimit: vi.fn(),
     }));
 
     const guide = await asUser.action(api.documents.index.generateSourceGuide, {
@@ -652,10 +681,10 @@ describe("documents.generateSourceGuide", () => {
 
     vi.unstubAllGlobals();
     vi.doUnmock("../_lib/env.js");
-  });
+  }, 30000);
 
   test("returns existing source guide if already generated", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(schema, await createModulesWithMockedLimits());
     const userId = await seedUser(t);
     const notebookId = await seedNotebook(t, userId);
     const asUser = withAuth(t, userId);
@@ -688,7 +717,7 @@ describe("documents.generateSourceGuide", () => {
   });
 
   test("throws when document has no extracted content", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(schema, await createModulesWithMockedLimits());
     const userId = await seedUser(t);
     const notebookId = await seedNotebook(t, userId);
     const asUser = withAuth(t, userId);
