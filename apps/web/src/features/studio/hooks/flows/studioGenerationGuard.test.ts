@@ -3,9 +3,9 @@ import { getStudioGenerationBlocker } from "./studioGenerationGuard";
 
 describe("getStudioGenerationBlocker", () => {
   it("requires sign-in when not authenticated", () => {
-    expect(
-      getStudioGenerationBlocker({ isAuthenticated: false, notebookId: "nb_123" })
-    ).toBe("Please sign in to continue.");
+    expect(getStudioGenerationBlocker({ isAuthenticated: false, notebookId: "nb_123" })).toBe(
+      "Please sign in to continue."
+    );
   });
 
   it("requires a notebook when authenticated but notebook id is missing", () => {
@@ -15,8 +15,6 @@ describe("getStudioGenerationBlocker", () => {
   });
 
   it("returns null when authenticated with a notebook id", () => {
-    expect(
-      getStudioGenerationBlocker({ isAuthenticated: true, notebookId: "nb_123" })
-    ).toBeNull();
+    expect(getStudioGenerationBlocker({ isAuthenticated: true, notebookId: "nb_123" })).toBeNull();
   });
 });

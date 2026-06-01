@@ -380,7 +380,13 @@ export function NotebookView() {
         notebookId={urlNotebookId}
       />
     );
-  }, [activeLiteratureView, handleCloseLiteratureView, handleOpenSavedReport, sources, urlNotebookId]);
+  }, [
+    activeLiteratureView,
+    handleCloseLiteratureView,
+    handleOpenSavedReport,
+    sources,
+    urlNotebookId,
+  ]);
 
   return (
     <AudioPlayerProvider value={audioPlayerContextValue}>
