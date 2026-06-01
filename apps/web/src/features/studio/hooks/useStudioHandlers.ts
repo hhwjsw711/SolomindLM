@@ -1,3 +1,4 @@
+import { useConvexAuth } from "convex/react";
 import { useCallback, useMemo, useState } from "react";
 import { useToast } from "@/shared/contexts/useToast";
 import type { Note, Source } from "@/shared/types/index";
@@ -22,8 +23,7 @@ import {
 export interface UseStudioHandlersProps {
   notes: Note[];
   sources: Source[];
-  userId?: string | null;
-  noteId?: string | null;
+  notebookId?: string | null;
   onAddNote: (note: Note) => void;
   onUpdateNote: (id: string, newTitle: string) => void;
   onUpdateNoteFull?: (id: string, note: Note) => void;
@@ -69,13 +69,13 @@ export interface UseStudioHandlersReturn {
 export function useStudioHandlers({
   notes,
   sources = [],
-  userId,
-  noteId,
+  notebookId,
   onAddNote,
   onUpdateNoteFull,
   onDeleteNote,
   confirm,
 }: UseStudioHandlersProps): UseStudioHandlersReturn {
+  const { isAuthenticated } = useConvexAuth();
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isFlashcardModalOpen, setIsFlashcardModalOpen] = useState(false);
   const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
@@ -90,8 +90,8 @@ export function useStudioHandlers({
     () => ({
       notes,
       sources,
-      userId,
-      noteId,
+      isAuthenticated,
+      notebookId,
       onAddNote,
       onUpdateNoteFull,
       onDeleteNote,
@@ -103,7 +103,17 @@ export function useStudioHandlers({
         loading: toast.loading,
       },
     }),
-    [notes, sources, userId, noteId, onAddNote, onUpdateNoteFull, onDeleteNote, confirm, toast]
+    [
+      notes,
+      sources,
+      isAuthenticated,
+      notebookId,
+      onAddNote,
+      onUpdateNoteFull,
+      onDeleteNote,
+      confirm,
+      toast,
+    ]
   );
 
   const createReportFlow = useCreateReportFlow(flowContext);

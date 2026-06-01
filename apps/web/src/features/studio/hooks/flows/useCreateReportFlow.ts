@@ -4,6 +4,7 @@ import type { Note } from "@/shared/types/index";
 import { getReportSubtitle } from "@/shared/types/reportTypes";
 import { useCreateReport } from "../../services/reportsApi";
 import { useStudioGenerationCatch } from "../useStudioGenerationCatch";
+import { getStudioGenerationBlocker } from "./studioGenerationGuard";
 import type { CreateFlowContext } from "./types";
 
 export function useCreateReportFlow(ctx: CreateFlowContext) {
@@ -24,8 +25,9 @@ export function useCreateReportFlow(ctx: CreateFlowContext) {
         }
         return;
       }
-      if (!ctx.userId || !ctx.noteId) {
-        showErrorToast("Please sign in again to continue.");
+      const blocker = getStudioGenerationBlocker(ctx);
+      if (blocker) {
+        showErrorToast(blocker);
         return;
       }
 
@@ -55,7 +57,7 @@ export function useCreateReportFlow(ctx: CreateFlowContext) {
 
       try {
         const { note } = await createReport({
-          notebookId: ctx.noteId,
+          notebookId: ctx.notebookId!,
           documentIds: selectedDocumentIds,
           reportType: formatId,
           customPrompt,

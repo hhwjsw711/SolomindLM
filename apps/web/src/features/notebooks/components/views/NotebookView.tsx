@@ -74,8 +74,6 @@ export function NotebookView() {
   const [activeLiteratureView, setActiveLiteratureView] = useState<ActiveLiteratureView | null>(
     null
   );
-  const [activeStudioNoteId, setActiveStudioNoteId] = useState<string | null>(null);
-
   useEffect(() => {
     const params = new URLSearchParams(location.search);
 
@@ -135,7 +133,7 @@ export function NotebookView() {
   }, []);
 
   const handleOpenSavedReport = useCallback((reportId: Id<"reports">) => {
-    setActiveStudioNoteId(reportId);
+    window.dispatchEvent(new CustomEvent("setActiveNote", { detail: { noteId: reportId } }));
     setActiveLiteratureView(null);
     setIsStudioOpen(true);
     setMobileActiveTab("studio");
@@ -191,8 +189,7 @@ export function NotebookView() {
         width={rightWidth}
         isResizing={isResizingRight}
         sources={sources}
-        userId={user?.id}
-        noteId={activeStudioNoteId}
+        notebookId={urlNotebookId}
       />
     );
   }, [
@@ -208,12 +205,9 @@ export function NotebookView() {
     rightWidth,
 
     sources,
-    activeStudioNoteId,
     toggleStudio,
 
     urlNotebookId,
-
-    user?.id,
   ]);
 
   // Mini Audio Player state
@@ -383,19 +377,10 @@ export function NotebookView() {
         width={390}
         isResizing={false}
         sources={sources}
-        userId={user?.id}
-        noteId={activeStudioNoteId}
+        notebookId={urlNotebookId}
       />
     );
-  }, [
-    activeLiteratureView,
-    activeStudioNoteId,
-    handleCloseLiteratureView,
-    handleOpenSavedReport,
-    sources,
-    urlNotebookId,
-    user?.id,
-  ]);
+  }, [activeLiteratureView, handleCloseLiteratureView, handleOpenSavedReport, sources, urlNotebookId]);
 
   return (
     <AudioPlayerProvider value={audioPlayerContextValue}>

@@ -4,6 +4,7 @@ import type { AudioOverviewNote, Note } from "@/shared/types/index";
 import type { AudioConfig } from "../../components/CustomizeAudioModal";
 import { useCreateAudioOverview } from "../../services/audioApi";
 import { useStudioGenerationCatch } from "../useStudioGenerationCatch";
+import { getStudioGenerationBlocker } from "./studioGenerationGuard";
 import type { CreateFlowContext } from "./types";
 
 export function useCreateAudioFlow(ctx: CreateFlowContext) {
@@ -24,8 +25,9 @@ export function useCreateAudioFlow(ctx: CreateFlowContext) {
         }
         return;
       }
-      if (!ctx.userId || !ctx.noteId) {
-        showErrorToast("Please sign in again to continue.");
+      const blocker = getStudioGenerationBlocker(ctx);
+      if (blocker) {
+        showErrorToast(blocker);
         return;
       }
 
@@ -52,7 +54,7 @@ export function useCreateAudioFlow(ctx: CreateFlowContext) {
 
       try {
         const { audioOverviewId } = await createAudioOverview({
-          notebookId: ctx.noteId,
+          notebookId: ctx.notebookId!,
           documentIds: selectedDocumentIds,
           title: `Audio Overview • ${formatTitle}`,
           audioType: config.formatId,

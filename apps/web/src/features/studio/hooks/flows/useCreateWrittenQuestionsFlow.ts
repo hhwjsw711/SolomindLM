@@ -4,6 +4,7 @@ import type { Note, WrittenQuestionsNote } from "@/shared/types/index";
 import type { WrittenQuestionsConfig } from "../../components/CustomizeWrittenQuestionsModal";
 import { useCreateWrittenQuestions } from "../../services/writtenQuestionsApi";
 import { useStudioGenerationCatch } from "../useStudioGenerationCatch";
+import { getStudioGenerationBlocker } from "./studioGenerationGuard";
 import type { CreateFlowContext } from "./types";
 
 const WQ_COUNT_MAP = { fewer: 5, standard: 10, more: 15 };
@@ -26,8 +27,9 @@ export function useCreateWrittenQuestionsFlow(ctx: CreateFlowContext) {
         }
         return;
       }
-      if (!ctx.userId || !ctx.noteId) {
-        showErrorToast("Please sign in again to continue.");
+      const blocker = getStudioGenerationBlocker(ctx);
+      if (blocker) {
+        showErrorToast(blocker);
         return;
       }
 
@@ -52,7 +54,7 @@ export function useCreateWrittenQuestionsFlow(ctx: CreateFlowContext) {
 
       try {
         const resWQ = await createWrittenQuestions({
-          notebookId: ctx.noteId,
+          notebookId: ctx.notebookId!,
           documentIds: selectedDocumentIds,
           questionCount: config.count,
           difficulty: config.difficulty,

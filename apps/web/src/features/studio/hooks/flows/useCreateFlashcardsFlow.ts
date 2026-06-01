@@ -4,6 +4,7 @@ import type { FlashcardNote, Note } from "@/shared/types/index";
 import type { FlashcardConfig } from "../../components/CustomizeFlashcardsModal";
 import { useCreateFlashcard } from "../../services/flashcardsApi";
 import { useStudioGenerationCatch } from "../useStudioGenerationCatch";
+import { getStudioGenerationBlocker } from "./studioGenerationGuard";
 import type { CreateFlowContext } from "./types";
 
 const FLASHCARD_COUNT_MAP = { fewer: 20, standard: 35, more: 55 };
@@ -26,8 +27,9 @@ export function useCreateFlashcardsFlow(ctx: CreateFlowContext) {
         }
         return;
       }
-      if (!ctx.userId || !ctx.noteId) {
-        showErrorToast("Please sign in again to continue.");
+      const blocker = getStudioGenerationBlocker(ctx);
+      if (blocker) {
+        showErrorToast(blocker);
         return;
       }
 
@@ -47,7 +49,7 @@ export function useCreateFlashcardsFlow(ctx: CreateFlowContext) {
 
       try {
         const res = await createFlashcards({
-          notebookId: ctx.noteId,
+          notebookId: ctx.notebookId!,
           documentIds: selectedDocumentIds,
           cardCount,
           difficulty: config.difficulty,

@@ -4,6 +4,7 @@ import type { Note, QuizNote } from "@/shared/types/index";
 import type { QuizConfig } from "../../components/CustomizeQuizModal";
 import { useCreateQuiz } from "../../services/quizzesApi";
 import { useStudioGenerationCatch } from "../useStudioGenerationCatch";
+import { getStudioGenerationBlocker } from "./studioGenerationGuard";
 import type { CreateFlowContext } from "./types";
 
 const QUIZ_COUNT_MAP = { fewer: 10, standard: 20, more: 30 };
@@ -26,8 +27,9 @@ export function useCreateQuizFlow(ctx: CreateFlowContext) {
         }
         return;
       }
-      if (!ctx.userId || !ctx.noteId) {
-        showErrorToast("Please sign in again to continue.");
+      const blocker = getStudioGenerationBlocker(ctx);
+      if (blocker) {
+        showErrorToast(blocker);
         return;
       }
 
@@ -47,7 +49,7 @@ export function useCreateQuizFlow(ctx: CreateFlowContext) {
 
       try {
         const resQuiz = await createQuiz({
-          notebookId: ctx.noteId,
+          notebookId: ctx.notebookId!,
           documentIds: selectedDocumentIds,
           questionCount: config.count,
           difficulty: config.difficulty,

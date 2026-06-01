@@ -4,6 +4,7 @@ import type { Note, SpreadsheetNote } from "@/shared/types/index";
 import type { SpreadsheetConfig } from "../../components/CustomizeSpreadsheetsModal";
 import { getSpreadsheetTypeLabel, useCreateSpreadsheet } from "../../services/spreadsheetsApi";
 import { useStudioGenerationCatch } from "../useStudioGenerationCatch";
+import { getStudioGenerationBlocker } from "./studioGenerationGuard";
 import type { CreateFlowContext } from "./types";
 
 export function useCreateSpreadsheetFlow(ctx: CreateFlowContext) {
@@ -24,8 +25,9 @@ export function useCreateSpreadsheetFlow(ctx: CreateFlowContext) {
         }
         return;
       }
-      if (!ctx.userId || !ctx.noteId) {
-        showErrorToast("Please sign in again to continue.");
+      const blocker = getStudioGenerationBlocker(ctx);
+      if (blocker) {
+        showErrorToast(blocker);
         return;
       }
 
@@ -50,7 +52,7 @@ export function useCreateSpreadsheetFlow(ctx: CreateFlowContext) {
 
       try {
         const { spreadsheetId, spreadsheet } = await createSpreadsheet({
-          notebookId: ctx.noteId,
+          notebookId: ctx.notebookId!,
           documentIds: selectedDocumentIds,
           title: "Spreadsheet",
           spreadsheetType: config.spreadsheetType,

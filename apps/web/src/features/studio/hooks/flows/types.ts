@@ -5,8 +5,8 @@ import type { Note, Source } from "@/shared/types/index";
 export interface CreateFlowContext {
   notes: Note[];
   sources: Source[];
-  userId: string | null | undefined;
-  noteId: string | null | undefined;
+  isAuthenticated: boolean;
+  notebookId: string | null | undefined;
   onAddNote: (note: Note) => void;
   onUpdateNoteFull?: (id: string, note: Note) => void;
   onDeleteNote: (id: string) => void;

@@ -4,6 +4,7 @@ import type { InfographicNote, Note } from "@/shared/types/index";
 import type { InfographicConfig } from "../../components/CustomizeInfographicModal";
 import { useCreateInfographic } from "../../services/infographicApi";
 import { useStudioGenerationCatch } from "../useStudioGenerationCatch";
+import { getStudioGenerationBlocker } from "./studioGenerationGuard";
 import type { CreateFlowContext } from "./types";
 
 export function useCreateInfographicFlow(ctx: CreateFlowContext) {
@@ -24,8 +25,9 @@ export function useCreateInfographicFlow(ctx: CreateFlowContext) {
         }
         return;
       }
-      if (!ctx.userId || !ctx.noteId) {
-        showErrorToast("Please sign in again to continue.");
+      const blocker = getStudioGenerationBlocker(ctx);
+      if (blocker) {
+        showErrorToast(blocker);
         return;
       }
 
@@ -51,7 +53,7 @@ export function useCreateInfographicFlow(ctx: CreateFlowContext) {
 
       try {
         const { infographicId, infographic } = await createInfographic({
-          notebookId: ctx.noteId,
+          notebookId: ctx.notebookId!,
           documentIds: selectedDocumentIds,
           title: "Infographic",
           customPrompt: config.customPrompt,

@@ -42,8 +42,7 @@ interface StudioPanelProps {
   width: number;
   isResizing: boolean;
   sources?: any[];
-  userId?: string | null;
-  noteId?: string | null;
+  notebookId?: string | null;
 }
 
 /**
@@ -57,8 +56,7 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
   width,
   isResizing: _isResizing,
   sources = [],
-  userId,
-  noteId,
+  notebookId,
 }) => {
   const { notes, onUpdateNote, onUpdateNoteFull, onDeleteNote, onAddNote, onSaveReportContent } =
     useStudioContext();
@@ -177,8 +175,7 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
   } = useStudioHandlers({
     notes,
     sources,
-    userId,
-    noteId,
+    notebookId,
     onAddNote,
     onUpdateNote,
     onUpdateNoteFull,

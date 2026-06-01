@@ -3,6 +3,7 @@ import { useToast } from "@/shared/contexts/useToast";
 import type { MindMapNote, Note } from "@/shared/types/index";
 import { useCreateMindMap } from "../../services/mindMapApi";
 import { useStudioGenerationCatch } from "../useStudioGenerationCatch";
+import { getStudioGenerationBlocker } from "./studioGenerationGuard";
 import type { CreateFlowContext } from "./types";
 
 export function useCreateMindMapFlow(ctx: CreateFlowContext) {
@@ -22,8 +23,9 @@ export function useCreateMindMapFlow(ctx: CreateFlowContext) {
       }
       return;
     }
-    if (!ctx.userId || !ctx.noteId) {
-      showErrorToast("Please sign in again to continue.");
+    const blocker = getStudioGenerationBlocker(ctx);
+    if (blocker) {
+      showErrorToast(blocker);
       return;
     }
 
@@ -43,7 +45,7 @@ export function useCreateMindMapFlow(ctx: CreateFlowContext) {
 
     try {
       const { mindMapId, mindmap } = await createMindMap({
-        notebookId: ctx.noteId,
+        notebookId: ctx.notebookId!,
         documentIds: selectedDocumentIds,
         title: "Mind Map",
       });
