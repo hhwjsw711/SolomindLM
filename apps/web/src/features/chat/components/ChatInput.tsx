@@ -281,8 +281,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           disabled={disabled}
         />
 
-        <div className="flex w-full min-w-0 flex-col gap-2 pb-0.5 @min-[440px]/chat-input:flex-row @min-[440px]/chat-input:items-center @min-[440px]/chat-input:justify-between @min-[440px]/chat-input:gap-2">
-          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+        <div className="flex w-full min-w-0 flex-nowrap items-center justify-between gap-2 pb-0.5">
+          <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-2 overflow-hidden">
             {/* Mode */}
             <div className="relative" ref={modeMenuRef}>
               <button
@@ -506,7 +506,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             )}
           </div>
 
-          <div className="flex min-h-10 min-w-0 shrink-0 items-center justify-end gap-2 @min-[440px]/chat-input:pl-2">
+          <div className="flex min-h-10 min-w-0 shrink-0 flex-nowrap items-center justify-end gap-2 pl-1">
             {showModelRow && (
               <div className="relative max-w-full min-w-0" ref={modelMenuRef}>
                 <button
@@ -526,7 +526,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   title={currentModel?.name ?? "Choose model"}
                 >
                   <ModelBrandIcon brand={currentModel?.brand ?? "openai"} />
-                  <span className="min-w-0 max-w-[min(10rem,40vw)] truncate @max-[380px]/chat-input:sr-only @min-[440px]/chat-input:max-w-[9rem]">
+                  <span className="min-w-0 max-w-[9rem] truncate @max-[32rem]/chat-input:sr-only">
                     {currentModel?.name ?? "GPT-OSS 120B"}
                   </span>
                   <ChevronDown

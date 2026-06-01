@@ -806,10 +806,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         <div className="flex flex-1 min-h-0">
           <div
             ref={messagesContainerRef}
-            className={`flex min-h-0 w-full min-w-0 flex-1 relative chat-panel-graph-grid ${
+            className={`min-h-0 w-full min-w-0 flex-1 relative chat-panel-graph-grid ${
               messages.length === 0
                 ? "overflow-y-auto overflow-x-hidden"
-                : "overflow-x-hidden overflow-y-hidden"
+                : "flex overflow-x-hidden overflow-y-hidden"
             }`}
           >
             {messages.length === 0 ? (
