@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, act } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockNavigate = vi.fn();
 const mockCreateNotebook = vi.fn();
@@ -75,7 +75,7 @@ describe("useNotebookCRUD", () => {
 
     expect(mockCreateNotebook).toHaveBeenCalledWith({
       title: "Untitled Notebook",
-      coverColor: "bg-yellow-500",
+      coverColor: "bg-vintage-brown-300",
       icon: "Folder",
     });
     expect(mockNavigate).toHaveBeenCalledWith("/notebook/nb-new");

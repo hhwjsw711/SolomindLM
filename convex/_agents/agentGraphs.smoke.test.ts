@@ -1,13 +1,13 @@
 "use node";
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { AudioOverviewGraph } from "./audio_overview/AudioOverviewGraph";
 import { FlashcardGraph } from "./flashcard/FlashcardGraph";
-import { ReportGraph } from "./report/ReportGraph";
-import { QuizGraph } from "./quiz/QuizGraph";
 import { MindMapGraph } from "./mindmap/MindMapGraph";
+import { QuizGraph } from "./quiz/QuizGraph";
+import { ReportGraph } from "./report/ReportGraph";
 import { SpreadsheetGraph } from "./spreadsheet/SpreadsheetGraph";
 import { WrittenQuestionsGraph } from "./written_questions/WrittenQuestionsGraph";
-import { AudioOverviewGraph } from "./audio_overview/AudioOverviewGraph";
 
 vi.mock("@langchain/community/chat_models/togetherai", () => ({
   ChatTogetherAI: vi.fn().mockImplementation(function (this: unknown, config: unknown) {
@@ -18,6 +18,10 @@ vi.mock("@langchain/community/chat_models/togetherai", () => ({
       }),
     };
   }),
+}));
+
+vi.mock("../_services/ai/togetherTts.js", () => ({
+  createTogetherTtsClient: vi.fn(() => ({})),
 }));
 
 const DUMMY_KEY = "test-api-key";
