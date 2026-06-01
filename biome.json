@@ -16,9 +16,18 @@
     "useEditorconfig": true,
     "includes": [
       "**",
-      "!convex/_generated",
-      "!**/node_modules",
-      "!**/dist",
+      "!convex/_generated/**",
+      "!apps/web/node_modules/.vite/**",
+      "!apps/web/dist/**",
+      "!dist/**",
+      "!.claude/**",
+      "!.worktrees/**",
+      "!node_modules/**",
+      "!archive/**",
+      "!apps/mobile/.expo/**",
+      "!apps/mobile/components/__tests__/**",
+      "!apps/mobile/metro.config.js",
+      "!apps/web/public/**",
       "!**/.arcserve",
       "!**/bun.lock"
     ]

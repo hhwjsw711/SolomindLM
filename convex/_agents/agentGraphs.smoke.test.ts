@@ -20,6 +20,10 @@ vi.mock("@langchain/community/chat_models/togetherai", () => ({
   }),
 }));
 
+vi.mock("../_services/ai/togetherTts.js", () => ({
+  createTogetherTtsClient: vi.fn(() => ({})),
+}));
+
 const DUMMY_KEY = "test-api-key";
 const MAP_MODEL = "openai/gpt-oss-20b";
 const REDUCE_MODEL = "openai/gpt-oss-120b";

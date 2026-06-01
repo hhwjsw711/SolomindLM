@@ -141,7 +141,7 @@ Template (copy variables into repo-root `.env`; Bun loads it for `bun run eval:r
 - `RAG_EVALS_ENABLED=true`
 - `RAG_EVAL_SECRET` — same as local
 
-`scripts/push-convex-env.js` skips `RAG_EVAL_CONVEX_URL` so only the Convex backend vars are uploaded.
+`scripts/push-convex-env.mjs` skips `RAG_EVAL_CONVEX_URL` so only the Convex backend vars are uploaded.
 
 ```bash
 # Preview what would be pushed (optional)

@@ -89,6 +89,7 @@ jobs:
       - name: Run Convex Tests
         env:
           TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+          TOGETHER_AI_API_KEY: test-key-for-ci
         run: bun run test:convex
 
       - name: Run Web Tests
