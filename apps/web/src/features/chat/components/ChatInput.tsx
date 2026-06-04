@@ -275,13 +275,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         ? "Ask a complex research question with multi-step investigation..."
         : "Ask a question about your sources...";
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const textarea = textareaRef.current;
-    if (textarea) {
-      textarea.style.height = "auto";
-      textarea.style.height = `${Math.min(textarea.scrollHeight, 160)}px`;
-    }
-  }, []);
+    if (!textarea) return;
+    // Reset before measuring so scrollHeight shrinks when content is cleared.
+    textarea.style.height = "0px";
+    textarea.style.height = `${Math.min(textarea.scrollHeight, 160)}px`;
+  }, [value, placeholder]);
 
   useEffect(() => {
     if (openMenu === "none") return;
@@ -358,7 +358,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         <textarea
           ref={textareaRef}
           placeholder={placeholder}
-          className="w-full min-w-0 bg-transparent border-none py-1.5 px-1 resize-none outline-none text-foreground placeholder:text-muted-foreground/70 min-h-[40px] max-h-[160px] font-serif text-sm leading-relaxed"
+          className="w-full min-w-0 bg-transparent border-none py-1.5 px-1 resize-none outline-none text-foreground placeholder:text-muted-foreground/70 max-h-[160px] font-serif text-sm leading-snug"
           rows={1}
           value={value}
           onChange={(e) => onChange(e.target.value)}
