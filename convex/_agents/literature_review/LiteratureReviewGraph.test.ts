@@ -71,10 +71,10 @@ describe("Workflow step sequence", () => {
     }
 
     // Build ordered step list by scanning source for step calls
-    const stepCalls: Array<{ type: string; name: string }> = [];
-    const allStepsRegex = /step\.(runAction|awaitEvent)\s*\(/g;
-    const actionNameRegex = /internal\.literatureReview\.workflowSteps\.(\w+)/g;
-    const eventNameRegex = /awaitEvent\s*\(\s*(\w+)/g;
+    const _stepCalls: Array<{ type: string; name: string }> = [];
+    const _allStepsRegex = /step\.(runAction|awaitEvent)\s*\(/g;
+    const _actionNameRegex = /internal\.literatureReview\.workflowSteps\.(\w+)/g;
+    const _eventNameRegex = /awaitEvent\s*\(\s*(\w+)/g;
 
     // We know the expected order from the source structure
     expect(actions).toContain("planReview");

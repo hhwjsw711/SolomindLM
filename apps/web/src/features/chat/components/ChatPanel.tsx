@@ -460,7 +460,14 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     } finally {
       setIsCreatingConversation(false);
     }
-  }, [messages.length, onCreateConversation, onSelectConversation, toastError, closeTooltip]);
+  }, [
+    messages.length,
+    onCreateConversation,
+    onSelectConversation,
+    toastError,
+    closeTooltip,
+    setComposerMode,
+  ]);
 
   // --- Message handlers ---
 
@@ -507,7 +514,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       }
       setComposerMode(next);
     },
-    [composerMode]
+    [composerMode, setSourceFilters, setComposerMode]
   );
 
   const handleSendMessage = useCallback(async () => {

@@ -1,19 +1,12 @@
 #!/usr/bin/env node
 import { spawn } from "node:child_process";
-import {
-  existsSync,
-  readFileSync,
-  unlinkSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const DEBOUNCE_MS = 1500;
 
 const projectRoot =
-  process.env.CURSOR_PROJECT_DIR ||
-  process.env.CLAUDE_PROJECT_DIR ||
-  process.cwd();
+  process.env.CURSOR_PROJECT_DIR || process.env.CLAUDE_PROJECT_DIR || process.cwd();
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -61,10 +54,7 @@ if (existsSync(pendingPath)) {
   }
 }
 
-writeFileSync(
-  pendingPath,
-  JSON.stringify({ web: false, convex: false, updatedAt: 0 }),
-);
+writeFileSync(pendingPath, JSON.stringify({ web: false, convex: false, updatedAt: 0 }));
 
 const jobs = [];
 if (finalPending.web) {

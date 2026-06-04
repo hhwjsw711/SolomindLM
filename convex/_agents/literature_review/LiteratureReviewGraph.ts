@@ -372,7 +372,7 @@ export const literatureReviewWorkflow = workflow
         { sessionId: args.sessionId }
       );
       const existingBatchSet = new Set(existingBatchNumbers);
-      const extractBatchCount = Math.ceil(includedPapers.length / EXTRACT_DATA_CHUNK_SIZE) || 0;
+      const _extractBatchCount = Math.ceil(includedPapers.length / EXTRACT_DATA_CHUNK_SIZE) || 0;
 
       await trackStep(
         step,

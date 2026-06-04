@@ -4,16 +4,10 @@
  * Schedules debounced typecheck after edits; always prints {} and exits 0.
  */
 import { spawn } from "node:child_process";
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  unlinkSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { isAbsolute, join, relative, resolve } from "node:path";
 
-const DEBOUNCE_MS = 1500;
+const _DEBOUNCE_MS = 1500;
 const MCP_WRITE_TOOLS =
   /replace_content|create_text_file|replace_symbol_body|insert_before_symbol|insert_after_symbol/i;
 
@@ -158,9 +152,7 @@ function scheduleTypechecks(projectRoot, targets) {
 
 try {
   const projectRoot =
-    process.env.CURSOR_PROJECT_DIR ||
-    process.env.CLAUDE_PROJECT_DIR ||
-    process.cwd();
+    process.env.CURSOR_PROJECT_DIR || process.env.CLAUDE_PROJECT_DIR || process.cwd();
 
   const payload = readStdinUtf8();
   if (shouldHandlePayload(payload)) {

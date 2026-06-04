@@ -281,7 +281,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       textarea.style.height = "auto";
       textarea.style.height = `${Math.min(textarea.scrollHeight, 160)}px`;
     }
-  }, [value]);
+  }, []);
 
   useEffect(() => {
     if (openMenu === "none") return;
@@ -306,7 +306,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       document.removeEventListener("mousedown", handlePointerDown);
       document.removeEventListener("keydown", handleEscape);
     };
-  }, [openMenu]);
+  }, [openMenu, menuInteractionRefs]);
 
   useEffect(() => {
     if (!showResearchDatabases && openMenu === "corpus") {

@@ -533,7 +533,7 @@ async function searchSemanticScholar(
   const MAX_TRANSIENT_ATTEMPTS = 3;
   const BASE_DELAY_MS = 2000;
   let lastError: Error | undefined;
-  let rateLimited = false;
+  let _rateLimited = false;
 
   for (let attempt429 = 0; attempt429 < SEMANTIC_SCHOLAR_MAX_429_RETRIES; attempt429++) {
     for (let attempt = 0; attempt < MAX_TRANSIENT_ATTEMPTS; attempt++) {
@@ -560,7 +560,7 @@ async function searchSemanticScholar(
           const retryAfterMs = parseRetryAfterMs(response.headers.get("retry-after"));
 
           if (status === 429) {
-            rateLimited = true;
+            _rateLimited = true;
             const hasMore429Retries = attempt429 < SEMANTIC_SCHOLAR_MAX_429_RETRIES - 1;
             if (hasMore429Retries) {
               const delayMs = retryAfterMs ?? semanticScholarMinIntervalMs() * (attempt429 + 1);
@@ -572,7 +572,7 @@ async function searchSemanticScholar(
               await delay(delayMs);
               const retrySlot = await acquireSemanticScholarRequestSlot(throttleCtx, logger);
               if (!retrySlot.ok) {
-                rateLimited = true;
+                _rateLimited = true;
                 break;
               }
               break;
