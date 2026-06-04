@@ -134,15 +134,9 @@ export function formatPaperTitleYear(title: string, year: string): string {
 }
 
 /** Resolve an extraction cell for display, including metadata fallbacks. */
-export function resolveStudyTableCellValue(
-  paper: ReportPaperRow,
-  columnLabel: string
-): string {
+export function resolveStudyTableCellValue(paper: ReportPaperRow, columnLabel: string): string {
   const normalized = columnLabel.toLowerCase().replace(/\s+/g, "_");
-  const direct =
-    paper.rowData[columnLabel] ??
-    paper.rowData[normalized] ??
-    paper.rowData["title"];
+  const direct = paper.rowData[columnLabel] ?? paper.rowData[normalized] ?? paper.rowData["title"];
   if (direct?.trim() && direct.trim() !== "N/A") {
     return direct.trim();
   }
@@ -229,8 +223,10 @@ export function fullReportHasOnlyTrivialContent(
   sections: Array<{ heading: string; content: string }>
 ): boolean {
   const headings = sections.map((s) => s.heading);
-  return getReportSectionsNeedingRegeneration(sections, headings).length >=
-    Math.ceil(headings.length / 2);
+  return (
+    getReportSectionsNeedingRegeneration(sections, headings).length >=
+    Math.ceil(headings.length / 2)
+  );
 }
 
 export function buildStudyCharacteristicsTable(

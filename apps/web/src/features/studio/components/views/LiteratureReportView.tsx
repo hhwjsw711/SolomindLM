@@ -1,9 +1,9 @@
-import { ArrowLeft, Check, Copy, Download, FileText, Loader2, Save, X } from "lucide-react";
-import React, { lazy, Suspense, useMemo, useState } from "react";
 import {
   normalizeLiteratureReportSectionContent,
   stripLeadingSectionHeadingLine,
 } from "@convex/literatureReview/reportContext";
+import { ArrowLeft, Check, Copy, Download, FileText, Loader2, Save, X } from "lucide-react";
+import React, { lazy, Suspense, useMemo, useState } from "react";
 import { sanitizeMarkdown } from "@/shared/utils";
 import { CitationStyle, CitationStylePicker } from "../CitationStylePicker";
 import { type PrismaFlowCounts, PrismaFlowDiagram } from "../PrismaFlowDiagram";

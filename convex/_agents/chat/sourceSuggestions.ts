@@ -58,7 +58,12 @@ function parseSuggestionsPayload(raw: string): {
   }
 
   const suggestions = [
-    ...new Set(parsed.suggestions.map(String).map((s) => s.trim()).filter(Boolean)),
+    ...new Set(
+      parsed.suggestions
+        .map(String)
+        .map((s) => s.trim())
+        .filter(Boolean)
+    ),
   ];
 
   return {

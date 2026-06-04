@@ -8,8 +8,8 @@ import {
   isTrivialReportSectionContent,
   mergeDeterministicReportSections,
   needsDeterministicReportMerge,
-  resolveStudyTableCellValue,
   normalizeLiteratureReportSectionContent,
+  resolveStudyTableCellValue,
   stripLeadingSectionHeadingLine,
   validateAndSanitizeReportSections,
 } from "./reportContext";
@@ -51,9 +51,7 @@ describe("reportContext", () => {
     expect(stripLeadingSectionHeadingLine("## Abstract\n\nBody text.", "Abstract")).toBe(
       "Body text."
     );
-    expect(stripLeadingSectionHeadingLine("# Introduction\n\nBody.", "Introduction")).toBe(
-      "Body."
-    );
+    expect(stripLeadingSectionHeadingLine("# Introduction\n\nBody.", "Introduction")).toBe("Body.");
     expect(stripLeadingSectionHeadingLine("### Overview\n\nBody.", "Results")).toBe(
       "### Overview\n\nBody."
     );

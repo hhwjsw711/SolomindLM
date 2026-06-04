@@ -403,32 +403,32 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 role="listbox"
                 aria-label="Choose chat mode"
               >
-                  <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    Mode
-                  </p>
-                  {COMPOSER_MODES.map(({ id, label, icon: Icon }) => {
-                    const active = mode === id;
-                    return (
-                      <button
-                        key={id}
-                        type="button"
-                        role="option"
-                        aria-selected={active}
-                        className={[
-                          "flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm transition-colors",
-                          active ? "bg-primary/10 font-medium text-primary" : "hover:bg-muted/70",
-                        ].join(" ")}
-                        onClick={() => {
-                          onModeChange(id);
-                          setOpenMenu("none");
-                        }}
-                      >
-                        <Icon className="size-4 shrink-0 opacity-90" />
-                        <span className="flex-1 min-w-0">{label}</span>
-                        {active ? <Check className="size-3.5 shrink-0" strokeWidth={2.5} /> : null}
-                      </button>
-                    );
-                  })}
+                <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Mode
+                </p>
+                {COMPOSER_MODES.map(({ id, label, icon: Icon }) => {
+                  const active = mode === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      role="option"
+                      aria-selected={active}
+                      className={[
+                        "flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm transition-colors",
+                        active ? "bg-primary/10 font-medium text-primary" : "hover:bg-muted/70",
+                      ].join(" ")}
+                      onClick={() => {
+                        onModeChange(id);
+                        setOpenMenu("none");
+                      }}
+                    >
+                      <Icon className="size-4 shrink-0 opacity-90" />
+                      <span className="flex-1 min-w-0">{label}</span>
+                      {active ? <Check className="size-3.5 shrink-0" strokeWidth={2.5} /> : null}
+                    </button>
+                  );
+                })}
               </ComposerDropUp>
             </div>
 
@@ -461,54 +461,54 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   role="listbox"
                   aria-label="Choose research database"
                 >
-                    <p className="px-3 pb-2.5 text-sm font-medium text-muted-foreground">
-                      Research Databases:
-                    </p>
-                    <div className="flex flex-col gap-0.5 px-1.5">
-                      {RESEARCH_DATABASES.map(({ id, title, description, icon: Icon }) => {
-                        const selected = researchDatabase === id;
-                        return (
-                          <button
-                            key={id}
-                            type="button"
-                            role="option"
-                            aria-selected={selected}
+                  <p className="px-3 pb-2.5 text-sm font-medium text-muted-foreground">
+                    Research Databases:
+                  </p>
+                  <div className="flex flex-col gap-0.5 px-1.5">
+                    {RESEARCH_DATABASES.map(({ id, title, description, icon: Icon }) => {
+                      const selected = researchDatabase === id;
+                      return (
+                        <button
+                          key={id}
+                          type="button"
+                          role="option"
+                          aria-selected={selected}
+                          className={[
+                            "grid w-full grid-cols-[auto_auto_1fr] grid-rows-[auto_auto] items-start gap-x-3 gap-y-0.5 rounded-lg px-2.5 py-2.5 text-left text-sm transition-colors",
+                            selected ? "bg-primary/5" : "hover:bg-muted/60",
+                          ].join(" ")}
+                          onClick={() => {
+                            onResearchDatabaseChange(id);
+                            setOpenMenu("none");
+                          }}
+                        >
+                          <span
                             className={[
-                              "grid w-full grid-cols-[auto_auto_1fr] grid-rows-[auto_auto] items-start gap-x-3 gap-y-0.5 rounded-lg px-2.5 py-2.5 text-left text-sm transition-colors",
-                              selected ? "bg-primary/5" : "hover:bg-muted/60",
+                              "col-start-1 row-span-2 row-start-1 flex size-4 shrink-0 items-center justify-center justify-self-center self-center rounded-full border-2",
+                              selected
+                                ? "border-primary bg-primary"
+                                : "border-muted-foreground/35 bg-transparent",
                             ].join(" ")}
-                            onClick={() => {
-                              onResearchDatabaseChange(id);
-                              setOpenMenu("none");
-                            }}
+                            aria-hidden
                           >
-                            <span
-                              className={[
-                                "col-start-1 row-span-2 row-start-1 flex size-4 shrink-0 items-center justify-center justify-self-center self-center rounded-full border-2",
-                                selected
-                                  ? "border-primary bg-primary"
-                                  : "border-muted-foreground/35 bg-transparent",
-                              ].join(" ")}
-                              aria-hidden
-                            >
-                              {selected ? (
-                                <span className="size-1.5 rounded-full bg-primary-foreground" />
-                              ) : null}
-                            </span>
-                            <Icon
-                              className="col-start-2 row-span-2 row-start-1 size-4 shrink-0 self-center text-foreground/85"
-                              aria-hidden
-                            />
-                            <span className="col-start-3 row-start-1 min-w-0 font-semibold leading-tight text-foreground">
-                              {title}
-                            </span>
-                            <span className="col-start-3 row-start-2 min-w-0 text-xs font-normal leading-snug text-muted-foreground">
-                              {description}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
+                            {selected ? (
+                              <span className="size-1.5 rounded-full bg-primary-foreground" />
+                            ) : null}
+                          </span>
+                          <Icon
+                            className="col-start-2 row-span-2 row-start-1 size-4 shrink-0 self-center text-foreground/85"
+                            aria-hidden
+                          />
+                          <span className="col-start-3 row-start-1 min-w-0 font-semibold leading-tight text-foreground">
+                            {title}
+                          </span>
+                          <span className="col-start-3 row-start-2 min-w-0 text-xs font-normal leading-snug text-muted-foreground">
+                            {description}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </ComposerDropUp>
               </div>
             )}
@@ -534,11 +534,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   panelRef={filtersPanelRef}
                   className="max-h-[min(65vh,480px)] w-[min(19rem,calc(100vw-2rem))] overflow-y-auto overflow-x-hidden rounded-xl border border-border bg-card p-3 shadow-xl font-sans animate-in fade-in slide-in-from-bottom-2 duration-150"
                 >
-                    <AcademicDiscoveryFiltersSection
-                      academic={academicDiscoveryFilters ?? {}}
-                      setAcademic={onAcademicDiscoveryFiltersChange!}
-                      showTopDivider={false}
-                    />
+                  <AcademicDiscoveryFiltersSection
+                    academic={academicDiscoveryFilters ?? {}}
+                    setAcademic={onAcademicDiscoveryFiltersChange!}
+                    showTopDivider={false}
+                  />
                 </ComposerDropUp>
               </div>
             )}
@@ -566,38 +566,38 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   panelRef={filtersPanelRef}
                   className="max-h-[min(65vh,480px)] w-[min(19rem,calc(100vw-2rem))] overflow-y-auto overflow-x-hidden rounded-xl border border-border bg-card p-3 shadow-xl font-sans animate-in fade-in slide-in-from-bottom-2 duration-150"
                 >
-                    <p className="text-xs font-semibold text-foreground">Source channels</p>
-                    <div className="mt-2 space-y-1 border-t border-border/40 pt-2">
-                      {SOURCE_FILTERS.map(({ id, label, icon: Icon }) => {
-                        const isActive = activeFilters.includes(id);
-                        return (
-                          <label
-                            key={id}
-                            className={`flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 text-sm select-none transition-colors ${
-                              isActive
-                                ? "text-foreground"
-                                : "text-muted-foreground hover:text-foreground"
-                            }`}
-                          >
-                            <Icon className="size-4 shrink-0" />
-                            <span className="flex-1 min-w-0">{label}</span>
-                            <input
-                              type="checkbox"
-                              checked={isActive}
-                              disabled={!onSourceFilterChange}
-                              onChange={() => toggleFilter(id)}
-                              className="h-4 w-4 shrink-0 rounded border-2 border-border bg-background text-primary accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 focus-visible:ring-offset-card"
-                            />
-                          </label>
-                        );
-                      })}
-                    </div>
-                    {activeFilters.includes("academic") && onAcademicDiscoveryFiltersChange && (
-                      <AcademicDiscoveryFiltersSection
-                        academic={academicDiscoveryFilters ?? {}}
-                        setAcademic={onAcademicDiscoveryFiltersChange}
-                      />
-                    )}
+                  <p className="text-xs font-semibold text-foreground">Source channels</p>
+                  <div className="mt-2 space-y-1 border-t border-border/40 pt-2">
+                    {SOURCE_FILTERS.map(({ id, label, icon: Icon }) => {
+                      const isActive = activeFilters.includes(id);
+                      return (
+                        <label
+                          key={id}
+                          className={`flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 text-sm select-none transition-colors ${
+                            isActive
+                              ? "text-foreground"
+                              : "text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          <Icon className="size-4 shrink-0" />
+                          <span className="flex-1 min-w-0">{label}</span>
+                          <input
+                            type="checkbox"
+                            checked={isActive}
+                            disabled={!onSourceFilterChange}
+                            onChange={() => toggleFilter(id)}
+                            className="h-4 w-4 shrink-0 rounded border-2 border-border bg-background text-primary accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+                          />
+                        </label>
+                      );
+                    })}
+                  </div>
+                  {activeFilters.includes("academic") && onAcademicDiscoveryFiltersChange && (
+                    <AcademicDiscoveryFiltersSection
+                      academic={academicDiscoveryFilters ?? {}}
+                      setAcademic={onAcademicDiscoveryFiltersChange}
+                    />
+                  )}
                 </ComposerDropUp>
               </div>
             )}

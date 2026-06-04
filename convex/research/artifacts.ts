@@ -12,7 +12,11 @@ import {
   type ReportSection,
   sortReportSections,
 } from "./reportSections";
-import { deepResearchReportTitle, deepResearchTableTitle, fallbackResearchTitleFromQuery } from "./titles";
+import {
+  deepResearchReportTitle,
+  deepResearchTableTitle,
+  fallbackResearchTitleFromQuery,
+} from "./titles";
 
 function buildCitationFromEvidence(entry: {
   sourceType: string;
@@ -209,8 +213,7 @@ export const createResearchArtifacts = internalMutation({
       });
     }
 
-    const baseTitle =
-      args.researchTitle?.trim() || fallbackResearchTitleFromQuery(args.query);
+    const baseTitle = args.researchTitle?.trim() || fallbackResearchTitleFromQuery(args.query);
     const tableTitle = deepResearchTableTitle(baseTitle);
     const reportTitle = deepResearchReportTitle(baseTitle);
 

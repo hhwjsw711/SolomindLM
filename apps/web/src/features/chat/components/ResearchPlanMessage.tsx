@@ -1,10 +1,7 @@
 import type { Id } from "@convex/_generated/dataModel";
 import { Ban, Check, FileSpreadsheet, FileText, FlaskConical, Loader2, X } from "lucide-react";
 import React, { useMemo, useState } from "react";
-import {
-  useLiteratureReport,
-  useLiteratureTable,
-} from "../services/literatureReviewApi";
+import { useLiteratureReport, useLiteratureTable } from "../services/literatureReviewApi";
 import { useLatestRunForPlan, useResearchPlan, useResearchSteps } from "../services/researchApi";
 import { mapDeepResearchSteps } from "../utils/deepResearchSteps";
 import { LiteratureReviewSteps } from "./LiteratureReviewSteps";

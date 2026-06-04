@@ -18,10 +18,10 @@ import {
 import React, { useEffect, useRef, useState } from "react";
 import { BibtexImportModal } from "./BibtexImportModal";
 import { DoiInputModal } from "./DoiInputModal";
+import { isGoogleDrivePickerConfigured } from "./GoogleDrivePicker";
 import { ManualPaperModal } from "./ManualPaperModal";
 import { MendeleyImportModal } from "./MendeleyImportModal";
 import { ZoteroImportModal } from "./ZoteroImportModal";
-import { isGoogleDrivePickerConfigured } from "./GoogleDrivePicker";
 
 const MAX_SOURCES = 200;
 
