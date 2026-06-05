@@ -145,34 +145,68 @@ function combineChunkContents(chunks: Array<{ content: string }>): string {
   return chunks.map((c) => c.content).join("\n\n---\n\n");
 }
 
+/** Thrown when judge LLM output cannot be parsed into a score object. */
+export class LlmJudgeParseError extends Error {
+  readonly responsePreview: string;
+
+  constructor(message: string, responsePreview: string) {
+    super(message);
+    this.name = "LlmJudgeParseError";
+    this.responsePreview = responsePreview;
+  }
+}
+
+function previewResponse(text: string, maxLen = 200): string {
+  const oneLine = text.replace(/\s+/g, " ").trim();
+  return oneLine.length <= maxLen ? oneLine : `${oneLine.slice(0, maxLen)}…`;
+}
+
 /**
- * Parse JSON from LLM response with fallback.
- * LLMs sometimes wrap JSON in markdown code blocks.
+ * Parse JSON from LLM judge output. LLMs sometimes wrap JSON in markdown code blocks.
+ * Throws {@link LlmJudgeParseError} on failure (callers should mark the metric as fail, not warn/pass).
  */
-function parseJsonResponse(response: string): unknown {
+export function parseJsonResponse(response: string): Record<string, unknown> {
   const cleaned = response
     .replace(/```json\s*/gi, "")
     .replace(/```\s*$/gi, "")
     .trim();
-  try {
-    return JSON.parse(cleaned);
-  } catch {
-    // Try to extract JSON object
-    const match = cleaned.match(/\{[\s\S]*\}/);
-    if (match) {
-      try {
-        return JSON.parse(match[0]);
-      } catch {
-        // Return a safe fallback
+
+  const tryParseObject = (raw: string): Record<string, unknown> | null => {
+    try {
+      const parsed: unknown = JSON.parse(raw);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        return parsed as Record<string, unknown>;
       }
+    } catch {
+      // try next strategy
     }
-    return {
-      score: 0.5,
-      reasoning: "Failed to parse LLM response",
-      hallucinations: [],
-      missing: [],
-    };
+    return null;
+  };
+
+  const direct = tryParseObject(cleaned);
+  if (direct) return direct;
+
+  const match = cleaned.match(/\{[\s\S]*\}/);
+  if (match) {
+    const extracted = tryParseObject(match[0]);
+    if (extracted) return extracted;
   }
+
+  throw new LlmJudgeParseError(
+    "Failed to parse LLM judge response as JSON object",
+    previewResponse(cleaned)
+  );
+}
+
+function requireJudgeScore(result: Record<string, unknown>): number {
+  const score = result.score;
+  if (typeof score !== "number" || Number.isNaN(score)) {
+    throw new LlmJudgeParseError(
+      "Judge response missing numeric score field",
+      previewResponse(JSON.stringify(result))
+    );
+  }
+  return score;
 }
 
 // ─── Default LLM Invocation ───────────────────────────────────────
@@ -237,28 +271,31 @@ export async function llmJudgeCorrectness(
       })
     );
 
-    const result = parseJsonResponse(response) as {
-      score?: number;
-      reasoning?: string;
-      hallucinations?: string[];
-      missing?: string[];
-    };
-
-    const score = result.score ?? 0.5;
+    const result = parseJsonResponse(response);
+    const score = requireJudgeScore(result);
     const status = statusFromScore(score);
 
-    let detail = result.reasoning ?? "No reasoning provided";
-    if (result.missing?.length) {
-      detail += `\nMissing: ${result.missing.join(", ")}`;
+    const reasoning =
+      typeof result.reasoning === "string" ? result.reasoning : "No reasoning provided";
+    const missing = Array.isArray(result.missing)
+      ? result.missing.filter((m): m is string => typeof m === "string")
+      : [];
+    const hallucinations = Array.isArray(result.hallucinations)
+      ? result.hallucinations.filter((h): h is string => typeof h === "string")
+      : [];
+
+    let detail = reasoning;
+    if (missing.length) {
+      detail += `\nMissing: ${missing.join(", ")}`;
     }
-    if (result.hallucinations?.length) {
-      detail += `\nHallucinations: ${result.hallucinations.join(", ")}`;
+    if (hallucinations.length) {
+      detail += `\nHallucinations: ${hallucinations.join(", ")}`;
     }
 
     return baseMetric("llm_judge_correctness", fixture, artifact, status, score, detail, {
       model,
-      hallucinations: result.hallucinations ?? [],
-      missing: result.missing ?? [],
+      hallucinations,
+      missing,
     });
   } catch (err) {
     return baseMetric(
@@ -307,25 +344,28 @@ export async function llmJudgeFaithfulness(
       })
     );
 
-    const result = parseJsonResponse(response) as {
-      score?: number;
-      reasoning?: string;
-      hallucinations?: string[];
-      supported_claims?: string[];
-    };
-
-    const score = result.score ?? 0.5;
+    const result = parseJsonResponse(response);
+    const score = requireJudgeScore(result);
     const status = statusFromScore(score);
 
-    let detail = result.reasoning ?? "No reasoning provided";
-    if (result.hallucinations?.length) {
-      detail += `\nUnsupported claims: ${result.hallucinations.join(", ")}`;
+    const reasoning =
+      typeof result.reasoning === "string" ? result.reasoning : "No reasoning provided";
+    const hallucinations = Array.isArray(result.hallucinations)
+      ? result.hallucinations.filter((h): h is string => typeof h === "string")
+      : [];
+    const supportedClaims = Array.isArray(result.supported_claims)
+      ? result.supported_claims.filter((c): c is string => typeof c === "string")
+      : [];
+
+    let detail = reasoning;
+    if (hallucinations.length) {
+      detail += `\nUnsupported claims: ${hallucinations.join(", ")}`;
     }
 
     return baseMetric("llm_judge_faithfulness", fixture, artifact, status, score, detail, {
       model,
-      hallucinations: result.hallucinations ?? [],
-      supportedClaims: result.supported_claims?.length ?? 0,
+      hallucinations,
+      supportedClaims: supportedClaims.length,
     });
   } catch (err) {
     return baseMetric(
@@ -364,23 +404,24 @@ export async function llmJudgeCompleteness(
       })
     );
 
-    const result = parseJsonResponse(response) as {
-      score?: number;
-      reasoning?: string;
-      missing_aspects?: string[];
-    };
-
-    const score = result.score ?? 0.5;
+    const result = parseJsonResponse(response);
+    const score = requireJudgeScore(result);
     const status = statusFromScore(score);
 
-    let detail = result.reasoning ?? "No reasoning provided";
-    if (result.missing_aspects?.length) {
-      detail += `\nMissing aspects: ${result.missing_aspects.join(", ")}`;
+    const reasoning =
+      typeof result.reasoning === "string" ? result.reasoning : "No reasoning provided";
+    const missingAspects = Array.isArray(result.missing_aspects)
+      ? result.missing_aspects.filter((m): m is string => typeof m === "string")
+      : [];
+
+    let detail = reasoning;
+    if (missingAspects.length) {
+      detail += `\nMissing aspects: ${missingAspects.join(", ")}`;
     }
 
     return baseMetric("llm_judge_completeness", fixture, artifact, status, score, detail, {
       model,
-      missingAspects: result.missing_aspects ?? [],
+      missingAspects,
     });
   } catch (err) {
     return baseMetric(

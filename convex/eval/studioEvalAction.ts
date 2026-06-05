@@ -65,7 +65,14 @@ async function resolveDocumentIds(
     hint && hint.length > 0
       ? typedDocs.filter((d) => (d.fileName ?? "").toLowerCase().includes(hint))
       : typedDocs;
-  const chosen = scoped.length > 0 ? scoped : typedDocs;
+  if (hint && hint.length > 0 && scoped.length === 0) {
+    const available = typedDocs.map((d) => d.fileName ?? "(unnamed)").join(", ");
+    throw new Error(
+      `[RAG eval] documentTitleHint "${documentTitleHint}" matched no documents in notebook ${notebookId} ` +
+        `(${typedDocs.length} available: ${available})`
+    );
+  }
+  const chosen = scoped;
   const ids = chosen.map((d) => d._id);
   if (ids.length === 0) {
     throw new Error(

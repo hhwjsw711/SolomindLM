@@ -15,6 +15,11 @@ describe("extractJsonObjectString", () => {
   it("ignores reasoning monologue without JSON", () => {
     expect(extractJsonObjectString("Need JSON output only, planning next step...")).toBeNull();
   });
+
+  it("extracts JSON from prose before a fenced block via brace slicing", () => {
+    const inner = '{"topics":["E"],"summary":"Brace slice summary that is long enough for validation."}';
+    expect(extractJsonObjectString(`Intro text\n${inner}\nDone.`)).toBe(inner);
+  });
 });
 
 describe("togetherStructuredJsonPayload", () => {

@@ -18,7 +18,11 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "node",
-    include: ["tests/convex/**/*.ts", "convex/**/*.test.ts"],
+    include: [
+      "tests/convex/**/*.ts",
+      "convex/**/*.test.ts",
+      "evals/rag/metrics/**/*.test.ts",
+    ],
     exclude: ["convex/**/*.integration.test.ts"],
   },
 });

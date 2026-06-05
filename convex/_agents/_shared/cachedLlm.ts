@@ -61,6 +61,29 @@ export interface LLMResponse {
   };
 }
 
+/** Minimal Together / OpenAI chat completion choice shape (avoids `any` at parse boundaries). */
+export type TogetherChatMessage = {
+  content?: unknown;
+  reasoning?: unknown;
+  refusal?: unknown;
+};
+
+export type TogetherCompletionChoice = {
+  message?: TogetherChatMessage;
+  /** Legacy completions-style field on some Together responses */
+  text?: string;
+  finish_reason?: string;
+};
+
+type TogetherChatCompletionBody = {
+  choices?: TogetherCompletionChoice[];
+  usage?: {
+    prompt_tokens?: number;
+    completion_tokens?: number;
+    total_tokens?: number;
+  };
+};
+
 /** Normalize OpenAI-style message.content (string or multimodal parts) to plain text. */
 function messageContentToString(message: { content?: unknown } | undefined): string {
   const c = message?.content;
@@ -123,7 +146,7 @@ export function extractJsonObjectString(text: string): string | null {
 }
 
 /** Prefer JSON in `content`; only use `reasoning` when it contains a parseable JSON object. */
-export function togetherStructuredJsonPayload(choice: any): string {
+export function togetherStructuredJsonPayload(choice: TogetherCompletionChoice | undefined): string {
   if (!choice) return "";
 
   const msg = choice.message;
@@ -154,7 +177,7 @@ export function togetherStructuredJsonPayload(choice: any): string {
  * Best-effort assistant text from a Together / OpenAI-style chat completion choice.
  * Some responses use legacy `text`; hybrid models may place a JSON payload only in `reasoning`.
  */
-function togetherChoiceAssistantText(choice: any): string {
+function togetherChoiceAssistantText(choice: TogetherCompletionChoice | undefined): string {
   if (!choice) return "";
   const msg = choice.message;
   if (!msg) {
@@ -173,7 +196,7 @@ function togetherChoiceAssistantText(choice: any): string {
   return "";
 }
 
-function logEmptyTogetherAssistant(model: string, choice: any): void {
+function logEmptyTogetherAssistant(model: string, choice: TogetherCompletionChoice | undefined): void {
   const msg = choice?.message;
   console.warn("[Together LLM] empty assistant text", {
     model,
@@ -263,9 +286,9 @@ async function executeTogetherLlmRequest(
         throw err;
       }
 
-      let data: any;
+      let data: TogetherChatCompletionBody;
       try {
-        data = JSON.parse(bodyText);
+        data = JSON.parse(bodyText) as TogetherChatCompletionBody;
       } catch {
         throw new Error("LLM API returned non-JSON body");
       }
@@ -290,18 +313,26 @@ async function executeTogetherLlmRequest(
           reasoningPreview:
             typeof msg?.reasoning === "string" ? msg.reasoning.slice(0, 120) : undefined,
         });
+        throw new Error("LLM API returned no JSON payload for structured response");
       }
+
+      const usageRaw = data.usage;
+      const usage =
+        usageRaw &&
+        typeof usageRaw.prompt_tokens === "number" &&
+        typeof usageRaw.completion_tokens === "number" &&
+        typeof usageRaw.total_tokens === "number"
+          ? {
+              promptTokens: usageRaw.prompt_tokens,
+              completionTokens: usageRaw.completion_tokens,
+              totalTokens: usageRaw.total_tokens,
+            }
+          : undefined;
 
       return {
         content,
         structuredJson,
-        usage: data.usage
-          ? {
-              promptTokens: data.usage.prompt_tokens,
-              completionTokens: data.usage.completion_tokens,
-              totalTokens: data.usage.total_tokens,
-            }
-          : undefined,
+        usage,
       };
     } catch (e) {
       if (e instanceof Error && e.message === "LLM API returned non-JSON body") {
@@ -338,7 +369,18 @@ export const llmInternal = internalAction({
     ),
     temperature: v.number(),
     maxTokens: v.optional(v.number()),
-    responseFormat: v.optional(v.object({ type: v.string() })),
+    responseFormat: v.optional(
+      v.union(
+        v.object({ type: v.union(v.literal("text"), v.literal("json_object")) }),
+        v.object({
+          type: v.literal("json_schema"),
+          json_schema: v.object({
+            name: v.string(),
+            schema: v.record(v.string(), v.any()),
+          }),
+        })
+      )
+    ),
     reasoningEnabled: v.optional(v.boolean()),
     toolChoice: v.optional(v.string()),
   },

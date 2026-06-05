@@ -162,14 +162,6 @@ export function inferSourceChannel(sourceUrl?: string): string {
 }
 
 /**
- * External Source Utilization
- * Measures whether external sources (non-notebook) contributed meaningfully
- * when they were enabled.
- *
- * Score = fraction of selected chunks that came from external sources
- * Status: pass if >= 20% external when external channels enabled
- */
-/**
  * Research source breadth: unique external URLs in selected evidence.
  * Pass ≥8, warn 4–7, fail <4. Skipped for notebook-only policies.
  */

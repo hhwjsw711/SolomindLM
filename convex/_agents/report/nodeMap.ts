@@ -38,11 +38,17 @@ export async function mapProcess(
     .replace("{chunk}", chunk)
     .replace("{customPrompt}", sanitizeUserInput(customPrompt || ""));
 
-  const structuredPrompt = `${prompt}
+  const customFocus = customPrompt?.trim();
+  let structuredPrompt = `${prompt}
 
 IMPORTANT: Respond with a JSON object containing:
 1. "topics": An array of 3-5 key topics this section covers
 2. "summary": The complete structured summary as described above`;
+  if (customFocus && reportType !== "custom") {
+    structuredPrompt =
+      `ADDITIONAL USER REQUIREMENTS (highest priority — MUST follow):\n${sanitizeUserInput(customFocus)}\n\n` +
+      structuredPrompt;
+  }
 
   console.log(`[ReportGraph] ${chunkId} Sending prompt to LLM (${prompt.length} chars)...`);
 

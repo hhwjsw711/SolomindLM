@@ -240,11 +240,17 @@ export async function runProcessReportMapChunkPhase(
       .replace("{chunk}", chunk)
       .replace("{customPrompt}", customPrompt ? sanitizeUserInput(customPrompt) : "");
 
-    const structuredPrompt = `${prompt}
+    const customFocus = customPrompt?.trim();
+    let structuredPrompt = `${prompt}
 
 IMPORTANT: Respond with a JSON object containing:
 1. "topics": An array of 3-5 key topics this section covers
 2. "summary": The complete structured summary as described above`;
+    if (customFocus && reportType !== "custom") {
+      structuredPrompt =
+        `ADDITIONAL USER REQUIREMENTS (highest priority — MUST follow):\n${sanitizeUserInput(customFocus)}\n\n` +
+        structuredPrompt;
+    }
 
     console.log(`[ReportJob] ${chunkId} Calling LLM (${prompt.length} chars)`);
 
@@ -260,6 +266,7 @@ IMPORTANT: Respond with a JSON object containing:
         }),
       timeoutMs: CONFIG.PER_CHUNK_TIMEOUT_MS,
       phaseLabel: "ReportMap",
+      retry: { maxAttempts: 1 },
       onRetry: (attempt, error) => {
         console.log(`[ReportJob] ${chunkId} Retry attempt ${attempt}/3: ${error.message}`);
       },
@@ -342,7 +349,7 @@ IMPORTANT: Respond with a JSON object containing:
           try {
             return JSON.parse(String(r))?._error;
           } catch {
-            return false;
+            return true;
           }
         }).length
       : 0;
@@ -491,8 +498,15 @@ export async function runFinalizeReportPhase(
     })) as { content: unknown };
 
     const elapsed = Date.now() - startTime;
-    const content =
+    let content =
       typeof response.content === "string" ? response.content : String(response.content);
+
+    if (failedCount.count > 0) {
+      const omitted = failedCount.count === 1 ? "section" : "sections";
+      content =
+        `> **Note:** ${failedCount.count} source ${omitted} could not be processed and are omitted from this report.\n\n` +
+        content;
+    }
 
     console.log(`[ReportJob] Reduce completed in ${elapsed}ms, output: ${content.length} chars`);
 

@@ -15,7 +15,7 @@ export const MapOutputSchema = z.object({
     .array(z.string())
     .min(1, { error: "At least one topic is required" })
     .max(5, { error: "Maximum 5 topics allowed" })
-    .describe("3-5 key topics that this section covers, ordered by importance"),
+    .describe("1-5 key topics that this section covers, ordered by importance"),
   summary: z
     .string()
     .min(50, { error: "Summary must be at least 50 characters" })
@@ -73,7 +73,8 @@ function isRetriableMapStructuredError(error: unknown): boolean {
   return (
     message.includes("empty llm content") ||
     message.includes("failed to parse map json") ||
-    message.includes("map output validation failed")
+    message.includes("map output validation failed") ||
+    message.includes("no json payload for structured response")
   );
 }
 
@@ -94,6 +95,11 @@ export async function invokeMapStructuredOutput(
   for (let attempt = 0; attempt < MAP_STRUCTURED_MAX_ATTEMPTS; attempt++) {
     try {
       const isLastAttempt = attempt === MAP_STRUCTURED_MAX_ATTEMPTS - 1;
+      if (isLastAttempt && attempt > 0) {
+        console.warn(
+          `[ReportMap] Structured output attempt ${attempt + 1}/${MAP_STRUCTURED_MAX_ATTEMPTS} using json_object fallback`
+        );
+      }
       const userPrompt =
         attempt === 0
           ? options.userPrompt
