@@ -22,6 +22,7 @@ function mockAcademicThrottleMutations(
 
 describe("searchInternalHandler rate limit metadata", () => {
   it("sets rateLimited when Semantic Scholar returns 429 after retries", async () => {
+    vi.useFakeTimers();
     const runMutation = vi.fn();
     mockAcademicThrottleMutations(runMutation);
     const fetchMock = vi.fn().mockResolvedValue({
@@ -36,20 +37,26 @@ describe("searchInternalHandler rate limit metadata", () => {
     });
     vi.stubGlobal("fetch", fetchMock);
 
-    const result = await searchInternalHandler(
-      {
-        query: "llm benchmarks",
-        maxResults: 5,
-        sources: ["semantic_scholar"],
-      },
-      { runMutation } as never
-    );
+    try {
+      const resultPromise = searchInternalHandler(
+        {
+          query: "llm benchmarks",
+          maxResults: 5,
+          sources: ["semantic_scholar"],
+        },
+        { runMutation } as never
+      );
+      await vi.runAllTimersAsync();
+      const result = await resultPromise;
 
-    expect(result.papers).toEqual([]);
-    expect(result.rateLimited).toBe(true);
-    expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(3);
-    expect(runMutation).toHaveBeenCalled();
-    vi.unstubAllGlobals();
+      expect(result.papers).toEqual([]);
+      expect(result.rateLimited).toBe(true);
+      expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(3);
+      expect(runMutation).toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+      vi.unstubAllGlobals();
+    }
   });
 
   it("recovers from Semantic Scholar 429 when Retry-After backoff succeeds", async () => {
