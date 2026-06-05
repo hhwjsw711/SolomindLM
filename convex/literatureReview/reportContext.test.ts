@@ -159,6 +159,34 @@ describe("reportContext", () => {
     expect(val).toBe("Retrieval-Augmented Generation for LLMs (2023)");
   });
 
+  it("resolveStudyTableCellValue does not use paper title for unrelated columns", () => {
+    const val = resolveStudyTableCellValue(
+      {
+        citationKey: "Gao2023",
+        title: "Retrieval-Augmented Generation for LLMs",
+        authors: "Y. Gao",
+        year: "2023",
+        rowData: { title: "Wrong title cell", retrieval_approach: "dense" },
+      },
+      "retrieval_approach"
+    );
+    expect(val).toBe("dense");
+  });
+
+  it("resolveStudyTableCellValue leaves unrelated columns blank when missing", () => {
+    const val = resolveStudyTableCellValue(
+      {
+        citationKey: "Gao2023",
+        title: "Retrieval-Augmented Generation for LLMs",
+        authors: "Y. Gao",
+        year: "2023",
+        rowData: { title: "Wrong title cell" },
+      },
+      "methodology"
+    );
+    expect(val).toBe("");
+  });
+
   it("isTrivialReportSectionContent detects JSON example placeholders", () => {
     expect(isTrivialReportSectionContent("...")).toBe(true);
     expect(isTrivialReportSectionContent("Abstract content here", "Abstract")).toBe(true);

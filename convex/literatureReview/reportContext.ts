@@ -136,7 +136,7 @@ export function formatPaperTitleYear(title: string, year: string): string {
 /** Resolve an extraction cell for display, including metadata fallbacks. */
 export function resolveStudyTableCellValue(paper: ReportPaperRow, columnLabel: string): string {
   const normalized = columnLabel.toLowerCase().replace(/\s+/g, "_");
-  const direct = paper.rowData[columnLabel] ?? paper.rowData[normalized] ?? paper.rowData["title"];
+  const direct = paper.rowData[columnLabel] ?? paper.rowData[normalized];
   if (direct?.trim() && direct.trim() !== "N/A") {
     return direct.trim();
   }
