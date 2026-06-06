@@ -1,4 +1,14 @@
-import { AudioLines, File, FileCode, FileText, Globe, Youtube } from "lucide-react";
+import {
+  AudioLines,
+  FileSpreadsheet,
+  FileText,
+  Globe,
+  GraduationCap,
+  HardDrive,
+  Presentation,
+  ScanLine,
+  Youtube,
+} from "lucide-react";
 import React from "react";
 import { LANDING_CONTENT } from "../constants";
 
@@ -13,12 +23,18 @@ export const ContentShowcase: React.FC = () => {
         return Globe;
       case "AudioLines":
         return AudioLines;
-      case "File":
-        return File;
-      case "FileCode":
-        return FileCode;
+      case "Presentation":
+        return Presentation;
+      case "ScanLine":
+        return ScanLine;
+      case "GraduationCap":
+        return GraduationCap;
+      case "HardDrive":
+        return HardDrive;
+      case "FileSpreadsheet":
+        return FileSpreadsheet;
       default:
-        return File;
+        return FileText;
     }
   };
 
@@ -30,23 +46,25 @@ export const ContentShowcase: React.FC = () => {
           <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">
             {LANDING_CONTENT.contentShowcase.title}
           </h2>
-          <p className="text-lg text-muted-foreground">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             {LANDING_CONTENT.contentShowcase.description}
           </p>
         </div>
 
-        {/* Format cards – 3×2 grid of rounded rectangles */}
-        <div className="grid grid-cols-3 gap-3 sm:gap-4 max-w-3xl mx-auto">
+        {/* Format cards – responsive grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 max-w-4xl mx-auto">
           {LANDING_CONTENT.contentShowcase.formats.map((format) => {
             const Icon = getIconForFormat(format.icon);
 
             return (
               <div
                 key={format.name}
-                className="rounded-xl px-4 py-2.5 sm:px-4 sm:py-3 bg-card border border-border shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-1.5 min-h-0"
+                className="rounded-xl px-3 py-2.5 sm:px-4 sm:py-3 bg-card border border-border shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-1.5 min-h-0"
               >
                 <Icon className="w-5 h-5 shrink-0 text-primary" />
-                <span className="font-medium text-foreground text-center">{format.name}</span>
+                <span className="font-medium text-foreground text-center text-sm sm:text-base">
+                  {format.name}
+                </span>
               </div>
             );
           })}

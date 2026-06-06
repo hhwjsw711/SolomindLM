@@ -4,7 +4,7 @@ test.describe("Smoke tests — public pages", () => {
   test("landing page loads with hero content", async ({ page }) => {
     await page.goto("/");
 
-    await expect(page.getByRole("button", { name: "Get Started Free" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Get Started" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Features" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Pricing" })).toBeVisible();
   });
@@ -41,7 +41,7 @@ test.describe("Smoke tests — public pages", () => {
   test("landing page Get Started button navigates forward", async ({ page }) => {
     await page.goto("/");
 
-    await page.getByRole("button", { name: "Get Started Free" }).click();
+    await page.getByRole("button", { name: "Get Started" }).click();
 
     await page.waitForURL(/\/(home|sign-in)/, { timeout: 5_000 });
     const url = page.url();

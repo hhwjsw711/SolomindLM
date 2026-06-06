@@ -1,5 +1,6 @@
-import React from "react";
-import { Navigate } from "react-router-dom";
+import React, { useState } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
+import { AuthModal } from "@/features/auth/components/AuthModal";
 import { useAuth } from "@/features/auth/useAuth";
 import { SEOMeta } from "@/shared/seo/SEOMeta";
 import {
@@ -25,6 +26,8 @@ interface LandingPageProps {
 
 export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
   const { isAuthenticated, isLoading } = useAuth();
+  const navigate = useNavigate();
+  const [authModalOpen, setAuthModalOpen] = useState(false);
 
   if (isNativeShell()) {
     if (isLoading) {
@@ -47,7 +50,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
         ]}
       />
       <div className="min-h-screen landing-grid-pattern">
-        <NavigationHeader onGetStarted={onGetStarted} />
+        <NavigationHeader
+          onGetStarted={onGetStarted}
+          onLogin={() => setAuthModalOpen(true)}
+        />
         <HeroSection onGetStarted={onGetStarted} />
         <FeaturesGrid />
         <UseCasesSection />
@@ -56,6 +62,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
         <FAQSection />
         <Footer />
       </div>
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        onAuthenticated={() => navigate("/home", { replace: true })}
+      />
     </>
   );
 };

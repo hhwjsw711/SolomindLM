@@ -4,6 +4,7 @@ import { Button } from "@/shared/components/ui/button";
 
 interface NavigationHeaderProps {
   onGetStarted: () => void;
+  onLogin: () => void;
 }
 
 interface NavItem {
@@ -18,7 +19,7 @@ const navItems: NavItem[] = [
   { label: "FAQ", href: "#faq" },
 ];
 
-export const NavigationHeader: React.FC<NavigationHeaderProps> = ({ onGetStarted }) => {
+export const NavigationHeader: React.FC<NavigationHeaderProps> = ({ onGetStarted, onLogin }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -72,12 +73,19 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({ onGetStarted
           </nav>
 
           {/* Desktop CTA */}
-          <div className="hidden md:block">
+          <div className="hidden md:flex items-center gap-3">
+            <Button
+              variant="outline"
+              onClick={onLogin}
+              className="font-sans rounded-xl font-semibold px-6 py-2 transition-transform duration-200 ease-out hover:scale-[1.02] active:scale-[0.98]"
+            >
+              Log in
+            </Button>
             <Button
               onClick={onGetStarted}
               className="font-sans bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl font-semibold px-6 py-2 transition-transform duration-200 ease-out hover:scale-[1.02] active:scale-[0.98]"
             >
-              Get Started Free
+              Get Started
             </Button>
           </div>
 
@@ -105,13 +113,23 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({ onGetStarted
                 </button>
               ))}
               <Button
+                variant="outline"
+                onClick={() => {
+                  onLogin();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="font-sans rounded-xl font-semibold w-full mt-2 transition-transform duration-200 ease-out hover:scale-[1.02] active:scale-[0.98]"
+              >
+                Log in
+              </Button>
+              <Button
                 onClick={() => {
                   onGetStarted();
                   setIsMobileMenuOpen(false);
                 }}
                 className="font-sans bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl font-semibold w-full mt-2 transition-transform duration-200 ease-out hover:scale-[1.02] active:scale-[0.98]"
               >
-                Get Started Free
+                Get Started
               </Button>
             </nav>
           </div>

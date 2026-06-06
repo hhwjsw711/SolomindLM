@@ -1,21 +1,37 @@
 import {
   AudioLines,
+  BookOpen,
   Brain,
   FileText,
   GitFork,
   HelpCircle,
+  Image,
   Layers,
+  MessageCircle,
   MessageSquareText,
-  Presentation,
   Table2,
+  Telescope,
 } from "lucide-react";
 import React from "react";
 import Marquee from "react-fast-marquee";
-import { LANDING_CONTENT } from "../constants";
+import {
+  FEATURES_MARQUEE_ROW_1_ORDER,
+  FEATURES_MARQUEE_ROW_2_ORDER,
+  LANDING_CONTENT,
+  orderLandingFeatures,
+} from "../constants";
 
 export const FeaturesGrid: React.FC = () => {
   const getIconForFeature = (id: string) => {
     switch (id) {
+      case "rag":
+        return Brain;
+      case "chat":
+        return MessageCircle;
+      case "deepResearch":
+        return Telescope;
+      case "literatureReview":
+        return BookOpen;
       case "audio":
         return AudioLines;
       case "mindmap":
@@ -27,11 +43,9 @@ export const FeaturesGrid: React.FC = () => {
       case "quiz":
         return HelpCircle;
       case "infographic":
-        return Presentation;
+        return Image;
       case "writtenQuestions":
         return MessageSquareText;
-      case "rag":
-        return Brain;
       case "spreadsheets":
         return Table2;
       default:
@@ -41,6 +55,14 @@ export const FeaturesGrid: React.FC = () => {
 
   const getColorForFeature = (id: string) => {
     switch (id) {
+      case "rag":
+        return "text-violet-600";
+      case "chat":
+        return "text-sky-700";
+      case "deepResearch":
+        return "text-indigo-700";
+      case "literatureReview":
+        return "text-blue-700";
       case "audio":
         return "text-purple-700";
       case "mindmap":
@@ -55,8 +77,6 @@ export const FeaturesGrid: React.FC = () => {
         return "text-violet-600";
       case "writtenQuestions":
         return "text-green-700";
-      case "rag":
-        return "text-violet-600";
       case "spreadsheets":
         return "text-cyan-600";
       default:
@@ -85,8 +105,14 @@ export const FeaturesGrid: React.FC = () => {
     );
   };
 
-  const featureCardsRow1 = LANDING_CONTENT.features.map(renderCard);
-  const featureCardsRow2 = LANDING_CONTENT.features.map(renderCard);
+  const featureCardsRow1 = orderLandingFeatures(
+    LANDING_CONTENT.features,
+    FEATURES_MARQUEE_ROW_1_ORDER
+  ).map(renderCard);
+  const featureCardsRow2 = orderLandingFeatures(
+    LANDING_CONTENT.features,
+    FEATURES_MARQUEE_ROW_2_ORDER
+  ).map(renderCard);
 
   const marqueeClass =
     "[mask-image:linear-gradient(to_right,transparent,black_64px,black_calc(100%-64px),transparent)]";

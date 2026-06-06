@@ -8,7 +8,7 @@ test.describe("Auth — Auth page smoke tests", () => {
     await page.evaluate(() => localStorage.clear());
     await page.reload();
 
-    await page.getByRole("button", { name: "Get Started Free" }).click();
+    await page.getByRole("button", { name: "Get Started" }).click();
 
     await page.waitForURL(/\/(home|sign-in)/, { timeout: 5_000 });
     const url = page.url();

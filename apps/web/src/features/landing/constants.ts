@@ -43,8 +43,20 @@ export const LANDING_FAQS: FAQItem[] = [
   },
 ];
 
+const LANDING_CHAT_TOOLS = [
+  { id: "chat", label: "AI Chat", iconName: "MessageCircle", color: "text-sky-700" },
+  { id: "deepResearch", label: "Deep Research", iconName: "Telescope", color: "text-indigo-700" },
+  {
+    id: "literatureReview",
+    label: "Literature Review",
+    iconName: "FileText",
+    color: "text-blue-700",
+  },
+] as const;
+
 const LANDING_TOOLS = [
   { id: "rag", label: "Grounded RAG System", iconName: "Brain", color: "text-violet-600" },
+  ...LANDING_CHAT_TOOLS,
   ...STUDIO_TOOLS,
 ];
 
@@ -64,26 +76,76 @@ export const LANDING_CONTENT = {
   contentShowcase: {
     title: "Upload Anything, Learn Everything",
     description:
-      "SolomindLM accepts virtually any content type and transforms it into interactive study materials",
+      "Upload files, paste links, import papers, or pull from Google Drive—SolomindLM turns your sources into interactive study materials",
     formats: [
       { name: "PDFs", icon: "FileText" },
-      { name: "Youtube Videos", icon: "Youtube" },
+      { name: "Video Transcripts", icon: "Youtube" },
       { name: "Websites", icon: "Globe" },
-      { name: "Slides", icon: "FileCode" },
-      { name: "Handwritten Notes", icon: "File" },
-      { name: "Text Files", icon: "File" },
+      { name: "Docs & Slides", icon: "Presentation" },
+      { name: "Images & Scans", icon: "ScanLine" },
+      { name: "Audio Files", icon: "AudioLines" },
+      { name: "Research Papers", icon: "GraduationCap" },
+      { name: "Google Drive", icon: "HardDrive" },
+      { name: "Text & Data", icon: "FileSpreadsheet" },
     ],
   },
   finalCTA: {
     title: "Ready to Transform Your Learning?",
     description: "Join thousands of students and researchers using SolomindLM",
-    buttonText: "Get Started Free",
+    buttonText: "Get Started",
     trustBadge: "No credit card required",
   },
 };
 
+/** Marquee row 1 — interleaved mix (not source order). */
+export const FEATURES_MARQUEE_ROW_1_ORDER = [
+  "flashcards",
+  "deepResearch",
+  "audio",
+  "quiz",
+  "literatureReview",
+  "mindmap",
+  "chat",
+  "infographic",
+  "rag",
+  "reports",
+  "writtenQuestions",
+  "spreadsheets",
+] as const;
+
+/** Marquee row 2 — different shuffle so rows don't mirror each other. */
+export const FEATURES_MARQUEE_ROW_2_ORDER = [
+  "quiz",
+  "spreadsheets",
+  "rag",
+  "audio",
+  "literatureReview",
+  "flashcards",
+  "deepResearch",
+  "mindmap",
+  "chat",
+  "reports",
+  "infographic",
+  "writtenQuestions",
+] as const;
+
+export function orderLandingFeatures(
+  features: typeof LANDING_CONTENT.features,
+  order: readonly string[]
+) {
+  const byId = new Map(features.map((feature) => [feature.id, feature]));
+  return order.flatMap((id) => {
+    const feature = byId.get(id);
+    return feature ? [feature] : [];
+  });
+}
+
 function getFeatureDescription(id: string): string {
   const descriptions: Record<string, string> = {
+    rag: "Answers grounded in your sources",
+    chat: "Ask questions with cited answers from your notebook",
+    deepResearch: "Multi-step research across web and academic papers",
+    literatureReview: "Screen papers and generate synthesis reports",
     audio: "AI summaries you can listen to anywhere",
     mindmap: "Map concepts and connections visually",
     reports: "Study guides and reports, on demand",
@@ -91,7 +153,6 @@ function getFeatureDescription(id: string): string {
     quiz: "Test yourself with AI-built quizzes",
     infographic: "Visual infographics from your sources",
     writtenQuestions: "Written Q&A with instant feedback",
-    rag: "Answers grounded in your sources",
     spreadsheets: "Sources turned into tables and data",
   };
   return descriptions[id] || "";
