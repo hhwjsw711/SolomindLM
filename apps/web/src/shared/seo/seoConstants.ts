@@ -1,7 +1,6 @@
 export const SEO_BASE_URL = "https://www.solomindlm.com";
 
-export const SEO_DEFAULT_TITLE =
-  "SolomindLM — AI Notebook for PDFs, Videos & Research (Free)";
+export const SEO_DEFAULT_TITLE = "SolomindLM — AI Notebook for PDFs, Videos & Research (Free)";
 
 export const SEO_DEFAULT_DESCRIPTION =
   "Upload PDFs, videos, and articles. Chat with your sources and generate flashcards, quizzes, mind maps, and audio overviews—grounded in your documents, free to start.";

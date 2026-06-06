@@ -148,7 +148,7 @@ const ROOT_DIV_PATTERN = /<div id="root">\s*<\/div>/;
 /** Inject static crawlable content inside #root before React hydrates. */
 export function injectPrerenderBody(html: string, bodyHtml: string): string {
   if (!ROOT_DIV_PATTERN.test(html)) {
-    throw new Error("injectPrerenderBody: expected <div id=\"root\"></div> in HTML template");
+    throw new Error('injectPrerenderBody: expected <div id="root"></div> in HTML template');
   }
   return html.replace(ROOT_DIV_PATTERN, `<div id="root">\n${bodyHtml}\n    </div>`);
 }

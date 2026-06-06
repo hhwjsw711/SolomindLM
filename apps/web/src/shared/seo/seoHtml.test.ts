@@ -6,12 +6,7 @@ import {
 import { buildIntentLandingPrerenderBody } from "./intentLandingPrerenderHtml";
 import { getPublicSeoPageByPath } from "./publicSeoPages";
 import { SEO_BASE_URL } from "./seoConstants";
-import {
-  applySeoToHtml,
-  canonicalUrl,
-  injectPrerenderBody,
-  seoPageToHeadInput,
-} from "./seoHtml";
+import { applySeoToHtml, canonicalUrl, injectPrerenderBody, seoPageToHeadInput } from "./seoHtml";
 
 const MINIMAL_HTML = `<!doctype html>
 <html lang="en">
