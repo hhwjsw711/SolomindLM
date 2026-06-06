@@ -1,6 +1,11 @@
 import React, { useEffect } from "react";
+import { getPublicSeoPageByPath } from "./publicSeoPages";
+import { SEO_BASE_URL, SEO_DEFAULT_DESCRIPTION, SEO_DEFAULT_TITLE } from "./seoConstants";
+import { canonicalUrl } from "./seoHtml";
 
 interface SEOMetaProps {
+  /** Look up title, description, and structured data from the public SEO registry. */
+  pagePath?: string;
   title?: string;
   description?: string;
   canonical?: string;
@@ -13,39 +18,40 @@ interface SEOMetaProps {
   structuredData?: Record<string, unknown> | Record<string, unknown>[];
 }
 
-const BASE_URL = "https://solomindlm.com";
-const DEFAULT_TITLE = "SolomindLM - AI Research Tool & Learning Partner";
-const DEFAULT_DESCRIPTION =
-  "Transform PDFs, videos, and articles into flashcards, quizzes, mind maps, and audio overviews. Grounded AI ensures accurate, hallucination-free study materials.";
+export const SEOMeta: React.FC<SEOMetaProps> = (props) => {
+  const registryPage = props.pagePath ? getPublicSeoPageByPath(props.pagePath) : undefined;
 
-export const SEOMeta: React.FC<SEOMetaProps> = ({
-  title = DEFAULT_TITLE,
-  description = DEFAULT_DESCRIPTION,
-  canonical,
-  keywords,
-  ogType = "website",
-  ogImage,
-  ogImageAlt,
-  twitterCard = "summary_large_image",
-  noindex = false,
-  structuredData,
-}) => {
+  const title = props.title ?? registryPage?.title ?? SEO_DEFAULT_TITLE;
+  const description = props.description ?? registryPage?.description ?? SEO_DEFAULT_DESCRIPTION;
+  const canonical = props.canonical ?? registryPage?.path;
+  const keywords = props.keywords ?? registryPage?.keywords;
+  const ogType = props.ogType ?? registryPage?.ogType ?? "website";
+  const ogImage = props.ogImage ?? registryPage?.ogImage;
+  const ogImageAlt = props.ogImageAlt ?? registryPage?.ogImageAlt;
+  const twitterCard = props.twitterCard ?? registryPage?.twitterCard ?? "summary_large_image";
+  const noindex = props.noindex ?? registryPage?.noindex ?? false;
+  const structuredData = props.structuredData ?? registryPage?.structuredData;
+
   useEffect(() => {
-    // Update basic meta tags
     document.title = title;
 
-    // Update or create meta description
     setMetaTag("name", "description", description);
 
     if (keywords !== undefined) {
       setMetaTag("name", "keywords", keywords);
     }
 
-    // Open Graph tags
     setMetaTag("property", "og:title", title);
     setMetaTag("property", "og:description", description);
     setMetaTag("property", "og:type", ogType);
-    setMetaTag("property", "og:url", window.location.href);
+
+    const pageUrl = canonical
+      ? canonicalUrl(SEO_BASE_URL, canonical)
+      : typeof window !== "undefined"
+        ? window.location.href
+        : SEO_BASE_URL;
+
+    setMetaTag("property", "og:url", pageUrl);
 
     if (ogImage) {
       setMetaTag("property", "og:image", ogImage);
@@ -54,7 +60,6 @@ export const SEOMeta: React.FC<SEOMetaProps> = ({
       }
     }
 
-    // Twitter Card tags
     setMetaTag("name", "twitter:card", twitterCard);
     setMetaTag("name", "twitter:title", title);
     setMetaTag("name", "twitter:description", description);
@@ -62,29 +67,16 @@ export const SEOMeta: React.FC<SEOMetaProps> = ({
       setMetaTag("name", "twitter:image", ogImage);
     }
 
-    // Canonical link
     if (canonical) {
-      setLinkTag("canonical", `${BASE_URL}${canonical}`);
-    } else {
-      setLinkTag("canonical", window.location.href);
+      setLinkTag("canonical", canonicalUrl(SEO_BASE_URL, canonical));
     }
 
-    // Robots meta
-    if (noindex) {
-      setMetaTag("name", "robots", "noindex, nofollow");
-    } else {
-      setMetaTag("name", "robots", "index, follow");
-    }
+    const robots = noindex ? "noindex, nofollow" : "index, follow";
+    setMetaTag("name", "robots", robots);
 
-    // Structured data (JSON-LD)
     if (structuredData) {
       setStructuredData(structuredData);
     }
-
-    // Cleanup on unmount
-    return () => {
-      removeMetaTags();
-    };
   }, [
     title,
     description,
@@ -98,10 +90,9 @@ export const SEOMeta: React.FC<SEOMetaProps> = ({
     structuredData,
   ]);
 
-  return null; // This component doesn't render anything
+  return null;
 };
 
-// Helper functions
 function setMetaTag(attrName: string, attrValue: string, content: string): void {
   let element = document.querySelector(`meta[${attrName}="${attrValue}"]`) as HTMLMetaElement;
   if (!element) {
@@ -138,17 +129,5 @@ function setStructuredData(data: Record<string, unknown> | Record<string, unknow
     script.setAttribute("data-dynamic", "true");
     document.head.appendChild(script);
     structuredDataScripts.push(script);
-  });
-}
-
-function removeMetaTags(): void {
-  const dynamicMetaTags = document.querySelectorAll('meta[data-dynamic="true"]');
-  dynamicMetaTags.forEach((tag) => tag.remove());
-  const dynamicLinks = document.querySelectorAll('link[data-dynamic="true"]');
-  dynamicLinks.forEach((tag) => tag.remove());
-  structuredDataScripts.splice(0, structuredDataScripts.length).forEach((script) => {
-    if (script.parentNode) {
-      script.parentNode.removeChild(script);
-    }
   });
 }

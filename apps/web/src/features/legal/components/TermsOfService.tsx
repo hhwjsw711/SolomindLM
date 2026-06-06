@@ -4,11 +4,7 @@ import { LegalPageShell } from "./LegalPageShell";
 
 export const TermsOfService: React.FC = () => {
   return (
-    <LegalPageShell
-      title="Terms of Service"
-      description="Terms that apply when you use SolomindLM’s AI research notebooks, sources, chat, and study tools."
-      canonical="/terms"
-    >
+    <LegalPageShell title="Terms of Service" canonical="/terms">
       <section className="space-y-3">
         <p className="text-muted-foreground">
           By creating an account or using SolomindLM (&quot;the Service&quot;), you agree to these

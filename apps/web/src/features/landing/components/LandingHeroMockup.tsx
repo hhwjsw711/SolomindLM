@@ -1,14 +1,20 @@
 import {
   Check,
+  CheckSquare,
   ChevronDown,
   FileStack,
+  FileText,
   Globe,
+  GraduationCap,
   Layers,
   MessageCircle,
   PanelLeftOpen,
   PanelRightOpen,
   Search,
   Send,
+  Square,
+  Telescope,
+  Youtube,
 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { CustomizeAudioModal } from "@/features/studio/components/CustomizeAudioModal";
@@ -22,6 +28,39 @@ import { ToolGrid } from "@/features/studio/components/ToolGrid";
 import { STUDIO_TOOLS } from "@/shared/constants";
 
 type HeroMode = "chat" | "studio";
+
+type DemoComposerMode = "chat" | "deepResearch" | "literatureReview";
+
+const DEMO_COMPOSER_MODES: {
+  id: DemoComposerMode;
+  label: string;
+  shortLabel: string;
+  placeholder: string;
+  icon: typeof MessageCircle;
+}[] = [
+  {
+    id: "chat",
+    label: "Chat",
+    shortLabel: "Chat",
+    placeholder: "Ask a question about your sources...",
+    icon: MessageCircle,
+  },
+  {
+    id: "deepResearch",
+    label: "Deep Research",
+    shortLabel: "Research",
+    placeholder: "Ask a complex research question with multi-step investigation...",
+    icon: Telescope,
+  },
+  {
+    id: "literatureReview",
+    label: "Literature Review",
+    shortLabel: "Literature",
+    placeholder:
+      "Describe the topic, research question, and requirements to generate a literature review...",
+    icon: FileText,
+  },
+];
 
 type LandingStudioPreviewModal =
   | null
@@ -43,20 +82,46 @@ export function LandingHeroMockup({
   className,
 }: LandingHeroMockupProps) {
   const [mode, setMode] = useState<HeroMode>("chat");
-  const [sourceId, setSourceId] = useState<string>("s1");
+  const [selectedSourceIds, setSelectedSourceIds] = useState<Set<string>>(
+    () => new Set(["s1", "s2", "s3"])
+  );
   const [refKey, setRefKey] = useState<1 | 2 | null>(1);
   const [activityOpen, setActivityOpen] = useState(true);
   const [studioModal, setStudioModal] = useState<LandingStudioPreviewModal>(null);
   const [inputFlash, setInputFlash] = useState(false);
+  const [composerMode, setComposerMode] = useState<DemoComposerMode>("chat");
+
+  const activeComposer = useMemo(
+    () => DEMO_COMPOSER_MODES.find((m) => m.id === composerMode) ?? DEMO_COMPOSER_MODES[0],
+    [composerMode]
+  );
 
   const sources = useMemo(
     () => [
-      { id: "s1", title: "CPSC 304 — notes.pdf", kind: "PDF" },
-      { id: "s2", title: "Normal forms explained", kind: "YouTube" },
-      { id: "s3", title: "ACM survey (2019)", kind: "Article" },
+      { id: "s1", title: "CPSC 304 — notes.pdf", type: "PDF" as const, date: "Jan 12" },
+      { id: "s2", title: "Normal forms explained", type: "YOUTUBE" as const, date: "Feb 3" },
+      { id: "s3", title: "ACM survey (2019)", type: "PAPER" as const, date: "Mar 8" },
     ],
     []
   );
+
+  const toggleSourceSelected = useCallback((id: string) => {
+    setSelectedSourceIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        if (next.size > 1) next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
+  const sourceIcon = useCallback((type: (typeof sources)[number]["type"]) => {
+    if (type === "YOUTUBE") return <Youtube className="h-4 w-4 text-destructive sm:h-5 sm:w-5" />;
+    if (type === "PAPER") return <GraduationCap className="h-4 w-4 sm:h-5 sm:w-5" />;
+    return <FileText className="h-4 w-4 sm:h-5 sm:w-5" />;
+  }, []);
 
   const closeStudioModal = useCallback(() => setStudioModal(null), []);
 
@@ -167,27 +232,46 @@ export function LandingHeroMockup({
                 Sources
               </span>
             </div>
-            <div className="flex flex-1 flex-col gap-1.5 overflow-y-auto p-3 sm:gap-2 sm:p-4">
+            <div className="flex flex-1 flex-col gap-2 overflow-y-auto p-2.5 sm:gap-2.5 sm:p-3">
               {sources.map((s) => {
-                const active = sourceId === s.id;
+                const selected = selectedSourceIds.has(s.id);
+                const typeLabel =
+                  s.type === "YOUTUBE" ? "YouTube" : s.type === "PAPER" ? "Paper" : s.type;
                 return (
-                  <button
+                  <div
                     key={s.id}
-                    type="button"
-                    onClick={() => setSourceId(s.id)}
-                    className={`rounded-lg border px-2 py-1.5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:px-2.5 sm:py-2 ${
-                      active
-                        ? "border-primary/50 bg-primary/8 shadow-sm"
-                        : "border-border/80 bg-background/60 hover:border-border hover:bg-accent/40"
-                    }`}
+                    className="group flex cursor-default flex-col overflow-hidden rounded-lg border border-border bg-card shadow-sm transition-all hover:shadow-md"
                   >
-                    <p className="truncate font-sans text-[11px] font-medium text-foreground sm:text-xs">
-                      {s.title}
-                    </p>
-                    <p className="mt-0.5 font-sans text-[10px] text-muted-foreground sm:text-[11px]">
-                      {s.kind}
-                    </p>
-                  </button>
+                    <div className="flex items-center gap-2 px-2 py-2 sm:px-2.5 sm:py-2.5">
+                      <div className="flex shrink-0 items-center justify-center text-muted-foreground">
+                        {sourceIcon(s.type)}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="truncate text-[11px] font-medium leading-tight text-foreground sm:text-xs">
+                          {s.title}
+                        </h4>
+                        <p className="mt-0.5 truncate font-sans text-[10px] leading-snug text-muted-foreground sm:text-[11px]">
+                          <span className={s.type === "YOUTUBE" ? "tracking-wide" : "uppercase tracking-wide"}>
+                            {typeLabel}
+                          </span>
+                          <span> • {s.date}</span>
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => toggleSourceSelected(s.id)}
+                        className="flex shrink-0 items-center justify-center rounded-xl p-1 text-primary transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        aria-label={selected ? `Deselect ${s.title}` : `Select ${s.title}`}
+                        aria-pressed={selected}
+                      >
+                        {selected ? (
+                          <CheckSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                        ) : (
+                          <Square className="h-3.5 w-3.5 opacity-50 group-hover:opacity-100 sm:h-4 sm:w-4" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
                 );
               })}
             </div>
@@ -239,29 +323,42 @@ export function LandingHeroMockup({
                     />
                   </button>
                   {activityOpen ? (
-                    <ul className="space-y-1 border-l-2 border-primary/20 py-1 pl-2.5 font-sans text-[10px] text-muted-foreground sm:space-y-1.5 sm:pl-3 sm:text-xs">
-                      <li className="flex items-center gap-1.5 sm:gap-2">
-                        <Check
-                          className="h-3 w-3 shrink-0 text-vintage-green-600 sm:h-3.5 sm:w-3.5"
-                          aria-hidden
-                        />
-                        HyDE + embeddings
-                      </li>
-                      <li className="flex items-center gap-1.5 sm:gap-2">
-                        <Check
-                          className="h-3 w-3 shrink-0 text-vintage-green-600 sm:h-3.5 sm:w-3.5"
-                          aria-hidden
-                        />
-                        Ranked relevant passages
-                      </li>
-                      <li className="flex items-start gap-1.5 pt-0.5 sm:gap-2">
-                        <Globe
-                          className="mt-0.5 h-3 w-3 shrink-0 opacity-70 sm:h-3.5 sm:w-3.5"
-                          aria-hidden
-                        />
-                        <span>Reading: CPSC 304 — notes.pdf</span>
-                      </li>
-                    </ul>
+                    <div className="space-y-1.5 rounded-lg border border-border/60 bg-muted/25 px-2.5 py-2 sm:px-3 sm:py-2.5">
+                      {[
+                        { done: true, label: "Semantic search across sources" },
+                        { done: true, label: "Ranked relevant passages" },
+                        {
+                          done: false,
+                          label: "Reading: CPSC 304 — notes.pdf",
+                          icon: Globe,
+                        },
+                      ].map((step) => {
+                        const StepIcon = step.icon;
+                        return (
+                          <div
+                            key={step.label}
+                            className="flex items-center gap-2 font-sans text-[10px] text-muted-foreground sm:text-xs"
+                          >
+                            {step.done ? (
+                              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-vintage-green-600/15 sm:h-[18px] sm:w-[18px]">
+                                <Check
+                                  className="h-2.5 w-2.5 text-vintage-green-600 sm:h-3 sm:w-3"
+                                  aria-hidden
+                                />
+                              </span>
+                            ) : StepIcon ? (
+                              <span className="flex h-4 w-4 shrink-0 items-center justify-center sm:h-[18px] sm:w-[18px]">
+                                <StepIcon
+                                  className="h-3 w-3 text-primary/70 sm:h-3.5 sm:w-3.5"
+                                  aria-hidden
+                                />
+                              </span>
+                            ) : null}
+                            <span className={step.done ? "" : "text-foreground/80"}>{step.label}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
                   ) : null}
                 </div>
 
@@ -319,19 +416,54 @@ export function LandingHeroMockup({
 
             <div className="shrink-0 border-t border-border bg-background/90 p-2 backdrop-blur-sm sm:p-3">
               <div
-                className={`flex items-center gap-2 rounded-lg border border-input bg-card px-2.5 py-1.5 shadow-sm transition sm:rounded-xl sm:px-3 sm:py-2 ${
+                className={`flex w-full min-w-0 flex-col gap-0.5 overflow-hidden rounded-2xl border border-border/80 bg-card px-2.5 py-1.5 shadow-lg transition sm:px-3 ${
                   inputFlash ? "ring-2 ring-primary/35" : ""
                 }`}
               >
-                <div className="h-2 min-w-0 flex-1 rounded-full bg-muted/80" />
-                <button
-                  type="button"
-                  onClick={flashInput}
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-sm transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:h-9 sm:w-9 sm:rounded-lg"
-                  aria-label="Send (demo)"
-                >
-                  <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden />
-                </button>
+                <p className="px-1 py-1.5 font-serif text-xs leading-snug text-muted-foreground/70 sm:text-sm">
+                  {activeComposer.placeholder}
+                </p>
+                <div className="flex w-full min-w-0 flex-nowrap items-center justify-between gap-2">
+                  <div
+                    className="flex min-w-0 flex-1 flex-nowrap items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                    role="tablist"
+                    aria-label="Composer mode"
+                  >
+                    {DEMO_COMPOSER_MODES.map(({ id, label, shortLabel, icon: Icon }) => {
+                      const active = composerMode === id;
+                      return (
+                        <button
+                          key={id}
+                          type="button"
+                          role="tab"
+                          aria-selected={active}
+                          onClick={() => setComposerMode(id)}
+                          className={[
+                            "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-transparent px-2.5 text-[11px] font-medium font-sans transition-colors sm:h-9 sm:gap-2 sm:px-3 sm:text-xs",
+                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card",
+                            active && id === "literatureReview"
+                              ? "bg-primary/10 text-primary"
+                              : active
+                                ? "bg-muted/80 text-foreground"
+                                : "bg-muted/35 text-muted-foreground hover:bg-muted/55 hover:text-foreground",
+                          ].join(" ")}
+                        >
+                          <Icon className="size-3.5 shrink-0 opacity-90 sm:size-4" aria-hidden />
+                          <span className="truncate sm:hidden">{shortLabel}</span>
+                          <span className="hidden truncate sm:inline">{label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={flashInput}
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:h-9 sm:w-9"
+                    aria-label="Send (demo)"
+                  >
+                    <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden />
+                  </button>
+                </div>
               </div>
             </div>
           </div>

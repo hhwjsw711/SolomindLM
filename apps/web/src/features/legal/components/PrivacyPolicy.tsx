@@ -4,11 +4,7 @@ import { LegalPageShell } from "./LegalPageShell";
 
 export const PrivacyPolicy: React.FC = () => {
   return (
-    <LegalPageShell
-      title="Privacy Policy"
-      description="How SolomindLM collects, uses, and shares information when you use our notebooks, sources, AI features, and billing."
-      canonical="/privacy"
-    >
+    <LegalPageShell title="Privacy Policy" canonical="/privacy">
       <section className="space-y-3">
         <p className="text-muted-foreground">
           SolomindLM is operated from Canada. This Policy describes how we handle personal

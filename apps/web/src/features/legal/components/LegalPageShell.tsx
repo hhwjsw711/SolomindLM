@@ -6,12 +6,11 @@ import { LEGAL_LAST_UPDATED } from "../legalMeta";
 
 type LegalPageShellProps = {
   title: string;
-  description: string;
   canonical: "/terms" | "/privacy";
   children: ReactNode;
 };
 
-export function LegalPageShell({ title, description, canonical, children }: LegalPageShellProps) {
+export function LegalPageShell({ title, canonical, children }: LegalPageShellProps) {
   const other =
     canonical === "/terms"
       ? { href: "/privacy", label: "Privacy Policy" }
@@ -19,7 +18,7 @@ export function LegalPageShell({ title, description, canonical, children }: Lega
 
   return (
     <>
-      <SEOMeta title={`${title} - SolomindLM`} description={description} canonical={canonical} />
+      <SEOMeta pagePath={canonical} />
       <div className="min-h-screen bg-background text-foreground">
         <header className="border-b border-border/80 bg-background/80 backdrop-blur-sm sticky top-0 z-10">
           <div className="mx-auto flex max-w-2xl items-center justify-between gap-4 px-5 py-4">

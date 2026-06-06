@@ -3,12 +3,6 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { AuthModal } from "@/features/auth/components/AuthModal";
 import { useAuth } from "@/features/auth/useAuth";
 import { SEOMeta } from "@/shared/seo/SEOMeta";
-import {
-  generateFAQStructuredData,
-  generateOrganizationStructuredData,
-  generateSoftwareApplicationStructuredData,
-  generateWebSiteStructuredData,
-} from "@/shared/seo/structuredData";
 import { isNativeShell } from "@/utils/platformDetection";
 import { ContentShowcase } from "./components/ContentShowcase";
 import { FAQSection } from "./components/FAQSection";
@@ -18,7 +12,6 @@ import { HeroSection } from "./components/HeroSection";
 import { NavigationHeader } from "./components/NavigationHeader";
 import { PricingSection } from "./components/PricingSection";
 import { UseCasesSection } from "./components/UseCasesSection";
-import { LANDING_FAQS } from "./constants";
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -38,17 +31,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
 
   return (
     <>
-      <SEOMeta
-        title="SolomindLM - AI Research Tool & Learning Partner"
-        description="Transform PDFs, videos, and articles into flashcards, quizzes, mind maps, and audio overviews. Grounded AI ensures accurate, hallucination-free study materials."
-        canonical="/"
-        structuredData={[
-          generateOrganizationStructuredData(),
-          generateWebSiteStructuredData(),
-          generateSoftwareApplicationStructuredData(),
-          generateFAQStructuredData(LANDING_FAQS),
-        ]}
-      />
+      <SEOMeta pagePath="/" />
       <div className="min-h-screen landing-grid-pattern">
         <NavigationHeader
           onGetStarted={onGetStarted}

@@ -6,7 +6,7 @@
   "scripts": {
     "kill-port": "bun run scripts/kill-port.ts",
     "dev": "bun run kill-port && vite",
-    "build": "vite build",
+    "build": "vite build && bun run scripts/prerender-seo.ts && bun run scripts/generate-sitemap.ts",
     "preview": "vite preview",
     "test": "vitest run --config vitest.config.ts",
     "test:watch": "vitest --config vitest.config.ts",
