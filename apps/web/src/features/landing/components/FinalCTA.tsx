@@ -7,10 +7,10 @@ interface FinalCTAProps {
 }
 
 const benefits = [
-  "Generate flashcards from any PDF in seconds",
-  "Create quizzes from videos and articles",
-  "Turn notes into mind maps automatically",
-  "Export to Anki, Quizlet, and more",
+  "Draft flashcards from PDFs and other sources you upload",
+  "Build multiple-choice quizzes from your notebook material",
+  "Create mind maps from your uploaded content",
+  "Chat and generate reports grounded in your sources",
 ];
 
 export const FinalCTA: React.FC<FinalCTAProps> = ({ onGetStarted }) => {
@@ -19,12 +19,12 @@ export const FinalCTA: React.FC<FinalCTAProps> = ({ onGetStarted }) => {
       <div className="max-w-3xl mx-auto text-center space-y-8">
         {/* Headline */}
         <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground">
-          Start Learning Smarter Today
+          Ready to Transform Your Learning?
         </h2>
 
         {/* Description */}
         <p className="text-lg text-muted-foreground">
-          Join thousands of students and researchers who save hours of study time every week
+          Create study and research materials from your own sources
         </p>
 
         {/* Benefits List */}
@@ -49,10 +49,6 @@ export const FinalCTA: React.FC<FinalCTAProps> = ({ onGetStarted }) => {
 
         {/* Trust Badges */}
         <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
-          <span className="flex items-center gap-2">
-            <Check className="w-4 h-4 text-success" />
-            Takes 30 seconds
-          </span>
           <span className="flex items-center gap-2">
             <Check className="w-4 h-4 text-success" />
             No credit card required

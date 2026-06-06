@@ -1,6 +1,18 @@
 import { Twitter } from "lucide-react";
 import React from "react";
 import { Link } from "react-router-dom";
+import { getIntentPagesByCluster } from "../intentLandingPages";
+
+const FOOTER_TAGLINE =
+  "SolomindLM is an AI learning and research assistant that helps you work with PDFs, videos, and papers—flashcards, quizzes, reports, chat, and more, starting from the material you upload.";
+
+const COMPANY_LINKS = [
+  { label: "Features", to: "/#features" },
+  { label: "Pricing", to: "/#pricing" },
+  { label: "FAQ", to: "/#faq" },
+  { label: "Privacy Policy", to: "/privacy" },
+  { label: "Terms", to: "/terms" },
+] as const;
 
 function DiscordIcon({ className }: { className?: string }) {
   return (
@@ -16,53 +28,104 @@ function DiscordIcon({ className }: { className?: string }) {
   );
 }
 
+function FooterLinkColumn({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <nav aria-label={title}>
+      <h3 className="text-[15px] font-display font-semibold text-foreground mb-5">{title}</h3>
+      <ul className="space-y-3">{children}</ul>
+    </nav>
+  );
+}
+
+function FooterLink({ to, children }: { to: string; children: React.ReactNode }) {
+  return (
+    <li>
+      <Link
+        to={to}
+        className="text-sm text-muted-foreground hover:text-foreground transition-colors leading-snug"
+      >
+        {children}
+      </Link>
+    </li>
+  );
+}
+
 export const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
+  const studentPages = getIntentPagesByCluster("students");
+  const researchPages = getIntentPagesByCluster("research");
 
   return (
-    <footer className="border-t border-border bg-background">
-      <div className="max-w-[1500px] w-full mx-auto px-6 py-12">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          {/* Brand */}
-          <div className="text-sm text-muted-foreground">&copy; {currentYear} SolomindLM</div>
-
-          {/* Links */}
-          <nav className="flex items-center gap-6">
-            <Link
-              to="/privacy"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Privacy
+    <footer className="border-t border-border/60 bg-card/40">
+      <div className="max-w-[1500px] w-full mx-auto px-6 sm:px-8 lg:px-12 pt-16 pb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-10">
+          <div className="sm:col-span-2 lg:col-span-4">
+            <Link to="/" className="inline-flex items-center gap-2.5 mb-5">
+              <img src="/SolomindLM_logo.png" alt="" className="w-8 h-8 shrink-0 object-contain" />
+              <span className="text-xl font-display font-bold text-foreground tracking-tight">
+                SolomindLM
+              </span>
             </Link>
-            <Link
-              to="/terms"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Terms
-            </Link>
-          </nav>
-
-          {/* Social Links */}
-          <div className="flex items-center gap-4">
-            <a
-              href="https://discord.gg/solomindlm"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Discord"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <DiscordIcon className="w-5 h-5" />
-            </a>
-            <a
-              href="https://twitter.com/solomindlm"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Twitter"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <Twitter className="w-5 h-5" />
-            </a>
+            <p className="text-sm text-muted-foreground leading-relaxed max-w-sm mb-6">
+              {FOOTER_TAGLINE}
+            </p>
+            <div className="flex items-center gap-4">
+              <a
+                href="https://discord.gg/solomindlm"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Discord"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <DiscordIcon className="w-5 h-5" />
+              </a>
+              <a
+                href="https://twitter.com/solomindlm"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Twitter"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Twitter className="w-5 h-5" />
+              </a>
+            </div>
           </div>
+
+          <div className="lg:col-span-2">
+            <FooterLinkColumn title="Company">
+              {COMPANY_LINKS.map((link) => (
+                <FooterLink key={link.to} to={link.to}>
+                  {link.label}
+                </FooterLink>
+              ))}
+            </FooterLinkColumn>
+          </div>
+
+          <div className="lg:col-span-3">
+            <FooterLinkColumn title="For Students">
+              {studentPages.map((page) => (
+                <FooterLink key={page.path} to={page.path}>
+                  {page.navLabel}
+                </FooterLink>
+              ))}
+            </FooterLinkColumn>
+          </div>
+
+          <div className="lg:col-span-3">
+            <FooterLinkColumn title="For Research">
+              {researchPages.map((page) => (
+                <FooterLink key={page.path} to={page.path}>
+                  {page.navLabel}
+                </FooterLink>
+              ))}
+            </FooterLinkColumn>
+          </div>
+        </div>
+
+        <div className="mt-14 pt-8 border-t border-border/60 text-center">
+          <p className="text-sm text-muted-foreground">
+            Copyright &copy; {currentYear} SolomindLM. All rights reserved.
+          </p>
         </div>
       </div>
     </footer>

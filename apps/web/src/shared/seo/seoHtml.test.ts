@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { getIntentLandingPaths } from "@/features/landing/intentLandingPages";
 import { getPublicSeoPageByPath } from "./publicSeoPages";
 import { applySeoToHtml, canonicalUrl, seoPageToHeadInput } from "./seoHtml";
 
@@ -45,5 +46,13 @@ describe("applySeoToHtml", () => {
     expect(html).toContain('type="application/ld+json"');
     expect(html).toContain('"@type":"FAQPage"');
     expect(html).not.toContain("SearchAction");
+  });
+});
+
+describe("intent landing SEO registry", () => {
+  it("registers all intent landing pages in the SEO registry", () => {
+    for (const path of getIntentLandingPaths()) {
+      expect(getPublicSeoPageByPath(path)).toBeDefined();
+    }
   });
 });

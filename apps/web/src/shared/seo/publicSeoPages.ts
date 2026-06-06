@@ -1,4 +1,5 @@
 import { LANDING_FAQS } from "@/features/landing/constants";
+import { INTENT_LANDING_PAGES } from "@/features/landing/intentLandingPages";
 import { LEGAL_LAST_UPDATED_ISO } from "@/features/legal/legalMeta";
 import {
   SEO_DEFAULT_DESCRIPTION,
@@ -39,6 +40,16 @@ const HOME_STRUCTURED_DATA = [
   generateFAQStructuredData(LANDING_FAQS),
 ];
 
+const INTENT_SEO_PAGES: PublicSeoPage[] = INTENT_LANDING_PAGES.map((page) => ({
+  path: page.path,
+  title: page.title,
+  description: page.description,
+  keywords: page.keywords,
+  changefreq: page.changefreq ?? "weekly",
+  priority: page.priority ?? 0.8,
+  structuredData: generateFAQStructuredData(page.faqs),
+}));
+
 export const PUBLIC_SEO_PAGES: PublicSeoPage[] = [
   {
     path: "/",
@@ -69,6 +80,7 @@ export const PUBLIC_SEO_PAGES: PublicSeoPage[] = [
     priority: 0.3,
     lastmod: LEGAL_LAST_UPDATED_ISO,
   },
+  ...INTENT_SEO_PAGES,
 ];
 
 export function getPublicSeoPageByPath(path: string): PublicSeoPage | undefined {

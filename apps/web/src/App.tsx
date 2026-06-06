@@ -17,6 +17,8 @@ import { useSubscriptionStatus } from "./features/billing/services/subscriptionA
 import { ChatStreamingProvider } from "./features/chat/ChatStreamingContext";
 import { useChatStream } from "./features/chat/hooks/useChatStream";
 import { useConversationCRUD } from "./features/chat/hooks/useConversationCRUD";
+import { IntentLandingPage } from "./features/landing/IntentLandingPage";
+import { INTENT_LANDING_PAGES, isIntentLandingPath } from "./features/landing/intentLandingPages";
 import { LandingPage } from "./features/landing/LandingPage";
 import { PrivacyPolicy } from "./features/legal/components/PrivacyPolicy";
 import { TermsOfService } from "./features/legal/components/TermsOfService";
@@ -154,7 +156,8 @@ const AppContent: React.FC = () => {
     location.pathname === "/" ||
     location.pathname === "/privacy" ||
     location.pathname === "/terms" ||
-    location.pathname === "/sign-in";
+    location.pathname === "/sign-in" ||
+    isIntentLandingPath(location.pathname);
   const isHomePage =
     location.pathname === "/home" ||
     location.pathname === "/billing" ||
@@ -383,6 +386,14 @@ const AppContent: React.FC = () => {
             <Route path="/sign-in" element={<AuthPage />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />
+
+            {INTENT_LANDING_PAGES.map((page) => (
+              <Route
+                key={page.path}
+                path={page.path}
+                element={<IntentLandingPage pagePath={page.path} />}
+              />
+            ))}
 
             <Route path="/home" element={<HomePage />} />
 

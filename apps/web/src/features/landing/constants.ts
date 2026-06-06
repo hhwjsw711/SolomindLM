@@ -9,17 +9,16 @@ export const LANDING_FAQS: FAQItem[] = [
   {
     question: "How accurate is the AI-generated content?",
     answer:
-      "All generated content is grounded directly in your uploaded sources—whether it's a PDF, article, or video—rather than relying solely on general knowledge. This means the chances of AI hallucinations are extremely low, ensuring the flashcards, quizzes, and summaries accurately reflect your original materials.",
+      "Generated content is based on the sources you add, but it should still be reviewed against the original material before you rely on it for studying or research.",
   },
   {
     question: "What languages are supported?",
-    answer:
-      "Currently, we're focusing on English content with full official support. We're actively working on expanding to other popular languages including Spanish, French, German, Chinese, Japanese, and Korean. Coming soon, you'll be able to process content in one language and generate study materials in another.",
+    answer: "SolomindLM is currently focused on English-language study and research workflows.",
   },
   {
-    question: "Can I export my flashcards and study materials?",
+    question: "What can I do with generated study materials?",
     answer:
-      "Yes! You can export your flashcards to Anki, Quizlet, as CSV files. Mind maps can be exported as images or in Markdown format. Audio overviews can be downloaded as MP3 files.",
+      "You can create study outputs like flashcards, quizzes, mind maps, and audio overviews from your sources, then review them inside SolomindLM.",
   },
   {
     question: "How is my data used and protected?",
@@ -34,12 +33,12 @@ export const LANDING_FAQS: FAQItem[] = [
   {
     question: "What makes SolomindLM different from Quizlet or Anki?",
     answer:
-      "Unlike Quizlet or Anki which require manual content creation, SolomindLM uses AI to automatically generate study materials from any content source. Simply upload a PDF, video, or article, and get flashcards, quizzes, and mind maps instantly—saving you hours of manual work.",
+      "SolomindLM starts from your PDFs, videos, articles, and notes, then helps generate study materials from that source content instead of requiring you to create everything manually.",
   },
   {
     question: "How long does it take to generate study materials?",
     answer:
-      "Most documents are processed in under 60 seconds. A 20-page PDF typically takes about 30 seconds to generate comprehensive flashcards, quizzes, and summaries.",
+      "Processing time depends on the source length, file type, and the output you choose to generate.",
   },
 ];
 
@@ -91,7 +90,7 @@ export const LANDING_CONTENT = {
   },
   finalCTA: {
     title: "Ready to Transform Your Learning?",
-    description: "Join thousands of students and researchers using SolomindLM",
+    description: "Create study and research materials from your own sources",
     buttonText: "Get Started",
     trustBadge: "No credit card required",
   },
@@ -142,18 +141,24 @@ export function orderLandingFeatures(
 
 function getFeatureDescription(id: string): string {
   const descriptions: Record<string, string> = {
-    rag: "Answers grounded in your sources",
-    chat: "Ask questions with cited answers from your notebook",
-    deepResearch: "Multi-step research across web and academic papers",
-    literatureReview: "Screen papers and generate synthesis reports",
-    audio: "AI summaries you can listen to anywhere",
-    mindmap: "Map concepts and connections visually",
-    reports: "Study guides and reports, on demand",
-    flashcards: "Auto-generated cards from any content",
-    quiz: "Test yourself with AI-built quizzes",
+    rag: "Answers from your uploaded sources",
+    chat: "Ask questions using your notebook sources",
+    deepResearch: "Multi-step research with web and notebook sources",
+    literatureReview: "Screen papers and draft synthesis reports",
+    sourceUpload: "Files, links, transcripts, and pasted text",
+    sourceDiscovery: "Search web and news, add to your notebook",
+    academicDiscovery: "Find academic papers with filters",
+    paperImport: "DOI, BibTeX, RIS, Zotero, and Mendeley",
+    citationStyles: "APA, MLA, Chicago, IEEE, and more",
+    notebookSharing: "Cowork or fork a notebook via link",
+    audio: "Audio recaps from your study material",
+    mindmap: "Visual maps of concepts from your sources",
+    reports: "Study guides and report drafts on demand",
+    flashcards: "Flashcard drafts from your material",
+    quiz: "Multiple-choice practice quizzes from sources",
     infographic: "Visual infographics from your sources",
-    writtenQuestions: "Written Q&A with instant feedback",
-    spreadsheets: "Sources turned into tables and data",
+    writtenQuestions: "Written prompts with answer feedback",
+    spreadsheets: "Structured tables extracted from sources",
   };
   return descriptions[id] || "";
 }

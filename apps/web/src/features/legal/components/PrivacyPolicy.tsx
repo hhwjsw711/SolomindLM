@@ -51,8 +51,13 @@ export const PrivacyPolicy: React.FC = () => {
             </li>
             <li>
               Chat messages, notes, and generated artifacts stored in your workspace (for example
-              reports, flashcards, quizzes, mind maps, infographics, spreadsheets, audio, and
-              similar outputs).
+              reports, flashcards, quizzes, mind maps, infographics, spreadsheets, audio overviews,
+              written-question sets, literature tables, and literature review outputs).
+            </li>
+            <li>
+              Research and discovery activity, such as search queries, literature review screening
+              decisions, and bibliographic metadata from academic databases when you use those
+              features.
             </li>
             <li>
               Notebook organization data (folders, titles, sharing or collaboration settings where
@@ -107,27 +112,32 @@ export const PrivacyPolicy: React.FC = () => {
           </li>
           <li>
             <span className="text-foreground">Together AI</span> — large language model inference
-            for chat, many generation flows, and text-to-speech for audio overviews.
+            for chat and generation flows; multilingual text embeddings for search and retrieval;
+            text-to-speech for audio overviews; speech-to-text for uploaded audio; and image
+            generation for infographics (via hosted models on Together&apos;s platform).
           </li>
           <li>
-            <span className="text-foreground">OpenAI</span> — text embeddings for search and image
-            generation for slide visuals where that pipeline is used.
+            <span className="text-foreground">ZeroEntropy</span> — reranking retrieved passages for
+            relevance in search and chat.
           </li>
           <li>
-            <span className="text-foreground">ZeroEntropy</span> — optional reranking over retrieved
-            passages for relevance.
+            <span className="text-foreground">Mistral</span> — optical character recognition (OCR)
+            for PDFs, images, and some academic paper extraction paths.
           </li>
           <li>
-            <span className="text-foreground">Mistral</span> — image and document text extraction
-            (OCR) where that path is used.
+            <span className="text-foreground">Supadata</span> — fetching web pages and transcripts
+            from certain third-party links and media (for example YouTube and other supported
+            platforms).
           </li>
           <li>
-            <span className="text-foreground">Supadata</span> — fetching and transcribing certain
-            third-party links and media.
+            <span className="text-foreground">Tavily</span> — web, news, and finance source
+            discovery and search when those features run.
           </li>
           <li>
-            <span className="text-foreground">Tavily</span> — web search and source discovery when
-            those features run.
+            <span className="text-foreground">OpenAlex, Semantic Scholar, PubMed, and arXiv</span> —
+            academic paper metadata and discovery when you use literature review, deep research, or
+            academic discover features (your search terms may be sent; returned data is generally
+            public bibliographic information).
           </li>
           <li>
             <span className="text-foreground">Stripe</span> — payments and subscription management.

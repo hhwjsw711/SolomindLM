@@ -14,12 +14,14 @@ import {
 } from "lucide-react";
 import React from "react";
 import Marquee from "react-fast-marquee";
+import { Link } from "react-router-dom";
 import {
   FEATURES_MARQUEE_ROW_1_ORDER,
   FEATURES_MARQUEE_ROW_2_ORDER,
   LANDING_CONTENT,
   orderLandingFeatures,
 } from "../constants";
+import { FEATURE_INTENT_PATHS } from "../intentLandingPages";
 
 export const FeaturesGrid: React.FC = () => {
   const getIconForFeature = (id: string) => {
@@ -87,6 +89,7 @@ export const FeaturesGrid: React.FC = () => {
   const renderCard = (feature: (typeof LANDING_CONTENT.features)[0]) => {
     const Icon = getIconForFeature(feature.id);
     const colorClass = getColorForFeature(feature.id);
+    const intentPath = FEATURE_INTENT_PATHS[feature.id];
     return (
       <div
         key={feature.id}
@@ -101,6 +104,11 @@ export const FeaturesGrid: React.FC = () => {
         <p className="text-muted-foreground text-base leading-relaxed line-clamp-2">
           {feature.description}
         </p>
+        {intentPath ? (
+          <Link to={intentPath} className="mt-3 text-sm font-medium text-primary hover:underline">
+            Learn more →
+          </Link>
+        ) : null}
       </div>
     );
   };
