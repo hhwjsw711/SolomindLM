@@ -70,7 +70,11 @@ function IntentHeader() {
     <header className="border-b border-border/60 bg-card/40 backdrop-blur-sm sticky top-0 z-50">
       <div className="max-w-[1500px] mx-auto px-6 sm:px-8 lg:px-12 h-16 flex items-center justify-between">
         <Link to="/" className="inline-flex items-center gap-2.5">
-          <img src="/SolomindLM_logo.png" alt="SolomindLM" className="w-8 h-8 shrink-0 object-contain" />
+          <img
+            src="/SolomindLM_logo.png"
+            alt="SolomindLM"
+            className="w-8 h-8 shrink-0 object-contain"
+          />
           <span className="text-lg font-display font-bold text-foreground tracking-tight">
             SolomindLM
           </span>
