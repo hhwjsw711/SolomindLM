@@ -88,7 +88,7 @@ export const Footer: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-10">
           <div className="sm:col-span-2 lg:col-span-4">
             <Link to="/" className="inline-flex items-center gap-2.5 mb-5">
-              <img src="/SolomindLM_logo.png" alt="" className="w-8 h-8 shrink-0 object-contain" />
+              <img src="/SolomindLM_logo.png" alt="SolomindLM" className="w-8 h-8 shrink-0 object-contain" />
               <span className="text-xl font-display font-bold text-foreground tracking-tight">
                 SolomindLM
               </span>

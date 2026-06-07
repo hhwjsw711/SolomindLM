@@ -44,10 +44,9 @@ export const Favicon: React.FC<FaviconProps> = ({
   return (
     <img
       src={src}
-      alt=""
+      alt={hostname ? `${hostname} favicon` : "Site favicon"}
       width={size}
       height={size}
-      aria-hidden="true"
       loading="lazy"
       className={`shrink-0 self-start inline-block ${fit === "cover" ? "object-cover" : "object-contain"} ${className}`}
       style={{ width: size, height: size, maxWidth: size, maxHeight: size }}

@@ -474,7 +474,7 @@ export function AuthPage() {
       <header className="relative z-1 flex shrink-0 items-center justify-between px-6 py-5 sm:px-10">
         {nativeShell ? (
           <div className="flex items-center gap-2.5 text-stone-900">
-            <img src="/SolomindLM_logo.png" alt="" className="h-8 w-8 object-contain" />
+            <img src="/SolomindLM_logo.png" alt="SolomindLM" className="h-8 w-8 object-contain" />
             <span className="font-serif text-lg font-semibold tracking-tight">SolomindLM</span>
           </div>
         ) : (
@@ -484,7 +484,7 @@ export function AuthPage() {
               className="flex items-center gap-2.5 text-stone-900 transition hover:opacity-80"
               aria-label="SolomindLM home"
             >
-              <img src="/SolomindLM_logo.png" alt="" className="h-8 w-8 object-contain" />
+              <img src="/SolomindLM_logo.png" alt="SolomindLM" className="h-8 w-8 object-contain" />
               <span className="font-serif text-lg font-semibold tracking-tight">SolomindLM</span>
             </Link>
             <Link
