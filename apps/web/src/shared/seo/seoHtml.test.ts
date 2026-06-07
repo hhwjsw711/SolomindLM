@@ -4,6 +4,7 @@ import {
   getIntentLandingPaths,
 } from "@/features/landing/intentLandingPages";
 import { buildIntentLandingPrerenderBody } from "./intentLandingPrerenderHtml";
+import { buildHomePrerenderBody, buildLegalPrerenderBody } from "./publicSeoPrerenderHtml";
 import { getPublicSeoPageByPath } from "./publicSeoPages";
 import { SEO_BASE_URL } from "./seoConstants";
 import { applySeoToHtml, canonicalUrl, injectPrerenderBody, seoPageToHeadInput } from "./seoHtml";
@@ -62,6 +63,21 @@ describe("intent landing SEO registry", () => {
 });
 
 describe("injectPrerenderBody", () => {
+  it("injects homepage h1 for crawlers", () => {
+    const bodyHtml = buildHomePrerenderBody();
+    const html = injectPrerenderBody(MINIMAL_HTML, bodyHtml);
+
+    expect(html).toContain("<h1>Learn Anything</h1>");
+    expect(html).toContain('data-seo-prerender="true"');
+  });
+
+  it("injects legal page h1 for crawlers", () => {
+    const bodyHtml = buildLegalPrerenderBody("Privacy Policy", "/privacy");
+    const html = injectPrerenderBody(MINIMAL_HTML, bodyHtml);
+
+    expect(html).toContain("<h1>Privacy Policy</h1>");
+  });
+
   it("injects static article HTML inside #root", () => {
     const intentPage = getIntentLandingPageByPath("/students/ai-flashcards");
     expect(intentPage).toBeDefined();
