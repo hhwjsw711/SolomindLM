@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { getIntentPagesByCluster } from "../intentLandingPages";
-import { getComparisonPages } from "../seoContentPages";
+import { getComparisonPages, getGuidePages } from "../seoContentPages";
 
 const FOOTER_TAGLINE =
   "SolomindLM is an AI learning and research assistant that helps you work with PDFs, videos, and papers—flashcards, quizzes, reports, chat, and more, starting from the material you upload.";
@@ -83,6 +83,7 @@ export const Footer: React.FC = () => {
   const studentPages = getIntentPagesByCluster("students");
   const researchPages = getIntentPagesByCluster("research");
   const comparisonPages = getComparisonPages();
+  const guidePages = getGuidePages();
 
   return (
     <footer className="border-t border-border/60 bg-card/40">
@@ -154,16 +155,6 @@ export const Footer: React.FC = () => {
             </FooterLinkColumn>
           </div>
 
-          <div className="lg:col-span-2">
-            <FooterLinkColumn title="Comparisons">
-              {comparisonPages.map((page) => (
-                <FooterLink key={page.path} to={page.path}>
-                  {page.navLabel}
-                </FooterLink>
-              ))}
-            </FooterLinkColumn>
-          </div>
-
           <div className="lg:col-span-3">
             <FooterLinkColumn title="For Research">
               <FooterLink to="/research">All research tools</FooterLink>
@@ -173,6 +164,25 @@ export const Footer: React.FC = () => {
                 </FooterLink>
               ))}
             </FooterLinkColumn>
+          </div>
+
+          <div className="lg:col-span-2">
+            <FooterLinkColumn title="Comparisons">
+              {comparisonPages.map((page) => (
+                <FooterLink key={page.path} to={page.path}>
+                  {page.navLabel}
+                </FooterLink>
+              ))}
+            </FooterLinkColumn>
+            <div className="mt-10">
+              <FooterLinkColumn title="Guides">
+                {guidePages.map((page) => (
+                  <FooterLink key={page.path} to={page.path}>
+                    {page.navLabel}
+                  </FooterLink>
+                ))}
+              </FooterLinkColumn>
+            </div>
           </div>
         </div>
 

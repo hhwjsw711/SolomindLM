@@ -54,14 +54,14 @@ export const SEO_CONTENT_PAGES: SeoContentPageConfig[] = [
   {
     path: "/compare/solomindlm-vs-notebooklm",
     pageType: "compare",
-    title: "SolomindLM vs NotebookLM: Which AI Research and Study Tool Fits Your Workflow?",
+    title: "Best NotebookLM Alternative for Students & Researchers | SolomindLM",
     description:
-      "Compare SolomindLM and NotebookLM for studying from PDFs, source-grounded chat, flashcards, quizzes, literature review, and deep research workflows.",
+      "Looking for a NotebookLM alternative? Compare SolomindLM and NotebookLM for free PDF study, audio overviews, flashcards, literature review, and research workflows.",
     keywords:
-      "SolomindLM vs NotebookLM, NotebookLM alternative, best AI study tool for PDFs, AI research tool flashcards literature review",
-    h1: "SolomindLM vs NotebookLM",
+      "NotebookLM alternative, best NotebookLM alternative, NotebookLM alternative free, NotebookLM alternatives for studying, NotebookLM audio overview alternative, SolomindLM vs NotebookLM",
+    h1: "Best NotebookLM alternative for PDFs, flashcards, and research",
     intro:
-      "SolomindLM and NotebookLM both deliver strong source-grounded chat with citations and synthesis from your own materials—not general web AI alone. NotebookLM leans into Google's ecosystem and study features such as Audio Overviews, Video Overviews, and the Learning Guide. SolomindLM differentiates with notebook folders, web and academic discovery, literature review with twelve citation styles, chat search across external sources, multiple model choices, and study tools such as written questions with feedback and spaced-repetition flashcards.",
+      "SolomindLM is a strong NotebookLM alternative when you want source-grounded chat with citations plus notebook folders, web and academic discovery, literature review with twelve citation styles, and study tools such as written questions with feedback and spaced-repetition flashcards. NotebookLM fits users anchored in Google Workspace who want Audio Overviews, Video Overviews, and the Learning Guide. This page compares both so you can pick the best NotebookLM alternative for your workflow—not just a feature checklist.",
     quickAnswer: {
       chooseCompetitor:
         "Choose NotebookLM if you want Google's ecosystem integration plus Audio Overviews, Video Overviews, flashcards, quizzes, reports, and the Learning Guide AI tutor on top of source-grounded chat with citations.",
@@ -153,6 +153,13 @@ export const SEO_CONTENT_PAGES: SeoContentPageConfig[] = [
     ],
     sections: [
       {
+        h2: "Why choose SolomindLM as a NotebookLM alternative?",
+        paragraphs: [
+          "Most people searching for a NotebookLM alternative want the same core idea—upload sources, chat with citations, and generate study or research outputs. SolomindLM matches that foundation and adds workflows NotebookLM does not emphasize on its product pages: academic paper import, literature review with multiple citation styles, written questions with feedback, notebook folders, and in-app web and academic discovery.",
+          "If you need a free NotebookLM alternative for studying from PDFs, generating flashcards and quizzes, or running literature review on a reading list, SolomindLM is built for that path. If you primarily want Google's ecosystem, Video Overviews, and the Learning Guide AI tutor, NotebookLM may still be the better fit.",
+        ],
+      },
+      {
         h2: "What do SolomindLM and NotebookLM have in common?",
         paragraphs: [
           "Both tools are built around source-grounded AI with citations: you add documents, ask questions, and get answers and outputs that refer back to those materials rather than inventing facts from general training data alone.",
@@ -227,6 +234,21 @@ export const SEO_CONTENT_PAGES: SeoContentPageConfig[] = [
       },
     ],
     faqs: [
+      {
+        question: "What is the best NotebookLM alternative?",
+        answer:
+          "The best NotebookLM alternative depends on your workflow. SolomindLM is a strong fit for students and researchers who want source-grounded chat plus folders, discovery, academic imports, literature review with twelve citation styles, written questions with feedback, and spaced-repetition flashcards. NotebookLM remains competitive if you prioritize Google's ecosystem, Video Overviews, and the Learning Guide AI tutor.",
+      },
+      {
+        question: "Is there a free NotebookLM alternative?",
+        answer:
+          "Yes. SolomindLM offers a free tier with notebooks, per-notebook source limits, and daily generation caps so you can upload PDFs, chat with sources, and try flashcards, quizzes, and literature review before upgrading.",
+      },
+      {
+        question: "Is SolomindLM a NotebookLM alternative for audio overviews?",
+        answer:
+          "Yes. SolomindLM generates audio overviews from your uploaded sources so you can listen to study recaps on the go—similar to NotebookLM's Audio Overviews, alongside flashcards, quizzes, and research tools in the same notebook.",
+      },
       {
         question: "Is SolomindLM a NotebookLM alternative?",
         answer:
@@ -412,14 +434,14 @@ export const SEO_CONTENT_PAGES: SeoContentPageConfig[] = [
   {
     path: "/guides/how-to-do-an-ai-literature-review",
     pageType: "guide",
-    title: "How to Do an AI Literature Review With Your Papers",
+    title: "How to Do an AI Literature Review With Your Papers (Step-by-Step)",
     description:
-      "Learn how to discover papers, import sources, chat with your reading list, and synthesize themes and gaps with SolomindLM's AI literature review workflow.",
+      "Learn how to use AI for literature review: build a paper set, chat across sources, run literature review mode, and synthesize themes and gaps with SolomindLM—without replacing scholarly judgment.",
     keywords:
-      "how to do literature review with AI, AI literature review from papers, chat with papers synthesize themes, import DOI BibTeX Zotero literature review",
-    h1: "How to Do an AI Literature Review With Your Papers",
+      "ai for literature review, how to do literature review with AI, ai for research literature review, AI literature review from papers, import DOI BibTeX Zotero",
+    h1: "How to use AI for literature review with your papers",
     intro:
-      "A useful AI literature review workflow starts with a real paper set, not a generic prompt. SolomindLM supports research notebooks with academic paper discovery, paper import, chat with papers, citation styles, literature review, and deep research workflows—so synthesis stays grounded in the sources you add.",
+      "Using AI for literature review works best when you start with a real paper set, not a blank prompt. This guide walks through a practical workflow—discover and import papers, chat across your reading list, run literature review mode, and format citations—while you stay responsible for rigor, inclusion criteria, and final claims. For the product overview, see our AI literature review tool page.",
     sections: [
       {
         h2: "Step 1 — Build the paper set",
@@ -474,8 +496,19 @@ export const SEO_CONTENT_PAGES: SeoContentPageConfig[] = [
           "SolomindLM is not a substitute for a preregistered or fully systematic review protocol. It does not replace manual judgment on paper quality, inclusion criteria, or claims evaluation. Use it to accelerate reading and drafting while you retain responsibility for methodology and conclusions.",
         ],
       },
+      {
+        h2: "How to avoid overreliance on AI in literature review",
+        paragraphs: [
+          "Treat every AI synthesis as a draft. Spot-check quotes and claims against original PDFs, keep a manual log of inclusion decisions, and use chat to question the reading list—not only to confirm what you already believe. AI literature review tools speed orientation and note-taking; they do not remove your responsibility for methods and conclusions.",
+        ],
+      },
     ],
     faqs: [
+      {
+        question: "How do I use AI for literature review responsibly?",
+        answer:
+          "Start with a scoped paper set, verify AI summaries against originals, document which papers you included or excluded, and edit synthesis drafts before submission. Use AI to orient and draft—not to replace reading or methodological judgment.",
+      },
       {
         question: "Can AI summarize multiple papers?",
         answer:
@@ -542,6 +575,10 @@ export function getSeoContentPaths(): string[] {
 
 export function getComparisonPages(): SeoContentPageConfig[] {
   return SEO_CONTENT_PAGES.filter((page) => page.pageType === "compare");
+}
+
+export function getGuidePages(): SeoContentPageConfig[] {
+  return SEO_CONTENT_PAGES.filter((page) => page.pageType === "guide");
 }
 
 export function isSeoContentPath(path: string): boolean {

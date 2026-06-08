@@ -39,14 +39,14 @@ export const CLUSTER_HUB_PAGES: ClusterHubPageConfig[] = [
   {
     path: "/students",
     cluster: "students",
-    title: "Study Tools for Students | SolomindLM",
+    title: "AI Study Tools for Students — Free | SolomindLM",
     description:
-      "Upload lectures and readings, then generate flashcards, quizzes, mind maps, audio overviews, reports, and more—all grounded in your own course materials.",
+      "AI study tools for college students: upload PDFs and lectures, then generate flashcards, quizzes, mind maps, audio overviews, and reports grounded in your course materials.",
     keywords:
-      "student study tools, AI flashcards, study guide, upload PDF, quiz generator, mind map, audio study",
-    h1: "Study tools built around your course materials",
+      "ai study tools for students, ai study tools for college students, ai for studying, student study tools, AI flashcards, quiz generator",
+    h1: "AI study tools built around your course materials",
     subheadline:
-      "SolomindLM helps you bring lectures, PDFs, and media into one notebook, then turn them into flashcards, quizzes, reports, and other study outputs you can review and edit.",
+      "SolomindLM is a free AI study tool for students—bring lectures, PDFs, and media into one notebook, then turn them into flashcards, quizzes, reports, and other outputs you can review and edit.",
     summaryBullets: [
       "Upload PDFs, slides, audio, video transcripts, Google Drive files, or pasted text",
       "Discover web and news articles to add alongside your uploads",
@@ -127,12 +127,12 @@ export const CLUSTER_HUB_PAGES: ClusterHubPageConfig[] = [
   {
     path: "/research",
     cluster: "research",
-    title: "Research Tools | SolomindLM",
+    title: "AI Research & Literature Review Tools | SolomindLM",
     description:
-      "Discover and import academic papers, chat with your reading list, run literature review mode, format citations in 12 styles, and draft deep research reports.",
+      "AI tools for literature review and research: discover and import papers, chat with your reading list, run literature review mode, format citations in 12 styles, and draft deep research reports.",
     keywords:
-      "research tools, literature review, chat with PDF, paper discovery, citation styles, deep research, academic papers",
-    h1: "Research tools for your paper collection",
+      "ai tools for literature review, ai literature review tools, ai for research literature review, research tools, chat with papers, deep research",
+    h1: "AI research and literature review tools for your papers",
     subheadline:
       "Collect papers in a research notebook, ask questions across your sources, screen and synthesize literature, and format citations—while you stay responsible for rigor and verification.",
     summaryBullets: [

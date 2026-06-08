@@ -183,26 +183,37 @@ export const INTENT_LANDING_PAGES: IntentLandingPageConfig[] = [
     path: "/students/ai-flashcards",
     cluster: "students",
     intentKey: "flashcards",
-    title: "AI Flashcards from Your Sources | SolomindLM",
+    title: "AI Flashcards from PDF — Free Generator | SolomindLM",
     description:
-      "Generate flashcard decks grounded in your uploaded sources. Review the draft deck and edit cards before you study.",
-    keywords: "AI flashcards, study cards, spaced repetition, PDF flashcards, exam prep",
-    h1: "AI flashcards built from your sources",
+      "Make AI flashcards from PDF online free: upload a reading, generate a draft deck grounded in your source, edit cards, and study in your notebook.",
+    keywords:
+      "AI flashcards from PDF, pdf to flashcards free, ai flashcard generator free, make ai flashcards from pdf, ai generate flashcards from pdf",
+    h1: "Make AI flashcards from your PDF in minutes",
     subheadline:
-      "Turn readings and lectures into a draft deck you can review, edit, and study inside your notebook.",
+      "Upload a PDF or lecture notes, generate flashcards online, review the draft deck, and study with spaced repetition inside your notebook.",
     conversionPromise:
-      "Create a free account, upload a source, and generate your first flashcard deck.",
+      "Create a free account, upload a PDF, and generate your first flashcard deck online.",
     proofBullets: [
-      "Cards are drafted from content in your notebook",
-      "Review and edit the deck before studying",
-      "Flip cards in the built-in study view",
-      "Regenerate or refine when your materials change",
+      "Generate flashcards from PDFs and other sources in your notebook",
+      "Free to start—upload, generate, and study online",
+      "Review and edit every card before you study",
+      "Built-in study view with spaced repetition",
     ],
     sourceToOutput: {
       source: "A chapter PDF and lecture slides",
       output: "A draft flashcard deck with front and back pairs",
     },
     faqs: [
+      {
+        question: "Can I make AI flashcards from a PDF for free?",
+        answer:
+          "Yes. SolomindLM offers a free tier so you can upload a PDF, generate a draft flashcard deck, and study online. Paid plans raise notebook and generation limits.",
+      },
+      {
+        question: "How do I generate flashcards from a PDF online?",
+        answer:
+          "Create a notebook, upload your PDF, select the source, and run the Flashcards tool. SolomindLM drafts cards from your document so you can edit them before studying.",
+      },
       {
         question: "Can I edit cards after generation?",
         answer:
@@ -214,9 +225,9 @@ export const INTENT_LANDING_PAGES: IntentLandingPageConfig[] = [
           "Generation uses the sources you select in the notebook, so cards reflect your materials rather than generic topics.",
       },
       {
-        question: "Do I need to review the deck before studying?",
+        question: "How is this different from other AI flashcard generators?",
         answer:
-          "We recommend reviewing the draft. Automated cards can miss nuance or include wording you want to adjust for your course.",
+          "SolomindLM keeps flashcards inside a notebook with quizzes, mind maps, audio overviews, and chat on the same PDFs—so you do not need a separate tool for each study format.",
       },
     ],
     ctaLabel: "Create free account",
@@ -675,18 +686,21 @@ export const INTENT_LANDING_PAGES: IntentLandingPageConfig[] = [
     path: "/research/ai-literature-review",
     cluster: "research",
     intentKey: "literatureReview",
-    title: "AI Literature Review Assistant | SolomindLM",
+    title: "AI Literature Review Tool — Generator Free | SolomindLM",
     description:
-      "Literature review mode with screening, ranking, and synthesis across your paper set. A research aid—not a replacement for systematic review protocols.",
-    keywords: "literature review, systematic review aid, paper synthesis, research screening",
-    h1: "AI literature review across your paper set",
+      "Free AI literature review tool: import papers, screen and rank your reading list, and generate synthesis drafts across your sources. A research aid—not a systematic review replacement.",
+    keywords:
+      "ai literature review tool, ai literature review generator, ai for literature review, ai tools for literature review, free ai literature review",
+    h1: "AI literature review tool for your paper set",
     subheadline:
-      "Screen, rank, and synthesize sources in literature review mode to draft sections faster—while you keep responsibility for rigor and methods.",
-    conversionPromise: "Sign up free to run literature review mode on your imported papers.",
+      "Import papers, screen and rank sources, and use AI to draft literature review synthesis—grounded in the documents you add to your notebook.",
+    conversionPromise:
+      "Sign up free to run the AI literature review generator on your imported papers.",
     proofBullets: [
-      "Literature review mode for notebook sources",
+      "AI literature review mode across notebook sources",
       "Screening and ranking to prioritize papers",
-      "Synthesis drafts across your collection",
+      "Synthesis drafts with themes and gaps noted",
+      "Twelve citation styles for formatted references",
       "Not a substitute for formal systematic review methods",
     ],
     sourceToOutput: {
@@ -694,6 +708,16 @@ export const INTENT_LANDING_PAGES: IntentLandingPageConfig[] = [
       output: "A structured synthesis draft with themes and gaps noted",
     },
     faqs: [
+      {
+        question: "Is there a free AI literature review tool?",
+        answer:
+          "Yes. SolomindLM offers a free tier so you can import papers and run literature review mode on your reading list. Paid plans raise notebook and generation limits.",
+      },
+      {
+        question: "How does the AI literature review generator work?",
+        answer:
+          "Add papers to a research notebook, then run literature review mode to screen, rank, and synthesize across your collection. Output is a draft you should verify against the original PDFs.",
+      },
       {
         question: "Is this a systematic review tool?",
         answer:
