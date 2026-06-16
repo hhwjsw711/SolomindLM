@@ -13,6 +13,7 @@ import {
   Settings2,
 } from "lucide-react";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Virtuoso } from "react-virtuoso";
 import {
   buildAcademicDiscoveryApiFilters,
@@ -105,6 +106,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     onDeleteConversation,
     consumeResearchExecuteStream,
   } = useChatStreamingContext();
+  const { t } = useTranslation("chat");
   const { sources } = useSourcesContext();
   const notebookDocumentIds = useMemo(() => new Set(sources.map((s) => s.id)), [sources]);
   const [hoveredRefId, setHoveredRefId] = useState<number | null>(null);
@@ -680,7 +682,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
           <button
             onClick={toggleLeft}
             className="p-2 bg-card border border-border rounded-lg shadow-sm hover:bg-accent text-foreground transition-colors shrink-0"
-            title="Open Sources"
+            title={t("sources.openSources")}
           >
             <PanelLeftOpen className="w-4 h-4" />
           </button>
@@ -690,7 +692,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             data-onboarding="studio-panel-toggle"
             onClick={toggleRight}
             className="p-2 bg-card border border-border rounded-lg shadow-sm hover:bg-accent text-foreground transition-colors shrink-0"
-            title="Open Studio"
+            title={t("sources.openStudio")}
           >
             <PanelRightOpen className="w-4 h-4" />
           </button>
@@ -703,8 +705,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
           className={`p-2 bg-card border border-border rounded-lg shadow-sm hover:bg-accent text-foreground transition-colors shrink-0 ${
             historyOpen ? "ring-1 ring-border bg-accent" : ""
           }`}
-          title="Thread history"
-          aria-label="Thread history"
+          title={t("panel.threadHistory")}
+          aria-label={t("panel.threadHistory")}
           aria-expanded={historyOpen}
         >
           <History className="w-4 h-4" />
@@ -713,7 +715,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         {historyOpen && (
           <div
             role="dialog"
-            aria-label="Thread history"
+            aria-label={t("panel.threadHistory")}
             className="absolute top-full right-0 mt-1.5 z-50 w-80 max-w-[calc(100vw-2rem)] bg-card font-sans text-sm antialiased border border-border/80 rounded-xl shadow-lg flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150"
             style={{ maxHeight: "min(480px, calc(100vh - 100px))" }}
           >
@@ -739,13 +741,13 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         onClick={handleNewConversation}
         disabled={isCreatingConversation}
         className="p-2 bg-card border border-border rounded-lg shadow-sm hover:bg-accent text-foreground transition-colors shrink-0 disabled:opacity-50 disabled:pointer-events-none"
-        title={messages.length === 0 ? "Already in a new chat" : "New chat"}
+        title={messages.length === 0 ? t("panel.alreadyNewChat") : t("panel.newChat")}
         aria-label={
           isCreatingConversation
-            ? "Creatingâ€¦"
+            ? t("panel.creating")
             : messages.length === 0
-              ? "Already in a new chat"
-              : "New chat"
+              ? t("panel.alreadyNewChat")
+              : t("panel.newChat")
         }
       >
         <Plus className="w-4 h-4" />
@@ -755,7 +757,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         trigger={
           <button
             className="p-2 bg-card border border-border rounded-lg shadow-sm hover:bg-accent text-foreground transition-colors shrink-0"
-            title="Chat options"
+            title={t("panel.chatOptions")}
             type="button"
           >
             <MoreVertical className="w-4 h-4" />
@@ -769,7 +771,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             role="menuitem"
           >
             <Settings2 className="w-4 h-4 text-muted-foreground shrink-0" />
-            <span>Configure chat</span>
+            <span>{t("panel.configureChat")}</span>
           </button>
           <button
             onClick={handleExportChat}
@@ -777,7 +779,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             role="menuitem"
           >
             <Download className="w-4 h-4 text-muted-foreground shrink-0" />
-            <span>Export chat</span>
+            <span>{t("panel.exportChat")}</span>
           </button>
           <button
             onClick={handleSaveToNote}
@@ -785,7 +787,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             role="menuitem"
           >
             <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
-            <span>Save to note</span>
+            <span>{t("panel.saveToNote")}</span>
           </button>
           <div className="my-1 border-t border-border" />
           <button
@@ -796,8 +798,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             <Pin className="w-4 h-4 text-muted-foreground shrink-0" />
             <span>
               {activeConversationId && pinnedIds.has(activeConversationId)
-                ? "Unpin chat"
-                : "Pin chat"}
+                ? t("panel.unpinChat")
+                : t("panel.pinChat")}
             </span>
           </button>
         </div>

@@ -1,0 +1,166 @@
+{
+  "input": {
+    "placeholder": {
+      "chat": "向你的来源提问...",
+      "deepResearch": "提出一个需要多步研究的复杂问题...",
+      "literatureReview": "描述主题、研究问题和需求，生成文献综述..."
+    },
+    "send": {
+      "send": "发送消息 (Enter)",
+      "startDeepResearch": "开始深度研究 (Enter)",
+      "startLiteratureReview": "开始文献综述 (Enter)",
+      "stop": "停止生成",
+      "remoteGenerating": "另一个标签页或设备正在生成回复。切换到那里停止，或等待其完成。",
+      "empty": "输入消息以发送"
+    },
+    "voice": {
+      "dictate": "语音输入",
+      "stopAndTranscribe": "停止并转录",
+      "transcribing": "转录中…"
+    },
+    "disclaimer": "SolomindLM 可能不准确；请务必核实其回复。"
+  },
+  "composer": {
+    "mode": {
+      "chat": "聊天",
+      "deepResearch": "深度研究",
+      "literatureReview": "文献综述"
+    },
+    "modeLabel": "模式",
+    "chooseMode": "选择聊天模式",
+    "modeAriaLabel": "写作模式: {{label}}"
+  },
+  "research": {
+    "databases": "研究数据库",
+    "databaseLabel": "研究数据库:",
+    "chooseDatabase": "选择研究数据库",
+    "allPapers": "全部论文",
+    "allPapersDesc": "搜索 2 亿+ 研究论文",
+    "pubmed": "PubMed",
+    "pubmedDesc": "3900 万+ 生物医学和生命科学文献",
+    "arxiv": "ArXiv",
+    "arxivDesc": "探索 arXiv 上的研究预印本"
+  },
+  "filters": {
+    "label": "筛选",
+    "sourceChannels": "来源渠道",
+    "notebookSources": "笔记本来源",
+    "academic": "学术",
+    "web": "网络",
+    "news": "新闻",
+    "finance": "财经"
+  },
+  "model": {
+    "label": "模型",
+    "chooseModel": "选择模型",
+    "modelAriaLabel": "模型: {{name}}",
+    "fallbackName": "GPT-OSS 120B"
+  },
+  "sources": {
+    "heading": "来源",
+    "selectAll": "全选",
+    "deselectAll": "取消全选",
+    "selectedCount": "已选 {{count}} 项",
+    "score": "评分",
+    "cancel": "取消",
+    "adding": "添加中…",
+    "addToNotebook": "添加到笔记本",
+    "addSelected": "添加 {{count}} 项",
+    "close": "关闭",
+    "includeSource": "包含 {{title}}",
+    "openSources": "打开来源",
+    "openStudio": "打开Studio",
+    "openExternal": "打开"
+  },
+  "panel": {
+    "chat": "聊天",
+    "threadHistory": "对话历史",
+    "newChat": "新对话",
+    "alreadyNewChat": "已是新对话",
+    "creating": "创建中…",
+    "chatOptions": "聊天选项",
+    "configureChat": "配置聊天",
+    "exportChat": "导出聊天",
+    "saveToNote": "保存为笔记",
+    "pinChat": "置顶对话",
+    "unpinChat": "取消置顶"
+  },
+  "conversation": {
+    "newChat": "新对话",
+    "newChatFallback": "新对话",
+    "loading": "加载中…",
+    "noThreads": "暂无其他对话",
+    "pinned": "已置顶",
+    "recents": "最近",
+    "rename": "重命名",
+    "delete": "删除",
+    "pin": "置顶",
+    "unpin": "取消置顶",
+    "threadOptions": "对话选项",
+    "deleteDialogTitle": "删除对话？",
+    "deleteDialogBody": "这将永久删除此对话及其所有消息。",
+    "deleteDialogConfirm": "删除",
+    "renameFailed": "重命名对话失败",
+    "deleteFailed": "删除对话失败"
+  },
+  "empty": {
+    "addSources": "上传文档或添加链接，然后提问——我会附上引用来源作答。",
+    "hasSourcesHeading": "你想了解什么？",
+    "noSourcesHeading": "关于你的来源问任何问题",
+    "tryAsking": "试试这些",
+    "starter1": "总结关键概念",
+    "starter2": "主要论点是什么？",
+    "starter3": "考考我这个材料",
+    "starter4": "简单解释最重要的主题"
+  },
+  "message": {
+    "copy": "复制",
+    "copied": "已复制",
+    "retry": "重试",
+    "goodResponse": "好评",
+    "badResponse": "差评",
+    "actions": "消息操作",
+    "viewSources": "查看 {{count}} 个来源",
+    "viewSources_plural": "查看 {{count}} 个来源",
+    "sourcesCount": "{{count}} 个来源",
+    "sourcesCount_plural": "{{count}} 个来源",
+    "followUps": "追问",
+    "thinking": "思考中"
+  },
+  "configure": {
+    "title": "配置聊天",
+    "instructionMode": "指令模式",
+    "customInstructions": "自定义指令",
+    "responseLength": "回复长度",
+    "modeDefault": "默认",
+    "modeDefaultDesc": "标准助手行为",
+    "modeLearningGuide": "学习向导",
+    "modeLearningGuideDesc": "逐步引导式教学",
+    "modeCustom": "自定义",
+    "modeCustomDesc": "自定义指令",
+    "lengthDefault": "默认",
+    "lengthLonger": "更长",
+    "lengthShorter": "更短",
+    "customPlaceholder": "告诉助手在此笔记本中如何回复...",
+    "newChatWarning": "开始新对话以使用不同模式。",
+    "cancel": "取消",
+    "save": "保存",
+    "saving": "保存中…"
+  },
+  "toast": {
+    "noMessagesExport": "没有可导出的消息",
+    "exportSuccess": "聊天导出成功",
+    "noMessagesSave": "没有可保存的消息",
+    "noNotebookSelected": "未选择笔记本",
+    "savedChatTitle": "已保存的聊天",
+    "savedChatPreview": "笔记 · 已保存的聊天",
+    "settingsSaved": "聊天设置已保存",
+    "settingsFailed": "保存聊天设置失败",
+    "selectSourceFirst": "请先选择至少一个来源再提问",
+    "notebookLoading": "无法开始新对话。请等待笔记本加载完成后再试。",
+    "createFailed": "创建对话失败",
+    "researchStarting": "研究正在启动，请稍后重试。",
+    "researchFailed": "启动研究执行失败",
+    "literatureReviewFailed": "启动文献综述失败，请重试。"
+  }
+}

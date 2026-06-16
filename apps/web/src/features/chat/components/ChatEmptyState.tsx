@@ -1,13 +1,7 @@
 import React, { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 
 import { getNotebookLucideIcon } from "@/shared/notebook/notebookLucideIcon";
-
-const STARTER_PROMPTS = [
-  "Summarize the key concepts",
-  "What are the main arguments?",
-  "Quiz me on this material",
-  "Explain the most important topic simply",
-];
 
 /** Clears the absolute composer (input shell + disclaimer + bottom offset). */
 const COMPOSER_SCROLL_PADDING = "pb-[calc(12.5rem+env(safe-area-inset-bottom,0px))]";
@@ -19,9 +13,7 @@ interface ChatEmptyStateProps {
   sourceSummary?: string | null;
   suggestions?: string[] | null;
   isLoadingSuggestions?: boolean;
-  /** Notebook customize modal icon key (e.g. Folder, Book). */
   notebookIcon?: string | null;
-  /** Tailwind bg class from notebook (e.g. bg-vintage-amber-300); used for icon tint. */
   notebookCoverColor?: string | null;
   notebookTitle?: string;
 }
@@ -37,7 +29,14 @@ export const ChatEmptyState: React.FC<ChatEmptyStateProps> = ({
   notebookCoverColor,
   notebookTitle,
 }) => {
+  const { t } = useTranslation("chat");
   const hasSources = sourceCount > 0;
+
+  const STARTER_PROMPTS = useMemo(
+    () => [t("empty.starter1"), t("empty.starter2"), t("empty.starter3"), t("empty.starter4")],
+    [t]
+  );
+
   const displaySuggestions = useMemo(() => {
     const raw = hasSources && suggestions?.length ? suggestions : STARTER_PROMPTS;
     const seen = new Set<string>();
@@ -47,7 +46,7 @@ export const ChatEmptyState: React.FC<ChatEmptyStateProps> = ({
       seen.add(trimmed);
       return true;
     });
-  }, [hasSources, suggestions]);
+  }, [hasSources, suggestions, STARTER_PROMPTS]);
   const notebookGlyph = getNotebookLucideIcon(notebookIcon);
   const iconTintClass = notebookCoverColor?.length
     ? notebookCoverColor.replace("bg-", "text-")
@@ -57,14 +56,12 @@ export const ChatEmptyState: React.FC<ChatEmptyStateProps> = ({
     : "bg-primary/10";
   const heading =
     notebookTitle?.trim() ||
-    (hasSources ? "What would you like to know?" : "Ask anything about your sources");
+    (hasSources ? t("empty.hasSourcesHeading") : t("empty.noSourcesHeading"));
 
   return (
     <div className={`box-border w-full min-h-full px-6 pt-6 sm:pt-10 ${COMPOSER_SCROLL_PADDING}`}>
       <div className="mx-auto flex w-full max-w-xl flex-col items-center gap-8 sm:gap-10">
-        {/* Header */}
         <div className="flex w-full flex-col items-center gap-5 text-center">
-          {/* Icon */}
           <div
             className={`flex size-16 items-center justify-center rounded-2xl ${iconBgClass} ring-1 ring-border shadow-sm`}
             aria-hidden
@@ -75,33 +72,29 @@ export const ChatEmptyState: React.FC<ChatEmptyStateProps> = ({
             })}
           </div>
 
-          {/* Heading */}
           <h2 className="font-serif text-pretty text-2xl font-semibold tracking-tight text-foreground sm:text-3xl sm:leading-tight">
             {heading}
           </h2>
 
-          {/* Sub-copy */}
           {hasSources && sourceSummary ? (
             <p className="font-serif text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg max-w-sm">
               {sourceSummary}
             </p>
           ) : !hasSources ? (
             <p className="font-serif text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg max-w-sm">
-              Upload documents or add URLs, then ask questions — I'll answer with citations.
+              {t("empty.addSources")}
             </p>
           ) : null}
         </div>
 
-        {/* Divider */}
         <div className="flex w-full items-center gap-3">
           <div className="h-px flex-1 bg-border" />
           <span className="shrink-0 text-xs font-medium tracking-widest text-muted-foreground uppercase">
-            Try asking
+            {t("empty.tryAsking")}
           </span>
           <div className="h-px flex-1 bg-border" />
         </div>
 
-        {/* Suggestion chips */}
         <div className="flex w-full flex-wrap justify-center gap-2.5">
           {isLoadingSuggestions ? (
             <>

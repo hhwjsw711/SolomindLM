@@ -1,8 +1,10 @@
 import i18next from "i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import { initReactI18next } from "react-i18next";
+import chatEn from "./locales/en/chat.json";
 import commonEn from "./locales/en/common.json";
 import landingEn from "./locales/en/landing.json";
+import chatZh from "./locales/zh/chat.json";
 import commonZh from "./locales/zh/common.json";
 import landingZh from "./locales/zh/landing.json";
 
@@ -15,8 +17,8 @@ export const LANG_LABELS: Record<SupportedLang, string> = {
 };
 
 const resources = {
-  en: { common: commonEn, landing: landingEn },
-  zh: { common: commonZh, landing: landingZh },
+  en: { common: commonEn, landing: landingEn, chat: chatEn },
+  zh: { common: commonZh, landing: landingZh, chat: chatZh },
 };
 
 export const FALLBACK_LANG: SupportedLang = "en";

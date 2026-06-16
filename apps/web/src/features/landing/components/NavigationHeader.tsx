@@ -1,5 +1,6 @@
 import { Menu, X } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/shared/components/ui/button";
 
 interface NavigationHeaderProps {
@@ -12,16 +13,24 @@ interface NavItem {
   href: string;
 }
 
-const navItems: NavItem[] = [
-  { label: "Features", href: "#features" },
-  { label: "Use Cases", href: "#use-cases" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "FAQ", href: "#faq" },
-];
+const NAV_HREF_TO_KEY: Record<string, string> = {
+  "#features": "navigation.features",
+  "#use-cases": "navigation.useCases",
+  "#pricing": "navigation.pricing",
+  "#faq": "navigation.faq",
+};
+
+const NAV_HREFS = ["#features", "#use-cases", "#pricing", "#faq"];
 
 export const NavigationHeader: React.FC<NavigationHeaderProps> = ({ onGetStarted, onLogin }) => {
+  const { t } = useTranslation("landing");
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const navItems: NavItem[] = useMemo(
+    () => NAV_HREFS.map((href) => ({ label: t(NAV_HREF_TO_KEY[href]), href })),
+    [t]
+  );
 
   useEffect(() => {
     const handleScroll = () => {
@@ -79,13 +88,13 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({ onGetStarted
               onClick={onLogin}
               className="font-sans rounded-xl font-semibold px-6 py-2 transition-transform duration-200 ease-out hover:scale-[1.02] active:scale-[0.98]"
             >
-              Log in
+              {t("navigation.login")}
             </Button>
             <Button
               onClick={onGetStarted}
               className="font-sans bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl font-semibold px-6 py-2 transition-transform duration-200 ease-out hover:scale-[1.02] active:scale-[0.98]"
             >
-              Get Started
+              {t("navigation.getStarted")}
             </Button>
           </div>
 
@@ -93,7 +102,7 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({ onGetStarted
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="md:hidden p-2 text-foreground hover:opacity-80 transition-opacity"
-            aria-label="Toggle menu"
+            aria-label={t("navigation.toggleMenu")}
           >
             {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -120,7 +129,7 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({ onGetStarted
                 }}
                 className="font-sans rounded-xl font-semibold w-full mt-2 transition-transform duration-200 ease-out hover:scale-[1.02] active:scale-[0.98]"
               >
-                Log in
+                {t("navigation.login")}
               </Button>
               <Button
                 onClick={() => {
@@ -129,7 +138,7 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({ onGetStarted
                 }}
                 className="font-sans bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl font-semibold w-full mt-2 transition-transform duration-200 ease-out hover:scale-[1.02] active:scale-[0.98]"
               >
-                Get Started
+                {t("navigation.getStarted")}
               </Button>
             </nav>
           </div>

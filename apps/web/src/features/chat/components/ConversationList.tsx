@@ -2,6 +2,7 @@ import type { Doc } from "@convex/_generated/dataModel";
 import { Check, MoreVertical, Pencil, Pin, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import { useToast } from "@/shared/contexts/useToast";
 import { useConfirmDialog } from "@/shared/ui/useConfirmDialog";
 
@@ -35,6 +36,7 @@ export function ConversationList({
   pinnedIds,
   onTogglePin,
 }: ConversationListProps) {
+  const { t } = useTranslation("chat");
   /** Submenu is portaled to body; position stored so it is not clipped by parent overflow. */
   const [threadMenu, setThreadMenu] = useState<{
     convId: string;
@@ -100,7 +102,7 @@ export function ConversationList({
 
   const handleStartRename = (conv: Doc<"conversations">) => {
     setEditingId(conv._id);
-    setEditTitle((conv.title as string | undefined) ?? "New Chat");
+    setEditTitle((conv.title as string | undefined) ?? t("conversation.newChat"));
     setThreadMenu(null);
   };
 
@@ -112,7 +114,7 @@ export function ConversationList({
     try {
       await onRename(editingId, editTitle.trim());
     } catch {
-      toast.error("Failed to rename thread");
+      toast.error(t("conversation.renameFailed"));
     }
     setEditingId(null);
   };
@@ -120,15 +122,15 @@ export function ConversationList({
   const handleDelete = async (conv: Doc<"conversations">) => {
     setThreadMenu(null);
     const ok = await confirm(
-      "Delete thread?",
-      "This will permanently delete this thread and all its messages.",
-      { confirmText: "Delete", variant: "danger" }
+      t("conversation.deleteDialogTitle"),
+      t("conversation.deleteDialogBody"),
+      { confirmText: t("conversation.deleteDialogConfirm"), variant: "danger" }
     );
     if (!ok) return;
     try {
       await onDelete(conv._id);
     } catch {
-      toast.error("Failed to delete thread");
+      toast.error(t("conversation.deleteFailed"));
     }
   };
 
@@ -191,7 +193,7 @@ export function ConversationList({
             />
           ) : null}
           <span className="min-w-0 flex-1 truncate">
-            {(conv.title as string | undefined) ?? "New chat"}
+            {(conv.title as string | undefined) ?? t("conversation.newChatFallback")}
           </span>
         </button>
         <div className="flex shrink-0 items-center pr-0.5">
@@ -216,7 +218,7 @@ export function ConversationList({
                 ? "opacity-100"
                 : "opacity-0 group-hover:opacity-100"
             }`}
-            aria-label="Thread options"
+            aria-label={t("conversation.threadOptions")}
             aria-expanded={threadMenu?.convId === conv._id}
           >
             <MoreVertical className="h-4 w-4" strokeWidth={1.75} />
@@ -228,14 +230,16 @@ export function ConversationList({
 
   if (!conversations) {
     return (
-      <div className="px-3 py-6 text-center font-sans text-sm text-muted-foreground">Loading…</div>
+      <div className="px-3 py-6 text-center font-sans text-sm text-muted-foreground">
+        {t("conversation.loading")}
+      </div>
     );
   }
 
   if (conversations.length === 0) {
     return (
       <div className="px-3 py-6 text-center font-sans text-sm text-muted-foreground">
-        No other threads
+        {t("conversation.noThreads")}
       </div>
     );
   }
@@ -247,13 +251,13 @@ export function ConversationList({
       <div className="flex flex-col gap-1 pb-2 pt-1 font-sans antialiased">
         {pinned.length > 0 && (
           <>
-            <SectionLabel>Pinned</SectionLabel>
+            <SectionLabel>{t("conversation.pinned")}</SectionLabel>
             {pinned.map(renderRow)}
           </>
         )}
         {recents.length > 0 && (
           <>
-            <SectionLabel>Recents</SectionLabel>
+            <SectionLabel>{t("conversation.recents")}</SectionLabel>
             {recents.map(renderRow)}
           </>
         )}
@@ -280,7 +284,7 @@ export function ConversationList({
                 role="menuitem"
               >
                 <Pin className="h-3.5 w-3.5" strokeWidth={1.75} />
-                {threadMenuPinned ? "Unpin" : "Pin"}
+                {threadMenuPinned ? t("conversation.unpin") : t("conversation.pin")}
               </button>
             )}
             <button
@@ -290,7 +294,7 @@ export function ConversationList({
               role="menuitem"
             >
               <Pencil className="h-3.5 w-3.5" strokeWidth={1.75} />
-              Rename
+              {t("conversation.rename")}
             </button>
             <button
               type="button"
@@ -299,7 +303,7 @@ export function ConversationList({
               role="menuitem"
             >
               <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
-              Delete
+              {t("conversation.delete")}
             </button>
           </div>,
           document.body

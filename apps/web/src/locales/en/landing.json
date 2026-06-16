@@ -96,5 +96,14 @@
   "featuresGrid": {
     "heading": "Powerful Learning Tools",
     "subtitle": "AI-powered tools designed to help you learn faster and retain more"
+  },
+  "navigation": {
+    "features": "Features",
+    "useCases": "Use Cases",
+    "pricing": "Pricing",
+    "faq": "FAQ",
+    "login": "Log in",
+    "getStarted": "Get Started",
+    "toggleMenu": "Toggle menu"
   }
 }

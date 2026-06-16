@@ -6,24 +6,33 @@
 
 ---
 
-## NavigationHeader
+## NavigationHeader ✅
 
 **文件**: `features/landing/components/NavigationHeader.tsx`  
 **namespace**: `landing`
 
-- [ ] nav 链接: `Features`, `Use Cases`, `Pricing`, `FAQ`
-- [ ] 按钮: `Log in`, `Get Started`（桌面 + 移动端）
+- [x] nav 链接: `Features`, `Use Cases`, `Pricing`, `FAQ`
+- [x] 按钮: `Log in`, `Get Started`（桌面 + 移动端）
+- [x] `aria-label="Toggle menu"`
 
 ---
 
-## Chat
+## Chat ✅
 
-**namespace**: `chat`
+**namespace**: `chat`（`locales/{en,zh}/chat.json`）
 
-- [ ] `features/chat/ChatInput.tsx` — 模式切换标签、filter 文案、input placeholder
-- [ ] `features/chat/ChatEmptyState.tsx` — 空状态提示
-- [ ] `features/chat/ConversationList.tsx` — 对话列表标题/操作
-- [ ] `features/chat/ExternalSources.tsx` — 来源标记
+- [x] `ChatInput.tsx` — placeholder, composer modes, filters, research databases, model selector, voice/send buttons, disclaimer
+- [x] `ChatEmptyState.tsx` — starter prompts, headings, subtext, "Try asking" divider
+- [x] `ConversationList.tsx` — loading/empty states, section labels, rename/delete/pin actions, confirm dialog
+- [x] `ExternalSourcesModal.tsx` — heading, select/deselect, score, add/cancel buttons, aria-labels
+- [x] `ChatPanel.tsx` — toolbar tooltips, history/new chat/options buttons, dropdown menu
+- [ ] `ConfigureChatModal.tsx` — instruction modes, response length, custom instructions
+- [ ] `MessageBubble.tsx` — copy, retry, feedback, sources count, follow-ups
+- [ ] `AgentActivityPanel.tsx`, `ResearchPlanMessage.tsx`, `LiteratureReviewMessage.tsx`, etc.
+- [ ] Toast messages in ChatPanel
+- [ ] Utility files: `messageStatus.tsx`, `exportChat.ts`, `messageRendering.tsx`
+
+> 核心交互已完成（ChatInput + 空状态 + 对话列表 + 外部来源 + 面板工具栏）。剩余文件为辅助消息显示和工具函数，影响范围较小。
 
 ---
 

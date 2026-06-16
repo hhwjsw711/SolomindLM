@@ -1,0 +1,166 @@
+{
+  "input": {
+    "placeholder": {
+      "chat": "Ask a question about your sources...",
+      "deepResearch": "Ask a complex research question with multi-step investigation...",
+      "literatureReview": "Describe the topic, research question, and requirements to generate a literature review..."
+    },
+    "send": {
+      "send": "Send message (Enter)",
+      "startDeepResearch": "Start deep research (Enter)",
+      "startLiteratureReview": "Start literature review (Enter)",
+      "stop": "Stop generating",
+      "remoteGenerating": "A response is generating in another tab or device. Switch there to stop, or wait for it to finish.",
+      "empty": "Type a message to send"
+    },
+    "voice": {
+      "dictate": "Dictate (microphone)",
+      "stopAndTranscribe": "Stop and transcribe",
+      "transcribing": "Transcribing…"
+    },
+    "disclaimer": "SolomindLM can be inaccurate; please double check its responses."
+  },
+  "composer": {
+    "mode": {
+      "chat": "Chat",
+      "deepResearch": "Deep Research",
+      "literatureReview": "Literature Review"
+    },
+    "modeLabel": "Mode",
+    "chooseMode": "Choose chat mode",
+    "modeAriaLabel": "Composer mode: {{label}}"
+  },
+  "research": {
+    "databases": "Research databases",
+    "databaseLabel": "Research Databases:",
+    "chooseDatabase": "Choose research database",
+    "allPapers": "All Papers",
+    "allPapersDesc": "Search from 200M+ research papers",
+    "pubmed": "PubMed",
+    "pubmedDesc": "39M+ biomedical and life-science literature",
+    "arxiv": "ArXiv",
+    "arxivDesc": "Explore research preprints from arXiv"
+  },
+  "filters": {
+    "label": "Filters",
+    "sourceChannels": "Source channels",
+    "notebookSources": "Notebook sources",
+    "academic": "Academic",
+    "web": "Web",
+    "news": "News",
+    "finance": "Finance"
+  },
+  "model": {
+    "label": "Model",
+    "chooseModel": "Choose model",
+    "modelAriaLabel": "Model: {{name}}",
+    "fallbackName": "GPT-OSS 120B"
+  },
+  "sources": {
+    "heading": "Sources",
+    "selectAll": "Select all",
+    "deselectAll": "Deselect all",
+    "selectedCount": "{{count}} selected",
+    "score": "Score",
+    "cancel": "Cancel",
+    "adding": "Adding…",
+    "addToNotebook": "Add to notebook",
+    "addSelected": "Add {{count}}",
+    "close": "Close",
+    "includeSource": "Include {{title}}",
+    "openSources": "Open Sources",
+    "openStudio": "Open Studio",
+    "openExternal": "Open"
+  },
+  "panel": {
+    "chat": "Chat",
+    "threadHistory": "Thread history",
+    "newChat": "New chat",
+    "alreadyNewChat": "Already in a new chat",
+    "creating": "Creating…",
+    "chatOptions": "Chat options",
+    "configureChat": "Configure chat",
+    "exportChat": "Export chat",
+    "saveToNote": "Save to note",
+    "pinChat": "Pin chat",
+    "unpinChat": "Unpin chat"
+  },
+  "conversation": {
+    "newChat": "New Chat",
+    "newChatFallback": "New chat",
+    "loading": "Loading…",
+    "noThreads": "No other threads",
+    "pinned": "Pinned",
+    "recents": "Recents",
+    "rename": "Rename",
+    "delete": "Delete",
+    "pin": "Pin",
+    "unpin": "Unpin",
+    "threadOptions": "Thread options",
+    "deleteDialogTitle": "Delete thread?",
+    "deleteDialogBody": "This will permanently delete this thread and all its messages.",
+    "deleteDialogConfirm": "Delete",
+    "renameFailed": "Failed to rename thread",
+    "deleteFailed": "Failed to delete thread"
+  },
+  "empty": {
+    "addSources": "Upload documents or add URLs, then ask questions — I'll answer with citations.",
+    "hasSourcesHeading": "What would you like to know?",
+    "noSourcesHeading": "Ask anything about your sources",
+    "tryAsking": "Try asking",
+    "starter1": "Summarize the key concepts",
+    "starter2": "What are the main arguments?",
+    "starter3": "Quiz me on this material",
+    "starter4": "Explain the most important topic simply"
+  },
+  "message": {
+    "copy": "Copy",
+    "copied": "Copied",
+    "retry": "Retry",
+    "goodResponse": "Good response",
+    "badResponse": "Bad response",
+    "actions": "Message actions",
+    "viewSources": "View {{count}} source",
+    "viewSources_plural": "View {{count}} sources",
+    "sourcesCount": "{{count}} source",
+    "sourcesCount_plural": "{{count}} sources",
+    "followUps": "Follow-ups",
+    "thinking": "Thinking"
+  },
+  "configure": {
+    "title": "Configure chat",
+    "instructionMode": "Instruction mode",
+    "customInstructions": "Custom instructions",
+    "responseLength": "Response length",
+    "modeDefault": "Default",
+    "modeDefaultDesc": "Standard assistant behavior",
+    "modeLearningGuide": "Learning Guide",
+    "modeLearningGuideDesc": "Step-by-step teaching style",
+    "modeCustom": "Custom",
+    "modeCustomDesc": "Your own instructions",
+    "lengthDefault": "Default",
+    "lengthLonger": "Longer",
+    "lengthShorter": "Shorter",
+    "customPlaceholder": "Tell the assistant how to behave when responding in this notebook...",
+    "newChatWarning": "Start a new chat to use a different mode.",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving…"
+  },
+  "toast": {
+    "noMessagesExport": "No messages to export",
+    "exportSuccess": "Chat exported successfully",
+    "noMessagesSave": "No messages to save",
+    "noNotebookSelected": "No notebook selected",
+    "savedChatTitle": "Saved chat",
+    "savedChatPreview": "Note · Saved Chat",
+    "settingsSaved": "Chat settings saved",
+    "settingsFailed": "Failed to save chat settings",
+    "selectSourceFirst": "Please select at least one source before asking a question",
+    "notebookLoading": "Could not start a new chat. Wait for the notebook to finish loading, then try again.",
+    "createFailed": "Failed to create conversation",
+    "researchStarting": "Research is starting. Please retry in a moment.",
+    "researchFailed": "Failed to start research execution",
+    "literatureReviewFailed": "Failed to start literature review. Please try again."
+  }
+}

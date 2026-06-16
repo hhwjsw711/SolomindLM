@@ -96,5 +96,14 @@
   "featuresGrid": {
     "heading": "强大的学习工具",
     "subtitle": "AI 驱动的工具，帮助你更快学习、更牢固记忆"
+  },
+  "navigation": {
+    "features": "功能",
+    "useCases": "使用场景",
+    "pricing": "定价",
+    "faq": "常见问题",
+    "login": "登录",
+    "getStarted": "开始使用",
+    "toggleMenu": "切换菜单"
   }
 }

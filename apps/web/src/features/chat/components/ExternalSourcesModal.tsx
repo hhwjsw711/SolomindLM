@@ -1,5 +1,6 @@
 import { ExternalLink, Globe, GraduationCap, Newspaper, Plus, TrendingUp, X } from "lucide-react";
 import React, { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Favicon } from "@/shared/components/Favicon";
 
 export interface ExternalSource {
@@ -32,6 +33,7 @@ export const ExternalSourcesModal: React.FC<ExternalSourcesModalProps> = ({
   onAddSelected,
   isLoading = false,
 }) => {
+  const { t } = useTranslation("chat");
   const [selected, setSelected] = useState<Set<number>>(() => new Set());
 
   useEffect(() => {
@@ -95,14 +97,14 @@ export const ExternalSourcesModal: React.FC<ExternalSourcesModalProps> = ({
               id="external-sources-modal-title"
               className="truncate text-xl font-bold tracking-tight text-foreground"
             >
-              Sources
+              {t("sources.heading")}
             </h2>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="rounded-xl p-2 transition-colors hover:bg-secondary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            aria-label="Close"
+            aria-label={t("sources.close")}
           >
             <X className="h-5 w-5 text-muted-foreground" />
           </button>
@@ -114,10 +116,10 @@ export const ExternalSourcesModal: React.FC<ExternalSourcesModalProps> = ({
             onClick={allSelected ? deselectAll : selectAll}
             className="text-sm font-semibold text-primary transition-colors hover:text-primary/90 hover:underline underline-offset-4"
           >
-            {allSelected ? "Deselect all" : "Select all"}
+            {allSelected ? t("sources.deselectAll") : t("sources.selectAll")}
           </button>
           <span className="tabular-nums text-xs text-muted-foreground">
-            {selected.size} selected
+            {t("sources.selectedCount", { count: selected.size })}
           </span>
         </div>
 
@@ -141,7 +143,7 @@ export const ExternalSourcesModal: React.FC<ExternalSourcesModalProps> = ({
                       className="mt-0.5 h-4 w-4 shrink-0 rounded border-input text-primary accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                       checked={isChecked}
                       onChange={() => toggleIndex(index)}
-                      aria-label={`Include ${source.title}`}
+                      aria-label={t("sources.includeSource", { title: source.title })}
                     />
                     {source.sourceType === "web" ? (
                       <Favicon url={source.url} size={16} className="mt-0.5 shrink-0 opacity-90" />
@@ -170,7 +172,7 @@ export const ExternalSourcesModal: React.FC<ExternalSourcesModalProps> = ({
                         </span>
                         {source.score !== undefined ? (
                           <span className="text-[11px] tabular-nums text-muted-foreground">
-                            Score {source.score.toFixed(2)}
+                            {t("sources.score")} {source.score.toFixed(2)}
                           </span>
                         ) : null}
                       </div>
@@ -189,7 +191,7 @@ export const ExternalSourcesModal: React.FC<ExternalSourcesModalProps> = ({
             disabled={isLoading}
             className="rounded-xl px-4 py-2 text-sm font-bold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Cancel
+            {t("sources.cancel")}
           </button>
           <button
             type="button"
@@ -199,10 +201,10 @@ export const ExternalSourcesModal: React.FC<ExternalSourcesModalProps> = ({
           >
             <Plus className="h-4 w-4" strokeWidth={2} />
             {isLoading
-              ? "Adding…"
+              ? t("sources.adding")
               : selected.size === 0
-                ? "Add to notebook"
-                : `Add ${selected.size}`}
+                ? t("sources.addToNotebook")
+                : t("sources.addSelected", { count: selected.size })}
           </button>
         </div>
       </div>

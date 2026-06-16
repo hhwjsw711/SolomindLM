@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import {
   AcademicDiscoveryFiltersSection,
   buildAcademicDiscoveryApiFilters,
@@ -202,6 +203,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   chatSettings,
   onModelChange,
 }) => {
+  const { t } = useTranslation("chat");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const shellRef = useRef<HTMLDivElement>(null);
   const modeAnchorRef = useRef<HTMLButtonElement>(null);
@@ -270,10 +272,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   const placeholder =
     mode === "literatureReview"
-      ? "Describe the topic, research question, and requirements to generate a literature review..."
+      ? t("input.placeholder.literatureReview")
       : mode === "deepResearch"
-        ? "Ask a complex research question with multi-step investigation..."
-        : "Ask a question about your sources...";
+        ? t("input.placeholder.deepResearch")
+        : t("input.placeholder.chat");
 
   useLayoutEffect(() => {
     const textarea = textareaRef.current;
@@ -376,7 +378,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 disabled={Boolean(disabled)}
                 aria-haspopup="listbox"
                 aria-expanded={openMenu === "mode"}
-                aria-label={`Composer mode: ${modeMeta.label}`}
+                aria-label={t("composer.modeAriaLabel", { label: modeMeta.label })}
                 onClick={() => setOpenMenu((o) => (o === "mode" ? "none" : "mode"))}
                 className={[
                   "inline-flex h-9 max-w-full min-w-0 items-center gap-2 rounded-full border border-transparent px-3 text-sm font-medium font-sans transition-colors",
@@ -401,10 +403,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 panelRef={modePanelRef}
                 className="w-[min(15rem,calc(100vw-2rem))] rounded-xl border border-border bg-card py-2 shadow-xl font-sans animate-in fade-in slide-in-from-bottom-2 duration-150"
                 role="listbox"
-                aria-label="Choose chat mode"
+                aria-label={t("composer.chooseMode")}
               >
                 <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  Mode
+                  {t("composer.modeLabel")}
                 </p>
                 {COMPOSER_MODES.map(({ id, label, icon: Icon }) => {
                   const active = mode === id;
@@ -441,7 +443,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   disabled={Boolean(disabled)}
                   aria-haspopup="listbox"
                   aria-expanded={openMenu === "corpus"}
-                  aria-label="Research databases"
+                  aria-label={t("research.databases")}
                   onClick={() => setOpenMenu((o) => (o === "corpus" ? "none" : "corpus"))}
                   className="inline-flex h-9 max-w-[min(13rem,52vw)] min-w-0 items-center gap-2 rounded-full bg-muted/50 px-3 text-sm font-medium font-sans text-foreground hover:bg-muted/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card disabled:opacity-50"
                 >
@@ -459,10 +461,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   panelRef={corpusPanelRef}
                   className="w-[min(20rem,calc(100vw-2rem))] rounded-xl border border-border/80 bg-popover py-3 font-sans text-popover-foreground shadow-lg ring-1 ring-black/5 dark:ring-white/10 animate-in fade-in slide-in-from-bottom-2 duration-150"
                   role="listbox"
-                  aria-label="Choose research database"
+                  aria-label={t("research.chooseDatabase")}
                 >
                   <p className="px-3 pb-2.5 text-sm font-medium text-muted-foreground">
-                    Research Databases:
+                    {t("research.databaseLabel")}
                   </p>
                   <div className="flex flex-col gap-0.5 px-1.5">
                     {RESEARCH_DATABASES.map(({ id, title, description, icon: Icon }) => {
@@ -521,12 +523,12 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   type="button"
                   disabled={Boolean(disabled)}
                   aria-expanded={openMenu === "filters"}
-                  aria-label="Filters"
+                  aria-label={t("filters.label")}
                   onClick={() => setOpenMenu((o) => (o === "filters" ? "none" : "filters"))}
                   className={filtersButtonClass(academicFiltersActive)}
                 >
                   <ListFilter className="size-4 shrink-0" strokeWidth={2} aria-hidden />
-                  Filters
+                  {t("filters.label")}
                 </button>
                 <ComposerDropUp
                   anchorRef={filtersAnchorRef}
@@ -551,14 +553,14 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   type="button"
                   disabled={Boolean(disabled)}
                   aria-expanded={openMenu === "filters"}
-                  aria-label="Filters"
+                  aria-label={t("filters.label")}
                   onClick={() => setOpenMenu((o) => (o === "filters" ? "none" : "filters"))}
                   className={filtersButtonClass(
                     activeFilters.includes("academic") && academicFiltersActive
                   )}
                 >
                   <ListFilter className="size-4 shrink-0" strokeWidth={2} aria-hidden />
-                  Filters
+                  {t("filters.label")}
                 </button>
                 <ComposerDropUp
                   anchorRef={filtersAnchorRef}
@@ -566,7 +568,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   panelRef={filtersPanelRef}
                   className="max-h-[min(65vh,480px)] w-[min(19rem,calc(100vw-2rem))] overflow-y-auto overflow-x-hidden rounded-xl border border-border bg-card p-3 shadow-xl font-sans animate-in fade-in slide-in-from-bottom-2 duration-150"
                 >
-                  <p className="text-xs font-semibold text-foreground">Source channels</p>
+                  <p className="text-xs font-semibold text-foreground">
+                    {t("filters.sourceChannels")}
+                  </p>
                   <div className="mt-2 space-y-1 border-t border-border/40 pt-2">
                     {SOURCE_FILTERS.map(({ id, label, icon: Icon }) => {
                       const isActive = activeFilters.includes(id);
@@ -622,8 +626,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     hideModelButtonLabel ? "gap-1 px-1.5" : "gap-1.5 px-1.5",
                     openMenu === "model" && "bg-muted/40 text-foreground"
                   )}
-                  title={currentModel?.name ?? "Choose model"}
-                  aria-label={`Model: ${currentModel?.name ?? "Choose model"}`}
+                  title={currentModel?.name ?? t("model.chooseModel")}
+                  aria-label={t("model.modelAriaLabel", {
+                    name: currentModel?.name ?? t("model.chooseModel"),
+                  })}
                 >
                   <ModelBrandIcon brand={currentModel?.brand ?? "openai"} />
                   <span
@@ -632,7 +638,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                       hideModelButtonLabel ? "sr-only" : "@max-4xl/chat-input:sr-only"
                     )}
                   >
-                    {currentModel?.name ?? "GPT-OSS 120B"}
+                    {currentModel?.name ?? t("model.fallbackName")}
                   </span>
                   <ChevronDown
                     className={[
@@ -652,11 +658,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     panelRef={modelPanelRef}
                     className="min-w-[13.5rem] max-w-[min(18rem,calc(100vw-2rem))] max-h-[min(70vh,22rem)] overflow-y-auto overflow-x-hidden rounded-xl border border-border/80 bg-popover py-1 font-sans text-popover-foreground shadow-xl ring-1 ring-black/5 dark:ring-white/10 animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-150"
                     role="listbox"
-                    aria-label="Choose model"
+                    aria-label={t("model.chooseModel")}
                   >
                     <div className="border-b border-border/50 px-3 py-2">
                       <p className="text-[11px] font-medium leading-none text-muted-foreground">
-                        Model
+                        {t("model.label")}
                       </p>
                     </div>
                     <div className="p-1">
@@ -741,10 +747,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     .join(" ")}
                   title={
                     voice.voiceState === "recording"
-                      ? "Stop and transcribe"
+                      ? t("input.voice.stopAndTranscribe")
                       : voice.voiceState === "transcribing"
-                        ? "Transcribing…"
-                        : "Dictate (microphone)"
+                        ? t("input.voice.transcribing")
+                        : t("input.voice.dictate")
                   }
                   aria-pressed={voice.voiceState === "recording" ? "true" : "false"}
                 >
@@ -776,16 +782,16 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               }`}
               title={
                 isStreaming
-                  ? "Stop generating"
+                  ? t("input.send.stop")
                   : waitingOnRemoteGeneration
-                    ? "A response is generating in another tab or device. Switch there to stop, or wait for it to finish."
+                    ? t("input.send.remoteGenerating")
                     : value.trim()
                       ? mode === "literatureReview"
-                        ? "Start literature review (Enter)"
+                        ? t("input.send.startLiteratureReview")
                         : mode === "deepResearch"
-                          ? "Start deep research (Enter)"
-                          : "Send message (Enter)"
-                      : "Type a message to send"
+                          ? t("input.send.startDeepResearch")
+                          : t("input.send.send")
+                      : t("input.send.empty")
               }
             >
               {isStreaming ? (
@@ -804,7 +810,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         </div>
       </div>
       <p className="pointer-events-none text-center text-[11px] leading-snug text-muted-foreground px-1">
-        SolomindLM can be inaccurate; please double check its responses.
+        {t("input.disclaimer")}
       </p>
     </div>
   );
