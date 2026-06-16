@@ -54,13 +54,13 @@
 
 ---
 
-## Studio
+## Studio 🔄
 
-**namespace**: `studio`
+**namespace**: `studio`（`locales/{en,zh}/studio.json`）
 
-- [ ] `features/studio/StudioPanelHeader.tsx` — 面板标题
-- [ ] `features/studio/ToolGrid.tsx` — 工具卡片标签/描述
-- [ ] 各视图定制弹窗（ReportView, FlashcardView, QuizView, MindMapView 等）
+- [x] `StudioPanelHeader.tsx` — 返回/重命名/编辑/复制/下载按钮、全屏切换、关闭面板（~17 条）
+- [x] `ToolGrid.tsx` — "Create" 标题
+- [ ] ~28 个视图/弹窗文件（`FlashcardView.tsx`, `QuizView.tsx`, `ReportView.tsx`, `CustomizeReportModal.tsx`, `SaveAsPromptModal.tsx`, ...）~250+ 条文案
 
 ---
 

@@ -10,6 +10,7 @@ import {
   PenTool,
 } from "lucide-react";
 import React, { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import {
   isFlashcardNote,
   isInfographicNote,
@@ -80,6 +81,7 @@ export const StudioPanelHeader: React.FC<StudioPanelHeaderProps> = ({
   isExporting,
   isMobile,
 }) => {
+  const { t } = useTranslation("studio");
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -99,7 +101,7 @@ export const StudioPanelHeader: React.FC<StudioPanelHeaderProps> = ({
                 type="button"
                 onClick={onBack}
                 className="p-1.5 hover:bg-secondary rounded-md transition-colors text-foreground flex items-center justify-center shrink-0"
-                aria-label="Back to Studio"
+                aria-label={t("header.backToStudio")}
               >
                 <ArrowLeft className="w-5 h-5 shrink-0" />
               </button>
@@ -128,7 +130,7 @@ export const StudioPanelHeader: React.FC<StudioPanelHeaderProps> = ({
                   }}
                   onClick={(e) => e.stopPropagation()}
                   className="flex-1 min-w-0 font-display font-bold text-sm tracking-wide bg-transparent border-0 border-b border-border rounded-none px-0 py-0.5 text-foreground focus:outline-none focus:ring-0 focus:border-primary"
-                  aria-label="Rename"
+                  aria-label={t("header.rename")}
                   autoFocus
                 />
               ) : (
@@ -144,8 +146,8 @@ export const StudioPanelHeader: React.FC<StudioPanelHeaderProps> = ({
                     type="button"
                     onClick={onEditReport}
                     className="p-2 hover:bg-secondary rounded-md transition-colors text-foreground/70 hover:text-foreground"
-                    title="Edit report"
-                    aria-label="Edit report"
+                    title={t("header.editReport")}
+                    aria-label={t("header.editReport")}
                   >
                     <Pencil className="w-4 h-4" />
                   </button>
@@ -155,8 +157,8 @@ export const StudioPanelHeader: React.FC<StudioPanelHeaderProps> = ({
                   onClick={onCopyReport}
                   disabled={!canCopyOrDownload}
                   className="p-2 hover:bg-secondary rounded-md transition-colors text-foreground/70 hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed"
-                  title="Copy report as Markdown"
-                  aria-label="Copy report as Markdown"
+                  title={t("header.copyAsMarkdown")}
+                  aria-label={t("header.copyAsMarkdown")}
                 >
                   <Copy className="w-4 h-4" />
                 </button>
@@ -165,8 +167,8 @@ export const StudioPanelHeader: React.FC<StudioPanelHeaderProps> = ({
                   onClick={onDownloadReport}
                   disabled={!canCopyOrDownload}
                   className="p-2 hover:bg-secondary rounded-md transition-colors text-foreground/70 hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed"
-                  title="Download report as Markdown file"
-                  aria-label="Download report as Markdown file"
+                  title={t("header.downloadAsMarkdown")}
+                  aria-label={t("header.downloadAsMarkdown")}
                 >
                   <Download className="w-4 h-4" />
                 </button>
@@ -179,8 +181,8 @@ export const StudioPanelHeader: React.FC<StudioPanelHeaderProps> = ({
                   onClick={onCopyUserNote}
                   disabled={!canCopyOrDownloadUserNote}
                   className="p-2 hover:bg-secondary rounded-md transition-colors text-foreground/70 hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed"
-                  title="Copy note"
-                  aria-label="Copy note"
+                  title={t("header.copyNote")}
+                  aria-label={t("header.copyNote")}
                 >
                   <Copy className="w-4 h-4" />
                 </button>
@@ -189,8 +191,8 @@ export const StudioPanelHeader: React.FC<StudioPanelHeaderProps> = ({
                   onClick={onDownloadUserNote}
                   disabled={!canCopyOrDownloadUserNote}
                   className="p-2 hover:bg-secondary rounded-md transition-colors text-foreground/70 hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed"
-                  title="Download as Markdown"
-                  aria-label="Download as Markdown"
+                  title={t("header.downloadNoteAsMarkdown")}
+                  aria-label={t("header.downloadNoteAsMarkdown")}
                 >
                   <Download className="w-4 h-4" />
                 </button>
@@ -203,8 +205,8 @@ export const StudioPanelHeader: React.FC<StudioPanelHeaderProps> = ({
                   onClick={onExportFlashcards}
                   disabled={isExporting}
                   className="p-2 hover:bg-secondary rounded-md transition-colors text-foreground/70 hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed"
-                  title="Download flashcards as CSV"
-                  aria-label="Download flashcards as CSV"
+                  title={t("header.downloadFlashcardsCSV")}
+                  aria-label={t("header.downloadFlashcardsCSV")}
                 >
                   {isExporting ? (
                     <Loader2 className="w-4 h-4 animate-spin shrink-0" aria-hidden />
@@ -221,8 +223,8 @@ export const StudioPanelHeader: React.FC<StudioPanelHeaderProps> = ({
                   onClick={onDownloadSpreadsheet}
                   disabled={!canDownloadSpreadsheet}
                   className="p-2 hover:bg-secondary rounded-md transition-colors text-foreground/70 hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed"
-                  title="Download as CSV"
-                  aria-label="Download as CSV"
+                  title={t("header.downloadAsCSV")}
+                  aria-label={t("header.downloadAsCSV")}
                 >
                   <Download className="w-4 h-4" />
                 </button>
@@ -235,8 +237,8 @@ export const StudioPanelHeader: React.FC<StudioPanelHeaderProps> = ({
                   onClick={onDownloadInfographic}
                   disabled={!canDownloadInfographic}
                   className="p-2 hover:bg-secondary rounded-md transition-colors text-foreground/70 hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed"
-                  title="Download infographic"
-                  aria-label="Download infographic"
+                  title={t("header.downloadInfographic")}
+                  aria-label={t("header.downloadInfographic")}
                 >
                   <Download className="w-4 h-4" />
                 </button>
@@ -276,7 +278,7 @@ export const StudioPanelHeader: React.FC<StudioPanelHeaderProps> = ({
               type="button"
               onClick={onBack}
               className="p-1 -ml-1 hover:bg-sidebar-accent rounded-sm transition-colors text-sidebar-foreground/70 hover:text-sidebar-foreground flex items-center justify-center shrink-0"
-              aria-label="Back to Studio"
+              aria-label={t("header.backToStudio")}
             >
               <ArrowLeft className="w-5 h-5 shrink-0" />
             </button>
@@ -305,7 +307,7 @@ export const StudioPanelHeader: React.FC<StudioPanelHeaderProps> = ({
                 }}
                 onClick={(e) => e.stopPropagation()}
                 className="flex-1 min-w-0 font-display font-bold text-sm tracking-wide bg-transparent border-0 border-b border-border rounded-none px-0 py-0.5 text-sidebar-foreground focus:outline-none focus:ring-0 focus:border-primary"
-                aria-label="Rename"
+                aria-label={t("header.rename")}
                 autoFocus
               />
             ) : (
@@ -324,7 +326,7 @@ export const StudioPanelHeader: React.FC<StudioPanelHeaderProps> = ({
                   }
                 }}
                 className="font-display font-bold text-sm tracking-wide truncate text-left min-w-0 flex-1 cursor-text hover:opacity-80 hover:underline hover:decoration-dotted hover:underline-offset-2 transition-opacity outline-none focus:outline-none focus:opacity-80 bg-transparent"
-                title="Click to rename"
+                title={t("header.clickToRename")}
               >
                 {activeNote.title}
               </span>
@@ -337,8 +339,8 @@ export const StudioPanelHeader: React.FC<StudioPanelHeaderProps> = ({
                   type="button"
                   onClick={onEditReport}
                   className="p-2 hover:bg-sidebar-accent rounded-sm transition-colors text-sidebar-foreground/70 hover:text-sidebar-foreground"
-                  title="Edit report"
-                  aria-label="Edit report"
+                  title={t("header.editReport")}
+                  aria-label={t("header.editReport")}
                 >
                   <Pencil className="w-4 h-4" />
                 </button>
@@ -348,8 +350,8 @@ export const StudioPanelHeader: React.FC<StudioPanelHeaderProps> = ({
                 onClick={onCopyReport}
                 disabled={!canCopyOrDownload}
                 className="p-2 hover:bg-sidebar-accent rounded-sm transition-colors text-sidebar-foreground/70 hover:text-sidebar-foreground disabled:opacity-40 disabled:cursor-not-allowed"
-                title="Copy report as Markdown"
-                aria-label="Copy report as Markdown"
+                title={t("header.copyAsMarkdown")}
+                aria-label={t("header.copyAsMarkdown")}
               >
                 <Copy className="w-4 h-4" />
               </button>
@@ -358,8 +360,8 @@ export const StudioPanelHeader: React.FC<StudioPanelHeaderProps> = ({
                 onClick={onDownloadReport}
                 disabled={!canCopyOrDownload}
                 className="p-2 hover:bg-sidebar-accent rounded-sm transition-colors text-sidebar-foreground/70 hover:text-sidebar-foreground disabled:opacity-40 disabled:cursor-not-allowed"
-                title="Download report as Markdown file"
-                aria-label="Download report as Markdown file"
+                title={t("header.downloadAsMarkdown")}
+                aria-label={t("header.downloadAsMarkdown")}
               >
                 <Download className="w-4 h-4" />
               </button>
@@ -372,8 +374,8 @@ export const StudioPanelHeader: React.FC<StudioPanelHeaderProps> = ({
                 onClick={onCopyUserNote}
                 disabled={!canCopyOrDownloadUserNote}
                 className="p-2 hover:bg-sidebar-accent rounded-sm transition-colors text-sidebar-foreground/70 hover:text-sidebar-foreground disabled:opacity-40 disabled:cursor-not-allowed"
-                title="Copy note"
-                aria-label="Copy note"
+                title={t("header.copyNote")}
+                aria-label={t("header.copyNote")}
               >
                 <Copy className="w-4 h-4" />
               </button>
@@ -382,8 +384,8 @@ export const StudioPanelHeader: React.FC<StudioPanelHeaderProps> = ({
                 onClick={onDownloadUserNote}
                 disabled={!canCopyOrDownloadUserNote}
                 className="p-2 hover:bg-sidebar-accent rounded-sm transition-colors text-sidebar-foreground/70 hover:text-sidebar-foreground disabled:opacity-40 disabled:cursor-not-allowed"
-                title="Download as Markdown"
-                aria-label="Download as Markdown"
+                title={t("header.downloadNoteAsMarkdown")}
+                aria-label={t("header.downloadNoteAsMarkdown")}
               >
                 <Download className="w-4 h-4" />
               </button>
@@ -396,8 +398,8 @@ export const StudioPanelHeader: React.FC<StudioPanelHeaderProps> = ({
                 onClick={onExportFlashcards}
                 disabled={isExporting}
                 className="p-2 hover:bg-sidebar-accent rounded-sm transition-colors text-sidebar-foreground/70 hover:text-sidebar-foreground disabled:opacity-40 disabled:cursor-not-allowed"
-                title="Download flashcards as CSV"
-                aria-label="Download flashcards as CSV"
+                title={t("header.downloadFlashcardsCSV")}
+                aria-label={t("header.downloadFlashcardsCSV")}
               >
                 {isExporting ? (
                   <Loader2 className="w-4 h-4 animate-spin shrink-0" aria-hidden />
@@ -414,8 +416,8 @@ export const StudioPanelHeader: React.FC<StudioPanelHeaderProps> = ({
                 onClick={onDownloadSpreadsheet}
                 disabled={!canDownloadSpreadsheet}
                 className="p-2 hover:bg-sidebar-accent rounded-sm transition-colors text-sidebar-foreground/70 hover:text-sidebar-foreground disabled:opacity-40 disabled:cursor-not-allowed"
-                title="Download as CSV"
-                aria-label="Download as CSV"
+                title={t("header.downloadAsCSV")}
+                aria-label={t("header.downloadAsCSV")}
               >
                 <Download className="w-4 h-4" />
               </button>
@@ -428,8 +430,8 @@ export const StudioPanelHeader: React.FC<StudioPanelHeaderProps> = ({
                 onClick={onDownloadInfographic}
                 disabled={!canDownloadInfographic}
                 className="p-2 hover:bg-sidebar-accent rounded-sm transition-colors text-sidebar-foreground/70 hover:text-sidebar-foreground disabled:opacity-40 disabled:cursor-not-allowed"
-                title="Download infographic"
-                aria-label="Download infographic"
+                title={t("header.downloadInfographic")}
+                aria-label={t("header.downloadInfographic")}
               >
                 <Download className="w-4 h-4" />
               </button>
@@ -437,8 +439,12 @@ export const StudioPanelHeader: React.FC<StudioPanelHeaderProps> = ({
                 type="button"
                 onClick={onToggleInfographicFullscreen}
                 className="p-2 hover:bg-sidebar-accent rounded-sm transition-colors text-sidebar-foreground/70 hover:text-sidebar-foreground"
-                title={isInfographicFullscreen ? "Exit fullscreen" : "Full screen"}
-                aria-label={isInfographicFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+                title={
+                  isInfographicFullscreen ? t("header.exitFullscreen") : t("header.fullScreen")
+                }
+                aria-label={
+                  isInfographicFullscreen ? t("header.exitFullscreen") : t("header.enterFullscreen")
+                }
               >
                 {isInfographicFullscreen ? (
                   <Minimize2 className="w-4 h-4" />
@@ -454,7 +460,7 @@ export const StudioPanelHeader: React.FC<StudioPanelHeaderProps> = ({
           <button
             onClick={onClose}
             className="hidden md:flex p-1 hover:bg-sidebar-accent rounded-sm transition-colors text-sidebar-foreground/70 hover:text-sidebar-foreground items-center justify-center shrink-0"
-            aria-label="Close Studio panel"
+            aria-label={t("header.closePanel")}
           >
             <ChevronRight className="w-5 h-5 shrink-0" />
           </button>

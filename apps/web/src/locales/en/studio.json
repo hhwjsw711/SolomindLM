@@ -1,0 +1,23 @@
+{
+  "header": {
+    "backToStudio": "Back to Studio",
+    "rename": "Rename",
+    "editReport": "Edit report",
+    "copyAsMarkdown": "Copy report as Markdown",
+    "downloadAsMarkdown": "Download report as Markdown file",
+    "copyNote": "Copy note",
+    "downloadNoteAsMarkdown": "Download as Markdown",
+    "downloadFlashcardsCSV": "Download flashcards as CSV",
+    "downloadAsCSV": "Download as CSV",
+    "downloadInfographic": "Download infographic",
+    "exitFullscreen": "Exit fullscreen",
+    "enterFullscreen": "Enter fullscreen",
+    "fullScreen": "Full screen",
+    "clickToRename": "Click to rename",
+    "closePanel": "Close Studio panel",
+    "studio": "Studio"
+  },
+  "toolGrid": {
+    "create": "Create"
+  }
+}

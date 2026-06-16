@@ -9,6 +9,7 @@ import {
   Table2,
 } from "lucide-react";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { StudioTool } from "@/shared/types/index";
 
 interface ToolGridProps {
@@ -35,10 +36,11 @@ const IconMap: Record<string, React.FC<any>> = {
  * ToolGrid component displays creation tool cards in a responsive grid.
  */
 export const ToolGrid: React.FC<ToolGridProps> = ({ tools, onToolClick, width, activeToolId }) => {
+  const { t } = useTranslation("studio");
   return (
     <div className="space-y-3" data-onboarding="studio-tool-grid" data-testid="studio-tool-grid">
       <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-1 font-display">
-        Create
+        {t("toolGrid.create")}
       </h3>
       <div className={`grid gap-3 ${width > 450 ? "grid-cols-3" : "grid-cols-2"}`}>
         {tools.map((tool) => {

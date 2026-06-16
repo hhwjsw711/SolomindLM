@@ -1,0 +1,23 @@
+{
+  "header": {
+    "backToStudio": "返回 Studio",
+    "rename": "重命名",
+    "editReport": "编辑报告",
+    "copyAsMarkdown": "复制报告为 Markdown",
+    "downloadAsMarkdown": "下载报告为 Markdown 文件",
+    "copyNote": "复制笔记",
+    "downloadNoteAsMarkdown": "下载为 Markdown",
+    "downloadFlashcardsCSV": "下载闪卡为 CSV",
+    "downloadAsCSV": "下载为 CSV",
+    "downloadInfographic": "下载信息图",
+    "exitFullscreen": "退出全屏",
+    "enterFullscreen": "进入全屏",
+    "fullScreen": "全屏",
+    "clickToRename": "点击重命名",
+    "closePanel": "关闭 Studio 面板",
+    "studio": "Studio"
+  },
+  "toolGrid": {
+    "create": "创建"
+  }
+}
