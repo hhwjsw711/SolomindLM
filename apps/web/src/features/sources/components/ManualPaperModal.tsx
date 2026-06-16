@@ -1,6 +1,7 @@
 import { Id } from "@convex/_generated/dataModel";
 import { AlertCircle, FileText, Loader2, X } from "lucide-react";
 import React, { useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useUpload } from "../services/documentsApi";
 
 interface ManualPaperModalProps {
@@ -16,6 +17,7 @@ export const ManualPaperModal: React.FC<ManualPaperModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const { t } = useTranslation("sources");
   const [title, setTitle] = useState("");
   const [authors, setAuthors] = useState("");
   const [abstract, setAbstract] = useState("");
@@ -60,7 +62,7 @@ export const ManualPaperModal: React.FC<ManualPaperModalProps> = ({
       onSuccess?.(result.documentId);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to add paper");
+      setError(err instanceof Error ? err.message : t("manualPaper.failedToAdd"));
     } finally {
       setIsUploading(false);
     }
@@ -100,7 +102,7 @@ export const ManualPaperModal: React.FC<ManualPaperModalProps> = ({
         <div className="flex items-center justify-between p-6 border-b border-border/50 bg-card">
           <div className="flex items-center gap-2">
             <FileText className="w-5 h-5 text-primary" />
-            <h2 className="text-xl font-bold">Add Paper Manually</h2>
+            <h2 className="text-xl font-bold">{t("manualPaper.title")}</h2>
           </div>
           <button
             onClick={handleClose}
@@ -112,9 +114,7 @@ export const ManualPaperModal: React.FC<ManualPaperModalProps> = ({
 
         {/* Body */}
         <div className="overflow-y-auto p-6 space-y-6 bg-card/50">
-          <p className="text-muted-foreground text-sm">
-            Enter paper details manually. Title and authors are required.
-          </p>
+          <p className="text-muted-foreground text-sm">{t("manualPaper.description")}</p>
 
           {/* Title */}
           <div className="space-y-2">
@@ -125,7 +125,7 @@ export const ManualPaperModal: React.FC<ManualPaperModalProps> = ({
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Paper title"
+              placeholder={t("manualPaper.titlePlaceholder")}
               className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
               disabled={isUploading}
             />
@@ -140,7 +140,7 @@ export const ManualPaperModal: React.FC<ManualPaperModalProps> = ({
               type="text"
               value={authors}
               onChange={(e) => setAuthors(e.target.value)}
-              placeholder="Author names, comma-separated"
+              placeholder={t("manualPaper.authorsPlaceholder")}
               className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
               disabled={isUploading}
             />
@@ -230,7 +230,7 @@ export const ManualPaperModal: React.FC<ManualPaperModalProps> = ({
             ) : (
               <FileText className="w-4 h-4" />
             )}
-            Add Paper
+            {t("manualPaper.addPaper")}
           </button>
         </div>
       </div>

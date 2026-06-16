@@ -1,5 +1,6 @@
 import { FileText, Loader2, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface TextInputModalProps {
   isOpen: boolean;
@@ -14,6 +15,7 @@ export const TextInputModal: React.FC<TextInputModalProps> = ({
   onUpload,
   isUploading,
 }) => {
+  const { t } = useTranslation("sources");
   const [textInput, setTextInput] = useState("");
 
   // Reset input when modal opens
@@ -52,7 +54,7 @@ export const TextInputModal: React.FC<TextInputModalProps> = ({
             <div className="p-2 bg-primary/10 rounded-lg flex items-center justify-center">
               <FileText className="w-5 h-5 text-primary" />
             </div>
-            <h2 className="text-xl font-bold font-sans">Paste Text</h2>
+            <h2 className="text-xl font-bold font-sans">{t("textInput.title")}</h2>
           </div>
           <button
             onClick={onClose}
@@ -66,7 +68,7 @@ export const TextInputModal: React.FC<TextInputModalProps> = ({
             value={textInput}
             onChange={(e) => setTextInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Paste your text here..."
+            placeholder={t("textInput.placeholder")}
             className="w-full h-48 px-4 py-3 bg-background border-2 border-border rounded-xl font-serif focus:border-primary focus:outline-none transition-colors resize-none"
             disabled={isUploading}
             autoFocus
@@ -77,7 +79,7 @@ export const TextInputModal: React.FC<TextInputModalProps> = ({
               disabled={isUploading}
               className="flex-1 py-3 bg-secondary text-foreground rounded-lg hover:bg-secondary/80 font-bold font-sans transition-colors"
             >
-              Cancel
+              {t("textInput.cancel")}
             </button>
             <button
               onClick={handleUpload}
@@ -87,10 +89,10 @@ export const TextInputModal: React.FC<TextInputModalProps> = ({
               {isUploading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin shrink-0" />
-                  Adding...
+                  {t("textInput.adding")}
                 </>
               ) : (
-                "Add Source"
+                t("textInput.addSource")
               )}
             </button>
           </div>

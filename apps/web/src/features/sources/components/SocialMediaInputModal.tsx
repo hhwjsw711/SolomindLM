@@ -1,5 +1,6 @@
 import { Loader2, X, Youtube } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useToast } from "@/shared/contexts/useToast";
 
 interface SocialMediaInputModalProps {
@@ -15,6 +16,7 @@ export const SocialMediaInputModal: React.FC<SocialMediaInputModalProps> = ({
   onUpload,
   isUploading,
 }) => {
+  const { t } = useTranslation("sources");
   const { error: showError } = useToast();
   const [urlInput, setUrlInput] = useState("");
 
@@ -34,7 +36,7 @@ export const SocialMediaInputModal: React.FC<SocialMediaInputModalProps> = ({
       .filter((url) => url.length > 0 && (url.startsWith("http://") || url.startsWith("https://")));
 
     if (urls.length === 0) {
-      showError("Please enter at least one valid URL (starting with http:// or https://).");
+      showError(t("socialMediaInput.invalidUrl"));
       return;
     }
 
@@ -64,7 +66,7 @@ export const SocialMediaInputModal: React.FC<SocialMediaInputModalProps> = ({
             <div className="p-2 bg-primary/10 rounded-lg flex items-center justify-center">
               <Youtube className="w-5 h-5 text-primary" />
             </div>
-            <h2 className="text-xl font-bold font-sans">Add Video URL</h2>
+            <h2 className="text-xl font-bold font-sans">{t("socialMediaInput.title")}</h2>
           </div>
           <button
             onClick={onClose}
@@ -74,17 +76,12 @@ export const SocialMediaInputModal: React.FC<SocialMediaInputModalProps> = ({
           </button>
         </div>
         <div className="p-6 space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Paste video URLs to extract their transcripts. Supports YouTube, TikTok, Instagram, and
-            X (Twitter). Separate multiple URLs with spaces or new lines.
-          </p>
+          <p className="text-sm text-muted-foreground">{t("socialMediaInput.description")}</p>
           <textarea
             value={urlInput}
             onChange={(e) => setUrlInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Paste URL from YouTube, TikTok, Instagram, or X...
-
-Separate multiple URLs with spaces or new lines"
+            placeholder={t("socialMediaInput.placeholder")}
             className="w-full h-32 px-4 py-3 bg-background border-2 border-border rounded-xl font-serif focus:border-primary focus:outline-none transition-colors resize-none"
             disabled={isUploading}
             autoFocus
@@ -95,7 +92,7 @@ Separate multiple URLs with spaces or new lines"
               disabled={isUploading}
               className="flex-1 py-3 bg-secondary text-foreground rounded-lg hover:bg-secondary/80 font-bold font-sans transition-colors"
             >
-              Cancel
+              {t("socialMediaInput.cancel")}
             </button>
             <button
               onClick={handleUpload}
@@ -105,10 +102,10 @@ Separate multiple URLs with spaces or new lines"
               {isUploading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin shrink-0" />
-                  Adding...
+                  {t("socialMediaInput.adding")}
                 </>
               ) : (
-                "Add Sources"
+                t("socialMediaInput.addSources")
               )}
             </button>
           </div>

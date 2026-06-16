@@ -51,7 +51,9 @@
 - [x] `PdfViewer.tsx` — PDF 工具栏
 - [x] `AddSourceModal.tsx` — 上传弹窗（~25 条）
 - [ ] `DiscoverSourcesModal.tsx` — 搜索面板（~49 条）
-- [ ] 输入弹窗：`UrlInputModal`, `TextInputModal`, `SocialMediaInputModal`, `ManualPaperModal`, `DoiInputModal`, `BibtexImportModal`, `MendeleyImportModal`, `ZoteroImportModal`
+- [x] 输入弹窗：`UrlInputModal`, `TextInputModal`, `SocialMediaInputModal`
+- [x] `ManualPaperModal.tsx` — 手动添加论文（~6 条）
+- [ ] `DoiInputModal`, `BibtexImportModal`, `MendeleyImportModal`, `ZoteroImportModal`
 - [ ] `AcademicDiscoveryFiltersSection.tsx`, `academicFieldTaxonomy.ts`
 
 ---

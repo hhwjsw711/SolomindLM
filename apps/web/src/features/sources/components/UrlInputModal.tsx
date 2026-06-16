@@ -1,5 +1,6 @@
 import { Globe, Loader2, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useToast } from "@/shared/contexts/useToast";
 
 interface UrlInputModalProps {
@@ -15,6 +16,7 @@ export const UrlInputModal: React.FC<UrlInputModalProps> = ({
   onUpload,
   isUploading,
 }) => {
+  const { t } = useTranslation("sources");
   const { error: showError } = useToast();
   const [urlInput, setUrlInput] = useState("");
 
@@ -34,7 +36,7 @@ export const UrlInputModal: React.FC<UrlInputModalProps> = ({
       .filter((url) => url.length > 0 && (url.startsWith("http://") || url.startsWith("https://")));
 
     if (urls.length === 0) {
-      showError("Please enter at least one valid URL (starting with http:// or https://).");
+      showError(t("urlInput.invalidUrl"));
       return;
     }
 
@@ -64,7 +66,7 @@ export const UrlInputModal: React.FC<UrlInputModalProps> = ({
             <div className="p-2 bg-primary/10 rounded-lg flex items-center justify-center">
               <Globe className="w-5 h-5 text-primary" />
             </div>
-            <h2 className="text-xl font-bold font-sans">Add Website</h2>
+            <h2 className="text-xl font-bold font-sans">{t("urlInput.title")}</h2>
           </div>
           <button
             onClick={onClose}
@@ -78,10 +80,7 @@ export const UrlInputModal: React.FC<UrlInputModalProps> = ({
             value={urlInput}
             onChange={(e) => setUrlInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="https://example.com
-https://another-example.com
-
-Separate multiple URLs with spaces or new lines"
+            placeholder={t("urlInput.placeholder")}
             className="w-full h-32 px-4 py-3 bg-background border-2 border-border rounded-xl font-serif focus:border-primary focus:outline-none transition-colors resize-none"
             disabled={isUploading}
             autoFocus
@@ -92,7 +91,7 @@ Separate multiple URLs with spaces or new lines"
               disabled={isUploading}
               className="flex-1 py-3 bg-secondary text-foreground rounded-lg hover:bg-secondary/80 font-bold font-sans transition-colors"
             >
-              Cancel
+              {t("urlInput.cancel")}
             </button>
             <button
               onClick={handleUpload}
@@ -102,10 +101,10 @@ Separate multiple URLs with spaces or new lines"
               {isUploading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin shrink-0" />
-                  Adding...
+                  <>{t("urlInput.adding")}</>
                 </>
               ) : (
-                "Add Sources"
+                <>{t("urlInput.addSources")}</>
               )}
             </button>
           </div>
