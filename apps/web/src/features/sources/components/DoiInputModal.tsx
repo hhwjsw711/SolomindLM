@@ -51,7 +51,7 @@ export const DoiInputModal: React.FC<DoiInputModalProps> = ({
       if (result) {
         setPreview(result);
       } else {
-        setError("Could not resolve DOI. Please check the DOI and try again.");
+        setError(t("doiInput.failedToResolve"));
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : t("doiInput.failedToResolve"));
@@ -148,7 +148,9 @@ export const DoiInputModal: React.FC<DoiInputModalProps> = ({
           {/* Preview */}
           {preview && (
             <div className="border border-border/50 rounded-xl p-5 space-y-4 bg-card shadow-sm">
-              <h3 className="font-semibold text-lg">{preview.title || "Untitled Paper"}</h3>
+              <h3 className="font-semibold text-lg">
+                {preview.title || t("doiInput.placeholder")}
+              </h3>
               {preview.authors && preview.authors.length > 0 && (
                 <p className="text-sm text-muted-foreground">{preview.authors.join(", ")}</p>
               )}

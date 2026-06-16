@@ -172,7 +172,7 @@ export const SourceViewer: React.FC<SourceViewerProps> = ({
                 <div className="space-y-2">
                   <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                     <Tags className="h-3.5 w-3.5" aria-hidden />
-                    Topics
+                    {t("sourceViewer.topics")}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {source.sourceGuide.topics.map((topic, i) => (
@@ -214,9 +214,7 @@ export const SourceViewer: React.FC<SourceViewerProps> = ({
               {t("sourceViewer.failedToProcess")}
             </p>
           </div>
-          <p className="text-xs text-destructive/80">
-            There was an error while processing this document. Please try uploading it again.
-          </p>
+          <p className="text-xs text-destructive/80">{t("sourceViewer.failedToProcessBody")}</p>
         </div>
       )}
 
@@ -238,9 +236,7 @@ export const SourceViewer: React.FC<SourceViewerProps> = ({
             <p className="text-sm font-medium text-destructive">{t("sourceViewer.failedToLoad")}</p>
           </div>
           <p className="text-xs text-destructive/80">{error}</p>
-          <p className="text-xs text-muted-foreground">
-            The content will automatically reload when available. Please ensure you are logged in.
-          </p>
+          <p className="text-xs text-muted-foreground">{t("sourceViewer.failedToLoadBody")}</p>
         </div>
       )}
 
@@ -283,7 +279,9 @@ export const SourceViewer: React.FC<SourceViewerProps> = ({
             pdfUrlLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                <span className="ml-2 text-sm text-muted-foreground">Loading PDF…</span>
+                <span className="ml-2 text-sm text-muted-foreground">
+                  {t("sourceViewer.loadingPdf")}
+                </span>
               </div>
             ) : pdfUrl ? (
               <PdfViewer file={pdfUrl} />

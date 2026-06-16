@@ -119,7 +119,7 @@ export const ManualPaperModal: React.FC<ManualPaperModalProps> = ({
           {/* Title */}
           <div className="space-y-2">
             <label className="text-sm font-medium">
-              Title <span className="text-destructive">*</span>
+              {t("manualPaper.titleLabel")} <span className="text-destructive">*</span>
             </label>
             <input
               type="text"
@@ -134,7 +134,7 @@ export const ManualPaperModal: React.FC<ManualPaperModalProps> = ({
           {/* Authors */}
           <div className="space-y-2">
             <label className="text-sm font-medium">
-              Authors <span className="text-destructive">*</span>
+              {t("manualPaper.authorsLabel")} <span className="text-destructive">*</span>
             </label>
             <input
               type="text"
@@ -144,16 +144,16 @@ export const ManualPaperModal: React.FC<ManualPaperModalProps> = ({
               className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
               disabled={isUploading}
             />
-            <p className="text-xs text-muted-foreground">Separate multiple authors with commas</p>
+            <p className="text-xs text-muted-foreground">{t("manualPaper.authorsHelp")}</p>
           </div>
 
           {/* Abstract */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">Abstract</label>
+            <label className="text-sm font-medium">{t("manualPaper.abstractLabel")}</label>
             <textarea
               value={abstract}
               onChange={(e) => setAbstract(e.target.value)}
-              placeholder="Paper abstract"
+              placeholder={t("manualPaper.abstractPlaceholder")}
               rows={4}
               className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
               disabled={isUploading}
@@ -163,48 +163,48 @@ export const ManualPaperModal: React.FC<ManualPaperModalProps> = ({
           {/* DOI, Venue, Year, PDF URL - 2 column grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">DOI</label>
+              <label className="text-sm font-medium">{t("manualPaper.doiLabel")}</label>
               <input
                 type="text"
                 value={doi}
                 onChange={(e) => setDoi(e.target.value)}
-                placeholder="e.g., 10.1038/s41586-020-2649-2"
+                placeholder={t("manualPaper.doiPlaceholder")}
                 className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
                 disabled={isUploading}
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Venue</label>
+              <label className="text-sm font-medium">{t("manualPaper.venueLabel")}</label>
               <input
                 type="text"
                 value={venue}
                 onChange={(e) => setVenue(e.target.value)}
-                placeholder="Journal or conference"
+                placeholder={t("manualPaper.venuePlaceholder")}
                 className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
                 disabled={isUploading}
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Year</label>
+              <label className="text-sm font-medium">{t("manualPaper.yearLabel")}</label>
               <input
                 type="text"
                 value={year}
                 onChange={(e) => setYear(e.target.value)}
-                placeholder="Publication year"
+                placeholder={t("manualPaper.yearPlaceholder")}
                 className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
                 disabled={isUploading}
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">PDF URL</label>
+              <label className="text-sm font-medium">{t("manualPaper.pdfUrlLabel")}</label>
               <input
                 type="text"
                 value={pdfUrl}
                 onChange={(e) => setPdfUrl(e.target.value)}
-                placeholder="https://..."
+                placeholder={t("manualPaper.pdfUrlPlaceholder")}
                 className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
                 disabled={isUploading}
               />

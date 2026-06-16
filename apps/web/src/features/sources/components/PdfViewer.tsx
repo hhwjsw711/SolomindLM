@@ -314,7 +314,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({ file, className = "" }) =>
                     type="text"
                     inputMode="numeric"
                     autoComplete="off"
-                    aria-label="Go to page"
+                    aria-label={t("pdfViewer.pageInputTitle")}
                     title={t("pdfViewer.pageInputTitle")}
                     value={pageInput}
                     onChange={(e) => setPageInput(e.target.value.replace(/\D/g, ""))}

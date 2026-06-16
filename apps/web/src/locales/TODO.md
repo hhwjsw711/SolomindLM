@@ -25,7 +25,7 @@
 - [x] `ChatEmptyState.tsx` — starter prompts, headings, subtext, "Try asking" divider
 - [x] `ConversationList.tsx` — loading/empty states, section labels, rename/delete/pin actions, confirm dialog
 - [x] `ExternalSourcesModal.tsx` — heading, select/deselect, score, add/cancel buttons, aria-labels
-- [x] `ChatPanel.tsx` — toolbar tooltips, history/new chat/options buttons, dropdown menu
+- [x] `ChatPanel.tsx` — toast 消息（15 条）
 - [x] `ConfigureChatModal.tsx` — instruction modes, response length, custom instructions
 - [x] `MessageBubble.tsx` — copy, retry, feedback, sources count, follow-ups
 - [x] `AgentActivityPanel.tsx` — 搜索/查询/完成状态标记
@@ -49,10 +49,8 @@
 - [x] `SourceViewer.tsx` — 查看器标签、加载/错误状态
 - [x] `SourceGuide.tsx` — 来源指南
 - [x] `PdfViewer.tsx` — PDF 工具栏
-- [x] `AddSourceModal.tsx` — 上传弹窗（~25 条）
-- [x] `DiscoverSourcesModal.tsx` — 搜索面板（placeholder, empty/error states, OA tooltip ~10 条；~39 条通用词如 Search/Filters/Grid view 延后）
-- [x] 输入弹窗：`UrlInputModal`, `TextInputModal`, `SocialMediaInputModal`
-- [x] `ManualPaperModal.tsx` — 手动添加论文（~6 条）
+- [x] `DiscoverSourcesModal.tsx` — 搜索面板（placeholder, empty/error states, OA tooltip ~10 条）
+- [x] `ManualPaperModal.tsx` — 全部表单标签（13 条）
 - [x] `DoiInputModal`, `BibtexImportModal`, `MendeleyImportModal`, `ZoteroImportModal`
 - [ ] `AcademicDiscoveryFiltersSection.tsx`, `academicFieldTaxonomy.ts`
 
@@ -62,7 +60,7 @@
 
 **namespace**: `studio`（`locales/{en,zh}/studio.json`）
 
-- [x] `StudioPanelHeader.tsx` — 返回/重命名/编辑/复制/下载按钮、全屏切换、关闭面板（~17 条）
+- [x] `StudioPanelHeader.tsx` — 全部按钮（mobile + desktop，17 条）
 - [x] `ToolGrid.tsx` — "Create" 标题
 - [ ] ~28 个视图/弹窗文件（`FlashcardView.tsx`, `QuizView.tsx`, `ReportView.tsx`, `CustomizeReportModal.tsx`, `SaveAsPromptModal.tsx`, ...）~250+ 条文案
 

@@ -2,6 +2,7 @@ import { api } from "@convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
 import { Share2, User as UserIcon } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
 import { AvatarDropdown } from "../../features/auth/components/AvatarDropdown";
 import { useAuth } from "../../features/auth/useAuth";
@@ -33,6 +34,7 @@ export const Header: React.FC<HeaderProps> = ({
   notebookRenamable = true,
   onShare,
 }) => {
+  const { t } = useTranslation("common");
   const navigate = useNavigate();
   const authLocation = useLocation();
   const { user, isAuthenticated, signOut } = useAuth();
@@ -116,7 +118,7 @@ export const Header: React.FC<HeaderProps> = ({
         ref={spanRef}
         className="absolute opacity-0 pointer-events-none text-lg font-display font-bold whitespace-pre"
       >
-        {inputValue || "Enter title"}
+        {inputValue || t("header.enterTitle")}
       </span>
 
       {/* Left Section: logo (Go to Home) separate from notebook name (rename) */}
@@ -125,12 +127,12 @@ export const Header: React.FC<HeaderProps> = ({
           type="button"
           onClick={onLogoClick}
           className="flex items-center justify-center w-8 h-8 shrink-0 rounded hover:scale-105 transition-transform focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-          title="Go to Home"
-          aria-label="Go to Home"
+          title={t("header.goHome")}
+          aria-label={t("header.goHome")}
         >
           <img
             src="/SolomindLM_logo.png"
-            alt="SolomindLM Logo"
+            alt={t("header.logoAlt")}
             className="w-8 h-8 object-contain"
             onError={(e) => {
               // Fallback to 'N' if image doesn't exist
@@ -161,13 +163,13 @@ export const Header: React.FC<HeaderProps> = ({
                 onBlur={handleSave}
                 style={{ width: Math.max(100, inputWidth) }}
                 className="text-lg font-display font-bold text-foreground bg-transparent border-b border-primary outline-none p-0 tracking-tight min-w-0"
-                aria-label="Notebook name"
+                aria-label={t("header.notebookName")}
               />
             ) : notebookRenamable ? (
               <h1
                 onClick={() => setIsEditing(true)}
                 className="text-lg font-display font-bold text-foreground tracking-tight cursor-text hover:text-foreground/80 hover:decoration-dotted hover:underline underline-offset-4 transition-all truncate min-w-0"
-                title="Click to rename notebook"
+                title={t("header.clickToRename")}
               >
                 {title}
               </h1>
@@ -190,10 +192,10 @@ export const Header: React.FC<HeaderProps> = ({
             type="button"
             onClick={onShare}
             className="px-3 py-1.5 text-sm font-medium border border-border rounded-md hover:bg-secondary transition-colors flex items-center gap-1.5 shrink-0"
-            title="Share notebook"
+            title={t("header.shareNotebook")}
           >
             <Share2 className="w-4 h-4" />
-            <span className="hidden sm:inline">Share</span>
+            <span className="hidden sm:inline">{t("header.share")}</span>
           </button>
         )}
         {onBillingClick && !hasSubscription && (
@@ -201,7 +203,7 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={onBillingClick}
             className="px-3 py-1.5 text-sm font-medium bg-primary/10 hover:bg-primary/20 text-primary rounded-md transition-colors"
           >
-            Upgrade to Pro
+            {t("header.upgradeToPro")}
           </button>
         )}
         {onBillingClick && hasSubscription && (
@@ -209,7 +211,7 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={onBillingClick}
             className="px-3 py-1.5 text-sm font-medium bg-success/10 hover:bg-success/20 text-success rounded-md transition-colors"
           >
-            Pro
+            {t("header.pro")}
           </button>
         )}
         <LanguageSwitcher />

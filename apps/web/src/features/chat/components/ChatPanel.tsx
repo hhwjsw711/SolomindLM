@@ -249,7 +249,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         });
         if (!response.ok) {
           if (response.status === 404) {
-            toastError("Research is starting. Please retry in a moment.");
+            toastError(t("toast.researchStarting"));
             return;
           }
           const data = (await response.json().catch(() => null)) as { error?: string } | null;
@@ -258,7 +258,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         await consumeResearchExecuteStream(response);
       } catch (err) {
         console.error("[ResearchPlan] Approve failed:", err);
-        toastError(err instanceof Error ? err.message : "Failed to start research execution");
+        toastError(err instanceof Error ? err.message : t("toast.researchFailed"));
       }
     },
     [approvePlanMutation, authToken, consumeResearchExecuteStream, toastError]
@@ -287,20 +287,20 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
 
   const handleExportChat = () => {
     if (messages.length === 0) {
-      toastError("No messages to export");
+      toastError(t("toast.noMessagesExport"));
       return;
     }
     exportAsMarkdown(messages, notebookTitle);
-    success("Chat exported successfully");
+    success(t("toast.exportSuccess"));
   };
 
   const handleSaveToNote = async () => {
     if (messages.length === 0) {
-      toastError("No messages to save");
+      toastError(t("toast.noMessagesSave"));
       return;
     }
     if (!notebookId) {
-      toastError("No notebook selected");
+      toastError(t("toast.noNotebookSelected"));
       return;
     }
 
@@ -336,11 +336,11 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       try {
         await updateNotebook(notebookId, { chatSettings: settings });
         if (!opts?.silentSuccess) {
-          success("Chat settings saved");
+          success(t("toast.settingsSaved"));
         }
         setIsConfigModalOpen(false);
       } catch (_e) {
-        toastError("Failed to save chat settings");
+        toastError(t("toast.settingsFailed"));
       } finally {
         setIsSavingConfig(false);
       }
@@ -453,12 +453,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         onSelectConversation?.(id);
         setHistoryOpen(false);
       } else {
-        toastError(
-          "Could not start a new chat. Wait for the notebook to finish loading, then try again."
-        );
+        toastError(t("toast.notebookLoading"));
       }
     } catch {
-      toastError("Failed to create conversation");
+      toastError(t("toast.createFailed"));
     } finally {
       setIsCreatingConversation(false);
     }
@@ -495,7 +493,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     const completed = sources?.filter((s) => s.status === "completed") ?? [];
     const selectedCompleted = completed.filter((s) => s.selected);
     if (selectedCompleted.length === 0) {
-      toastError("Please select at least one source before asking a question");
+      toastError(t("toast.selectSourceFirst"));
       return false;
     }
     return true;
@@ -555,7 +553,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         }
         setActiveLiteratureSessionId(sessionId);
       } catch {
-        toastError("Failed to start literature review. Please try again.");
+        toastError(t("toast.literatureReviewFailed"));
       }
     } else {
       onSendMessage(trimmed, composerMode === "deepResearch" ? true : undefined, chatSourcePolicy);

@@ -149,7 +149,9 @@ export const SourcesPanelHeader: React.FC<SourcesPanelHeaderProps> = ({
         ) : (
           <div className="flex h-14 items-center gap-2 px-4 text-foreground">
             <FileStack className="w-4 h-4" />
-            <span className="font-display font-bold text-sm tracking-wide uppercase">Sources</span>
+            <span className="font-display font-bold text-sm tracking-wide uppercase">
+              {t("sourcePanelHeader.sources")}
+            </span>
             <span className="ml-2 text-xs text-muted-foreground bg-sidebar-accent px-1.5 py-0.5 rounded-xl font-mono">
               {selectedCount}
             </span>

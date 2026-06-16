@@ -287,7 +287,9 @@ export const AgentActivityPanel = React.memo<AgentActivityPanelProps>(
                         strokeWidth={2}
                         aria-hidden
                       />
-                      <span className="text-[11px] font-medium text-foreground/70">Done</span>
+                      <span className="text-[11px] font-medium text-foreground/70">
+                        {t("agent.done")}
+                      </span>
                     </div>
                   ) : null}
                 </div>

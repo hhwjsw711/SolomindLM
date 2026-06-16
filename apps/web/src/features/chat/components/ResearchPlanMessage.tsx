@@ -161,16 +161,16 @@ export const ResearchPlanMessage: React.FC<ResearchPlanMessageProps> = ({
       : null;
 
   const headerTitle = isRejected
-    ? "Plan dismissed"
+    ? i18next.t("chat:researchPlan.planDismissed")
     : runFailed
-      ? "Run failed"
-      : (planTitle ?? "Research plan");
+      ? i18next.t("chat:researchPlan.runFailed")
+      : (planTitle ?? i18next.t("chat:researchPlan.fallbackTitle"));
 
   const headerSubtitle = isRejected
-    ? "This plan was cancelled. You can still chat normally."
+    ? i18next.t("chat:researchPlan.cancelledMessage")
     : runFailed
-      ? "Something went wrong. Ask a follow-up in chat, or start a new deep research run."
-      : "Review the sub-questions below, then approve to start deep research.";
+      ? i18next.t("chat:researchPlan.errorMessage")
+      : i18next.t("chat:researchPlan.approvePrompt");
 
   const StatusIcon = isRejected ? Ban : runFailed ? X : FlaskConical;
 
@@ -231,11 +231,11 @@ export const ResearchPlanMessage: React.FC<ResearchPlanMessageProps> = ({
               {loadingFromServer ? (
                 <li className="flex items-center gap-2 px-4 py-4 text-sm text-muted-foreground sm:px-5">
                   <Loader2 className="size-4 shrink-0 animate-spin" />
-                  Loading plan…
+                  {i18next.t("chat:researchPlan.loadingPlan")}
                 </li>
               ) : missingPlan ? (
                 <li className="px-4 py-4 text-sm text-muted-foreground sm:px-5">
-                  Could not load this research plan. Try refreshing the page.
+                  {i18next.t("chat:researchPlan.couldNotLoad")}
                 </li>
               ) : (
                 displaySubQuestions.map((sq, index) => (
@@ -283,7 +283,7 @@ export const ResearchPlanMessage: React.FC<ResearchPlanMessageProps> = ({
                   disabled={submitting}
                   className="inline-flex w-full items-center justify-center rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-accent/50 disabled:pointer-events-none disabled:opacity-50 sm:w-auto"
                 >
-                  Cancel
+                  {i18next.t("chat:researchPlan.cancel")}
                 </button>
                 <button
                   type="button"
@@ -294,12 +294,12 @@ export const ResearchPlanMessage: React.FC<ResearchPlanMessageProps> = ({
                   {submitting ? (
                     <>
                       <Loader2 className="size-4 animate-spin" />
-                      Starting…
+                      {i18next.t("chat:researchPlan.starting")}
                     </>
                   ) : (
                     <>
                       <Check className="size-4" strokeWidth={2.5} />
-                      Approve & Research
+                      {i18next.t("chat:researchPlan.approveAndResearch")}
                     </>
                   )}
                 </button>

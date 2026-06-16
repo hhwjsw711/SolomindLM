@@ -246,8 +246,14 @@ export const StudioPanelHeader: React.FC<StudioPanelHeaderProps> = ({
                   type="button"
                   onClick={onToggleInfographicFullscreen}
                   className="p-2 hover:bg-secondary rounded-md transition-colors text-foreground/70 hover:text-foreground"
-                  title={isInfographicFullscreen ? "Exit fullscreen" : "Full screen"}
-                  aria-label={isInfographicFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+                  title={
+                    isInfographicFullscreen ? t("header.exitFullscreen") : t("header.fullScreen")
+                  }
+                  aria-label={
+                    isInfographicFullscreen
+                      ? t("header.exitFullscreen")
+                      : t("header.enterFullscreen")
+                  }
                 >
                   {isInfographicFullscreen ? (
                     <Minimize2 className="w-4 h-4" />
@@ -261,7 +267,9 @@ export const StudioPanelHeader: React.FC<StudioPanelHeaderProps> = ({
         ) : (
           <div className="flex items-center gap-2 text-foreground">
             <PenTool className="w-4 h-4 shrink-0" />
-            <span className="font-display font-bold text-sm tracking-wide uppercase">Studio</span>
+            <span className="font-display font-bold text-sm tracking-wide uppercase">
+              {t("header.studio")}
+            </span>
           </div>
         )}
       </div>
@@ -466,7 +474,9 @@ export const StudioPanelHeader: React.FC<StudioPanelHeaderProps> = ({
           </button>
           <div className="flex items-center gap-2 text-sidebar-foreground">
             <PenTool className="w-4 h-4 shrink-0" />
-            <span className="font-display font-bold text-sm tracking-wide uppercase">Studio</span>
+            <span className="font-display font-bold text-sm tracking-wide uppercase">
+              {t("header.studio")}
+            </span>
           </div>
         </>
       )}
