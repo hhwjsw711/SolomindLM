@@ -1,6 +1,7 @@
 import { Id } from "@convex/_generated/dataModel";
 import { AlertCircle, BookOpen, Loader2, Search, X } from "lucide-react";
 import React, { useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useResolveDoi, useUpload } from "../services/documentsApi";
 
 interface DoiInputModalProps {
@@ -29,6 +30,7 @@ export const DoiInputModal: React.FC<DoiInputModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const { t } = useTranslation("sources");
   const [doi, setDoi] = useState("");
   const [isResolving, setIsResolving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -52,7 +54,7 @@ export const DoiInputModal: React.FC<DoiInputModalProps> = ({
         setError("Could not resolve DOI. Please check the DOI and try again.");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to resolve DOI");
+      setError(err instanceof Error ? err.message : t("doiInput.failedToResolve"));
     } finally {
       setIsResolving(false);
     }
@@ -74,7 +76,7 @@ export const DoiInputModal: React.FC<DoiInputModalProps> = ({
       onSuccess?.(result.documentId);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to add paper");
+      setError(err instanceof Error ? err.message : t("doiInput.failedToAdd"));
     } finally {
       setIsUploading(false);
     }
@@ -96,7 +98,7 @@ export const DoiInputModal: React.FC<DoiInputModalProps> = ({
         <div className="flex items-center justify-between p-6 border-b border-border/50 bg-card">
           <div className="flex items-center gap-2">
             <BookOpen className="w-5 h-5 text-primary" />
-            <h2 className="text-xl font-bold">Import from DOI</h2>
+            <h2 className="text-xl font-bold">{t("doiInput.title")}</h2>
           </div>
           <button
             onClick={handleClose}
@@ -108,9 +110,7 @@ export const DoiInputModal: React.FC<DoiInputModalProps> = ({
 
         {/* Body */}
         <div className="overflow-y-auto p-6 space-y-6 bg-card/50">
-          <p className="text-muted-foreground text-sm">
-            Enter a DOI to automatically fetch paper metadata.
-          </p>
+          <p className="text-muted-foreground text-sm">{t("doiInput.description")}</p>
 
           {/* DOI Input */}
           <div className="flex gap-3">
@@ -118,7 +118,7 @@ export const DoiInputModal: React.FC<DoiInputModalProps> = ({
               type="text"
               value={doi}
               onChange={(e) => setDoi(e.target.value)}
-              placeholder="e.g., 10.1038/s41586-020-2649-2"
+              placeholder={t("doiInput.placeholder")}
               className="flex-1 w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
               onKeyDown={(e) => e.key === "Enter" && handleResolve()}
               disabled={isResolving || isUploading}
@@ -133,7 +133,7 @@ export const DoiInputModal: React.FC<DoiInputModalProps> = ({
               ) : (
                 <Search className="w-4 h-4" />
               )}
-              Resolve
+              {t("doiInput.resolve")}
             </button>
           </div>
 
@@ -170,7 +170,7 @@ export const DoiInputModal: React.FC<DoiInputModalProps> = ({
                 ) : (
                   <BookOpen className="w-4 h-4" />
                 )}
-                Add to Notebook
+                {t("doiInput.addToNotebook")}
               </button>
             </div>
           )}

@@ -53,7 +53,7 @@
 - [ ] `DiscoverSourcesModal.tsx` — 搜索面板（~49 条）
 - [x] 输入弹窗：`UrlInputModal`, `TextInputModal`, `SocialMediaInputModal`
 - [x] `ManualPaperModal.tsx` — 手动添加论文（~6 条）
-- [ ] `DoiInputModal`, `BibtexImportModal`, `MendeleyImportModal`, `ZoteroImportModal`
+- [x] `DoiInputModal`, `BibtexImportModal`, `MendeleyImportModal`, `ZoteroImportModal`
 - [ ] `AcademicDiscoveryFiltersSection.tsx`, `academicFieldTaxonomy.ts`
 
 ---

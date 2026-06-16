@@ -1,6 +1,7 @@
 import { Id } from "@convex/_generated/dataModel";
 import { AlertCircle, Library, Loader2, Upload, X } from "lucide-react";
 import React, { useCallback, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   useBulkUpload,
   useGetExistingPapers,
@@ -31,6 +32,7 @@ export const MendeleyImportModal: React.FC<MendeleyImportModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const { t } = useTranslation("sources");
   const [fileContent, setFileContent] = useState<string | null>(null);
   const [isParsing, setIsParsing] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
@@ -109,7 +111,7 @@ export const MendeleyImportModal: React.FC<MendeleyImportModalProps> = ({
       onSuccess?.(result.documentIds);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to import papers");
+      setError(err instanceof Error ? err.message : t("mendeleyImport.failedToImport"));
     } finally {
       setIsImporting(false);
     }
@@ -133,7 +135,7 @@ export const MendeleyImportModal: React.FC<MendeleyImportModalProps> = ({
         <div className="flex items-center justify-between p-6 border-b border-border/50 bg-card">
           <div className="flex items-center gap-2">
             <Library className="w-5 h-5 text-primary" />
-            <h2 className="text-xl font-bold">Import from Mendeley</h2>
+            <h2 className="text-xl font-bold">{t("mendeleyImport.title")}</h2>
           </div>
           <button
             onClick={handleClose}

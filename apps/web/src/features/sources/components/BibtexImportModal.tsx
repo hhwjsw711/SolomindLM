@@ -1,6 +1,7 @@
 import { Id } from "@convex/_generated/dataModel";
 import { AlertCircle, CheckSquare, FileText, Loader2, Square, Upload, X } from "lucide-react";
 import React, { useCallback, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useBulkUpload, useParseBibliography } from "../services/documentsApi";
 
 interface BibtexImportModalProps {
@@ -29,6 +30,7 @@ export const BibtexImportModal: React.FC<BibtexImportModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const { t } = useTranslation("sources");
   const [activeTab, setActiveTab] = useState<Tab>("file");
   const [fileContent, setFileContent] = useState<string | null>(null);
   const [pasteContent, setPasteContent] = useState("");
@@ -117,7 +119,7 @@ export const BibtexImportModal: React.FC<BibtexImportModalProps> = ({
       onSuccess?.(result.documentIds);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to import papers");
+      setError(err instanceof Error ? err.message : t("bibtexImport.failedToImport"));
     } finally {
       setIsImporting(false);
     }
@@ -166,7 +168,7 @@ export const BibtexImportModal: React.FC<BibtexImportModalProps> = ({
         <div className="flex items-center justify-between p-6 border-b border-border/50 bg-card">
           <div className="flex items-center gap-2">
             <FileText className="w-5 h-5 text-primary" />
-            <h2 className="text-xl font-bold">Import from BibTeX / RIS</h2>
+            <h2 className="text-xl font-bold">{t("bibtexImport.title")}</h2>
           </div>
           <button
             onClick={handleClose}
@@ -232,7 +234,7 @@ export const BibtexImportModal: React.FC<BibtexImportModalProps> = ({
               <textarea
                 value={pasteContent}
                 onChange={(e) => setPasteContent(e.target.value)}
-                placeholder="Paste your BibTeX or RIS content here..."
+                placeholder={t("bibtexImport.placeholder")}
                 rows={8}
                 className="w-full px-4 py-3 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 font-mono text-sm resize-none"
                 disabled={isParsing || isImporting}

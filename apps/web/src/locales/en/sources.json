@@ -221,5 +221,37 @@
     "pdfUrlPlaceholder": "https://...",
     "addPaper": "Add Paper",
     "failedToAdd": "Failed to add paper"
+  },
+  "doiInput": {
+    "title": "Import from DOI",
+    "description": "Enter a DOI to automatically fetch paper metadata.",
+    "placeholder": "e.g., 10.1038/s41586-020-2649-2",
+    "resolve": "Resolve",
+    "addToNotebook": "Add to Notebook",
+    "failedToResolve": "Failed to resolve DOI",
+    "failedToAdd": "Failed to add paper"
+  },
+  "bibtexImport": {
+    "title": "Import BibTeX or RIS",
+    "description": "Paste your BibTeX or RIS formatted reference below.",
+    "placeholder": "Paste BibTeX or RIS content here...",
+    "import": "Import Reference",
+    "failedToImport": "Failed to import reference"
+  },
+  "mendeleyImport": {
+    "title": "Import from Mendeley",
+    "loading": "Loading your Mendeley library...",
+    "selectDocuments": "Select documents to import",
+    "importSelected": "Import Selected",
+    "failedToLoad": "Failed to load Mendeley documents",
+    "failedToImport": "Failed to import documents"
+  },
+  "zoteroImport": {
+    "title": "Import from Zotero",
+    "loading": "Loading your Zotero library...",
+    "selectDocuments": "Select documents to import",
+    "importSelected": "Import Selected",
+    "failedToLoad": "Failed to load Zotero documents",
+    "failedToImport": "Failed to import documents"
   }
 }

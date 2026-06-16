@@ -221,5 +221,37 @@
     "pdfUrlPlaceholder": "https://...",
     "addPaper": "添加论文",
     "failedToAdd": "添加论文失败"
+  },
+  "doiInput": {
+    "title": "通过 DOI 导入",
+    "description": "输入 DOI 以自动获取论文元数据。",
+    "placeholder": "例如 10.1038/s41586-020-2649-2",
+    "resolve": "解析",
+    "addToNotebook": "添加到笔记本",
+    "failedToResolve": "解析 DOI 失败",
+    "failedToAdd": "添加论文失败"
+  },
+  "bibtexImport": {
+    "title": "导入 BibTeX 或 RIS",
+    "description": "在下方粘贴你的 BibTeX 或 RIS 格式引用。",
+    "placeholder": "在此粘贴 BibTeX 或 RIS 内容...",
+    "import": "导入引用",
+    "failedToImport": "导入引用失败"
+  },
+  "mendeleyImport": {
+    "title": "从 Mendeley 导入",
+    "loading": "正在加载你的 Mendeley 库...",
+    "selectDocuments": "选择要导入的文档",
+    "importSelected": "导入选中项",
+    "failedToLoad": "加载 Mendeley 文档失败",
+    "failedToImport": "导入文档失败"
+  },
+  "zoteroImport": {
+    "title": "从 Zotero 导入",
+    "loading": "正在加载你的 Zotero 库...",
+    "selectDocuments": "选择要导入的文档",
+    "importSelected": "导入选中项",
+    "failedToLoad": "加载 Zotero 文档失败",
+    "failedToImport": "导入文档失败"
   }
 }
