@@ -1,0 +1,100 @@
+{
+  "hero": {
+    "headline": "用 AI 改变你的学习方式",
+    "subheadline": "上传任何内容——PDF、视频、文章——生成闪卡、测验、思维导图等。适合学生、研究人员和终身学习者。",
+    "primaryCTA": "试用 SolomindLM",
+    "secondaryCTA": "查看功能"
+  },
+  "features": {
+    "rag": "基于上传来源的智能回答",
+    "chat": "使用笔记本来源提出问题",
+    "deepResearch": "结合网络和笔记本来源的多步研究",
+    "literatureReview": "筛选论文并撰写综合报告",
+    "sourceUpload": "文件、链接、转录和粘贴文本",
+    "sourceDiscovery": "搜索网络和新闻，添加到笔记本",
+    "academicDiscovery": "通过筛选查找学术论文",
+    "paperImport": "DOI、BibTeX、RIS、Zotero 和 Mendeley",
+    "citationStyles": "APA、MLA、Chicago、IEEE 等多种格式",
+    "notebookSharing": "通过链接协作或复刻笔记本",
+    "audio": "学习材料的音频摘要",
+    "mindmap": "来源概念的可视化图谱",
+    "reports": "学习指南和报告草稿",
+    "flashcards": "基于材料的闪卡草稿",
+    "quiz": "基于来源的选择题练习",
+    "infographic": "信息来源的可视化信息图",
+    "writtenQuestions": "带答案反馈的写作题",
+    "spreadsheets": "从来源中提取的结构化表格"
+  },
+  "contentShowcase": {
+    "title": "上传一切，学习一切",
+    "description": "上传文件、粘贴链接、导入论文或从 Google Drive 拉取——SolomindLM 将你的来源转化为交互式学习材料",
+    "formats": {
+      "pdfs": "PDF",
+      "videoTranscripts": "视频转录",
+      "websites": "网站",
+      "docsSlides": "文档与幻灯片",
+      "imagesScans": "图像与扫描",
+      "audioFiles": "音频文件",
+      "researchPapers": "研究论文",
+      "googleDrive": "Google Drive",
+      "textData": "文本与数据"
+    }
+  },
+  "finalCTA": {
+    "title": "准备好改变你的学习方式？",
+    "description": "从你自己的来源创建学习和研究材料",
+    "buttonText": "开始使用",
+    "trustBadge": "无需信用卡",
+    "createAccount": "创建免费账户",
+    "cancelAnytime": "随时取消",
+    "benefits": [
+      "从上传的 PDF 和其他来源制作闪卡草稿",
+      "从笔记本材料构建选择题测验",
+      "从上传内容创建思维导图",
+      "基于来源进行聊天并生成报告"
+    ]
+  },
+  "heroSection": {
+    "headline": "学习一切",
+    "tagline": "AI 增强学习，而非替代思考。",
+    "placeholder": [
+      "总结这篇 PDF...",
+      "出生物题...",
+      "解释这节课...",
+      "创建闪卡来自...",
+      "分析这篇研究论文...",
+      "生成学习指南...",
+      "分解这个概念...",
+      "关键要点是什么..."
+    ]
+  },
+  "faq": {
+    "heading": "常见问题",
+    "subtitle": "关于 SolomindLM 你需要知道的一切",
+    "stillHaveQuestions": "还有问题？",
+    "contactSupport": "联系支持",
+    "seeAll": "查看所有常见问题"
+  },
+  "pricing": {
+    "heading": "免费版",
+    "proHeading": "Pro",
+    "freeDescription": "开始使用核心工具",
+    "proYearlyDescription": "适合有更高需求的用户",
+    "proMonthlyDescription": "与年付相同，按月计费",
+    "startFree": "免费开始",
+    "getPro": "获取 Pro",
+    "proBadge": "专业版",
+    "savePercent": "年付省 50%",
+    "monthly": "月付",
+    "yearly": "年付",
+    "sectionLabel": "定价",
+    "sectionHeading": "免费开始，需要时升级。",
+    "bestValue": "最超值",
+    "annual": "按年",
+    "monthlyToggle": "按月"
+  },
+  "featuresGrid": {
+    "heading": "强大的学习工具",
+    "subtitle": "AI 驱动的工具，帮助你更快学习、更牢固记忆"
+  }
+}

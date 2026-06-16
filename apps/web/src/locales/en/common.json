@@ -1,0 +1,48 @@
+{
+  "header": {
+    "logoAlt": "SolomindLM Logo",
+    "goHome": "Go to Home",
+    "share": "Share",
+    "shareNotebook": "Share notebook",
+    "upgradeToPro": "Upgrade to Pro",
+    "pro": "Pro",
+    "notebookName": "Notebook name",
+    "clickToRename": "Click to rename notebook",
+    "enterTitle": "Enter title"
+  },
+  "generation": {
+    "generating": "Generating...",
+    "completed": "Completed",
+    "failed": "Failed",
+    "draft": "Draft",
+    "readyToGenerate": "Ready to generate",
+    "generationCompleted": "Generation completed successfully",
+    "generationFailed": "Generation failed"
+  },
+  "errors": {
+    "notebookLimit": "You've reached your notebook limit ({{current}}/{{limit}}).",
+    "sourceLimit": "You've reached your source limit ({{current}}/{{limit}}).",
+    "dailyLimit": "Daily {{feature}} limit reached ({{current}}/{{limit}}).",
+    "limitReached": "You've reached a limit ({{current}}/{{limit}}).",
+    "proDailyRefresh": "This limit refreshes on a rolling day—try again later, or contact support if you need a higher cap.",
+    "proContactSupport": "Contact support to increase your limits.",
+    "upgradeNotebooks": "Upgrade for up to 100 notebooks.",
+    "upgradeSources": "Upgrade for more notebooks and higher daily generation limits. To add a source, remove one from this notebook first.",
+    "chatMessages": "chat message",
+    "flashcardSets": "flashcard set",
+    "quizSets": "quiz",
+    "reportSets": "report",
+    "audioOverviews": "audio overview",
+    "writtenQuestionSets": "written question set",
+    "spreadsheets": "spreadsheet",
+    "infographics": "infographic",
+    "upgradeFor": "Upgrade for {{limit}}.",
+    "upgradeToPro": "Upgrade to Pro for higher limits.",
+    "externalServiceUnavailable": "{{service}} is temporarily unavailable{{suffix}}",
+    "externalServiceRetry": ". Try again.",
+    "externalServiceEnd": ".",
+    "storageFailed": "Storage {{operation}} failed.",
+    "invalidInput": "Invalid input.",
+    "somethingWentWrong": "Something went wrong."
+  }
+}

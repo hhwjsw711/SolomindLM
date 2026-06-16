@@ -1,5 +1,6 @@
 import { BadgePercent, Check } from "lucide-react";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/shared/components/ui/button";
 
 interface PricingSectionProps {
@@ -10,68 +11,69 @@ interface PricingPlan {
   name: string;
   price: string;
   period?: string;
-  description: string;
+  descriptionKey: string;
   features: string[];
-  cta: string;
+  ctaKey: string;
   highlighted: boolean;
   billingKey: "free" | "yearly" | "monthly";
 }
 
-const pricingPlans: PricingPlan[] = [
-  {
-    name: "Free",
-    price: "$0",
-    description: "Get started with core tools",
-    features: [
-      "20 notebooks · 200 sources each",
-      "50 chat messages / day",
-      "5 flashcards, quizzes, reports / day",
-      "5 audio overviews / day",
-      "5 infographics / day",
-      "5 written questions / day",
-    ],
-    cta: "Start free",
-    highlighted: false,
-    billingKey: "free",
-  },
-  {
-    name: "Pro",
-    price: "$7.50",
-    period: "/mo, billed yearly",
-    description: "For serious learners",
-    features: [
-      "200 notebooks · 200 sources each",
-      "500 chat messages / day",
-      "100 flashcards, quizzes, reports / day",
-      "100 audio overviews / day",
-      "100 infographics / day",
-      "100 written questions / day",
-    ],
-    cta: "Get Pro",
-    highlighted: true,
-    billingKey: "yearly",
-  },
-  {
-    name: "Pro",
-    price: "$15",
-    period: "/mo",
-    description: "Same as yearly, billed monthly",
-    features: [
-      "200 notebooks · 200 sources each",
-      "500 chat messages / day",
-      "100 flashcards, quizzes, reports / day",
-      "100 audio overviews / day",
-      "100 infographics / day",
-      "100 written questions / day",
-    ],
-    cta: "Get Pro",
-    highlighted: false,
-    billingKey: "monthly",
-  },
-];
-
 export const PricingSection: React.FC<PricingSectionProps> = ({ onGetStarted }) => {
+  const { t } = useTranslation("landing");
   const [billing, setBilling] = useState<"yearly" | "monthly">("yearly");
+
+  const pricingPlans: PricingPlan[] = [
+    {
+      name: t("pricing.heading"),
+      price: "$0",
+      descriptionKey: "pricing.freeDescription",
+      features: [
+        "20 notebooks · 200 sources each",
+        "50 chat messages / day",
+        "5 flashcards, quizzes, reports / day",
+        "5 audio overviews / day",
+        "5 infographics / day",
+        "5 written questions / day",
+      ],
+      ctaKey: "pricing.startFree",
+      highlighted: false,
+      billingKey: "free",
+    },
+    {
+      name: t("pricing.proHeading"),
+      price: "$7.50",
+      period: "/mo, billed yearly",
+      descriptionKey: "pricing.proYearlyDescription",
+      features: [
+        "200 notebooks · 200 sources each",
+        "500 chat messages / day",
+        "100 flashcards, quizzes, reports / day",
+        "100 audio overviews / day",
+        "100 infographics / day",
+        "100 written questions / day",
+      ],
+      ctaKey: "pricing.getPro",
+      highlighted: true,
+      billingKey: "yearly",
+    },
+    {
+      name: t("pricing.proHeading"),
+      price: "$15",
+      period: "/mo",
+      descriptionKey: "pricing.proMonthlyDescription",
+      features: [
+        "200 notebooks · 200 sources each",
+        "500 chat messages / day",
+        "100 flashcards, quizzes, reports / day",
+        "100 audio overviews / day",
+        "100 infographics / day",
+        "100 written questions / day",
+      ],
+      ctaKey: "pricing.getPro",
+      highlighted: false,
+      billingKey: "monthly",
+    },
+  ];
 
   const plansToShow =
     billing === "yearly"
@@ -92,9 +94,11 @@ export const PricingSection: React.FC<PricingSectionProps> = ({ onGetStarted }) 
       <div className="max-w-[1500px] w-full mx-auto relative">
         {/* Section Header */}
         <div className="text-center mb-16">
-          <p className="text-sm font-medium text-primary uppercase tracking-widest mb-3">Pricing</p>
+          <p className="text-sm font-medium text-primary uppercase tracking-widest mb-3">
+            {t("pricing.sectionLabel")}
+          </p>
           <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground tracking-tight mb-3">
-            Start free. Upgrade when you need more.
+            {t("pricing.sectionHeading")}
           </h2>
         </div>
 
@@ -116,7 +120,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({ onGetStarted }) 
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              Annual
+              {t("pricing.annual")}
             </button>
             <button
               type="button"
@@ -129,13 +133,13 @@ export const PricingSection: React.FC<PricingSectionProps> = ({ onGetStarted }) 
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              Monthly
+              {t("pricing.monthlyToggle")}
             </button>
           </div>
           {billing === "yearly" && (
             <span className="ml-3 inline-flex items-center gap-1 text-sm text-primary font-medium">
               <BadgePercent className="w-4 h-4" aria-hidden />
-              Save 50%
+              {t("pricing.savePercent")}
             </span>
           )}
         </div>
@@ -154,7 +158,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({ onGetStarted }) 
               {plan.highlighted && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                   <span className="inline-block px-3 py-1 rounded-xl bg-primary text-primary-foreground text-xs font-semibold">
-                    Best value
+                    {t("pricing.bestValue")}
                   </span>
                 </div>
               )}
@@ -173,7 +177,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({ onGetStarted }) 
                       <span className="text-muted-foreground text-sm">{plan.period}</span>
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground mt-2">{plan.description}</p>
+                  <p className="text-sm text-muted-foreground mt-2">{t(plan.descriptionKey)}</p>
                 </div>
 
                 {/* Features */}
@@ -197,7 +201,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({ onGetStarted }) 
                   }`}
                   size="lg"
                 >
-                  {plan.cta}
+                  {t(plan.ctaKey)}
                 </Button>
               </div>
             </div>

@@ -10,9 +10,10 @@ import {
   Youtube,
 } from "lucide-react";
 import React from "react";
-import { LANDING_CONTENT } from "../constants";
+import { useLandingContent } from "../constants";
 
 export const ContentShowcase: React.FC = () => {
+  const content = useLandingContent();
   const getIconForFormat = (iconName: string) => {
     switch (iconName) {
       case "FileText":
@@ -44,16 +45,16 @@ export const ContentShowcase: React.FC = () => {
         {/* Section Header */}
         <div className="text-center mb-20">
           <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">
-            {LANDING_CONTENT.contentShowcase.title}
+            {content.contentShowcase.title}
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            {LANDING_CONTENT.contentShowcase.description}
+            {content.contentShowcase.description}
           </p>
         </div>
 
         {/* Format cards – responsive grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 max-w-4xl mx-auto">
-          {LANDING_CONTENT.contentShowcase.formats.map((format) => {
+          {content.contentShowcase.formats.map((format) => {
             const Icon = getIconForFormat(format.icon);
 
             return (

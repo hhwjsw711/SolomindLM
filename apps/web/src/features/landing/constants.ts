@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { STUDIO_TOOLS } from "@/shared/constants";
 
 export interface FAQItem {
@@ -132,4 +133,43 @@ function getFeatureDescription(id: string): string {
     spreadsheets: "Structured tables extracted from sources",
   };
   return descriptions[id] || "";
+}
+
+export function useLandingContent() {
+  const { t } = useTranslation("landing");
+
+  return {
+    hero: {
+      headline: t("hero.headline"),
+      subheadline: t("hero.subheadline"),
+      primaryCTA: t("hero.primaryCTA"),
+      secondaryCTA: t("hero.secondaryCTA"),
+    },
+    features: LANDING_TOOLS.map((tool) => ({
+      id: tool.id,
+      title: tool.label,
+      description: t(`features.${tool.id}`, getFeatureDescription(tool.id)),
+    })),
+    contentShowcase: {
+      title: t("contentShowcase.title"),
+      description: t("contentShowcase.description"),
+      formats: [
+        { name: t("contentShowcase.formats.pdfs"), icon: "FileText" },
+        { name: t("contentShowcase.formats.videoTranscripts"), icon: "Youtube" },
+        { name: t("contentShowcase.formats.websites"), icon: "Globe" },
+        { name: t("contentShowcase.formats.docsSlides"), icon: "Presentation" },
+        { name: t("contentShowcase.formats.imagesScans"), icon: "ScanLine" },
+        { name: t("contentShowcase.formats.audioFiles"), icon: "AudioLines" },
+        { name: t("contentShowcase.formats.researchPapers"), icon: "GraduationCap" },
+        { name: t("contentShowcase.formats.googleDrive"), icon: "HardDrive" },
+        { name: t("contentShowcase.formats.textData"), icon: "FileSpreadsheet" },
+      ],
+    },
+    finalCTA: {
+      title: t("finalCTA.title"),
+      description: t("finalCTA.description"),
+      buttonText: t("finalCTA.buttonText"),
+      trustBadge: t("finalCTA.trustBadge"),
+    },
+  };
 }

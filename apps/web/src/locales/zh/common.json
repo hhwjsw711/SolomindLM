@@ -1,0 +1,48 @@
+{
+  "header": {
+    "logoAlt": "SolomindLM Logo",
+    "goHome": "回到首页",
+    "share": "分享",
+    "shareNotebook": "分享笔记本",
+    "upgradeToPro": "升级到 Pro",
+    "pro": "Pro",
+    "notebookName": "笔记本名称",
+    "clickToRename": "点击重命名笔记本",
+    "enterTitle": "输入标题"
+  },
+  "generation": {
+    "generating": "生成中...",
+    "completed": "已完成",
+    "failed": "失败",
+    "draft": "草稿",
+    "readyToGenerate": "准备生成",
+    "generationCompleted": "生成成功",
+    "generationFailed": "生成失败"
+  },
+  "errors": {
+    "notebookLimit": "笔记本数量已达上限 ({{current}}/{{limit}})。",
+    "sourceLimit": "来源数量已达上限 ({{current}}/{{limit}})。",
+    "dailyLimit": "每日{{feature}}额度已用完 ({{current}}/{{limit}})。",
+    "limitReached": "已达到上限 ({{current}}/{{limit}})。",
+    "proDailyRefresh": "此限制按滚动天刷新——请稍后再试，或联系支持以提高上限。",
+    "proContactSupport": "联系支持以提高限制。",
+    "upgradeNotebooks": "升级以获取最多 100 个笔记本。",
+    "upgradeSources": "升级以获取更多笔记本和更高的每日生成限额。要添加来源，请先从本笔记本中移除一个。",
+    "chatMessages": "聊天消息",
+    "flashcardSets": "闪卡组",
+    "quizSets": "测验",
+    "reportSets": "报告",
+    "audioOverviews": "音频概览",
+    "writtenQuestionSets": "问答题组",
+    "spreadsheets": "电子表格",
+    "infographics": "信息图",
+    "upgradeFor": "升级以获得 {{limit}}。",
+    "upgradeToPro": "升级到 Pro 以获得更高限额。",
+    "externalServiceUnavailable": "{{service}} 暂时不可用{{suffix}}",
+    "externalServiceRetry": "，请重试。",
+    "externalServiceEnd": "。",
+    "storageFailed": "存储{{operation}}操作失败。",
+    "invalidInput": "输入无效。",
+    "somethingWentWrong": "出了点问题。"
+  }
+}

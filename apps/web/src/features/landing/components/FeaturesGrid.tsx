@@ -14,17 +14,21 @@ import {
 } from "lucide-react";
 import React from "react";
 import Marquee from "react-fast-marquee";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import {
   FEATURES_MARQUEE_ROW_1_ORDER,
   FEATURES_MARQUEE_ROW_2_ORDER,
   getLandingFeatureColor,
-  LANDING_CONTENT,
   orderLandingFeatures,
+  useLandingContent,
 } from "../constants";
 import { FEATURE_INTENT_PATHS } from "../intentLandingPages";
 
 export const FeaturesGrid: React.FC = () => {
+  const landing = useLandingContent();
+  const { t } = useTranslation("landing");
+
   const getIconForFeature = (id: string) => {
     switch (id) {
       case "rag":
@@ -56,7 +60,7 @@ export const FeaturesGrid: React.FC = () => {
     }
   };
 
-  const renderCard = (feature: (typeof LANDING_CONTENT.features)[0]) => {
+  const renderCard = (feature: (typeof landing.features)[0]) => {
     const Icon = getIconForFeature(feature.id);
     const colorClass = getLandingFeatureColor(feature.id);
     const intentPath = FEATURE_INTENT_PATHS[feature.id];
@@ -83,14 +87,12 @@ export const FeaturesGrid: React.FC = () => {
     );
   };
 
-  const featureCardsRow1 = orderLandingFeatures(
-    LANDING_CONTENT.features,
-    FEATURES_MARQUEE_ROW_1_ORDER
-  ).map(renderCard);
-  const featureCardsRow2 = orderLandingFeatures(
-    LANDING_CONTENT.features,
-    FEATURES_MARQUEE_ROW_2_ORDER
-  ).map(renderCard);
+  const featureCardsRow1 = orderLandingFeatures(landing.features, FEATURES_MARQUEE_ROW_1_ORDER).map(
+    renderCard
+  );
+  const featureCardsRow2 = orderLandingFeatures(landing.features, FEATURES_MARQUEE_ROW_2_ORDER).map(
+    renderCard
+  );
 
   const marqueeClass =
     "[mask-image:linear-gradient(to_right,transparent,black_64px,black_calc(100%-64px),transparent)]";
@@ -101,10 +103,10 @@ export const FeaturesGrid: React.FC = () => {
         {/* Section Header */}
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">
-            Powerful Learning Tools
+            {t("featuresGrid.heading")}
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            AI-powered tools designed to help you learn faster and retain more
+            {t("featuresGrid.subtitle")}
           </p>
         </div>
 

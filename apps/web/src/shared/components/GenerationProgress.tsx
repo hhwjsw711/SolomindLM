@@ -1,4 +1,5 @@
 import { CheckCircle2, Clock, Loader2, XCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ProgressBar } from "./ProgressBar";
 
 export type GenerationStatus = "draft" | "generating" | "completed" | "failed";
@@ -17,18 +18,17 @@ interface GenerationProgressProps {
   compact?: boolean;
 }
 
-/**
- * Component for displaying generation progress with status indicators
- */
 export function GenerationProgress({
   status,
   metadata,
   title,
   compact = false,
 }: GenerationProgressProps) {
+  const { t } = useTranslation("common");
+
   if (status === "generating") {
     const progress = metadata?.progress ?? 0;
-    const currentStep = metadata?.currentStep || "Generating...";
+    const currentStep = metadata?.currentStep || t("generation.generating");
 
     if (compact) {
       return (
@@ -60,7 +60,7 @@ export function GenerationProgress({
       return (
         <div className="flex items-center gap-2 text-sm">
           <CheckCircle2 className="w-4 h-4 text-green-500" />
-          <span className="text-muted-foreground">Completed</span>
+          <span className="text-muted-foreground">{t("generation.completed")}</span>
         </div>
       );
     }
@@ -70,20 +70,20 @@ export function GenerationProgress({
         <CheckCircle2 className="w-5 h-5 text-green-500" />
         <div className="flex-1">
           {title && <p className="font-medium text-foreground">{title}</p>}
-          <p className="text-sm text-muted-foreground">Generation completed successfully</p>
+          <p className="text-sm text-muted-foreground">{t("generation.generationCompleted")}</p>
         </div>
       </div>
     );
   }
 
   if (status === "failed") {
-    const error = metadata?.error || "Generation failed";
+    const error = metadata?.error || t("generation.generationFailed");
 
     if (compact) {
       return (
         <div className="flex items-center gap-2 text-sm">
           <XCircle className="w-4 h-4 text-destructive" />
-          <span className="text-destructive">Failed</span>
+          <span className="text-destructive">{t("generation.failed")}</span>
         </div>
       );
     }
@@ -99,12 +99,11 @@ export function GenerationProgress({
     );
   }
 
-  // draft status
   if (compact) {
     return (
       <div className="flex items-center gap-2 text-sm">
         <Clock className="w-4 h-4 text-muted-foreground" />
-        <span className="text-muted-foreground">Draft</span>
+        <span className="text-muted-foreground">{t("generation.draft")}</span>
       </div>
     );
   }
@@ -114,7 +113,7 @@ export function GenerationProgress({
       <Clock className="w-5 h-5 text-muted-foreground" />
       <div className="flex-1">
         {title && <p className="font-medium text-foreground">{title}</p>}
-        <p className="text-sm text-muted-foreground">Ready to generate</p>
+        <p className="text-sm text-muted-foreground">{t("generation.readyToGenerate")}</p>
       </div>
     </div>
   );

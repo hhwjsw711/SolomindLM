@@ -50,6 +50,7 @@ import { StudioProvider } from "./features/studio/StudioContext";
 import { ProtectedRoute } from "./shared/components/ProtectedRoute";
 import { ScrollToTop } from "./shared/components/ScrollToTop";
 import { ToastContainer } from "./shared/components/ToastContainer";
+import { LanguageProvider } from "./shared/contexts/LanguageContext";
 import { ThemeProvider } from "./shared/contexts/ThemeContext";
 import { ToastProvider } from "./shared/contexts/ToastContext";
 import { Header } from "./shared/ui/Header";
@@ -509,12 +510,14 @@ const App: React.FC = () => {
       <BrowserRouter>
         <ScrollToTop />
         <ThemeProvider>
-          <AuthProvider>
-            <ToastProvider>
-              <AppContent />
-              <ToastContainer />
-            </ToastProvider>
-          </AuthProvider>
+          <LanguageProvider>
+            <AuthProvider>
+              <ToastProvider>
+                <AppContent />
+                <ToastContainer />
+              </ToastProvider>
+            </AuthProvider>
+          </LanguageProvider>
         </ThemeProvider>
       </BrowserRouter>
     </>

@@ -1,22 +1,17 @@
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { LandingHeroMockup } from "./LandingHeroMockup";
 
 interface HeroSectionProps {
   onGetStarted: () => void;
 }
 
-const PLACEHOLDER_TEXTS = [
-  "Summarize this PDF...",
-  "Quiz me on Biology...",
-  "Explain this lecture...",
-  "Create flashcards from...",
-  "Analyze this research paper...",
-  "Generate study guide for...",
-  "Break down this concept...",
-  "What are the key points from...",
-];
-
 export const HeroSection: React.FC<HeroSectionProps> = ({ onGetStarted }) => {
+  const { t } = useTranslation("landing");
+
+  const PLACEHOLDER_TEXTS: string[] = t("heroSection.placeholder", {
+    returnObjects: true,
+  }) as unknown as string[];
   const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
   const [displayText, setDisplayText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);

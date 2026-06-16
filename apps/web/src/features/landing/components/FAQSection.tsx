@@ -1,10 +1,12 @@
 import { ChevronDown, ChevronUp } from "lucide-react";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { Button } from "@/shared/components/ui/button";
 import { LANDING_FAQS } from "../faqRegistry";
 
 export const FAQSection: React.FC = () => {
+  const { t } = useTranslation("landing");
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   const toggleFAQ = (index: number) => {
@@ -18,11 +20,9 @@ export const FAQSection: React.FC = () => {
           {/* Section Header */}
           <div className="text-center mb-20">
             <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">
-              Frequently Asked Questions
+              {t("faq.heading")}
             </h2>
-            <p className="text-lg text-muted-foreground">
-              Everything you need to know about SolomindLM
-            </p>
+            <p className="text-lg text-muted-foreground">{t("faq.subtitle")}</p>
           </div>
 
           {/* FAQ List */}
@@ -60,13 +60,13 @@ export const FAQSection: React.FC = () => {
               to="/faq"
               className="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1"
             >
-              See all frequently asked questions
+              {t("faq.seeAll")}
             </Link>
           </div>
 
           {/* Still Have Questions CTA */}
           <div className="mt-12 text-center">
-            <p className="text-muted-foreground mb-4">Still have questions?</p>
+            <p className="text-muted-foreground mb-4">{t("faq.stillHaveQuestions")}</p>
             <Button
               variant="outline"
               size="lg"
@@ -76,7 +76,7 @@ export const FAQSection: React.FC = () => {
                 window.location.href = "mailto:support@solomindlm.com";
               }}
             >
-              Contact Support
+              {t("faq.contactSupport")}
             </Button>
           </div>
         </div>

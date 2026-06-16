@@ -5,6 +5,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { AvatarDropdown } from "../../features/auth/components/AvatarDropdown";
 import { useAuth } from "../../features/auth/useAuth";
+import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { useTheme } from "../contexts/useTheme";
 import { useServiceErrorToast } from "../hooks/useServiceErrorToast";
 import { DropdownMenu } from "./DropdownMenu";
@@ -211,6 +212,7 @@ export const Header: React.FC<HeaderProps> = ({
             Pro
           </button>
         )}
+        <LanguageSwitcher />
         <DropdownMenu
           trigger={
             <div className="w-8 h-8 rounded-xl bg-secondary border border-border flex items-center justify-center hover:ring-2 hover:ring-ring transition-all shrink-0">

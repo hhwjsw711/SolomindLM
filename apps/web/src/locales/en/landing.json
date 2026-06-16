@@ -1,0 +1,100 @@
+{
+  "hero": {
+    "headline": "Transform How You Learn with AI",
+    "subheadline": "Upload any content—PDFs, videos, articles—and generate flashcards, quizzes, mind maps, and more. Perfect for students, researchers, and lifelong learners.",
+    "primaryCTA": "Try SolomindLM",
+    "secondaryCTA": "See Features"
+  },
+  "features": {
+    "rag": "Answers from your uploaded sources",
+    "chat": "Ask questions using your notebook sources",
+    "deepResearch": "Multi-step research with web and notebook sources",
+    "literatureReview": "Screen papers and draft synthesis reports",
+    "sourceUpload": "Files, links, transcripts, and pasted text",
+    "sourceDiscovery": "Search web and news, add to your notebook",
+    "academicDiscovery": "Find academic papers with filters",
+    "paperImport": "DOI, BibTeX, RIS, Zotero, and Mendeley",
+    "citationStyles": "APA, MLA, Chicago, IEEE, and more",
+    "notebookSharing": "Cowork or fork a notebook via link",
+    "audio": "Audio recaps from your study material",
+    "mindmap": "Visual maps of concepts from your sources",
+    "reports": "Study guides and report drafts on demand",
+    "flashcards": "Flashcard drafts from your material",
+    "quiz": "Multiple-choice practice quizzes from sources",
+    "infographic": "Visual infographics from your sources",
+    "writtenQuestions": "Written prompts with answer feedback",
+    "spreadsheets": "Structured tables extracted from sources"
+  },
+  "contentShowcase": {
+    "title": "Upload Anything, Learn Everything",
+    "description": "Upload files, paste links, import papers, or pull from Google Drive—SolomindLM turns your sources into interactive study materials",
+    "formats": {
+      "pdfs": "PDFs",
+      "videoTranscripts": "Video Transcripts",
+      "websites": "Websites",
+      "docsSlides": "Docs & Slides",
+      "imagesScans": "Images & Scans",
+      "audioFiles": "Audio Files",
+      "researchPapers": "Research Papers",
+      "googleDrive": "Google Drive",
+      "textData": "Text & Data"
+    }
+  },
+  "finalCTA": {
+    "title": "Ready to Transform Your Learning?",
+    "description": "Create study and research materials from your own sources",
+    "buttonText": "Get Started",
+    "trustBadge": "No credit card required",
+    "createAccount": "Create Your Free Account",
+    "cancelAnytime": "Cancel anytime",
+    "benefits": [
+      "Draft flashcards from PDFs and other sources you upload",
+      "Build multiple-choice quizzes from your notebook material",
+      "Create mind maps from your uploaded content",
+      "Chat and generate reports grounded in your sources"
+    ]
+  },
+  "heroSection": {
+    "headline": "Learn Anything",
+    "tagline": "AI that enhances learning, not replaces thinking.",
+    "placeholder": [
+      "Summarize this PDF...",
+      "Quiz me on Biology...",
+      "Explain this lecture...",
+      "Create flashcards from...",
+      "Analyze this research paper...",
+      "Generate study guide for...",
+      "Break down this concept...",
+      "What are the key points from..."
+    ]
+  },
+  "faq": {
+    "heading": "Frequently Asked Questions",
+    "subtitle": "Everything you need to know about SolomindLM",
+    "stillHaveQuestions": "Still have questions?",
+    "contactSupport": "Contact Support",
+    "seeAll": "See all frequently asked questions"
+  },
+  "pricing": {
+    "heading": "Free",
+    "proHeading": "Pro",
+    "freeDescription": "Get started with core tools",
+    "proYearlyDescription": "For serious learners",
+    "proMonthlyDescription": "Same as yearly, billed monthly",
+    "startFree": "Start free",
+    "getPro": "Get Pro",
+    "proBadge": "Pro",
+    "savePercent": "Save 50% with yearly",
+    "monthly": "monthly",
+    "yearly": "yearly",
+    "sectionLabel": "Pricing",
+    "sectionHeading": "Start free. Upgrade when you need more.",
+    "bestValue": "Best value",
+    "annual": "Annual",
+    "monthlyToggle": "Monthly"
+  },
+  "featuresGrid": {
+    "heading": "Powerful Learning Tools",
+    "subtitle": "AI-powered tools designed to help you learn faster and retain more"
+  }
+}
