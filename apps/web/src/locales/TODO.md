@@ -31,7 +31,7 @@
 - [x] `AgentActivityPanel.tsx` — 搜索/查询/完成状态标记
 - [x] `ResearchPlanMessage.tsx` — 频道标签、计划状态、按钮
 - [ ] `LiteratureReviewMessage.tsx` — 步骤配置、列确认、完成/错误状态
-- [ ] Toast messages in ChatPanel
+- [x] Toast messages in ChatPanel (已随 ChatPanel.tsx 一并翻译)
 - [x] Utility files: `messageStatus.tsx`, `exportChat.ts`, `messageRendering.tsx`
 
 > 核心交互已完成（ChatInput + 空状态 + 对话列表 + 外部来源 + 面板工具栏）。剩余文件为辅助消息显示和工具函数，影响范围较小。
@@ -85,9 +85,9 @@
 
 ---
 
-## 未使用的翻译 key
+## 未使用的翻译 key ✅
 
-`locales/{en,zh}/landing.json` 中的 `features.*` 有 6 个 key 未使用（`sourceUpload`, `sourceDiscovery`, `academicDiscovery`, `paperImport`, `citationStyles`, `notebookSharing`），因为 `LANDING_TOOLS` 不含这些 id。可保留供未来使用，或清理。
+- [x] `locales/{en,zh}/landing.json` — 已移除 6 个未使用的 `features.*` keys
 
 ---
 
