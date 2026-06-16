@@ -1,5 +1,6 @@
 import { AlertTriangle, ChevronRight, CircleCheck, FileBox } from "lucide-react";
 import React, { useCallback, useEffect, useId, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type {
   AgentGroundingCheck,
   ChatActivityPhase,
@@ -46,6 +47,7 @@ export const AgentActivityPanel = React.memo<AgentActivityPanelProps>(
     references,
     clarificationResponse,
   }) => {
+    const { t } = useTranslation("chat");
     const panelId = useId();
     const hardGroundingChecks = useMemo(
       () => groundingChecks.filter((g) => !g.soft),
@@ -109,7 +111,7 @@ export const AgentActivityPanel = React.memo<AgentActivityPanelProps>(
       const currentPhase = (activityPhase ?? historicalPhase ?? undefined) as string | undefined;
 
       if (clarificationResponse) {
-        return { headerPrimary: "Need a bit more context", headerMeta: null as string | null };
+        return { headerPrimary: t("agent.needMoreContext"), headerMeta: null as string | null };
       }
 
       if (useClaudeLayout) {
@@ -120,22 +122,22 @@ export const AgentActivityPanel = React.memo<AgentActivityPanelProps>(
 
         let primary: string;
         if (q) {
-          primary = `Searched sources for "${q}"`;
+          primary = t("agent.searchedSourcesFor", { q });
         } else if (aggregatedSources.length > 0 || (references?.length ?? 0) > 0) {
-          primary = "Searched sources";
+          primary = t("agent.searchedSources");
         } else if (searching || hasSearchDocuments) {
-          primary = "Searching your materials…";
+          primary = t("agent.searchingMaterials");
         } else {
-          primary = "Searched sources";
+          primary = t("agent.searchedSources");
         }
 
         const n = aggregatedSources.length;
-        const meta = n > 0 ? `${n} result${n === 1 ? "" : "s"}` : null;
+        const meta = n > 0 ? t("agent.resultCount", { n }) : null;
         return { headerPrimary: primary, headerMeta: meta };
       }
 
       if (currentPhase === "completed") {
-        return { headerPrimary: "Response complete", headerMeta: null as string | null };
+        return { headerPrimary: t("agent.responseComplete"), headerMeta: null as string | null };
       }
 
       if (activityDetail?.trim()) {
@@ -146,7 +148,7 @@ export const AgentActivityPanel = React.memo<AgentActivityPanelProps>(
       }
 
       const fallback = getStatusMessage(currentPhase);
-      return { headerPrimary: fallback ?? "Working…", headerMeta: null as string | null };
+      return { headerPrimary: fallback ?? t("agent.working"), headerMeta: null as string | null };
     }, [
       activityPhase,
       activityDetail,
@@ -240,8 +242,8 @@ export const AgentActivityPanel = React.memo<AgentActivityPanelProps>(
                     {aggregatedSources.length === 0 ? (
                       <p className="m-0 min-w-0 text-[11px] leading-snug text-muted-foreground">
                         {isStreaming && !searchFullyDone
-                          ? "Searching your materials…"
-                          : "No matching sections found in your sources."}
+                          ? t("agent.searchingMaterials")
+                          : t("agent.noMatchingSections")}
                       </p>
                     ) : (
                       <ul className="m-0 min-w-0 list-none divide-y divide-border/35 p-0 dark:divide-border/40">
@@ -256,7 +258,7 @@ export const AgentActivityPanel = React.memo<AgentActivityPanelProps>(
                             <span className="shrink-0 whitespace-nowrap text-right text-[11px] text-muted-foreground">
                               {src.isFullDocument
                                 ? null
-                                : `${src.sectionCount} relevant section${src.sectionCount === 1 ? "" : "s"}`}
+                                : t("agent.relevantSections", { n: src.sectionCount })}
                             </span>
                             {src.openUrl ? (
                               <a
@@ -264,7 +266,7 @@ export const AgentActivityPanel = React.memo<AgentActivityPanelProps>(
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className={SOURCE_BADGE_LINK_CLASS}
-                                aria-label={`Open ${src.title} in a new tab`}
+                                aria-label={t("agent.openSourceTab", { title: src.title })}
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 {src.badgeLabel}

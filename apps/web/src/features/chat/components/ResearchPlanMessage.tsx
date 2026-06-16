@@ -1,6 +1,7 @@
 import type { Id } from "@convex/_generated/dataModel";
 import { Ban, Check, FileSpreadsheet, FileText, FlaskConical, Loader2, X } from "lucide-react";
 import React, { useMemo, useState } from "react";
+import i18next from "@/i18n";
 import { useLiteratureReport, useLiteratureTable } from "../services/literatureReviewApi";
 import { useLatestRunForPlan, useResearchPlan, useResearchSteps } from "../services/researchApi";
 import { mapDeepResearchSteps } from "../utils/deepResearchSteps";
@@ -14,10 +15,10 @@ interface SubQuestion {
 }
 
 const CHANNEL_LABELS: Record<string, string> = {
-  notebook: "Notebook",
-  web: "Web",
-  academic: "Academic",
-  news: "News",
+  notebook: i18next.t("chat:researchPlan.channelNotebook"),
+  web: i18next.t("chat:researchPlan.channelWeb"),
+  academic: i18next.t("chat:researchPlan.channelAcademic"),
+  news: i18next.t("chat:researchPlan.channelNews"),
 };
 
 const CHANNEL_PILL_CLASS =
