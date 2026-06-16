@@ -43,11 +43,11 @@
 - [x] `SourceList.tsx` — 添加/发现/删除/刷新按钮、搜索、计数、空状态
 - [x] `SourceListItem.tsx` — 论文提示、状态标记、右键菜单
 - [x] `SourcesPanelHeader.tsx` — 面板标题、重命名、打开/复制/下载操作
-- [ ] `SourcesPanel.tsx` — 确认对话框、toast 消息
-- [ ] `SourceViewer.tsx` — 查看器标签、加载/错误状态
-- [ ] `SourceGuide.tsx` — 来源指南
-- [ ] `PdfViewer.tsx` — PDF 工具栏
-- [ ] `AddSourceModal.tsx` — 上传弹窗（~25 条）
+- [x] `SourcesPanel.tsx` — 确认对话框、toast 消息
+- [x] `SourceViewer.tsx` — 查看器标签、加载/错误状态
+- [x] `SourceGuide.tsx` — 来源指南
+- [x] `PdfViewer.tsx` — PDF 工具栏
+- [x] `AddSourceModal.tsx` — 上传弹窗（~25 条）
 - [ ] `DiscoverSourcesModal.tsx` — 搜索面板（~49 条）
 - [ ] 输入弹窗：`UrlInputModal`, `TextInputModal`, `SocialMediaInputModal`, `ManualPaperModal`, `DoiInputModal`, `BibtexImportModal`, `MendeleyImportModal`, `ZoteroImportModal`
 - [ ] `AcademicDiscoveryFiltersSection.tsx`, `academicFieldTaxonomy.ts`

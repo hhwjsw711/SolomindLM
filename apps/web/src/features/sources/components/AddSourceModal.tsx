@@ -16,6 +16,7 @@ import {
   Youtube,
 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { BibtexImportModal } from "./BibtexImportModal";
 import { DoiInputModal } from "./DoiInputModal";
 import { isGoogleDrivePickerConfigured } from "./GoogleDrivePicker";
@@ -68,6 +69,7 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
   fileInputRef,
   onFileSelect,
 }) => {
+  const { t } = useTranslation("sources");
   const [activeModal, setActiveModal] = useState<string | null>(null);
 
   // Keep ref to latest onDragLeave so we don't need it in the effect deps (avoids infinite loop:
@@ -116,7 +118,7 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
         <div className="overflow-y-auto p-6 md:p-10 space-y-8 bg-card/50">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-2xl font-medium">Add sources</h3>
+              <h3 className="text-2xl font-medium">{t("addSource.title")}</h3>
               <button
                 onClick={() => {
                   onClose();
@@ -125,14 +127,13 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
                 className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl border border-border hover:bg-secondary/50 transition-colors text-sm font-medium"
               >
                 <Globe className="w-4 h-4" />
-                Discover sources
+                {t("addSource.discoverSources")}
               </button>
             </div>
             <p className="text-muted-foreground text-sm leading-relaxed max-w-3xl">
-              Sources let SolomindLM base its responses on the information that matters most to you.
+              {t("addSource.description")}
               <br />
-              (Examples: marketing plans, course reading, research notes, meeting transcripts, sales
-              documents, etc.)
+              {t("addSource.descriptionExamples")}
             </p>
           </div>
 
@@ -167,18 +168,17 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
               <Upload className="w-6 h-6 text-primary shrink-0" />
             </div>
             <div className="text-center space-y-2">
-              <h3 className="text-lg font-bold text-primary">Upload sources</h3>
+              <h3 className="text-lg font-bold text-primary">{t("addSource.uploadHeading")}</h3>
               <p className="text-sm text-muted-foreground">
-                Drag & drop or{" "}
+                {t("addSource.uploadInstruction")}{" "}
                 <span className="text-primary underline decoration-dotted font-medium">
-                  choose file
+                  {t("addSource.chooseFile")}
                 </span>{" "}
-                to upload
+                {t("addSource.toUpload")}
               </p>
             </div>
             <p className="text-xs text-muted-foreground/60 text-center max-w-xl mt-4 font-mono">
-              Supported file types: PDF, Word, PowerPoint, Text, Markdown, JSON, CSV, PNG, JPEG,
-              AVIF, WAV, MP3, M4A, WebM, FLAC
+              {t("addSource.supportedFormats")}
             </p>
           </div>
 
@@ -187,7 +187,7 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
             <div className="border border-border/50 rounded-xl p-5 space-y-4 bg-card shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
                 <LinkIcon className="w-4 h-4" />
-                Links
+                {t("addSource.linksHeading")}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <button
@@ -196,7 +196,7 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
                   className="h-11 flex items-center justify-center gap-2 p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 border border-transparent hover:border-border transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Globe className="w-4 h-4 text-chart-3 group-hover:scale-110 transition-transform shrink-0" />
-                  <span className="text-sm font-medium">Website</span>
+                  <span className="text-sm font-medium">{t("addSource.website")}</span>
                 </button>
                 <button
                   onClick={onSocialMediaClick}
@@ -204,7 +204,7 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
                   className="h-11 flex items-center justify-center gap-2 p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 border border-transparent hover:border-border transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Youtube className="w-4 h-4 text-destructive group-hover:scale-110 transition-transform shrink-0" />
-                  <span className="text-sm font-medium">Transcripts</span>
+                  <span className="text-sm font-medium">{t("addSource.transcripts")}</span>
                 </button>
               </div>
             </div>
@@ -212,7 +212,7 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
             <div className="border border-border/50 rounded-xl p-5 space-y-4 bg-card shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
                 <Clipboard className="w-4 h-4" />
-                Paste text
+                {t("addSource.pasteTextHeading")}
               </div>
               <div className="space-y-2">
                 <button
@@ -223,7 +223,7 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
                   <div className="w-8 h-8 rounded-xl bg-background flex items-center justify-center border border-border shadow-sm group-hover:scale-105 transition-transform shrink-0">
                     <FileText className="w-4 h-4 text-chart-4" />
                   </div>
-                  <span className="text-sm font-medium">Copied text</span>
+                  <span className="text-sm font-medium">{t("addSource.copiedText")}</span>
                 </button>
               </div>
             </div>
@@ -232,7 +232,7 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
               <div className="border border-border/50 rounded-xl p-5 space-y-4 bg-card shadow-sm hover:shadow-md transition-shadow md:col-span-2 xl:col-span-1">
                 <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
                   <HardDrive className="w-4 h-4" />
-                  Google Drive
+                  {t("addSource.googleDriveHeading")}
                 </div>
                 <div className="space-y-2">
                   <button
@@ -241,7 +241,7 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
                     className="h-11 w-full flex items-center justify-center gap-2 p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 border border-transparent hover:border-border transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <HardDrive className="w-4 h-4 text-chart-2 group-hover:scale-110 transition-transform shrink-0" />
-                    <span className="text-sm font-medium">Choose from Google Drive</span>
+                    <span className="text-sm font-medium">{t("addSource.chooseFromDrive")}</span>
                   </button>
                 </div>
               </div>
@@ -250,7 +250,7 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
             <div className="border border-border/50 rounded-xl p-5 space-y-4 bg-card shadow-sm hover:shadow-md transition-shadow md:col-span-2 xl:col-span-3">
               <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
                 <BookOpen className="w-4 h-4" />
-                Research Papers
+                {t("addSource.researchPapersHeading")}
               </div>
               <div className="grid gap-2 sm:grid-cols-2 sm:gap-3">
                 <button
@@ -261,7 +261,9 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-background shadow-sm group-hover:scale-105 transition-transform [&_svg]:stroke-2 [&_svg]:text-primary">
                     <Globe className="h-4 w-4" aria-hidden />
                   </div>
-                  <span className="text-sm font-medium leading-snug">Import from DOI</span>
+                  <span className="text-sm font-medium leading-snug">
+                    {t("addSource.importDoi")}
+                  </span>
                 </button>
                 <button
                   onClick={() => setActiveModal("bibtex")}
@@ -271,7 +273,9 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-background shadow-sm group-hover:scale-105 transition-transform [&_svg]:stroke-2 [&_svg]:text-primary">
                     <FileText className="h-4 w-4" aria-hidden />
                   </div>
-                  <span className="text-sm font-medium leading-snug">Import BibTeX or RIS</span>
+                  <span className="text-sm font-medium leading-snug">
+                    {t("addSource.importBibtex")}
+                  </span>
                 </button>
                 <button
                   onClick={() => setActiveModal("zotero")}
@@ -281,7 +285,9 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-background shadow-sm group-hover:scale-105 transition-transform [&_svg]:stroke-2 [&_svg]:text-primary">
                     <Library className="h-4 w-4" aria-hidden />
                   </div>
-                  <span className="text-sm font-medium leading-snug">Import from Zotero</span>
+                  <span className="text-sm font-medium leading-snug">
+                    {t("addSource.importZotero")}
+                  </span>
                 </button>
                 <button
                   onClick={() => setActiveModal("mendeley")}
@@ -291,7 +297,9 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-background shadow-sm group-hover:scale-105 transition-transform [&_svg]:stroke-2 [&_svg]:text-primary">
                     <BookMarked className="h-4 w-4" aria-hidden />
                   </div>
-                  <span className="text-sm font-medium leading-snug">Import from Mendeley</span>
+                  <span className="text-sm font-medium leading-snug">
+                    {t("addSource.importMendeley")}
+                  </span>
                 </button>
                 <button
                   onClick={() => setActiveModal("manual")}
@@ -301,7 +309,9 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-background shadow-sm group-hover:scale-105 transition-transform [&_svg]:stroke-2 [&_svg]:text-primary">
                     <PenLine className="h-4 w-4" aria-hidden />
                   </div>
-                  <span className="text-sm font-medium leading-snug">Add manually</span>
+                  <span className="text-sm font-medium leading-snug">
+                    {t("addSource.addManually")}
+                  </span>
                 </button>
               </div>
             </div>
@@ -312,10 +322,8 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
             <div className="bg-warning/10 border border-warning/30 rounded-lg p-4 flex items-start gap-3">
               <X className="w-5 h-5 text-warning shrink-0 mt-0.5" />
               <div className="flex-1">
-                <p className="text-sm font-medium text-warning">Authentication required</p>
-                <p className="text-xs text-warning/80 mt-1">
-                  Please log in and select a notebook to upload sources.
-                </p>
+                <p className="text-sm font-medium text-warning">{t("addSource.authRequired")}</p>
+                <p className="text-xs text-warning/80 mt-1">{t("addSource.authRequiredBody")}</p>
               </div>
             </div>
           )}
@@ -323,10 +331,11 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
             <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 flex items-start gap-3">
               <X className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
               <div className="flex-1">
-                <p className="text-sm font-medium text-destructive">Source limit reached</p>
+                <p className="text-sm font-medium text-destructive">
+                  {t("addSource.limitReached")}
+                </p>
                 <p className="text-xs text-destructive/80 mt-1">
-                  You've reached the maximum of {MAX_SOURCES} sources. Remove some sources to add
-                  new ones.
+                  {t("addSource.limitReachedBody", { count: MAX_SOURCES })}
                 </p>
               </div>
             </div>
@@ -337,7 +346,7 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
         <div className="p-4 bg-secondary/10 border-t border-border flex items-center gap-4 text-xs">
           <div className="flex items-center gap-2 text-muted-foreground shrink-0 font-medium">
             <File className="w-4 h-4 shrink-0" />
-            <span>Source limit</span>
+            <span>{t("addSource.sourceLimit")}</span>
           </div>
           <div className="flex-1 h-2 bg-secondary/50 rounded-xl overflow-hidden">
             <div

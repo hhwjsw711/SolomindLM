@@ -8,6 +8,7 @@ import {
   XCircle,
 } from "lucide-react";
 import React, { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Source } from "@/shared/types";
 import { sanitizeMarkdown } from "@/shared/utils";
 import { cn } from "@/shared/utils/cn";
@@ -38,6 +39,7 @@ export const SourceViewer: React.FC<SourceViewerProps> = ({
   error,
   onDiscussTopic,
 }) => {
+  const { t } = useTranslation("sources");
   const isPdfSource = source.type === "PDF";
   const canShowPdf = isPdfSource && pdfStorageId;
   const [viewMode, setViewMode] = useState<PdfViewMode>("markdown");
@@ -87,7 +89,9 @@ export const SourceViewer: React.FC<SourceViewerProps> = ({
       setGeneratingGuide(true);
       generateSourceGuide(source.id)
         .catch((err) => {
-          setGuideError(err instanceof Error ? err.message : "Failed to generate source guide");
+          setGuideError(
+            err instanceof Error ? err.message : t("sourceViewer.failedToGenerateGuide")
+          );
         })
         .finally(() => {
           setGeneratingGuide(false);
@@ -121,7 +125,9 @@ export const SourceViewer: React.FC<SourceViewerProps> = ({
               )}
               aria-expanded={sourceGuideExpanded}
               aria-controls={`source-guide-panel-${source.id}`}
-              title={sourceGuideExpanded ? "Hide source guide" : "Show source guide"}
+              title={
+                sourceGuideExpanded ? t("sourceViewer.hideGuide") : t("sourceViewer.showGuide")
+              }
               onClick={() => setSourceGuideExpanded((open) => !open)}
             >
               <BookOpenText
@@ -130,7 +136,7 @@ export const SourceViewer: React.FC<SourceViewerProps> = ({
                 aria-hidden
               />
               <span className="min-w-0 flex-1 truncate font-serif text-[0.9375rem] font-semibold leading-tight tracking-tight text-foreground sm:text-base">
-                Source guide
+                {t("sourceViewer.sourceGuide")}
               </span>
               <span
                 className={cn(
@@ -174,7 +180,7 @@ export const SourceViewer: React.FC<SourceViewerProps> = ({
                         key={i}
                         type="button"
                         className="inline-flex items-center rounded-full border border-border/60 bg-secondary/45 px-2.5 py-1 text-xs font-medium text-secondary-foreground transition-colors hover:border-border hover:bg-secondary/65 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                        aria-label={`Discuss ${topic}`}
+                        aria-label={t("sourceViewer.discussTopic", { topic })}
                         onClick={() => onDiscussTopic?.(topic)}
                       >
                         {topic}
@@ -190,7 +196,7 @@ export const SourceViewer: React.FC<SourceViewerProps> = ({
         <div className="rounded-lg border border-border/60 bg-muted/20 p-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="w-4 h-4 animate-spin" />
-            <span>Generating source guide...</span>
+            <span>{t("sourceViewer.generatingGuide")}</span>
           </div>
         </div>
       ) : guideError ? (
@@ -204,7 +210,9 @@ export const SourceViewer: React.FC<SourceViewerProps> = ({
         <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 space-y-3">
           <div className="flex items-center gap-2">
             <XCircle className="w-5 h-5 text-destructive shrink-0" />
-            <p className="text-sm font-medium text-destructive">Failed to process document</p>
+            <p className="text-sm font-medium text-destructive">
+              {t("sourceViewer.failedToProcess")}
+            </p>
           </div>
           <p className="text-xs text-destructive/80">
             There was an error while processing this document. Please try uploading it again.
@@ -217,7 +225,7 @@ export const SourceViewer: React.FC<SourceViewerProps> = ({
         <div className="flex items-center justify-center py-12">
           <div className="flex flex-col items-center gap-3">
             <Loader2 className="w-6 h-6 text-primary animate-spin" />
-            <p className="text-sm text-muted-foreground">Loading content...</p>
+            <p className="text-sm text-muted-foreground">{t("sourceViewer.loadingContent")}</p>
           </div>
         </div>
       )}
@@ -227,7 +235,7 @@ export const SourceViewer: React.FC<SourceViewerProps> = ({
         <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 space-y-3">
           <div className="flex items-center gap-2">
             <XCircle className="w-5 h-5 text-destructive shrink-0" />
-            <p className="text-sm font-medium text-destructive">Failed to load content</p>
+            <p className="text-sm font-medium text-destructive">{t("sourceViewer.failedToLoad")}</p>
           </div>
           <p className="text-xs text-destructive/80">{error}</p>
           <p className="text-xs text-muted-foreground">
@@ -250,7 +258,7 @@ export const SourceViewer: React.FC<SourceViewerProps> = ({
             aria-pressed={viewMode === "markdown"}
           >
             <FileType className="h-4 w-4" />
-            Markdown
+            {t("sourceViewer.markdown")}
           </button>
           <button
             type="button"
@@ -263,7 +271,7 @@ export const SourceViewer: React.FC<SourceViewerProps> = ({
             aria-pressed={viewMode === "pdf"}
           >
             <FileText className="h-4 w-4" />
-            Original PDF
+            {t("sourceViewer.originalPdf")}
           </button>
         </div>
       )}
@@ -280,7 +288,7 @@ export const SourceViewer: React.FC<SourceViewerProps> = ({
             ) : pdfUrl ? (
               <PdfViewer file={pdfUrl} />
             ) : (
-              <p className="text-sm text-destructive">Could not load PDF.</p>
+              <p className="text-sm text-destructive">{t("sourceViewer.pdfFailed")}</p>
             )
           ) : (
             <div className="prose prose-sm prose-stone dark:prose-invert max-w-none font-serif leading-relaxed text-foreground/90 select-text">
@@ -314,7 +322,7 @@ export const SourceViewer: React.FC<SourceViewerProps> = ({
                     ),
                   }}
                 >
-                  {sanitizeMarkdown(content || "No content available.")}
+                  {sanitizeMarkdown(content || t("sourceViewer.noContent"))}
                 </MarkdownRenderer>
               </Suspense>
             </div>

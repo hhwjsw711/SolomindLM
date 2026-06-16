@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight, Loader2, Minus, PanelLeft, Plus } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Document, Outline, Page, pdfjs } from "react-pdf";
 import { cn } from "@/shared/utils/cn";
 import "react-pdf/dist/Page/AnnotationLayer.css";
@@ -57,6 +58,7 @@ interface PdfViewerProps {
 }
 
 export const PdfViewer: React.FC<PdfViewerProps> = ({ file, className = "" }) => {
+  const { t } = useTranslation("sources");
   const [numPages, setNumPages] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -80,7 +82,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({ file, className = "" }) =>
   }, []);
 
   const onDocumentLoadError = useCallback((err: Error) => {
-    setError(err?.message ?? "Failed to load PDF");
+    setError(err?.message ?? t("pdfViewer.failedToLoad"));
     setLoading(false);
   }, []);
 
@@ -291,8 +293,8 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({ file, className = "" }) =>
                       ? "border-primary bg-primary text-primary-foreground"
                       : "border-border bg-background text-foreground hover:bg-muted"
                   )}
-                  aria-label="Toggle outline"
-                  title="Toggle outline"
+                  aria-label={t("pdfViewer.toggleOutline")}
+                  title={t("pdfViewer.toggleOutline")}
                 >
                   <PanelLeft className="h-3.5 w-3.5" />
                 </button>
@@ -303,7 +305,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({ file, className = "" }) =>
                   onClick={() => goToPage(currentPage - 1)}
                   disabled={currentPage <= 1}
                   className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border bg-background text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-40"
-                  aria-label="Previous page"
+                  aria-label={t("pdfViewer.prevPage")}
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
@@ -313,7 +315,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({ file, className = "" }) =>
                     inputMode="numeric"
                     autoComplete="off"
                     aria-label="Go to page"
-                    title="Type a page number and press Enter"
+                    title={t("pdfViewer.pageInputTitle")}
                     value={pageInput}
                     onChange={(e) => setPageInput(e.target.value.replace(/\D/g, ""))}
                     onFocus={() => {
@@ -342,7 +344,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({ file, className = "" }) =>
                   onClick={() => goToPage(currentPage + 1)}
                   disabled={currentPage >= numPages}
                   className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border bg-background text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-40"
-                  aria-label="Next page"
+                  aria-label={t("pdfViewer.nextPage")}
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>
@@ -353,7 +355,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({ file, className = "" }) =>
                   onClick={handleZoomOut}
                   disabled={zoom <= ZOOM_MIN}
                   className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border bg-background text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-40"
-                  aria-label="Zoom out"
+                  aria-label={t("pdfViewer.zoomOut")}
                 >
                   <Minus className="h-3.5 w-3.5" />
                 </button>
@@ -364,7 +366,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({ file, className = "" }) =>
                   onClick={handleZoomIn}
                   disabled={zoom >= ZOOM_MAX}
                   className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border bg-background text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-40"
-                  aria-label="Zoom in"
+                  aria-label={t("pdfViewer.zoomIn")}
                 >
                   <Plus className="h-3.5 w-3.5" />
                 </button>
@@ -389,10 +391,10 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({ file, className = "" }) =>
                     "[&_a:hover]:bg-muted/80 [&_a:active]:bg-muted",
                     "[&_a:focus-visible]:outline-none [&_a:focus-visible]:ring-2 [&_a:focus-visible]:ring-ring [&_a:focus-visible]:ring-offset-2 [&_a:focus-visible]:ring-offset-background"
                   )}
-                  aria-label="Document outline"
+                  aria-label={t("pdfViewer.documentOutline")}
                 >
                   <h3 className="mb-3 border-b border-border/60 pb-2 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Contents
+                    {t("pdfViewer.contents")}
                   </h3>
                   <Outline onItemClick={handleOutlineItemClick} className="react-pdf__Outline" />
                 </aside>

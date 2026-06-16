@@ -1,5 +1,6 @@
 import { ChevronDown, ChevronUp, Compass, Loader2 } from "lucide-react";
 import React, { useId, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { sanitizeHtml } from "@/shared/utils";
 import { useSourceGuide } from "../hooks/useSourceGuide";
 
@@ -9,6 +10,7 @@ interface SourceGuideProps {
 }
 
 export const SourceGuide: React.FC<SourceGuideProps> = ({ documentId, onTopicClick }) => {
+  const { t } = useTranslation("sources");
   const { summary, topics, isLoading } = useSourceGuide(documentId);
   const [isExpanded, setIsExpanded] = useState(true);
   const panelId = useId();
@@ -34,7 +36,7 @@ export const SourceGuide: React.FC<SourceGuideProps> = ({ documentId, onTopicCli
               id={headingId}
               className="font-display text-[11px] font-bold uppercase tracking-widest text-muted-foreground"
             >
-              Source guide
+              {t("sourceGuide.heading")}
             </p>
           </div>
         </div>
@@ -57,7 +59,7 @@ export const SourceGuide: React.FC<SourceGuideProps> = ({ documentId, onTopicCli
             <div className="flex flex-col items-center gap-3 py-6">
               <Loader2 className="size-6 animate-spin text-primary" aria-hidden />
               <p className="font-display text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Summarizing source…
+                {t("sourceGuide.summarizing")}
               </p>
               <div className="w-full max-w-[18rem] space-y-2" aria-hidden>
                 <div className="h-2.5 w-full animate-pulse rounded-sm bg-muted-foreground/15" />

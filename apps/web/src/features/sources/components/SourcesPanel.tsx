@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useToast } from "@/shared/contexts/useToast";
 import { useConfirmDialog } from "@/shared/ui/useConfirmDialog";
 import { useSourceContent } from "../hooks/useSourceContent";
@@ -51,6 +52,7 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
   onFocusSourceHandled,
   onDiscussTopic,
 }) => {
+  const { t } = useTranslation("sources");
   const {
     sources,
     onToggleSource,
@@ -99,7 +101,7 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
         } catch (err) {
           console.error("Google Drive upload failed:", err);
           showError(
-            err instanceof Error ? err.message : `Failed to import "${file.name}" from Google Drive`
+            err instanceof Error ? err.message : t("sourcesPanel.importFailed", { name: file.name })
           );
         }
       }
@@ -184,9 +186,13 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
   // Handlers
   const handleDeleteSource = async (sourceId: string, sourceTitle: string) => {
     const confirmed = await confirm(
-      "Delete Source",
-      `Are you sure you want to delete "${sourceTitle}"? This action cannot be undone.`,
-      { confirmText: "Delete", cancelText: "Cancel", variant: "danger" }
+      t("sourcesPanel.deleteSourceTitle"),
+      t("sourcesPanel.deleteSourceBody", { title: sourceTitle }),
+      {
+        confirmText: t("sourcesPanel.delete"),
+        cancelText: t("sourcesPanel.cancel"),
+        variant: "danger",
+      }
     );
     if (confirmed) {
       onDeleteSource(sourceId);
@@ -197,9 +203,13 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
     const ids = sources.filter((s) => s.selected).map((s) => s.id);
     if (ids.length === 0) return;
     const confirmed = await confirm(
-      "Delete sources",
-      `Delete ${ids.length} selected source${ids.length === 1 ? "" : "s"}? This cannot be undone.`,
-      { confirmText: "Delete", cancelText: "Cancel", variant: "danger" }
+      t("sourcesPanel.deleteSourcesTitle"),
+      t("sourcesPanel.deleteSourcesBody", { count: ids.length }),
+      {
+        confirmText: t("sourcesPanel.delete"),
+        cancelText: t("sourcesPanel.cancel"),
+        variant: "danger",
+      }
     );
     if (confirmed) {
       await onDeleteSelectedSources(ids);
@@ -212,9 +222,13 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
     if (!noteId || isRefreshingAll || !canRefreshAll) return;
     const refreshableCount = sources.filter((s) => s.remoteRefreshKind).length;
     const confirmed = await confirm(
-      "Refresh sources",
-      `Re-fetch ${refreshableCount} remote source${refreshableCount === 1 ? "" : "s"}? Web pages and Google Drive imports will be updated.`,
-      { confirmText: "Refresh", cancelText: "Cancel", variant: "default" }
+      t("sourcesPanel.refreshSourcesTitle"),
+      t("sourcesPanel.refreshSourcesBody", { count: refreshableCount }),
+      {
+        confirmText: t("sourcesPanel.refresh"),
+        cancelText: t("sourcesPanel.cancel"),
+        variant: "default",
+      }
     );
     if (!confirmed) return;
     setIsRefreshingAll(true);
@@ -234,24 +248,22 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
       });
       const parts: string[] = [];
       if (result.urlCount > 0) {
-        parts.push(`${result.urlCount} web page${result.urlCount === 1 ? "" : "s"} queued`);
+        parts.push(t("sourcesPanel.refreshQueued", { count: result.urlCount }));
       }
       if (result.driveRefreshed > 0) {
-        parts.push(`${result.driveRefreshed} from Google Drive`);
+        parts.push(t("sourcesPanel.refreshDrive", { count: result.driveRefreshed }));
       }
       if (result.driveSkippedNoToken > 0) {
-        parts.push(
-          `${result.driveSkippedNoToken} Drive source${result.driveSkippedNoToken === 1 ? "" : "s"} skipped (sign in with Google to refresh)`
-        );
+        parts.push(t("sourcesPanel.refreshSkipped", { count: result.driveSkippedNoToken }));
       }
       if (parts.length === 0) {
-        showInfo("No web or Google Drive sources to refresh in this notebook.");
+        showInfo(t("sourcesPanel.refreshNoSources"));
       } else {
-        success(`Refresh started: ${parts.join(". ")}.`);
+        success(t("sourcesPanel.refreshStarted", { parts: parts.join(". ") }));
       }
     } catch (err) {
       console.error("Refresh all failed:", err);
-      showError(err instanceof Error ? err.message : "Failed to refresh sources");
+      showError(err instanceof Error ? err.message : t("sourcesPanel.refreshFailed"));
     } finally {
       setIsRefreshingAll(false);
     }
@@ -280,10 +292,10 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
           documentId: sourceId,
           accessToken,
         });
-        showInfo("Refresh started for this source.");
+        showInfo(t("sourcesPanel.refreshStartedSingle"));
       } catch (err) {
         console.error("Refresh source failed:", err);
-        showError(err instanceof Error ? err.message : "Failed to refresh source");
+        showError(err instanceof Error ? err.message : t("sourcesPanel.refreshFailed"));
       }
     },
     [sources, refreshRemoteSource, showInfo, showError]
@@ -427,7 +439,9 @@ export const SourcesPanel: React.FC<SourcesPanelProps> = ({
               pdfStorageId={viewingSource?.type === "PDF" ? viewingDocument?.storageId : undefined}
               isLoading={sourceContent.isLoading(viewingSourceId ?? "")}
               error={
-                sourceContent.hasError(viewingSourceId ?? "") ? "Failed to load content" : undefined
+                sourceContent.hasError(viewingSourceId ?? "")
+                  ? t("sourcesPanel.loadContentFailed")
+                  : undefined
               }
               onDiscussTopic={onDiscussTopic}
             />
