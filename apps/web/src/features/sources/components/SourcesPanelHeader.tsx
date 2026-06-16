@@ -1,5 +1,6 @@
 import { ChevronLeft, Copy, Download, ExternalLink, FileStack } from "lucide-react";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { Source } from "@/shared/types";
 
 interface SourcesPanelHeaderProps {
@@ -35,6 +36,7 @@ export const SourcesPanelHeader: React.FC<SourcesPanelHeaderProps> = ({
   onRenameSubmit,
   onResizeStart,
 }) => {
+  const { t } = useTranslation("sources");
   return (
     <>
       {/* Resize Handle (desktop only) */}
@@ -52,7 +54,7 @@ export const SourcesPanelHeader: React.FC<SourcesPanelHeaderProps> = ({
                 <button
                   onClick={onBackToList}
                   className="p-1.5 hover:bg-secondary active:bg-secondary/80 active:scale-[0.97] rounded-md transition-transform text-foreground flex items-center justify-center shrink-0 touch-manipulation"
-                  aria-label="Back to sources"
+                  aria-label={t("sourcePanelHeader.backToSources")}
                 >
                   <ChevronLeft className="w-5 h-5 shrink-0" />
                 </button>
@@ -82,7 +84,7 @@ export const SourcesPanelHeader: React.FC<SourcesPanelHeaderProps> = ({
                       onClick={(e) => e.stopPropagation()}
                       className="flex-1 min-w-0 font-display font-bold text-sm tracking-wide bg-transparent border-0 border-b border-border rounded-none px-0 py-0.5 text-foreground focus:outline-none focus:ring-0 focus:border-primary"
                       autoFocus
-                      aria-label="Rename source"
+                      aria-label={t("sourcePanelHeader.renameSource")}
                     />
                   ) : (
                     <span
@@ -100,7 +102,7 @@ export const SourcesPanelHeader: React.FC<SourcesPanelHeaderProps> = ({
                         }
                       }}
                       className="font-display font-bold text-sm tracking-wide truncate text-foreground cursor-text hover:opacity-80"
-                      title="Click to rename"
+                      title={t("sourcePanelHeader.clickToRename")}
                     >
                       {viewingSource.title}
                     </span>
@@ -115,8 +117,8 @@ export const SourcesPanelHeader: React.FC<SourcesPanelHeaderProps> = ({
                       target="_blank"
                       rel="noopener noreferrer"
                       className="p-2 rounded-md text-foreground/70 hover:text-foreground hover:bg-secondary transition-colors touch-manipulation"
-                      title="Open in new tab"
-                      aria-label="Open source in new tab"
+                      title={t("sourcePanelHeader.openInNewTab")}
+                      aria-label={t("sourcePanelHeader.openSourceInNewTab")}
                     >
                       <ExternalLink className="w-4 h-4" />
                     </a>
@@ -126,8 +128,8 @@ export const SourcesPanelHeader: React.FC<SourcesPanelHeaderProps> = ({
                   onClick={onCopy}
                   disabled={!canCopyOrDownload}
                   className="p-2 hover:bg-secondary active:bg-secondary/80 active:scale-[0.97] rounded-md transition-transform text-foreground/70 hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed touch-manipulation"
-                  title="Copy content as Markdown"
-                  aria-label="Copy content as Markdown"
+                  title={t("sourcePanelHeader.copyAsMarkdown")}
+                  aria-label={t("sourcePanelHeader.copyAsMarkdown")}
                 >
                   <Copy className="w-4 h-4" />
                 </button>
@@ -136,8 +138,8 @@ export const SourcesPanelHeader: React.FC<SourcesPanelHeaderProps> = ({
                   onClick={onDownload}
                   disabled={!canCopyOrDownload}
                   className="p-2 hover:bg-secondary active:bg-secondary/80 active:scale-[0.97] rounded-md transition-transform text-foreground/70 hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed touch-manipulation"
-                  title="Download as Markdown file"
-                  aria-label="Download as Markdown file"
+                  title={t("sourcePanelHeader.downloadAsMarkdown")}
+                  aria-label={t("sourcePanelHeader.downloadAsMarkdown")}
                 >
                   <Download className="w-4 h-4" />
                 </button>
@@ -193,7 +195,7 @@ export const SourcesPanelHeader: React.FC<SourcesPanelHeaderProps> = ({
                       onClick={(e) => e.stopPropagation()}
                       className="flex-1 min-w-0 font-display font-bold text-sm tracking-wide bg-transparent border-0 border-b border-border rounded-none px-0 py-0.5 text-sidebar-foreground focus:outline-none focus:ring-0 focus:border-primary"
                       autoFocus
-                      aria-label="Rename source"
+                      aria-label={t("sourcePanelHeader.renameSource")}
                     />
                   ) : (
                     <span
@@ -211,7 +213,7 @@ export const SourcesPanelHeader: React.FC<SourcesPanelHeaderProps> = ({
                         }
                       }}
                       className="font-display font-bold text-sm tracking-wide truncate text-left min-w-0 flex-1 cursor-text hover:opacity-80 hover:underline hover:decoration-dotted hover:underline-offset-2 transition-opacity outline-none focus:outline-none focus:opacity-80 bg-transparent"
-                      title="Click to rename"
+                      title={t("sourcePanelHeader.clickToRename")}
                     >
                       {viewingSource.title}
                     </span>
@@ -226,8 +228,8 @@ export const SourcesPanelHeader: React.FC<SourcesPanelHeaderProps> = ({
                       target="_blank"
                       rel="noopener noreferrer"
                       className="p-2 rounded-sm text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors touch-manipulation"
-                      title="Open in new tab"
-                      aria-label="Open source in new tab"
+                      title={t("sourcePanelHeader.openInNewTab")}
+                      aria-label={t("sourcePanelHeader.openSourceInNewTab")}
                     >
                       <ExternalLink className="w-4 h-4" />
                     </a>
@@ -237,8 +239,8 @@ export const SourcesPanelHeader: React.FC<SourcesPanelHeaderProps> = ({
                   onClick={onCopy}
                   disabled={!canCopyOrDownload}
                   className="p-2 hover:bg-sidebar-accent active:bg-sidebar-accent/80 active:scale-[0.97] rounded-sm transition-transform text-sidebar-foreground/70 hover:text-sidebar-foreground disabled:opacity-40 disabled:cursor-not-allowed touch-manipulation"
-                  title="Copy content as Markdown"
-                  aria-label="Copy content as Markdown"
+                  title={t("sourcePanelHeader.copyAsMarkdown")}
+                  aria-label={t("sourcePanelHeader.copyAsMarkdown")}
                 >
                   <Copy className="w-4 h-4" />
                 </button>
@@ -247,8 +249,8 @@ export const SourcesPanelHeader: React.FC<SourcesPanelHeaderProps> = ({
                   onClick={onDownload}
                   disabled={!canCopyOrDownload}
                   className="p-2 hover:bg-sidebar-accent active:bg-sidebar-accent/80 active:scale-[0.97] rounded-sm transition-transform text-sidebar-foreground/70 hover:text-sidebar-foreground disabled:opacity-40 disabled:cursor-not-allowed touch-manipulation"
-                  title="Download as Markdown file"
-                  aria-label="Download as Markdown file"
+                  title={t("sourcePanelHeader.downloadAsMarkdown")}
+                  aria-label={t("sourcePanelHeader.downloadAsMarkdown")}
                 >
                   <Download className="w-4 h-4" />
                 </button>
@@ -260,7 +262,7 @@ export const SourcesPanelHeader: React.FC<SourcesPanelHeaderProps> = ({
             <div className="flex items-center gap-2 text-sidebar-foreground">
               <FileStack className="w-4 h-4 shrink-0" />
               <span className="font-display font-bold text-sm tracking-wide uppercase">
-                Sources
+                {t("sourcePanelHeader.sources")}
               </span>
               <span className="ml-2 text-xs text-muted-foreground bg-sidebar-accent px-1.5 py-0.5 rounded-xl font-mono">
                 {selectedCount}
@@ -269,7 +271,7 @@ export const SourcesPanelHeader: React.FC<SourcesPanelHeaderProps> = ({
             <button
               onClick={onClose}
               className="p-1 hover:bg-sidebar-accent active:bg-sidebar-accent/80 active:scale-[0.97] rounded-sm transition-transform text-sidebar-foreground/70 hover:text-sidebar-foreground flex items-center justify-center shrink-0 touch-manipulation"
-              aria-label="Close Sources panel"
+              aria-label={t("sourcePanelHeader.closePanel")}
             >
               <ChevronLeft className="w-5 h-5 shrink-0" />
             </button>

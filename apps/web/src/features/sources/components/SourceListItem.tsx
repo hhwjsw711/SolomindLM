@@ -14,6 +14,7 @@ import {
   Youtube,
 } from "lucide-react";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { Favicon } from "@/shared/components/Favicon";
 import { Source } from "@/shared/types";
 
@@ -48,6 +49,7 @@ export const SourceListItem: React.FC<SourceListItemProps> = ({
   onStartRename,
   isMenuOpen,
 }) => {
+  const { t } = useTranslation("sources");
   const status = source.status || "completed";
   const canClick = !isRenaming && status !== "processing";
 
@@ -84,10 +86,14 @@ export const SourceListItem: React.FC<SourceListItemProps> = ({
     if (status === "processing" || source.paper.ingestionStatus === "pending") return null;
     if (status === "failed" || source.paper.ingestionStatus === "failed") return null;
     if (source.paper.ingestionStatus === "metadata_only") {
-      return source.paper.fulltextStatus === "external_only" ? "External" : "Abstract";
+      return source.paper.fulltextStatus === "external_only"
+        ? t("sourceListItem.external")
+        : t("sourceListItem.abstract");
     }
     if (source.paper.ingestionStatus === "ingested") {
-      return source.paper.fulltextStatus === "available" ? "Full text" : "Indexed";
+      return source.paper.fulltextStatus === "available"
+        ? t("sourceListItem.fullText")
+        : t("sourceListItem.indexed");
     }
     return null;
   };
@@ -124,13 +130,13 @@ export const SourceListItem: React.FC<SourceListItemProps> = ({
             {status === "processing" && (
               <div className="flex items-center gap-1 text-xs font-medium text-warning font-sans shrink-0">
                 <Loader2 className="w-3 h-3 animate-spin shrink-0" />
-                <span>Processing</span>
+                <span>{t("sourceListItem.processing")}</span>
               </div>
             )}
             {status === "failed" && (
               <div className="flex items-center gap-1 text-xs font-medium text-destructive font-sans shrink-0">
                 <XCircle className="w-3 h-3 shrink-0" />
-                <span>Failed</span>
+                <span>{t("sourceListItem.failed")}</span>
               </div>
             )}
           </div>
@@ -141,7 +147,7 @@ export const SourceListItem: React.FC<SourceListItemProps> = ({
             <span
               className={source.type === "YOUTUBE" ? "tracking-wide" : "uppercase tracking-wide"}
             >
-              {source.type === "YOUTUBE" ? "YouTube" : source.type}
+              {source.type === "YOUTUBE" ? t("sourceListItem.youtube") : source.type}
             </span>
             <span> • {source.date}</span>
             {paperHint && status === "completed" && (
@@ -176,7 +182,7 @@ export const SourceListItem: React.FC<SourceListItemProps> = ({
                 className={`p-1 hover:bg-secondary rounded-xl transition-colors flex items-center justify-center ${
                   isMenuOpen ? "text-foreground bg-secondary" : "text-muted-foreground"
                 }`}
-                title="More options"
+                title={t("sourceListItem.moreOptions")}
               >
                 <MoreVertical className="w-4 h-4" />
               </button>
@@ -202,7 +208,7 @@ export const SourceListItem: React.FC<SourceListItemProps> = ({
                         className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-secondary transition-colors"
                       >
                         <RefreshCw className="w-4 h-4" />
-                        Refresh
+                        {t("sourceListItem.refresh")}
                       </button>
                     )}
                     <button
@@ -214,7 +220,7 @@ export const SourceListItem: React.FC<SourceListItemProps> = ({
                       className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-secondary transition-colors"
                     >
                       <Edit2 className="w-4 h-4" />
-                      Rename
+                      {t("sourceListItem.rename")}
                     </button>
                     <button
                       type="button"
@@ -226,7 +232,7 @@ export const SourceListItem: React.FC<SourceListItemProps> = ({
                       className="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
-                      Delete
+                      {t("sourceListItem.delete")}
                     </button>
                   </div>
                 </>
