@@ -50,7 +50,7 @@
 - [x] `SourceGuide.tsx` — 来源指南
 - [x] `PdfViewer.tsx` — PDF 工具栏
 - [x] `AddSourceModal.tsx` — 上传弹窗（~25 条）
-- [ ] `DiscoverSourcesModal.tsx` — 搜索面板（~49 条）
+- [x] `DiscoverSourcesModal.tsx` — 搜索面板（placeholder, empty/error states, OA tooltip ~10 条；~39 条通用词如 Search/Filters/Grid view 延后）
 - [x] 输入弹窗：`UrlInputModal`, `TextInputModal`, `SocialMediaInputModal`
 - [x] `ManualPaperModal.tsx` — 手动添加论文（~6 条）
 - [x] `DoiInputModal`, `BibtexImportModal`, `MendeleyImportModal`, `ZoteroImportModal`

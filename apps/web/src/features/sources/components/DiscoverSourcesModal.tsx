@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSessionStorage } from "@/hooks/useSessionStorage";
+import i18next from "@/i18n";
 import { Favicon } from "@/shared/components/Favicon";
 import { useToast } from "@/shared/contexts/useToast";
 import { Source, UnifiedDiscoveryResult } from "@/shared/types/index";
@@ -181,8 +182,7 @@ function academicAccessChip(
   if (pdf) {
     return {
       label: "OA PDF",
-      title:
-        "An open-access PDF is available. We try to ingest it; some repositories block automated downloads.",
+      title: i18next.t("sources:discover.oaPdfTooltip"),
       className: `${META_CHIP} border-emerald-200/70 bg-emerald-50/80 text-emerald-950`,
     };
   }
@@ -343,12 +343,10 @@ export const DiscoverSourcesModal: React.FC<DiscoverSourcesModalProps> = ({
       setResults(response.sources);
       if (response.sources.length === 0) {
         const rateLimitWarning = response.warnings?.[0];
-        setError(
-          rateLimitWarning ?? "No sources found. Try a different query or adjust your filters."
-        );
+        setError(rateLimitWarning ?? i18next.t("sources:discover.noSourcesFound"));
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Search failed. Please try again.");
+      setError(err instanceof Error ? err.message : i18next.t("sources:discover.searchFailed"));
     } finally {
       setIsLoading(false);
     }
@@ -549,7 +547,7 @@ export const DiscoverSourcesModal: React.FC<DiscoverSourcesModalProps> = ({
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search for articles, papers, or websites..."
+                  placeholder={i18next.t("sources:discover.searchPlaceholder")}
                   className="w-full pl-10 pr-28 py-3 bg-secondary/20 border border-border rounded-lg text-sm focus:outline-none focus:border-primary transition-colors placeholder:text-muted-foreground/50"
                 />
                 <button
