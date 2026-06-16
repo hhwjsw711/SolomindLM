@@ -1,5 +1,6 @@
 import { Check } from "lucide-react";
-import React from "react";
+import React, { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useConfirmDialog } from "@/shared/ui/useConfirmDialog";
 import {
   useCancelSubscription,
@@ -11,33 +12,37 @@ interface BillingPageProps {
   onBack: () => void;
 }
 
-const freeFeatures = [
-  "20 notebooks per account",
-  "200 sources per notebook",
-  "50 chat messages/day",
-  "5 flashcards/day",
-  "5 quizzes/day",
-  "5 reports/day",
-  "5 audio overviews/day",
-  "5 written questions/day",
-];
+const FREE_FEATURE_KEYS = [
+  "freeFeatures.notebooks",
+  "freeFeatures.sources",
+  "freeFeatures.chatMessages",
+  "freeFeatures.flashcards",
+  "freeFeatures.quizzes",
+  "freeFeatures.reports",
+  "freeFeatures.audioOverview",
+  "freeFeatures.writtenQuestions",
+] as const;
 
-const proFeatures = [
-  "200 notebooks per account",
-  "200 sources per notebook",
-  "500 chat messages/day",
-  "100 flashcards/day",
-  "100 quizzes/day",
-  "100 reports/day",
-  "100 audio overviews/day",
-  "100 written questions/day",
-];
+const PRO_FEATURE_KEYS = [
+  "proFeatures.notebooks",
+  "proFeatures.sources",
+  "proFeatures.chatMessages",
+  "proFeatures.flashcards",
+  "proFeatures.quizzes",
+  "proFeatures.reports",
+  "proFeatures.audioOverview",
+  "proFeatures.writtenQuestions",
+] as const;
 
 export const BillingPage: React.FC<BillingPageProps> = ({ onBack }) => {
+  const { t } = useTranslation("billing");
   const status = useSubscriptionStatus();
   const { confirm, ConfirmDialogComponent } = useConfirmDialog();
   const createCheckout = useCreateCheckout();
   const cancelSubscription = useCancelSubscription();
+
+  const freeFeatures = useMemo(() => FREE_FEATURE_KEYS.map((k) => t(k)), [t]);
+  const proFeatures = useMemo(() => PRO_FEATURE_KEYS.map((k) => t(k)), [t]);
 
   const handleUpgrade = async (interval: "month" | "year") => {
     try {
@@ -49,23 +54,23 @@ export const BillingPage: React.FC<BillingPageProps> = ({ onBack }) => {
       window.location.href = session.url;
     } catch (error) {
       console.error("Failed to create checkout:", error);
-      alert(error instanceof Error ? error.message : "Failed to start checkout");
+      alert(error instanceof Error ? error.message : t("failedToStartCheckout"));
     }
   };
 
   const handleCancel = async () => {
-    const confirmed = await confirm(
-      "Cancel Subscription",
-      "Are you sure you want to cancel your subscription? You will lose access to Pro features at the end of your billing period.",
-      { confirmText: "Cancel Subscription", cancelText: "Keep Subscription", variant: "danger" }
-    );
+    const confirmed = await confirm(t("cancelConfirmTitle"), t("cancelConfirmBody"), {
+      confirmText: t("cancelConfirmConfirm"),
+      cancelText: t("cancelConfirmCancel"),
+      variant: "danger",
+    });
     if (!confirmed) return;
 
     try {
       await cancelSubscription();
     } catch (error) {
       console.error("Failed to cancel subscription:", error);
-      alert(error instanceof Error ? error.message : "Failed to cancel subscription");
+      alert(error instanceof Error ? error.message : t("failedToCancel"));
     }
   };
 
@@ -79,13 +84,13 @@ export const BillingPage: React.FC<BillingPageProps> = ({ onBack }) => {
               onClick={onBack}
               className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              <span>←</span> Back
+              <span>←</span> {t("back")}
             </button>
-            <h1 className="text-5xl font-serif font-bold mb-4 text-foreground">Choose Your Plan</h1>
+            <h1 className="text-5xl font-serif font-bold mb-4 text-foreground">
+              {t("choosePlan")}
+            </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              {status?.hasSubscription
-                ? "Manage your subscription and billing information below"
-                : "Unlock unlimited access to all SolomindLM features"}
+              {status?.hasSubscription ? t("manageSubtitle") : t("unlockUnlimited")}
             </p>
           </div>
         </div>
@@ -100,14 +105,15 @@ export const BillingPage: React.FC<BillingPageProps> = ({ onBack }) => {
                   <div className="flex items-center justify-between">
                     <div>
                       <h2 className="text-2xl font-serif font-bold mb-1 text-foreground">
-                        Pro Plan
+                        {t("proPlan")}
                       </h2>
                       <p className="text-muted-foreground mb-1">
-                        {status.interval === "month" ? "Monthly" : "Yearly"} billing
+                        {status.interval === "month" ? t("monthly") : t("yearly")}
+                        {t("billing")}
                       </p>
                       {status.currentPeriodEnd && (
                         <p className="text-sm text-muted-foreground">
-                          {status.cancelAtPeriodEnd ? "Access until " : "Renews on "}
+                          {status.cancelAtPeriodEnd ? t("accessUntil") : t("renewsOn")}
                           {new Date(status.currentPeriodEnd).toLocaleDateString(undefined, {
                             dateStyle: "long",
                           })}
@@ -115,12 +121,12 @@ export const BillingPage: React.FC<BillingPageProps> = ({ onBack }) => {
                       )}
                       {status.cancelAtPeriodEnd && (
                         <p className="text-sm text-orange-500 font-medium mt-2">
-                          ⚠️ Cancels at the end of your billing period
+                          ⚠️ {t("cancelsAtEnd")}
                         </p>
                       )}
                     </div>
                     <div className="text-right">
-                      <div className="text-sm text-muted-foreground mb-2">Current Price</div>
+                      <div className="text-sm text-muted-foreground mb-2">{t("currentPrice")}</div>
                       <p className="text-3xl font-serif font-bold mb-3">
                         ${status.amount ? (status.amount / 100).toFixed(0) : 0}
                         <span className="text-lg font-normal text-muted-foreground">
@@ -139,7 +145,7 @@ export const BillingPage: React.FC<BillingPageProps> = ({ onBack }) => {
                       onClick={handleCancel}
                       className="mt-6 px-4 py-2 text-sm font-medium border border-border rounded-lg hover:bg-muted/50 disabled:opacity-50 transition-colors"
                     >
-                      Cancel Subscription
+                      {t("cancelSubscription")}
                     </button>
                   )}
                 </div>
@@ -153,16 +159,20 @@ export const BillingPage: React.FC<BillingPageProps> = ({ onBack }) => {
               {/* Free Plan */}
               <div className="bg-card border-2 border-border rounded-xl p-8 flex flex-col hover:shadow-lg transition-all duration-300">
                 <div className="mb-6">
-                  <h3 className="text-2xl font-serif font-bold mb-2 text-foreground">Free</h3>
+                  <h3 className="text-2xl font-serif font-bold mb-2 text-foreground">
+                    {t("free")}
+                  </h3>
                   <p className="text-sm text-muted-foreground">
-                    {status?.hasSubscription ? "Your previous plan" : "Get started today"}
+                    {status?.hasSubscription ? t("yourPreviousPlan") : t("getStartedToday")}
                   </p>
                 </div>
 
                 <div className="mb-6">
                   <p className="text-5xl font-serif font-bold text-foreground">
                     $0
-                    <span className="text-lg font-normal text-muted-foreground">/month</span>
+                    <span className="text-lg font-normal text-muted-foreground">
+                      {t("perMonth")}
+                    </span>
                   </p>
                 </div>
 
@@ -171,17 +181,17 @@ export const BillingPage: React.FC<BillingPageProps> = ({ onBack }) => {
                     onClick={onBack}
                     className="w-full mb-8 py-3 border-2 border-border text-foreground font-medium rounded-lg hover:bg-muted/50 transition-colors"
                   >
-                    Downgrade
+                    {t("downgrade")}
                   </button>
                 ) : (
                   <div className="w-full mb-8 py-3 bg-muted text-muted-foreground font-medium rounded-lg text-center">
-                    Current Plan
+                    {t("currentPlan")}
                   </div>
                 )}
 
                 <div className="space-y-3 flex-1">
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-4">
-                    Included:
+                    {t("included")}
                   </p>
                   {freeFeatures.map((feature) => (
                     <div key={feature} className="flex items-start gap-3">
@@ -197,25 +207,27 @@ export const BillingPage: React.FC<BillingPageProps> = ({ onBack }) => {
                 {/* Save Badge */}
                 <div className="absolute left-1/2 -translate-x-1/2 -top-4 z-10">
                   <div className="bg-primary text-primary-foreground px-4 py-1 rounded-xl text-sm font-semibold whitespace-nowrap">
-                    Save 50%
+                    {t("savePercent")}
                   </div>
                 </div>
 
                 <div className="bg-card border-2 border-primary rounded-xl p-8 flex flex-col shadow-lg hover:shadow-xl transition-all duration-300">
                   <div className="mb-6">
-                    <h3 className="text-2xl font-serif font-bold mb-2 text-foreground">Yearly</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Best value – billed once per year
-                    </p>
+                    <h3 className="text-2xl font-serif font-bold mb-2 text-foreground">
+                      {t("yearly")}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">{t("bestValue")}</p>
                   </div>
 
                   <div className="mb-6">
                     <div className="flex items-baseline gap-2">
                       <p className="text-5xl font-serif font-bold text-foreground">
                         $7.50
-                        <span className="text-lg font-normal text-muted-foreground">/month</span>
+                        <span className="text-lg font-normal text-muted-foreground">
+                          {t("perMonth")}
+                        </span>
                       </p>
-                      <p className="text-sm text-muted-foreground font-normal">($90/year)</p>
+                      <p className="text-sm text-muted-foreground font-normal">{t("perYear")}</p>
                     </div>
                   </div>
 
@@ -224,20 +236,20 @@ export const BillingPage: React.FC<BillingPageProps> = ({ onBack }) => {
                       disabled={true}
                       className="w-full mb-8 py-3 bg-muted text-muted-foreground font-medium rounded-lg cursor-default opacity-50"
                     >
-                      Current Plan
+                      {t("currentPlan")}
                     </button>
                   ) : (
                     <button
                       onClick={() => handleUpgrade("year")}
                       className="w-full mb-8 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors"
                     >
-                      Get Started
+                      {t("getStarted")}
                     </button>
                   )}
 
                   <div className="space-y-3 flex-1">
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-4">
-                      Everything included:
+                      {t("everythingIncluded")}
                     </p>
                     {proFeatures.map((feature) => (
                       <div key={feature} className="flex items-start gap-3">
@@ -252,14 +264,18 @@ export const BillingPage: React.FC<BillingPageProps> = ({ onBack }) => {
               {/* Monthly */}
               <div className="bg-card border-2 border-border rounded-xl p-8 flex flex-col hover:shadow-lg hover:border-primary/50 transition-all duration-300">
                 <div className="mb-6">
-                  <h3 className="text-2xl font-serif font-bold mb-2 text-foreground">Monthly</h3>
-                  <p className="text-sm text-muted-foreground">Billed every month</p>
+                  <h3 className="text-2xl font-serif font-bold mb-2 text-foreground">
+                    {t("monthly")}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">{t("billedEveryMonth")}</p>
                 </div>
 
                 <div className="mb-6">
                   <p className="text-5xl font-serif font-bold text-foreground">
                     $15
-                    <span className="text-lg font-normal text-muted-foreground">/month</span>
+                    <span className="text-lg font-normal text-muted-foreground">
+                      {t("perMonth")}
+                    </span>
                   </p>
                 </div>
 
@@ -268,20 +284,20 @@ export const BillingPage: React.FC<BillingPageProps> = ({ onBack }) => {
                     disabled={true}
                     className="w-full mb-8 py-3 bg-muted text-muted-foreground font-medium rounded-lg cursor-default opacity-50"
                   >
-                    Current Plan
+                    {t("currentPlan")}
                   </button>
                 ) : (
                   <button
                     onClick={() => handleUpgrade("month")}
                     className="w-full mb-8 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors"
                   >
-                    Get Started
+                    {t("getStarted")}
                   </button>
                 )}
 
                 <div className="space-y-3 flex-1">
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-4">
-                    Everything included:
+                    {t("everythingIncluded")}
                   </p>
                   {proFeatures.map((feature) => (
                     <div key={feature} className="flex items-start gap-3">

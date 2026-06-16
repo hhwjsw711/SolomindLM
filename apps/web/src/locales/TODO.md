@@ -28,7 +28,9 @@
 - [x] `ChatPanel.tsx` — toolbar tooltips, history/new chat/options buttons, dropdown menu
 - [x] `ConfigureChatModal.tsx` — instruction modes, response length, custom instructions
 - [x] `MessageBubble.tsx` — copy, retry, feedback, sources count, follow-ups
-- [ ] `AgentActivityPanel.tsx`, `ResearchPlanMessage.tsx`, `LiteratureReviewMessage.tsx`, etc.
+- [x] `AgentActivityPanel.tsx` — 搜索/查询/完成状态标记
+- [x] `ResearchPlanMessage.tsx` — 频道标签、计划状态、按钮
+- [ ] `LiteratureReviewMessage.tsx` — 步骤配置、列确认、完成/错误状态
 - [ ] Toast messages in ChatPanel
 - [x] Utility files: `messageStatus.tsx`, `exportChat.ts`, `messageRendering.tsx`
 
@@ -73,11 +75,11 @@
 
 ---
 
-## Billing
+## Billing ✅
 
-**namespace**: `billing`
+**namespace**: `billing`（`locales/{en,zh}/billing.json`）
 
-- [ ] `features/billing/BillingPage.tsx` — 计划详情（feature 列表目前未翻译）
+- [x] `BillingPage.tsx` — 全部方案标签、功能列表、按钮、确认对话框、状态提示（~38 条）
 
 ---
 
