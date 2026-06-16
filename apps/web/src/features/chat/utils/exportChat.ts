@@ -1,8 +1,6 @@
+import i18next from "@/i18n";
 import { Message } from "@/shared/types/index";
 
-/**
- * Convert chat messages to clean markdown format
- */
 function messagesToMarkdown(messages: Message[]): string {
   if (messages.length === 0) return "";
 
@@ -10,9 +8,9 @@ function messagesToMarkdown(messages: Message[]): string {
 
   for (const message of messages) {
     if (message.role === "user") {
-      markdown += `## You\n\n${(message.content ?? "").trim()}\n\n`;
+      markdown += `## ${i18next.t("chat:export.userLabel")}\n\n${(message.content ?? "").trim()}\n\n`;
     } else if (message.role === "assistant") {
-      markdown += `## Assistant\n\n${(message.content ?? "").trim()}\n\n`;
+      markdown += `## ${i18next.t("chat:export.assistantLabel")}\n\n${(message.content ?? "").trim()}\n\n`;
       markdown += `---\n\n`;
     }
   }
@@ -40,16 +38,13 @@ export function exportAsMarkdown(
   const safeTitle = notebookTitle.replace(/[\\/:*?"<>|]/g, "_").trim() || "chat";
   const filename = `chat_${safeTitle}_${new Date().toISOString().split("T")[0]}.md`;
 
-  // Build markdown content with header
   let markdown = `# Chat Export - ${notebookTitle}\n`;
   markdown += `**Date:** ${dateStr}\n`;
   markdown += `**Notebook:** ${notebookTitle}\n`;
   markdown += `\n---\n\n`;
 
-  // Add messages using the same clean formatting
   markdown += messagesToMarkdown(messages);
 
-  // Create and trigger download
   const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");

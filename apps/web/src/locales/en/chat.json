@@ -125,7 +125,9 @@
     "sourcesCount": "{{count}} source",
     "sourcesCount_plural": "{{count}} sources",
     "followUps": "Follow-ups",
-    "thinking": "Thinking"
+    "thinking": "Thinking",
+    "yourMessage": "Your message",
+    "aiResponse": "AI Response"
   },
   "configure": {
     "title": "Configure chat",
@@ -162,5 +164,24 @@
     "researchStarting": "Research is starting. Please retry in a moment.",
     "researchFailed": "Failed to start research execution",
     "literatureReviewFailed": "Failed to start literature review. Please try again."
+  },
+  "status": {
+    "searching": "Searching sources",
+    "reading": "Reading sources",
+    "planning": "Planning",
+    "thinking": "Thinking",
+    "generating": "Generating response",
+    "writing": "Writing answer",
+    "retrieving": "Retrieving passages",
+    "embedding": "Embedding query",
+    "ranking": "Ranking results",
+    "completed": "Response complete"
+  },
+  "export": {
+    "userLabel": "You",
+    "assistantLabel": "Assistant"
+  },
+  "reference": {
+    "label": "Reference {{refId}}"
   }
 }

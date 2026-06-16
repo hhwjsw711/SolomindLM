@@ -1,5 +1,6 @@
 import { Check, Copy, RotateCcw, ThumbsDown, ThumbsUp } from "lucide-react";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Favicon } from "@/shared/components/Favicon";
 import { type ChatActivityPhase, Message } from "@/shared/types/index";
 import { renderMessageWithReferences } from "../utils/messageRendering";
@@ -57,6 +58,7 @@ export const MessageBubble = React.memo<MessageBubbleProps>(
     onOpenNotebookSource,
     notebookDocumentIds,
   }) => {
+    const { t } = useTranslation("chat");
     const isUser = message.role === "user";
     const isCopied = copiedMessageId === message.id;
     const [flashedActionId, setFlashedActionId] = React.useState<string | null>(null);
@@ -109,7 +111,7 @@ export const MessageBubble = React.memo<MessageBubbleProps>(
     // Copy button (always present)
     messageActions.push({
       id: "copy",
-      label: isCopied ? "Copied" : "Copy",
+      label: isCopied ? t("message.copied") : t("message.copy"),
       icon: isCopied ? Check : Copy,
       onClick: () => onCopyMessage(message),
       className: isCopied ? "text-primary" : "",
@@ -124,7 +126,7 @@ export const MessageBubble = React.memo<MessageBubbleProps>(
     if (canRetryAssistant) {
       messageActions.splice(1, 0, {
         id: "retry",
-        label: "Retry",
+        label: t("message.retry"),
         icon: RotateCcw,
         onClick: () => onRetry(message.id),
       });
@@ -134,7 +136,7 @@ export const MessageBubble = React.memo<MessageBubbleProps>(
       messageActions.push(
         {
           id: "thumbs-up",
-          label: "Good response",
+          label: t("message.goodResponse"),
           icon: ThumbsUp,
           onClick: () => onSetFeedback(message.id, message.feedback === "up" ? null : "up"),
           className:
@@ -144,7 +146,7 @@ export const MessageBubble = React.memo<MessageBubbleProps>(
         },
         {
           id: "thumbs-down",
-          label: "Bad response",
+          label: t("message.badResponse"),
           icon: ThumbsDown,
           onClick: () => onSetFeedback(message.id, message.feedback === "down" ? null : "down"),
           className:
@@ -166,7 +168,7 @@ export const MessageBubble = React.memo<MessageBubbleProps>(
       <div
         className="flex flex-wrap items-center gap-0.5"
         role="toolbar"
-        aria-label="Message actions"
+        aria-label={t("message.actions")}
       >
         {messageActions.map(({ id, label, icon: Icon, onClick, className = "" }) => {
           const isFlash = flashedActionId === id;
@@ -203,7 +205,7 @@ export const MessageBubble = React.memo<MessageBubbleProps>(
             type="button"
             onClick={() => setIsSourcesModalOpen(true)}
             className="ml-2 sm:ml-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-left font-sans text-xs font-medium text-muted-foreground transition-[color,background-color] duration-200 ease-out hover:bg-primary/10 hover:text-foreground dark:hover:bg-primary/14 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 focus-visible:ring-offset-2 focus-visible:ring-offset-background min-h-10 md:min-h-8 md:py-1 md:px-2.5 motion-reduce:transition-none"
-            aria-label={`View ${externalSources.length} source${externalSources.length === 1 ? "" : "s"}`}
+            aria-label={t("message.viewSources", { count: externalSources.length })}
           >
             <span className="relative flex shrink-0 flex-row items-center pl-0.5" aria-hidden>
               {sourcePreviewUrls.map((url, index) => (
@@ -221,9 +223,7 @@ export const MessageBubble = React.memo<MessageBubbleProps>(
                 </span>
               ))}
             </span>
-            <span>
-              {externalSources.length} source{externalSources.length === 1 ? "" : "s"}
-            </span>
+            <span>{t("message.sourcesCount", { count: externalSources.length })}</span>
           </button>
         ) : null}
       </div>
@@ -257,7 +257,7 @@ export const MessageBubble = React.memo<MessageBubbleProps>(
       !!message.agentTrace;
 
     const ThinkingIndicator = ({ status }: { status: string }) => {
-      const label = getStatusMessage(status) ?? "Thinking";
+      const label = getStatusMessage(status) ?? t("message.thinking");
       const icon = getStatusIcon(status);
       const isSpinning = status === "generating";
       return (
@@ -318,7 +318,9 @@ export const MessageBubble = React.memo<MessageBubbleProps>(
       if (!message.followUps || message.followUps.length === 0 || !onSendFollowUp) return null;
       return (
         <div className="mt-6 w-full">
-          <p className="text-sm font-semibold text-foreground mb-2 font-sans">Follow-ups</p>
+          <p className="text-sm font-semibold text-foreground mb-2 font-sans">
+            {t("message.followUps")}
+          </p>
           <div className="flex flex-col divide-y divide-border/40">
             {message.followUps.map((q, i) => (
               <button
@@ -368,7 +370,7 @@ export const MessageBubble = React.memo<MessageBubbleProps>(
               className="p-4 rounded-xl font-serif text-lg leading-relaxed text-foreground shadow-sm bg-[color-mix(in_oklch,var(--primary)_10%,var(--background))]"
               data-quotable="message"
               data-quotable-id={message.id}
-              data-quotable-title="Your message"
+              data-quotable-title={t("message.yourMessage")}
             >
               {renderMessageWithReferences(
                 message.id,
@@ -407,7 +409,9 @@ export const MessageBubble = React.memo<MessageBubbleProps>(
                 className="w-full min-w-0 max-w-4xl font-serif text-lg leading-relaxed text-foreground"
                 data-quotable="message"
                 data-quotable-id={message.id}
-                data-quotable-title={message.role === "assistant" ? "AI Response" : "Your message"}
+                data-quotable-title={
+                  message.role === "assistant" ? t("message.aiResponse") : t("message.yourMessage")
+                }
               >
                 {renderMessageWithReferences(
                   message.id,

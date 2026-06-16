@@ -26,11 +26,11 @@
 - [x] `ConversationList.tsx` — loading/empty states, section labels, rename/delete/pin actions, confirm dialog
 - [x] `ExternalSourcesModal.tsx` — heading, select/deselect, score, add/cancel buttons, aria-labels
 - [x] `ChatPanel.tsx` — toolbar tooltips, history/new chat/options buttons, dropdown menu
-- [ ] `ConfigureChatModal.tsx` — instruction modes, response length, custom instructions
-- [ ] `MessageBubble.tsx` — copy, retry, feedback, sources count, follow-ups
+- [x] `ConfigureChatModal.tsx` — instruction modes, response length, custom instructions
+- [x] `MessageBubble.tsx` — copy, retry, feedback, sources count, follow-ups
 - [ ] `AgentActivityPanel.tsx`, `ResearchPlanMessage.tsx`, `LiteratureReviewMessage.tsx`, etc.
 - [ ] Toast messages in ChatPanel
-- [ ] Utility files: `messageStatus.tsx`, `exportChat.ts`, `messageRendering.tsx`
+- [x] Utility files: `messageStatus.tsx`, `exportChat.ts`, `messageRendering.tsx`
 
 > 核心交互已完成（ChatInput + 空状态 + 对话列表 + 外部来源 + 面板工具栏）。剩余文件为辅助消息显示和工具函数，影响范围较小。
 

@@ -9,6 +9,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import React from "react";
+import i18next from "@/i18n";
 
 export function getStatusIcon(status?: string): React.ReactNode {
   switch (status) {
@@ -40,25 +41,25 @@ export function getStatusIcon(status?: string): React.ReactNode {
 export function getStatusMessage(status?: string): string | null {
   switch (status) {
     case "searching":
-      return "Searching sources";
+      return i18next.t("chat:status.searching");
     case "reading":
-      return "Reading sources";
+      return i18next.t("chat:status.reading");
     case "planning":
-      return "Planning";
+      return i18next.t("chat:status.planning");
     case "thinking":
-      return "Thinking";
+      return i18next.t("chat:status.thinking");
     case "generating":
-      return "Generating response";
+      return i18next.t("chat:status.generating");
     case "writing":
-      return "Writing answer";
+      return i18next.t("chat:status.writing");
     case "retrieving":
-      return "Retrieving passages";
+      return i18next.t("chat:status.retrieving");
     case "embedding":
-      return "Embedding query";
+      return i18next.t("chat:status.embedding");
     case "ranking":
-      return "Ranking results";
+      return i18next.t("chat:status.ranking");
     case "completed":
-      return "Response complete";
+      return i18next.t("chat:status.completed");
     default:
       return status ? status.replace(/_/g, " ") : null;
   }

@@ -1,4 +1,5 @@
 import React, { Suspense } from "react";
+import i18next from "@/i18n";
 import { sanitizeMarkdown } from "@/shared/utils";
 import { replaceCitationMarkersOutsideMath } from "./citationMarkers";
 import { MarkdownRendererLazy } from "./MarkdownRendererLazy";
@@ -77,7 +78,7 @@ export function renderMessageWithReferences(
                       onClick={(e) => handlers.onRefClick(refId, messageId, e)}
                       onTouchStart={(e) => handlers.onRefClick(refId, messageId, e)}
                       className="inline-flex items-center justify-center w-5 h-5 rounded-xl bg-primary text-primary-foreground text-xs font-bold cursor-pointer hover:bg-primary/90 active:bg-primary/80 transition-colors mx-1 align-middle relative touch-manipulation"
-                      title={`Reference ${refId}`}
+                      title={i18next.t("chat:reference.label", { refId })}
                       style={{ verticalAlign: "middle" }}
                     >
                       {refId}

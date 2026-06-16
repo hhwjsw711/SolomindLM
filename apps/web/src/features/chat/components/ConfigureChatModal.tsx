@@ -1,5 +1,6 @@
 import { Check, GraduationCap, MessageSquare, PenLine, X } from "lucide-react";
 import React, { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { ChatSettings } from "@/shared/types";
 
 const CUSTOM_INSTRUCTIONS_MAX_LENGTH = 10000;
@@ -19,28 +20,28 @@ interface ConfigureChatModalProps {
 const INSTRUCTION_MODES = [
   {
     value: "default" as const,
-    label: "Default",
+    labelKey: "configure.modeDefault",
+    descKey: "configure.modeDefaultDesc",
     icon: MessageSquare,
-    description: "Standard assistant behavior",
   },
   {
     value: "learningGuide" as const,
-    label: "Learning Guide",
+    labelKey: "configure.modeLearningGuide",
+    descKey: "configure.modeLearningGuideDesc",
     icon: GraduationCap,
-    description: "Step-by-step teaching style",
   },
   {
     value: "custom" as const,
-    label: "Custom",
+    labelKey: "configure.modeCustom",
+    descKey: "configure.modeCustomDesc",
     icon: PenLine,
-    description: "Your own instructions",
   },
 ] as const;
 
 const RESPONSE_LENGTHS = [
-  { value: "default" as const, label: "Default" },
-  { value: "longer" as const, label: "Longer" },
-  { value: "shorter" as const, label: "Shorter" },
+  { value: "default" as const, labelKey: "configure.lengthDefault" },
+  { value: "longer" as const, labelKey: "configure.lengthLonger" },
+  { value: "shorter" as const, labelKey: "configure.lengthShorter" },
 ] as const;
 
 function normalizeSavedSettings(settings?: ChatSettings): ChatSettings {
@@ -80,6 +81,7 @@ export const ConfigureChatModal: React.FC<ConfigureChatModalProps> = ({
   saving = false,
   instructionModeLocked = false,
 }) => {
+  const { t } = useTranslation("chat");
   const [instructionMode, setInstructionMode] = useState<ChatSettings["instructionMode"]>(
     chatSettings?.instructionMode ?? "default"
   );
@@ -138,13 +140,13 @@ export const ConfigureChatModal: React.FC<ConfigureChatModalProps> = ({
         <div className="flex shrink-0 items-center justify-between border-b border-border/50 bg-card p-6">
           <div className="flex items-center gap-3">
             <MessageSquare className="h-5 w-5 shrink-0 text-primary" />
-            <h2 className="font-sans text-xl font-bold tracking-tight">Configure chat</h2>
+            <h2 className="font-sans text-xl font-bold tracking-tight">{t("configure.title")}</h2>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="rounded-xl p-2 transition-colors hover:bg-secondary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            aria-label="Close"
+            aria-label={t("sources.close")}
           >
             <X className="h-5 w-5 text-muted-foreground" />
           </button>
@@ -154,7 +156,7 @@ export const ConfigureChatModal: React.FC<ConfigureChatModalProps> = ({
           {/* Instruction mode */}
           <div className="space-y-4">
             <h3 className="font-sans text-xs font-bold uppercase tracking-widest text-muted-foreground/70">
-              Instruction mode
+              {t("configure.instructionMode")}
             </h3>
             {instructionModeLocked && showMidChatSwitchWarning && (
               <p
@@ -162,7 +164,7 @@ export const ConfigureChatModal: React.FC<ConfigureChatModalProps> = ({
                 aria-live="polite"
                 className="rounded-lg border border-border/60 bg-muted/35 px-3 py-2 font-sans text-xs text-muted-foreground"
               >
-                Start a new chat to use a different mode.
+                {t("configure.newChatWarning")}
               </p>
             )}
             <div className="flex flex-col gap-2">
@@ -203,10 +205,10 @@ export const ConfigureChatModal: React.FC<ConfigureChatModalProps> = ({
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="font-serif text-[0.9375rem] font-semibold leading-snug tracking-tight text-foreground">
-                        {mode.label}
+                        {t(mode.labelKey)}
                       </p>
                       <p className="mt-0.5 font-serif text-[13px] leading-relaxed text-muted-foreground/92">
-                        {mode.description}
+                        {t(mode.descKey)}
                       </p>
                     </div>
                     {selected && (
@@ -229,7 +231,7 @@ export const ConfigureChatModal: React.FC<ConfigureChatModalProps> = ({
           {instructionMode === "custom" && (
             <div className="space-y-4">
               <h3 className="font-sans text-xs font-bold uppercase tracking-widest text-muted-foreground/70">
-                Custom instructions
+                {t("configure.customInstructions")}
               </h3>
               <textarea
                 value={customInstructions}
@@ -237,7 +239,7 @@ export const ConfigureChatModal: React.FC<ConfigureChatModalProps> = ({
                 onChange={(e) =>
                   setCustomInstructions(e.target.value.slice(0, CUSTOM_INSTRUCTIONS_MAX_LENGTH))
                 }
-                placeholder="Tell the assistant how to behave when responding in this notebook..."
+                placeholder={t("configure.customPlaceholder")}
                 className={[
                   "h-36 w-full resize-none rounded-lg border border-border bg-background p-5 font-serif text-base leading-relaxed transition-all placeholder:text-muted-foreground/40 focus:border-primary/40 focus:outline-none focus:ring-1 focus:ring-ring",
                   instructionModeLocked ? "cursor-default opacity-90" : "",
@@ -252,7 +254,7 @@ export const ConfigureChatModal: React.FC<ConfigureChatModalProps> = ({
           {/* Response length */}
           <div className="space-y-4">
             <h3 className="font-sans text-xs font-bold uppercase tracking-widest text-muted-foreground/70">
-              Response length
+              {t("configure.responseLength")}
             </h3>
             <div className="flex w-full rounded-xl border border-border/50 bg-background p-1 shadow-inner">
               {RESPONSE_LENGTHS.map((opt) => {
@@ -269,7 +271,7 @@ export const ConfigureChatModal: React.FC<ConfigureChatModalProps> = ({
                         : "text-muted-foreground hover:text-foreground",
                     ].join(" ")}
                   >
-                    {opt.label}
+                    {t(opt.labelKey)}
                   </button>
                 );
               })}
@@ -284,7 +286,7 @@ export const ConfigureChatModal: React.FC<ConfigureChatModalProps> = ({
             onClick={onClose}
             className="rounded-xl px-4 py-2 text-sm font-bold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
           >
-            Cancel
+            {t("configure.cancel")}
           </button>
           <button
             type="button"
@@ -292,7 +294,7 @@ export const ConfigureChatModal: React.FC<ConfigureChatModalProps> = ({
             disabled={saving || !hasUnsavedChanges}
             className="rounded-xl px-6 py-2 text-sm font-bold bg-primary text-primary-foreground shadow-sm transition-all hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {saving ? "Saving…" : "Save"}
+            {saving ? t("configure.saving") : t("configure.save")}
           </button>
         </div>
       </div>

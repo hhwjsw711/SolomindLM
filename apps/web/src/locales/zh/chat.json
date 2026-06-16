@@ -125,7 +125,9 @@
     "sourcesCount": "{{count}} 个来源",
     "sourcesCount_plural": "{{count}} 个来源",
     "followUps": "追问",
-    "thinking": "思考中"
+    "thinking": "思考中",
+    "yourMessage": "你的消息",
+    "aiResponse": "AI 回复"
   },
   "configure": {
     "title": "配置聊天",
@@ -162,5 +164,24 @@
     "researchStarting": "研究正在启动，请稍后重试。",
     "researchFailed": "启动研究执行失败",
     "literatureReviewFailed": "启动文献综述失败，请重试。"
+  },
+  "status": {
+    "searching": "搜索数据源中",
+    "reading": "读取数据源中",
+    "planning": "规划中",
+    "thinking": "思考中",
+    "generating": "生成回复中",
+    "writing": "撰写回答中",
+    "retrieving": "检索段落中",
+    "embedding": "向量化查询中",
+    "ranking": "排序结果中",
+    "completed": "回复完成"
+  },
+  "export": {
+    "userLabel": "用户",
+    "assistantLabel": "助手"
+  },
+  "reference": {
+    "label": "引用 {{refId}}"
   }
 }
