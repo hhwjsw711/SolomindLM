@@ -22,6 +22,7 @@ import { CustomizeReportModal } from "@/features/studio/components/CustomizeRepo
 import { CustomizeSpreadsheetsModal } from "@/features/studio/components/CustomizeSpreadsheetsModal";
 import { CustomizeWrittenQuestionsModal } from "@/features/studio/components/CustomizeWrittenQuestionsModal";
 import { ToolGrid } from "@/features/studio/components/ToolGrid";
+import i18next from "@/i18n";
 import { STUDIO_TOOLS } from "@/shared/constants";
 import { useToast } from "@/shared/contexts/useToast";
 import { isNativeShell } from "@/utils/platformDetection";
@@ -60,7 +61,7 @@ function AuthHeroMockup() {
 
   const afterPreviewAction = useCallback(() => {
     closeStudioModal();
-    info("Sign in to generate this in your notebook.");
+    info(i18next.t("auth:page.signInPrompt"));
   }, [closeStudioModal, info]);
 
   const handleStudioToolClick = useCallback((id: string) => {
@@ -136,7 +137,7 @@ function AuthHeroMockup() {
             }`}
           >
             <MessageCircle className="h-4 w-4 shrink-0 opacity-90" aria-hidden />
-            Chat
+            <>{i18next.t("auth:page.hero.chat")}</>
           </button>
           <button
             type="button"
@@ -169,7 +170,7 @@ function AuthHeroMockup() {
                 <div className="flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background/80 px-4 backdrop-blur-sm">
                   <FileStack className="h-4 w-4 shrink-0" aria-hidden />
                   <span className="font-display text-sm font-bold uppercase tracking-wide">
-                    Sources
+                    <>{i18next.t("auth:page.hero.sources")}</>
                   </span>
                 </div>
                 <div className="flex flex-1 flex-col gap-2 overflow-y-auto p-4 sm:p-5">
@@ -203,7 +204,7 @@ function AuthHeroMockup() {
                   <div className="flex items-center gap-2 text-foreground">
                     <MessageCircle className="h-4 w-4 shrink-0" aria-hidden />
                     <span className="font-display text-sm font-bold uppercase tracking-wide">
-                      Chat
+                      <>{i18next.t("auth:page.hero.chatTab")}</>
                     </span>
                   </div>
                   <div className="flex items-center gap-2" aria-hidden>
@@ -234,7 +235,9 @@ function AuthHeroMockup() {
                         className="flex w-full items-center gap-2 rounded-lg border border-border bg-card/90 px-3 py-2.5 text-left text-sm text-muted-foreground shadow-sm transition hover:bg-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       >
                         <Search className="h-4 w-4 shrink-0 text-primary/80" aria-hidden />
-                        <span className="font-sans">Searching your sources</span>
+                        <span className="font-sans">
+                          {i18next.t("auth:page.hero.searchingSources")}
+                        </span>
                         <ChevronDown
                           className={`ml-auto h-4 w-4 shrink-0 transition ${activityOpen ? "rotate-180" : ""}`}
                           aria-hidden
@@ -349,10 +352,10 @@ function AuthHeroMockup() {
                 <div className="flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background/80 px-4 backdrop-blur-sm sm:px-5">
                   <Layers className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
                   <span className="font-display text-sm font-bold uppercase tracking-wide text-foreground">
-                    Studio
+                    <>{i18next.t("auth:page.hero.studioTab")}</>
                   </span>
                   <span className="ml-2 min-w-0 flex-1 truncate font-sans text-xs text-muted-foreground">
-                    Create study artifacts from your sources
+                    {i18next.t("auth:page.hero.studioSubtitle")}
                   </span>
                 </div>
                 <div
@@ -474,7 +477,11 @@ export function AuthPage() {
       <header className="relative z-1 flex shrink-0 items-center justify-between px-6 py-5 sm:px-10">
         {nativeShell ? (
           <div className="flex items-center gap-2.5 text-stone-900">
-            <img src="/SolomindLM_logo.png" alt="SolomindLM" className="h-8 w-8 object-contain" />
+            <img
+              src="/SolomindLM_logo.png"
+              alt={i18next.t("auth:page.logoAlt")}
+              className="h-8 w-8 object-contain"
+            />
             <span className="font-serif text-lg font-semibold tracking-tight">SolomindLM</span>
           </div>
         ) : (
@@ -482,16 +489,20 @@ export function AuthPage() {
             <Link
               to="/"
               className="flex items-center gap-2.5 text-stone-900 transition hover:opacity-80"
-              aria-label="SolomindLM home"
+              aria-label={i18next.t("auth:page.logoTooltip")}
             >
-              <img src="/SolomindLM_logo.png" alt="SolomindLM" className="h-8 w-8 object-contain" />
+              <img
+                src="/SolomindLM_logo.png"
+                alt={i18next.t("auth:page.logoAlt")}
+                className="h-8 w-8 object-contain"
+              />
               <span className="font-serif text-lg font-semibold tracking-tight">SolomindLM</span>
             </Link>
             <Link
               to="/"
               className="rounded-xl border border-stone-300/80 bg-white/60 px-4 py-2 text-base font-sans font-medium text-stone-700 shadow-sm transition hover:bg-white"
             >
-              Back to home
+              {i18next.t("auth:page.backToHome")}
             </Link>
           </>
         )}
@@ -515,12 +526,10 @@ export function AuthPage() {
                   {!nativeShell && (
                     <div className="relative z-10 px-2 text-center sm:px-0 lg:pointer-events-none">
                       <h1 className="mx-auto max-w-[18ch] font-serif text-4xl font-normal leading-tight tracking-tight text-stone-900 sm:max-w-none sm:text-5xl lg:text-[2.75rem]">
-                        Think deeper,
-                        <br />
-                        learn faster.
+                        {i18next.t("auth:page.heading")}
                       </h1>
                       <p className="mx-auto mt-3 max-w-md font-sans text-base text-stone-600 sm:mt-4 sm:text-lg">
-                        Ground your research in real sources.
+                        {i18next.t("auth:page.subtitle")}
                       </p>
                     </div>
                   )}

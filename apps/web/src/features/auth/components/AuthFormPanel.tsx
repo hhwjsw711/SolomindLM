@@ -1,6 +1,7 @@
 import { useAuthActions } from "@convex-dev/auth/react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/features/auth/useAuth";
 import { getConvexAuthUserMessage } from "@/features/auth/utils/authErrorMessage";
@@ -31,6 +32,7 @@ export function AuthFormPanel({
   initialMode = "signIn",
   className,
 }: AuthFormPanelProps) {
+  const { t } = useTranslation("auth");
   const { signInWithGoogle } = useAuth();
   const { signIn } = useAuthActions();
   const [step, setStep] = useState<AuthStep>(initialMode);
@@ -53,7 +55,7 @@ export function AuthFormPanel({
       await signInWithGoogle();
       onAuthenticated();
     } catch (err) {
-      setError(getConvexAuthUserMessage(err, "Google sign-in failed"));
+      setError(getConvexAuthUserMessage(err, t("form.googleSignInFailed")));
     } finally {
       setGoogleLoading(false);
     }
@@ -72,7 +74,7 @@ export function AuthFormPanel({
         });
       })
       .catch((err) => {
-        setError(getConvexAuthUserMessage(err, "Sign-in failed"));
+        setError(getConvexAuthUserMessage(err, t("form.signInFailed")));
       })
       .finally(() => setPasswordLoading(false));
   };
@@ -87,7 +89,7 @@ export function AuthFormPanel({
         onAuthenticated();
       })
       .catch((err) => {
-        setError(getConvexAuthUserMessage(err, "Verification failed"));
+        setError(getConvexAuthUserMessage(err, t("form.verificationFailed")));
       })
       .finally(() => setPasswordLoading(false));
   };
@@ -105,7 +107,7 @@ export function AuthFormPanel({
         });
       })
       .catch((err) => {
-        setError(getConvexAuthUserMessage(err, "Could not send reset code"));
+        setError(getConvexAuthUserMessage(err, t("form.couldNotSendCode")));
       })
       .finally(() => setPasswordLoading(false));
   };
@@ -120,17 +122,19 @@ export function AuthFormPanel({
         onAuthenticated();
       })
       .catch((err) => {
-        setError(getConvexAuthUserMessage(err, "Could not reset password"));
+        setError(getConvexAuthUserMessage(err, t("form.couldNotResetPassword")));
       })
       .finally(() => setPasswordLoading(false));
   };
 
   const modalTitle = (() => {
-    if (step === "forgot") return "Reset password";
-    if (typeof step === "object" && step.kind === "resetVerification") return "Enter reset code";
-    if (typeof step === "object" && step.kind === "emailVerification") return "Check your email";
-    if (step === "signUp") return "Create account";
-    return "Sign in";
+    if (step === "forgot") return t("form.resetPassword");
+    if (typeof step === "object" && step.kind === "resetVerification")
+      return t("form.enterResetCode");
+    if (typeof step === "object" && step.kind === "emailVerification")
+      return t("form.checkYourEmail");
+    if (step === "signUp") return t("form.createAccount");
+    return t("form.signIn");
   })();
 
   const disableAll = googleLoading || passwordLoading;
@@ -187,10 +191,10 @@ export function AuthFormPanel({
               {googleLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Connecting…
+                  <>{t("form.connecting")}</>
                 </>
               ) : (
-                "Continue with Google"
+                <>{t("form.continueWithGoogle")}</>
               )}
             </button>
 
@@ -200,7 +204,7 @@ export function AuthFormPanel({
               </div>
               <div className="relative flex justify-center">
                 <span className="bg-card px-3 font-sans text-sm font-medium tracking-wide text-muted-foreground">
-                  Or continue with email
+                  {t("form.orContinueWithEmail")}
                 </span>
               </div>
             </div>
@@ -211,7 +215,7 @@ export function AuthFormPanel({
                 type="email"
                 autoComplete="email"
                 required
-                placeholder="Enter your email"
+                placeholder={t("form.emailPlaceholder")}
                 className={inputClass}
               />
               <div className="relative">
@@ -220,14 +224,14 @@ export function AuthFormPanel({
                   type={showAuthPassword ? "text" : "password"}
                   autoComplete={step === "signUp" ? "new-password" : "current-password"}
                   required
-                  placeholder="Password"
+                  placeholder={t("form.passwordPlaceholder")}
                   className={`${inputClass} pr-11`}
                 />
                 <button
                   type="button"
                   className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-muted-foreground transition hover:bg-accent/60 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25"
                   onClick={() => setShowAuthPassword((v) => !v)}
-                  aria-label={showAuthPassword ? "Hide password" : "Show password"}
+                  aria-label={showAuthPassword ? t("form.hidePassword") : t("form.showPassword")}
                 >
                   {showAuthPassword ? (
                     <EyeOff className="h-4 w-4" aria-hidden />
@@ -241,12 +245,12 @@ export function AuthFormPanel({
                 {passwordLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Please wait…
+                    <>{t("form.pleaseWait")}</>
                   </>
                 ) : step === "signUp" ? (
-                  "Create account"
+                  <>{t("form.createAccount")}</>
                 ) : (
-                  "Continue with email"
+                  <>{t("form.continueWithEmail")}</>
                 )}
               </button>
             </form>
@@ -262,7 +266,7 @@ export function AuthFormPanel({
                       setStep("signUp");
                     }}
                   >
-                    Create an account
+                    {t("form.createAnAccount")}
                   </button>
                   <button
                     type="button"
@@ -272,7 +276,7 @@ export function AuthFormPanel({
                       setStep("forgot");
                     }}
                   >
-                    Forgot password?
+                    {t("form.forgotPassword")}
                   </button>
                 </>
               ) : (
@@ -284,7 +288,7 @@ export function AuthFormPanel({
                     setStep("signIn");
                   }}
                 >
-                  Already have an account? Sign in
+                  {t("form.alreadyHaveAccount")}
                 </button>
               )}
             </div>
@@ -294,9 +298,7 @@ export function AuthFormPanel({
         {typeof step === "object" && step.kind === "emailVerification" ? (
           <>
             <p className="text-sm leading-relaxed text-muted-foreground font-sans">
-              We sent an 8-digit code to{" "}
-              <span className="font-medium text-foreground">{step.email}</span>. Enter it below to
-              continue.
+              {t("form.codeSentMessage", { email: step.email })}
             </p>
             <form className="space-y-3" onSubmit={handleEmailVerificationSubmit}>
               <input name="email" type="hidden" value={step.email} />
@@ -307,17 +309,17 @@ export function AuthFormPanel({
                 inputMode="numeric"
                 autoComplete="one-time-code"
                 required
-                placeholder="Verification code"
+                placeholder={t("form.verificationCodePlaceholder")}
                 className={inputClass}
               />
               <button type="submit" disabled={disableAll} className={btnPrimary}>
                 {passwordLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Verifying…
+                    <>{t("form.verifying")}</>
                   </>
                 ) : (
-                  "Verify and continue"
+                  <>{t("form.verifyAndContinue")}</>
                 )}
               </button>
             </form>
@@ -329,7 +331,7 @@ export function AuthFormPanel({
                 setStep("signIn");
               }}
             >
-              Back to sign in
+              {t("form.backToSignIn")}
             </button>
           </>
         ) : null}
@@ -337,7 +339,7 @@ export function AuthFormPanel({
         {step === "forgot" ? (
           <>
             <p className="text-sm leading-relaxed text-muted-foreground font-sans">
-              Enter your email and we will send you a code to reset your password.
+              {t("form.resetInstructions")}
             </p>
             <form className="space-y-3" onSubmit={handleForgotSubmit}>
               <input
@@ -345,7 +347,7 @@ export function AuthFormPanel({
                 type="email"
                 autoComplete="email"
                 required
-                placeholder="Email"
+                placeholder={t("form.emailLabel")}
                 className={inputClass}
               />
               <input name="flow" type="hidden" value="reset" />
@@ -353,10 +355,10 @@ export function AuthFormPanel({
                 {passwordLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Sending…
+                    <>{t("form.sending")}</>
                   </>
                 ) : (
-                  "Send code"
+                  <>{t("form.sendCode")}</>
                 )}
               </button>
             </form>
@@ -368,7 +370,7 @@ export function AuthFormPanel({
                 setStep("signIn");
               }}
             >
-              Back to sign in
+              {t("form.backToSignIn")}
             </button>
           </>
         ) : null}
@@ -376,9 +378,7 @@ export function AuthFormPanel({
         {typeof step === "object" && step.kind === "resetVerification" ? (
           <>
             <p className="text-sm leading-relaxed text-muted-foreground font-sans">
-              Enter the code we sent to{" "}
-              <span className="font-medium text-foreground">{step.email}</span> and choose a new
-              password.
+              {t("form.resetCodeInstructions", { email: step.email })}
             </p>
             <form className="space-y-3" onSubmit={handleResetVerificationSubmit}>
               <input name="email" type="hidden" value={step.email} />
@@ -388,7 +388,7 @@ export function AuthFormPanel({
                 type="text"
                 inputMode="numeric"
                 required
-                placeholder="Reset code"
+                placeholder={t("form.resetCodePlaceholder")}
                 className={inputClass}
               />
               <div className="relative">
@@ -397,14 +397,16 @@ export function AuthFormPanel({
                   type={showNewPassword ? "text" : "password"}
                   autoComplete="new-password"
                   required
-                  placeholder="New password"
+                  placeholder={t("form.newPasswordPlaceholder")}
                   className={`${inputClass} pr-11`}
                 />
                 <button
                   type="button"
                   className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-muted-foreground transition hover:bg-accent/60 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25"
                   onClick={() => setShowNewPassword((v) => !v)}
-                  aria-label={showNewPassword ? "Hide new password" : "Show new password"}
+                  aria-label={
+                    showNewPassword ? t("form.hideNewPassword") : t("form.showNewPassword")
+                  }
                 >
                   {showNewPassword ? (
                     <EyeOff className="h-4 w-4" aria-hidden />
@@ -417,10 +419,10 @@ export function AuthFormPanel({
                 {passwordLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Updating…
+                    <>{t("form.updating")}</>
                   </>
                 ) : (
-                  "Update password"
+                  <>{t("form.updatePassword")}</>
                 )}
               </button>
             </form>
@@ -432,7 +434,7 @@ export function AuthFormPanel({
                 setStep("forgot");
               }}
             >
-              Resend code
+              {t("form.resendCode")}
             </button>
           </>
         ) : null}
@@ -440,19 +442,13 @@ export function AuthFormPanel({
         {step === "signIn" || step === "signUp" ? (
           <div className="border-t border-border pt-5 text-center">
             <p className="text-sm text-muted-foreground font-sans">
-              By signing in, you agree to our{" "}
-              <Link
-                to="/terms"
-                className="text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-              >
-                Terms of Service
+              {t("form.bySigningIn")}{" "}
+              <Link to="/legal/terms" className="underline underline-offset-2 hover:text-primary">
+                {t("form.termsOfService")}
               </Link>{" "}
-              and{" "}
-              <Link
-                to="/privacy"
-                className="text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-              >
-                Privacy Policy
+              {t("form.and")}{" "}
+              <Link to="/legal/privacy" className="underline underline-offset-2 hover:text-primary">
+                {t("form.privacyPolicy")}
               </Link>
               .
             </p>

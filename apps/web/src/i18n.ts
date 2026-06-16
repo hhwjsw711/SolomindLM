@@ -1,11 +1,13 @@
 import i18next from "i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import { initReactI18next } from "react-i18next";
+import authEn from "./locales/en/auth.json";
 import chatEn from "./locales/en/chat.json";
 import commonEn from "./locales/en/common.json";
 import landingEn from "./locales/en/landing.json";
 import sourcesEn from "./locales/en/sources.json";
 import studioEn from "./locales/en/studio.json";
+import authZh from "./locales/zh/auth.json";
 import chatZh from "./locales/zh/chat.json";
 import commonZh from "./locales/zh/common.json";
 import landingZh from "./locales/zh/landing.json";
@@ -21,8 +23,22 @@ export const LANG_LABELS: Record<SupportedLang, string> = {
 };
 
 const resources = {
-  en: { common: commonEn, landing: landingEn, chat: chatEn, sources: sourcesEn, studio: studioEn },
-  zh: { common: commonZh, landing: landingZh, chat: chatZh, sources: sourcesZh, studio: studioZh },
+  en: {
+    common: commonEn,
+    landing: landingEn,
+    chat: chatEn,
+    sources: sourcesEn,
+    studio: studioEn,
+    auth: authEn,
+  },
+  zh: {
+    common: commonZh,
+    landing: landingZh,
+    chat: chatZh,
+    sources: sourcesZh,
+    studio: studioZh,
+    auth: authZh,
+  },
 };
 
 export const FALLBACK_LANG: SupportedLang = "en";

@@ -64,12 +64,12 @@
 
 ---
 
-## Auth
+## Auth ✅
 
-**namespace**: `auth`
+**namespace**: `auth`（`locales/{en,zh}/auth.json`）
 
-- [ ] `features/auth/AuthFormPanel.tsx` — 表单标签、错误回退文案
-- [ ] `features/auth/components/AuthPage.tsx` — 登录页文案
+- [x] `AuthFormPanel.tsx` — 全部表单标签、按钮、占位符、错误回退、说明文字、链接（~30 条）
+- [x] `AuthPage.tsx` — 标题、副标题、导航链接、hero mockup 文案、toast（~10 条）
 
 ---
 
