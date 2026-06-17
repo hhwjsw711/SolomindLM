@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { useToast } from "@/shared/contexts/useToast";
 import type { MindMapNote, Note } from "@/shared/types/index";
 import { useCreateMindMap } from "../../services/mindMapApi";
@@ -10,16 +11,15 @@ export function useCreateMindMapFlow(ctx: CreateFlowContext) {
   const createMindMap = useCreateMindMap();
   const catchGenerationError = useStudioGenerationCatch();
   const { error: showErrorToast } = useToast();
+  const { t } = useTranslation("studio");
 
   return useCallback(async () => {
     const selectedDocumentIds = ctx.sources.filter((s) => s.selected).map((s) => s.id);
     if (selectedDocumentIds.length === 0) {
       if (ctx.confirm) {
-        await ctx.confirm(
-          "No Sources Selected",
-          "Please select at least one source to generate a mind map",
-          { variant: "warning" }
-        );
+        await ctx.confirm(t("noSourcesSelected"), t("selectSourceForMindmap"), {
+          variant: "warning",
+        });
       }
       return;
     }

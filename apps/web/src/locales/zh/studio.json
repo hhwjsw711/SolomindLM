@@ -666,5 +666,14 @@
   "mindmap": {
     "untitledNode": "未命名",
     "rootFallback": "思维导图"
-  }
+  },
+  "noSourcesSelected": "未选择来源",
+  "selectSourceForMindmap": "请至少选择一个来源来生成思维导图",
+  "selectSourceForAudio": "请至少选择一个来源来生成音频概览",
+  "selectSourceForFlashcards": "请至少选择一个来源来生成闪卡",
+  "selectSourceForQuiz": "请至少选择一个来源来生成测验",
+  "selectSourceForInfographic": "请至少选择一个来源来生成信息图",
+  "selectSourceForReport": "请至少选择一个来源来生成报告",
+  "selectSourceForWrittenQuestions": "请至少选择一个来源来生成问答题",
+  "selectSourceForSpreadsheet": "请至少选择一个来源来生成电子表格"
 }

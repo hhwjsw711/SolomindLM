@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { useToast } from "@/shared/contexts/useToast";
 import type { AudioOverviewNote, Note } from "@/shared/types/index";
 import type { AudioConfig } from "../../components/CustomizeAudioModal";
@@ -11,17 +12,16 @@ export function useCreateAudioFlow(ctx: CreateFlowContext) {
   const createAudioOverview = useCreateAudioOverview();
   const catchGenerationError = useStudioGenerationCatch();
   const { error: showErrorToast } = useToast();
+  const { t } = useTranslation("studio");
 
   return useCallback(
     async (config: AudioConfig) => {
       const selectedDocumentIds = ctx.sources.filter((s) => s.selected).map((s) => s.id);
       if (selectedDocumentIds.length === 0) {
         if (ctx.confirm) {
-          await ctx.confirm(
-            "No Sources Selected",
-            "Please select at least one source to generate an audio overview",
-            { variant: "warning" }
-          );
+          await ctx.confirm(t("noSourcesSelected"), t("selectSourceForAudio"), {
+            variant: "warning",
+          });
         }
         return;
       }

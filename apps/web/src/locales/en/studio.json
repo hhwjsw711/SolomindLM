@@ -681,5 +681,14 @@
   "mindmap": {
     "untitledNode": "Untitled",
     "rootFallback": "Mind Map"
-  }
+  },
+  "noSourcesSelected": "No Sources Selected",
+  "selectSourceForMindmap": "Please select at least one source to generate a mind map",
+  "selectSourceForAudio": "Please select at least one source to generate an audio overview",
+  "selectSourceForFlashcards": "Please select at least one source to generate flashcards",
+  "selectSourceForQuiz": "Please select at least one source to generate a quiz",
+  "selectSourceForInfographic": "Please select at least one source to generate an infographic",
+  "selectSourceForReport": "Please select at least one source to generate a report",
+  "selectSourceForWrittenQuestions": "Please select at least one source to generate written questions",
+  "selectSourceForSpreadsheet": "Please select at least one source to generate a spreadsheet"
 }

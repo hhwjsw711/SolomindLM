@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { useToast } from "@/shared/contexts/useToast";
 import type { Note, WrittenQuestionsNote } from "@/shared/types/index";
 import type { WrittenQuestionsConfig } from "../../components/CustomizeWrittenQuestionsModal";
@@ -13,17 +14,16 @@ export function useCreateWrittenQuestionsFlow(ctx: CreateFlowContext) {
   const createWrittenQuestions = useCreateWrittenQuestions();
   const catchGenerationError = useStudioGenerationCatch();
   const { error: showErrorToast } = useToast();
+  const { t } = useTranslation("studio");
 
   return useCallback(
     async (config: WrittenQuestionsConfig) => {
       const selectedDocumentIds = ctx.sources.filter((s) => s.selected).map((s) => s.id);
       if (selectedDocumentIds.length === 0) {
         if (ctx.confirm) {
-          await ctx.confirm(
-            "No Sources Selected",
-            "Please select at least one source to generate written questions",
-            { variant: "warning" }
-          );
+          await ctx.confirm(t("noSourcesSelected"), t("selectSourceForWrittenQuestions"), {
+            variant: "warning",
+          });
         }
         return;
       }

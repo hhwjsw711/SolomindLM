@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { useToast } from "@/shared/contexts/useToast";
 import type { Note } from "@/shared/types/index";
 import { getReportSubtitle } from "@/shared/types/reportTypes";
@@ -11,17 +12,16 @@ export function useCreateReportFlow(ctx: CreateFlowContext) {
   const createReport = useCreateReport();
   const catchGenerationError = useStudioGenerationCatch();
   const { error: showErrorToast } = useToast();
+  const { t } = useTranslation("studio");
 
   return useCallback(
     async (formatId: string, customPrompt?: string) => {
       const selectedDocumentIds = ctx.sources.filter((s) => s.selected).map((s) => s.id);
       if (selectedDocumentIds.length === 0) {
         if (ctx.confirm) {
-          await ctx.confirm(
-            "No Sources Selected",
-            "Please select at least one source to generate a report",
-            { variant: "warning" }
-          );
+          await ctx.confirm(t("noSourcesSelected"), t("selectSourceForReport"), {
+            variant: "warning",
+          });
         }
         return;
       }
