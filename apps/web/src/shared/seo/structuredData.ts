@@ -16,15 +16,15 @@ export const generateFAQStructuredData = (faqs: Array<{ question: string; answer
 export const generateOrganizationStructuredData = () => ({
   "@context": "https://schema.org",
   "@type": "Organization",
-  name: "SolomindLM",
+  name: "BETTER-MEMORY",
   url: SEO_BASE_URL,
   logo: SEO_DEFAULT_OG_IMAGE,
   description: SEO_DEFAULT_DESCRIPTION,
-  sameAs: ["https://github.com/solomindlm", "https://twitter.com/solomindlm"],
+  sameAs: ["https://github.com/better-memory", "https://twitter.com/better-memory"],
   contactPoint: {
     "@type": "ContactPoint",
     contactType: "customer support",
-    email: "support@solomindlm.com",
+    email: "support@better-memory.com",
   },
 });
 
@@ -32,7 +32,7 @@ export const generateOrganizationStructuredData = () => ({
 export const generateWebSiteStructuredData = () => ({
   "@context": "https://schema.org",
   "@type": "WebSite",
-  name: "SolomindLM",
+  name: "BETTER-MEMORY",
   url: SEO_BASE_URL,
   description: SEO_DEFAULT_DESCRIPTION,
 });
@@ -40,7 +40,7 @@ export const generateWebSiteStructuredData = () => ({
 export const generateSoftwareApplicationStructuredData = () => ({
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
-  name: "SolomindLM",
+  name: "BETTER-MEMORY",
   applicationCategory: "https://schema.org/ResearchTool",
   url: SEO_BASE_URL,
   description: SEO_DEFAULT_DESCRIPTION,
@@ -82,12 +82,12 @@ export const generateArticleStructuredData = ({
   dateModified,
   author: {
     "@type": "Organization",
-    name: "SolomindLM",
+    name: "BETTER-MEMORY",
     url: SEO_BASE_URL,
   },
   publisher: {
     "@type": "Organization",
-    name: "SolomindLM",
+    name: "BETTER-MEMORY",
     logo: {
       "@type": "ImageObject",
       url: SEO_DEFAULT_OG_IMAGE,

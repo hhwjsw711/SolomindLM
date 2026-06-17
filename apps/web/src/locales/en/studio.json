@@ -145,7 +145,7 @@
     "title": "Create report",
     "format": "Format",
     "describeReport": "Describe the report you want to create",
-    "reportPlaceholder": "Tell SolomindLM how to structure and write your report...",
+    "reportPlaceholder": "Tell BETTER-MEMORY how to structure and write your report...",
     "saveAsPrompt": "Save as reusable prompt",
     "generate": "Generate Report",
     "formats": {
@@ -187,7 +187,7 @@
     "title": "Create spreadsheet",
     "format": "Format",
     "describeSpreadsheet": "Describe the spreadsheet you want to create",
-    "spreadsheetPlaceholder": "Tell SolomindLM how to structure and organize your spreadsheet...",
+    "spreadsheetPlaceholder": "Tell BETTER-MEMORY how to structure and organize your spreadsheet...",
     "saveAsPrompt": "Save as reusable prompt",
     "generate": "Generate Spreadsheet",
     "formats": {

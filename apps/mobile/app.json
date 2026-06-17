@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "SolomindLM",
-    "slug": "solomindlm",
+    "name": "BETTER-MEMORY",
+    "slug": "better-memory",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "solomindlm",
+    "scheme": "better-memory",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.solomindlm.app",
+      "bundleIdentifier": "com.better-memory.app",
       "associatedDomains": ["applinks:REPLACE_WITH_YOUR_DOMAIN"]
     },
     "android": {
@@ -23,7 +23,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.solomindlm.app",
+      "package": "com.better-memory.app",
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "intentFilters": [
@@ -58,8 +58,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow SolomindLM to access your photos to upload sources.",
-          "cameraPermission": "Allow SolomindLM to use the camera for document capture."
+          "photosPermission": "Allow BETTER-MEMORY to access your photos to upload sources.",
+          "cameraPermission": "Allow BETTER-MEMORY to use the camera for document capture."
         }
       ],
       "@sentry/react-native/expo"

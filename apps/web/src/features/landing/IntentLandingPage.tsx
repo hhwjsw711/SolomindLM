@@ -77,12 +77,12 @@ function IntentHeader() {
       <div className="max-w-[1500px] mx-auto px-6 sm:px-8 lg:px-12 h-16 flex items-center justify-between">
         <Link to="/" className="inline-flex items-center gap-2.5">
           <img
-            src="/SolomindLM_logo.png"
-            alt="SolomindLM"
+            src="/BETTER-MEMORY_logo.png"
+            alt="BETTER-MEMORY"
             className="w-8 h-8 shrink-0 object-contain"
           />
           <span className="text-lg font-display font-bold text-foreground tracking-tight">
-            SolomindLM
+            BETTER-MEMORY
           </span>
         </Link>
         <Link
@@ -212,7 +212,7 @@ function IntentRelatedFeaturesSection({ page }: { page: IntentLandingPageConfig 
           </h2>
           <p className="text-muted-foreground">
             Explore other {page.cluster === "students" ? "study" : "research"} workflows in
-            SolomindLM.
+            BETTER-MEMORY.
           </p>
         </div>
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

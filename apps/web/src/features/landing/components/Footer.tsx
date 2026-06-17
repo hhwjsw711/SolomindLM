@@ -91,12 +91,12 @@ export const Footer: React.FC = () => {
           <div className="sm:col-span-2 lg:col-span-3">
             <Link to="/" className="inline-flex items-center gap-2.5 mb-5">
               <img
-                src="/SolomindLM_logo.png"
-                alt="SolomindLM"
+                src="/BETTER-MEMORY_logo.png"
+                alt="BETTER-MEMORY"
                 className="w-8 h-8 shrink-0 object-contain"
               />
               <span className="text-xl font-display font-bold text-foreground tracking-tight">
-                SolomindLM
+                BETTER-MEMORY
               </span>
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed max-w-sm mb-6">
@@ -104,7 +104,7 @@ export const Footer: React.FC = () => {
             </p>
             <div className="flex items-center gap-4">
               <a
-                href="https://discord.gg/solomindlm"
+                href="https://discord.gg/better-memory"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Discord"
@@ -113,7 +113,7 @@ export const Footer: React.FC = () => {
                 <DiscordIcon className="w-5 h-5" />
               </a>
               <a
-                href="https://twitter.com/solomindlm"
+                href="https://twitter.com/better-memory"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="X"
@@ -122,7 +122,7 @@ export const Footer: React.FC = () => {
                 <XIcon className="w-5 h-5" />
               </a>
               <a
-                href="https://www.linkedin.com/company/solomindlm/"
+                href="https://www.linkedin.com/company/better-memory/"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="LinkedIn"

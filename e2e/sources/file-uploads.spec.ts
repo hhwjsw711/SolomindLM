@@ -52,7 +52,7 @@ test.describe("File Uploads", () => {
     const page = notebookPage;
     const fileName = `e2e-test-${Date.now()}.txt`;
     const displayTitle = getDisplayTitle(fileName);
-    const fileContent = `E2E Test Content ${Date.now()}: This is a test file for SolomindLM file upload functionality.`;
+    const fileContent = `E2E Test Content ${Date.now()}: This is a test file for BETTER-MEMORY file upload functionality.`;
     const filePath = createTempFile(fileName, fileContent);
     tempFiles.push(filePath);
 

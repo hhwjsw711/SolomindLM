@@ -32,9 +32,9 @@ export function FaqPage() {
     <>
       <SEOMeta
         pagePath="/faq"
-        title="FAQ | SolomindLM"
-        description="Answers about SolomindLM study tools, research workflows, pricing, privacy, and how to get started with notebooks and sources."
-        keywords="SolomindLM FAQ, study tools help, research assistant questions, pricing limits, AI learning"
+        title="FAQ | BETTER-MEMORY"
+        description="Answers about BETTER-MEMORY study tools, research workflows, pricing, privacy, and how to get started with notebooks and sources."
+        keywords="BETTER-MEMORY FAQ, study tools help, research assistant questions, pricing limits, AI learning"
       />
       <div className="min-h-screen landing-grid-pattern">
         <FaqHeader />
@@ -113,12 +113,12 @@ function FaqHeader() {
       <div className="max-w-[1500px] mx-auto px-6 sm:px-8 lg:px-12 h-16 flex items-center justify-between">
         <Link to="/" className="inline-flex items-center gap-2.5">
           <img
-            src="/SolomindLM_logo.png"
-            alt="SolomindLM"
+            src="/BETTER-MEMORY_logo.png"
+            alt="BETTER-MEMORY"
             className="w-8 h-8 shrink-0 object-contain"
           />
           <span className="text-lg font-display font-bold text-foreground tracking-tight">
-            SolomindLM
+            BETTER-MEMORY
           </span>
         </Link>
         <Link

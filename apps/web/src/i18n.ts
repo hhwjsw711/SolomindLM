@@ -67,7 +67,7 @@ void i18next
     detection: {
       order: ["localStorage", "navigator"],
       caches: ["localStorage"],
-      lookupLocalStorage: "solomindlm_lang",
+      lookupLocalStorage: "better-memory_lang",
     },
     returnNull: false,
     returnEmptyString: false,

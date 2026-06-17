@@ -14,7 +14,7 @@ We release patches for security vulnerabilities in the following versions:
 If you discover a security vulnerability, please report it responsibly:
 
 1. **Do not** open a public issue
-2. Email us at support@solomindlm.com with:
+2. Email us at support@better-memory.com with:
    - Description of the vulnerability
    - Steps to reproduce
    - Potential impact
@@ -67,4 +67,4 @@ We will:
 Subscribe to security updates:
 
 - Watch this repository on GitHub
-- Join our security mailing list: security@solomindlm.com
+- Join our security mailing list: security@better-memory.com

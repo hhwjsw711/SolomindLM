@@ -1,4 +1,4 @@
-# SolomindLM
+# BETTER-MEMORY
 
 > AI-powered research platform for multi-source content ingestion, RAG-based chat, and automated content generation.
 
@@ -30,9 +30,9 @@
 
 ## Overview
 
-SolomindLM is an open-source AI research platform that helps you ingest content from multiple sources, chat with your documents using RAG (Retrieval-Augmented Generation), and automatically generate structured content like reports, flashcards, quizzes, and more.
+BETTER-MEMORY is an open-source AI research platform that helps you ingest content from multiple sources, chat with your documents using RAG (Retrieval-Augmented Generation), and automatically generate structured content like reports, flashcards, quizzes, and more.
 
-### Why SolomindLM?
+### Why BETTER-MEMORY?
 
 - **All-in-one research workspace** — Collect sources, chat with them, and generate content in one place
 - **Multi-source ingestion** — PDFs, images, audio, web pages, YouTube videos, social media posts
@@ -183,8 +183,8 @@ Before you begin, ensure you have:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/samintisar/SolomindLM.git
-cd SolomindLM
+git clone https://github.com/samintisar/BETTER-MEMORY.git
+cd BETTER-MEMORY
 ```
 
 ### 2. Install Dependencies
@@ -379,7 +379,7 @@ EXPO_PUBLIC_WEB_URL=https://your-web-app.com
 ### Project Structure
 
 ```
-SolomindLM/
+BETTER-MEMORY/
 ├── apps/
 │   ├── web/                    # React frontend
 │   │   ├── src/
@@ -662,7 +662,7 @@ bun x convex dev
 - 📖 [Convex Documentation](https://docs.convex.dev)
 - 📖 [React Documentation](https://react.dev)
 - 📖 [LangChain Documentation](https://js.langchain.com)
-- 🐛 [Open an Issue](https://github.com/samintisar/SolomindLM/issues)
+- 🐛 [Open an Issue](https://github.com/samintisar/BETTER-MEMORY/issues)
 
 ---
 
@@ -679,7 +679,7 @@ This project is licensed under the **GNU Affero General Public License v3.0 (AGP
 
 **Commercial License Available:**
 
-If you want to use SolomindLM in a proprietary SaaS product without open-sourcing your code, a commercial license is available. See [COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md) for details.
+If you want to use BETTER-MEMORY in a proprietary SaaS product without open-sourcing your code, a commercial license is available. See [COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md) for details.
 
 ### Open Source vs Commercial Use
 
@@ -706,4 +706,4 @@ Contact: [samintisardev@gmail.com](mailto:samintisardev@gmail.com) for commercia
 
 ---
 
-<p align="center">Made with ❤️ by the SolomindLM team</p>
+<p align="center">Made with ❤️ by the BETTER-MEMORY team</p>

@@ -48,7 +48,7 @@ export const INTENT_LANDING_PAGES: IntentLandingPageConfig[] = [
     path: "/students/upload-sources",
     cluster: "students",
     intentKey: "sourceUpload",
-    title: "Upload Study Sources | SolomindLM",
+    title: "Upload Study Sources | BETTER-MEMORY",
     description:
       "Add PDFs, Word docs, slides, images, audio, video transcripts, Google Drive files, or pasted text to your notebook. Build one place for all your course materials.",
     keywords:
@@ -94,7 +94,7 @@ export const INTENT_LANDING_PAGES: IntentLandingPageConfig[] = [
     path: "/students/discover-sources",
     cluster: "students",
     intentKey: "sourceDiscovery",
-    title: "Discover Web Sources for Study | SolomindLM",
+    title: "Discover Web Sources for Study | BETTER-MEMORY",
     description:
       "Find web and news articles to add to your notebook. Search general web or finance-focused channels and import up to 20 results per search.",
     keywords: "discover sources, web search, news articles, study research, finance news",
@@ -139,7 +139,7 @@ export const INTENT_LANDING_PAGES: IntentLandingPageConfig[] = [
     path: "/students/share-notebooks",
     cluster: "students",
     intentKey: "notebookSharing",
-    title: "Share Notebooks with Classmates | SolomindLM",
+    title: "Share Notebooks with Classmates | BETTER-MEMORY",
     description:
       "Share notebooks with coworkers via view links or let others fork a copy. Revoke access when you no longer want to share.",
     keywords: "share notebook, study group, fork notebook, collaborate, revoke link",
@@ -183,7 +183,7 @@ export const INTENT_LANDING_PAGES: IntentLandingPageConfig[] = [
     path: "/students/ai-flashcards",
     cluster: "students",
     intentKey: "flashcards",
-    title: "AI Flashcards from PDF — Free Generator | SolomindLM",
+    title: "AI Flashcards from PDF — Free Generator | BETTER-MEMORY",
     description:
       "Make AI flashcards from PDF online free: upload a reading, generate a draft deck grounded in your source, edit cards, and study in your notebook.",
     keywords:
@@ -207,12 +207,12 @@ export const INTENT_LANDING_PAGES: IntentLandingPageConfig[] = [
       {
         question: "Can I make AI flashcards from a PDF for free?",
         answer:
-          "Yes. SolomindLM offers a free tier so you can upload a PDF, generate a draft flashcard deck, and study online. Paid plans raise notebook and generation limits.",
+          "Yes. BETTER-MEMORY offers a free tier so you can upload a PDF, generate a draft flashcard deck, and study online. Paid plans raise notebook and generation limits.",
       },
       {
         question: "How do I generate flashcards from a PDF online?",
         answer:
-          "Create a notebook, upload your PDF, select the source, and run the Flashcards tool. SolomindLM drafts cards from your document so you can edit them before studying.",
+          "Create a notebook, upload your PDF, select the source, and run the Flashcards tool. BETTER-MEMORY drafts cards from your document so you can edit them before studying.",
       },
       {
         question: "Can I edit cards after generation?",
@@ -227,7 +227,7 @@ export const INTENT_LANDING_PAGES: IntentLandingPageConfig[] = [
       {
         question: "How is this different from other AI flashcard generators?",
         answer:
-          "SolomindLM keeps flashcards inside a notebook with quizzes, mind maps, audio overviews, and chat on the same PDFs—so you do not need a separate tool for each study format.",
+          "BETTER-MEMORY keeps flashcards inside a notebook with quizzes, mind maps, audio overviews, and chat on the same PDFs—so you do not need a separate tool for each study format.",
       },
     ],
     ctaLabel: "Create free account",
@@ -239,7 +239,7 @@ export const INTENT_LANDING_PAGES: IntentLandingPageConfig[] = [
     path: "/students/ai-quizzes",
     cluster: "students",
     intentKey: "quiz",
-    title: "AI Multiple-Choice Quizzes | SolomindLM",
+    title: "AI Multiple-Choice Quizzes | BETTER-MEMORY",
     description:
       "Create multiple-choice quizzes from your sources. Set question count, difficulty, and focus areas. Separate from the Written Questions tool for short and essay answers.",
     keywords: "AI quiz, multiple choice, practice test, exam prep, study quiz",
@@ -289,7 +289,7 @@ export const INTENT_LANDING_PAGES: IntentLandingPageConfig[] = [
     path: "/students/ai-audio-overview",
     cluster: "students",
     intentKey: "audio",
-    title: "AI Audio Overviews for Studying | SolomindLM",
+    title: "AI Audio Overviews for Studying | BETTER-MEMORY",
     description:
       "Listen to AI-narrated overviews of your sources. Choose format—deep dive, brief, critique, or debate—plus length and focus.",
     keywords: "audio study, podcast summary, listen to notes, AI narration, deep dive",
@@ -333,7 +333,7 @@ export const INTENT_LANDING_PAGES: IntentLandingPageConfig[] = [
     path: "/students/ai-mind-maps",
     cluster: "students",
     intentKey: "mindmap",
-    title: "AI Mind Maps from Sources | SolomindLM",
+    title: "AI Mind Maps from Sources | BETTER-MEMORY",
     description:
       "Build visual mind maps from your uploaded sources. See how concepts connect across readings and lectures.",
     keywords: "mind map, concept map, visual study, AI mind map, study diagram",
@@ -376,7 +376,7 @@ export const INTENT_LANDING_PAGES: IntentLandingPageConfig[] = [
     path: "/students/ai-reports",
     cluster: "students",
     intentKey: "reports",
-    title: "AI Reports and Study Guides | SolomindLM",
+    title: "AI Reports and Study Guides | BETTER-MEMORY",
     description:
       "Generate reports from your sources: study guide, summary, briefing, concept explainer, or custom. Grounded in the materials you select.",
     keywords: "study guide, AI summary, briefing, concept explainer, report generator",
@@ -421,7 +421,7 @@ export const INTENT_LANDING_PAGES: IntentLandingPageConfig[] = [
     path: "/students/ai-infographics",
     cluster: "students",
     intentKey: "infographic",
-    title: "AI Infographics from Study Sources | SolomindLM",
+    title: "AI Infographics from Study Sources | BETTER-MEMORY",
     description:
       "Create infographic images from your sources. Choose style, orientation, and detail level for visual study aids.",
     keywords: "infographic, visual summary, study poster, AI image, learning visual",
@@ -465,7 +465,7 @@ export const INTENT_LANDING_PAGES: IntentLandingPageConfig[] = [
     path: "/students/ai-written-questions",
     cluster: "students",
     intentKey: "writtenQuestions",
-    title: "Written Questions with AI Feedback | SolomindLM",
+    title: "Written Questions with AI Feedback | BETTER-MEMORY",
     description:
       "Practice short-answer and essay questions from your sources. Submit responses for feedback—separate from multiple-choice Quizzes.",
     keywords: "essay practice, short answer, written response, study feedback, exam practice",
@@ -510,7 +510,7 @@ export const INTENT_LANDING_PAGES: IntentLandingPageConfig[] = [
     path: "/students/ai-spreadsheets",
     cluster: "students",
     intentKey: "spreadsheets",
-    title: "AI Spreadsheets from Sources | SolomindLM",
+    title: "AI Spreadsheets from Sources | BETTER-MEMORY",
     description:
       "Extract structured data from your sources into spreadsheets. Modes include data extraction, comparison, timeline, financial, and custom layouts.",
     keywords: "spreadsheet, data extraction, comparison table, timeline, study data",
@@ -554,7 +554,7 @@ export const INTENT_LANDING_PAGES: IntentLandingPageConfig[] = [
     path: "/research/academic-paper-discovery",
     cluster: "research",
     intentKey: "academicDiscovery",
-    title: "Academic Paper Discovery | SolomindLM",
+    title: "Academic Paper Discovery | BETTER-MEMORY",
     description:
       "Search academic literature with filters for year, citations, open access, and field. Import paper records with deduplication by DOI and OpenAlex.",
     keywords: "paper discovery, academic search, OpenAlex, DOI, literature search",
@@ -598,7 +598,7 @@ export const INTENT_LANDING_PAGES: IntentLandingPageConfig[] = [
     path: "/research/import-papers",
     cluster: "research",
     intentKey: "paperImport",
-    title: "Import Research Papers | SolomindLM",
+    title: "Import Research Papers | BETTER-MEMORY",
     description:
       "Import papers by DOI, BibTeX, RIS, Zotero, Mendeley, or manual entry. Build your reading list inside a research notebook.",
     keywords: "import papers, DOI, BibTeX, RIS, Zotero, Mendeley, reference manager",
@@ -641,7 +641,7 @@ export const INTENT_LANDING_PAGES: IntentLandingPageConfig[] = [
     path: "/research/citation-styles",
     cluster: "research",
     intentKey: "citationStyles",
-    title: "Citation Styles for Research | SolomindLM",
+    title: "Citation Styles for Research | BETTER-MEMORY",
     description:
       "Format citations in 12 styles including APA, MLA, Chicago, AMA, ACS, IEEE, Vancouver, and Harvard. Use in literature reviews, reports, and the Cite Paper modal.",
     keywords: "citation styles, APA, MLA, Chicago, IEEE, Vancouver, Harvard, cite paper",
@@ -686,7 +686,7 @@ export const INTENT_LANDING_PAGES: IntentLandingPageConfig[] = [
     path: "/research/ai-literature-review",
     cluster: "research",
     intentKey: "literatureReview",
-    title: "AI Literature Review Tool — Generator Free | SolomindLM",
+    title: "AI Literature Review Tool — Generator Free | BETTER-MEMORY",
     description:
       "Free AI literature review tool: import papers, screen and rank your reading list, and generate synthesis drafts across your sources. A research aid—not a systematic review replacement.",
     keywords:
@@ -711,7 +711,7 @@ export const INTENT_LANDING_PAGES: IntentLandingPageConfig[] = [
       {
         question: "Is there a free AI literature review tool?",
         answer:
-          "Yes. SolomindLM offers a free tier so you can import papers and run literature review mode on your reading list. Paid plans raise notebook and generation limits.",
+          "Yes. BETTER-MEMORY offers a free tier so you can import papers and run literature review mode on your reading list. Paid plans raise notebook and generation limits.",
       },
       {
         question: "How does the AI literature review generator work?",
@@ -743,7 +743,7 @@ export const INTENT_LANDING_PAGES: IntentLandingPageConfig[] = [
     path: "/research/chat-with-papers",
     cluster: "research",
     intentKey: "chat",
-    title: "Chat with Your Papers | SolomindLM",
+    title: "Chat with Your Papers | BETTER-MEMORY",
     description:
       "Ask questions across notebook sources and get answers that reference your materials. Grounded chat for research reading—not a guarantee of completeness.",
     keywords: "chat with PDF, research chat, grounded answers, paper Q&A, notebook chat",
@@ -787,7 +787,7 @@ export const INTENT_LANDING_PAGES: IntentLandingPageConfig[] = [
     path: "/research/deep-research",
     cluster: "research",
     intentKey: "deepResearch",
-    title: "Deep Research Reports | SolomindLM",
+    title: "Deep Research Reports | BETTER-MEMORY",
     description:
       "Run multi-step research that combines web search with your notebook sources and produces a report draft for you to refine.",
     keywords: "deep research, research report, web search, multi-step research, draft report",

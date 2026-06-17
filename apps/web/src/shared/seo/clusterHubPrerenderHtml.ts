@@ -80,7 +80,7 @@ ${faqItems}
         <p>${escapeHtml(page.ctaLabel)}</p>
       </section>
       <footer>
-        <p><a href="/">SolomindLM home</a></p>
+        <p><a href="/">BETTER-MEMORY home</a></p>
       </footer>
     </article>`;
 }

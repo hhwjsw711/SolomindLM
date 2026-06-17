@@ -44,19 +44,19 @@ describe("generateBreadcrumbStructuredData", () => {
         "@type": "ListItem",
         position: 1,
         name: "Home",
-        item: "https://www.solomindlm.com",
+        item: "https://www.better-memory.com",
       },
       {
         "@type": "ListItem",
         position: 2,
         name: "Students",
-        item: "https://www.solomindlm.com/students",
+        item: "https://www.better-memory.com/students",
       },
       {
         "@type": "ListItem",
         position: 3,
         name: "Flashcards",
-        item: "https://www.solomindlm.com/students/ai-flashcards",
+        item: "https://www.better-memory.com/students/ai-flashcards",
       },
     ]);
   });
@@ -77,7 +77,7 @@ describe("generateArticleStructuredData", () => {
     });
 
     expect(data["@type"]).toBe("TechArticle");
-    expect(data.url).toBe("https://www.solomindlm.com/guides/how-to-study-from-pdfs-with-ai");
+    expect(data.url).toBe("https://www.better-memory.com/guides/how-to-study-from-pdfs-with-ai");
     expect(data.headline).toBe(page!.h1);
   });
 
@@ -90,7 +90,7 @@ describe("generateArticleStructuredData", () => {
     expect(data.itemListElement).toHaveLength(3);
     expect(data.itemListElement[1]).toMatchObject({
       name: "Guides",
-      item: "https://www.solomindlm.com/guides/how-to-study-from-pdfs-with-ai",
+      item: "https://www.better-memory.com/guides/how-to-study-from-pdfs-with-ai",
     });
   });
 });

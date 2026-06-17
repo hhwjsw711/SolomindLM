@@ -41,7 +41,7 @@ describe("applySeoToHtml", () => {
 
     const html = applySeoToHtml(MINIMAL_HTML, SEO_BASE_URL, seoPageToHeadInput(page!));
 
-    expect(html).toContain("<title>Privacy Policy - SolomindLM</title>");
+    expect(html).toContain("<title>Privacy Policy - BETTER-MEMORY</title>");
     expect(html).toContain(`rel="canonical" href="${SEO_BASE_URL}/privacy"`);
     expect(html).toContain('name="robots" content="index, follow"');
   });
@@ -157,7 +157,7 @@ describe("injectPrerenderBody", () => {
   });
 
   it("injects SEO content page with comparison table for crawlers", () => {
-    const seoPage = getSeoContentPageByPath("/compare/solomindlm-vs-notebooklm");
+    const seoPage = getSeoContentPageByPath("/compare/better-memory-vs-notebooklm");
     expect(seoPage).toBeDefined();
 
     const bodyHtml = buildSeoContentPrerenderBody(seoPage!);
@@ -180,7 +180,7 @@ describe("injectPrerenderBody", () => {
     expect(html).toContain(`<h1>${hubPage!.h1}</h1>`);
     expect(html).toContain('href="/students/ai-flashcards"');
     expect(html).toContain('href="/guides/how-to-study-from-pdfs-with-ai"');
-    expect(html).toContain('href="/compare/solomindlm-vs-notebooklm"');
+    expect(html).toContain('href="/compare/better-memory-vs-notebooklm"');
     expect(html).toContain(hubPage!.faqs[0]!.answer);
   });
 });

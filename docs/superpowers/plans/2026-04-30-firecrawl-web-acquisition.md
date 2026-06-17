@@ -421,7 +421,7 @@ async function searchArxiv(
 
   try {
     const response = await fetch(url, {
-      headers: { "User-Agent": "SolomindLM/1.0 (mailto:support@solomindlm.com)" },
+      headers: { "User-Agent": "BETTER-MEMORY/1.0 (mailto:support@better-memory.com)" },
     });
     if (!response.ok) {
       throw createExternalServiceErrorFromResponse(
@@ -494,7 +494,7 @@ async function searchSemanticScholar(
 ): Promise<AcademicPaper[]> {
   const apiKey = env.SEMANTIC_SCHOLAR_API_KEY;
   const headers: Record<string, string> = {
-    "User-Agent": "SolomindLM/1.0 (mailto:support@solomindlm.com)",
+    "User-Agent": "BETTER-MEMORY/1.0 (mailto:support@better-memory.com)",
   };
   if (apiKey) headers["x-api-key"] = apiKey;
 

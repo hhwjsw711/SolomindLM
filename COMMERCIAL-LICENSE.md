@@ -1,8 +1,8 @@
-# Commercial License for SolomindLM
+# Commercial License for BETTER-MEMORY
 
 ## Overview
 
-SolomindLM is dual-licensed: under the **GNU Affero General Public License v3.0 (AGPL-3.0)** for open-source/compliant use, and under a **Commercial License** for proprietary or SaaS use.
+BETTER-MEMORY is dual-licensed: under the **GNU Affero General Public License v3.0 (AGPL-3.0)** for open-source/compliant use, and under a **Commercial License** for proprietary or SaaS use.
 
 Under AGPL-3.0, you may:
 
@@ -13,8 +13,8 @@ Under AGPL-3.0, you may:
 
 **However**, AGPL-3.0 places conditions on certain types of use:
 
-- **Network use:** If you modify SolomindLM and make it accessible to users over a network (e.g., as a SaaS product), you must offer those users the Corresponding Source of the modified version under AGPL-3.0.
-- **Distribution:** If you distribute SolomindLM (or a modified version) to third parties, you must make the Corresponding Source available under AGPL-3.0.
+- **Network use:** If you modify BETTER-MEMORY and make it accessible to users over a network (e.g., as a SaaS product), you must offer those users the Corresponding Source of the modified version under AGPL-3.0.
+- **Distribution:** If you distribute BETTER-MEMORY (or a modified version) to third parties, you must make the Corresponding Source available under AGPL-3.0.
 
 If you cannot comply with these conditions, you need a commercial license.
 
@@ -22,16 +22,16 @@ If you cannot comply with these conditions, you need a commercial license.
 
 You need a commercial license if you want to:
 
-- **Build a proprietary SaaS product** using SolomindLM without disclosing your source code to users
-- **Distribute SolomindLM** as part of a proprietary product without providing Corresponding Source
-- **Create a derivative or integrated product** based on SolomindLM and host or distribute it without meeting AGPL-3.0 obligations
-- **White-label or resell** SolomindLM without open-sourcing your modifications
+- **Build a proprietary SaaS product** using BETTER-MEMORY without disclosing your source code to users
+- **Distribute BETTER-MEMORY** as part of a proprietary product without providing Corresponding Source
+- **Create a derivative or integrated product** based on BETTER-MEMORY and host or distribute it without meeting AGPL-3.0 obligations
+- **White-label or resell** BETTER-MEMORY without open-sourcing your modifications
 
 You **do NOT** need a commercial license if you:
 
-- Use SolomindLM for personal use
-- Use SolomindLM internally within your organization without exposing it to external users
-- Self-host SolomindLM for your own use
+- Use BETTER-MEMORY for personal use
+- Use BETTER-MEMORY internally within your organization without exposing it to external users
+- Self-host BETTER-MEMORY for your own use
 - Build and distribute open-source projects that comply with AGPL-3.0
 - Contribute to the open-source project
 
@@ -53,7 +53,7 @@ Commercial licenses are available on a per-project or per-organization basis.
 Contact us for pricing details:
 
 **Email:** [samintisardev@gmail.com](mailto:samintisardev@gmail.com)  
-**Subject:** SolomindLM Commercial License Inquiry
+**Subject:** BETTER-MEMORY Commercial License Inquiry
 
 Please include:
 
@@ -66,17 +66,17 @@ We offer special pricing for early-stage startups and non-profits.
 
 ## Frequently Asked Questions
 
-### Can I self-host SolomindLM without a commercial license?
+### Can I self-host BETTER-MEMORY without a commercial license?
 
 **Yes.** Self-hosting for personal or internal business use (where no external users access the service) is fully permitted under AGPL-3.0.
 
-### Can I modify SolomindLM for my own use?
+### Can I modify BETTER-MEMORY for my own use?
 
 **Yes.** Personal modifications are permitted under AGPL-3.0. The obligation to share your modifications applies only when you distribute the software or make it accessible to external users over a network.
 
 ### Can I sell self-hosted instances to clients?
 
-Installing and configuring SolomindLM on a client's own infrastructure constitutes distribution, which triggers AGPL-3.0's Corresponding Source obligations — your client must receive the Corresponding Source under AGPL-3.0. If you want to deploy a modified or proprietary version for clients without these obligations, a commercial license is required. Contact us to discuss your use case.
+Installing and configuring BETTER-MEMORY on a client's own infrastructure constitutes distribution, which triggers AGPL-3.0's Corresponding Source obligations — your client must receive the Corresponding Source under AGPL-3.0. If you want to deploy a modified or proprietary version for clients without these obligations, a commercial license is required. Contact us to discuss your use case.
 
 ### Can I contribute to the open-source project?
 

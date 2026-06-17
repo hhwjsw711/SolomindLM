@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "solomindlm-monorepo",
+      "name": "better-memory-monorepo",
       "dependencies": {
         "@auth/core": "0.37.2",
         "@breezystack/lamejs": "^1.2.7",
@@ -46,7 +46,7 @@
       },
     },
     "apps/mobile": {
-      "name": "@solomindlm/mobile",
+      "name": "@better-memory/mobile",
       "version": "1.0.0",
       "dependencies": {
         "@convex-dev/auth": "0.0.90",
@@ -85,7 +85,7 @@
       },
     },
     "apps/web": {
-      "name": "@solomindlm/web",
+      "name": "@better-memory/web",
       "version": "0.0.0",
       "dependencies": {
         "@auth/core": "0.37.2",
@@ -815,9 +815,9 @@
 
     "@sinonjs/fake-timers": ["@sinonjs/fake-timers@10.3.0", "", { "dependencies": { "@sinonjs/commons": "^3.0.0" } }, "sha512-V4BG07kuYSUkTCSBHG8G8TNhM+F19jXFWnQtzj+we8DrkpSBCee9Z3Ms8yiGer/dlmhe35/Xdgyo3/0rQKg7YA=="],
 
-    "@solomindlm/mobile": ["@solomindlm/mobile@workspace:apps/mobile"],
+    "@better-memory/mobile": ["@better-memory/mobile@workspace:apps/mobile"],
 
-    "@solomindlm/web": ["@solomindlm/web@workspace:apps/web"],
+    "@better-memory/web": ["@better-memory/web@workspace:apps/web"],
 
     "@standard-schema/spec": ["@standard-schema/spec@1.1.0", "", {}, "sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w=="],
 

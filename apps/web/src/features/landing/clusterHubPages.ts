@@ -39,14 +39,14 @@ export const CLUSTER_HUB_PAGES: ClusterHubPageConfig[] = [
   {
     path: "/students",
     cluster: "students",
-    title: "AI Study Tools for Students — Free | SolomindLM",
+    title: "AI Study Tools for Students — Free | BETTER-MEMORY",
     description:
       "AI study tools for college students: upload PDFs and lectures, then generate flashcards, quizzes, mind maps, audio overviews, and reports grounded in your course materials.",
     keywords:
       "ai study tools for students, ai study tools for college students, ai for studying, student study tools, AI flashcards, quiz generator",
     h1: "AI study tools built around your course materials",
     subheadline:
-      "SolomindLM is a free AI study tool for students—bring lectures, PDFs, and media into one notebook, then turn them into flashcards, quizzes, reports, and other outputs you can review and edit.",
+      "BETTER-MEMORY is a free AI study tool for students—bring lectures, PDFs, and media into one notebook, then turn them into flashcards, quizzes, reports, and other outputs you can review and edit.",
     summaryBullets: [
       "Upload PDFs, slides, audio, video transcripts, Google Drive files, or pasted text",
       "Discover web and news articles to add alongside your uploads",
@@ -90,15 +90,15 @@ export const CLUSTER_HUB_PAGES: ClusterHubPageConfig[] = [
           "Step-by-step workflow for turning readings and lecture slides into flashcards, quizzes, mind maps, and study guides.",
       },
       {
-        path: "/compare/solomindlm-vs-notebooklm",
-        label: "SolomindLM vs NotebookLM",
+        path: "/compare/better-memory-vs-notebooklm",
+        label: "BETTER-MEMORY vs NotebookLM",
         description:
           "Fair comparison of source-grounded study tools—outputs, pricing, and which workflow fits your classes.",
       },
     ],
     faqs: [
       {
-        question: "What study tools does SolomindLM offer?",
+        question: "What study tools does BETTER-MEMORY offer?",
         answer:
           "You can upload and discover sources, then generate flashcards, multiple-choice quizzes, written questions with feedback, mind maps, audio overviews, reports and study guides, infographics, and spreadsheets—all from materials in your notebook.",
       },
@@ -127,7 +127,7 @@ export const CLUSTER_HUB_PAGES: ClusterHubPageConfig[] = [
   {
     path: "/research",
     cluster: "research",
-    title: "AI Research & Literature Review Tools | SolomindLM",
+    title: "AI Research & Literature Review Tools | BETTER-MEMORY",
     description:
       "AI tools for literature review and research: discover and import papers, chat with your reading list, run literature review mode, format citations in 12 styles, and draft deep research reports.",
     keywords:
@@ -163,15 +163,15 @@ export const CLUSTER_HUB_PAGES: ClusterHubPageConfig[] = [
           "Build a paper set, chat across sources, run literature review mode, and format citations.",
       },
       {
-        path: "/compare/solomindlm-vs-notebooklm",
-        label: "SolomindLM vs NotebookLM",
+        path: "/compare/better-memory-vs-notebooklm",
+        label: "BETTER-MEMORY vs NotebookLM",
         description:
           "Compare academic import, literature review, and research outputs before you choose a notebook tool.",
       },
     ],
     faqs: [
       {
-        question: "What research tools does SolomindLM offer?",
+        question: "What research tools does BETTER-MEMORY offer?",
         answer:
           "You can discover and import academic papers, chat with your sources, run literature review mode with screening and synthesis, produce deep research report drafts that combine web and notebook sources, and format citations in twelve styles.",
       },

@@ -226,7 +226,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onGetStarted }) => {
                 </div>
                 <div className="flex-1 mx-4">
                   <div className="bg-background rounded-md px-3 py-1 text-xs text-muted-foreground text-center">
-                    www.solomindlm.com
+                    www.better-memory.com
                   </div>
                 </div>
               </div>

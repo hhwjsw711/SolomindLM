@@ -1,4 +1,4 @@
-# robots.txt for SolomindLM
+# robots.txt for BETTER-MEMORY
 # https://www.robotstxt.org/robotstxt.html
 
 User-agent: *
@@ -8,8 +8,8 @@ Allow: /
 Allow: /llms.txt
 Allow: /llms-full.txt
 # https://llmstxt.org/
-# https://www.solomindlm.com/llms.txt
-# https://www.solomindlm.com/llms-full.txt
+# https://www.better-memory.com/llms.txt
+# https://www.better-memory.com/llms-full.txt
 
 # Disallow authenticated/protected routes
 Disallow: /home
@@ -24,4 +24,4 @@ Disallow: /auth/
 Disallow: /api/
 
 # Sitemap reference
-Sitemap: https://www.solomindlm.com/sitemap.xml
+Sitemap: https://www.better-memory.com/sitemap.xml

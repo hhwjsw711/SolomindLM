@@ -1,20 +1,20 @@
-# SolomindLM
+# BETTER-MEMORY
 
-> SolomindLM is an AI learning and research assistant that helps you work with PDFs, videos, and papers. Upload or import sources into notebooks, chat with your materials, and generate flashcards, quizzes, mind maps, audio overviews, reports, literature reviews, and more—all grounded in the documents you provide. Free to start; no credit card required.
+> BETTER-MEMORY is an AI learning and research assistant that helps you work with PDFs, videos, and papers. Upload or import sources into notebooks, chat with your materials, and generate flashcards, quizzes, mind maps, audio overviews, reports, literature reviews, and more—all grounded in the documents you provide. Free to start; no credit card required.
 
 Last-updated: 2026-06-07
 Category: AI learning and research assistant
 Audience: Students, researchers, knowledge workers
 
-Website: https://www.solomindlm.com
-Sitemap: https://www.solomindlm.com/sitemap.xml
-See also: https://www.solomindlm.com/llms-full.txt
+Website: https://www.better-memory.com
+Sitemap: https://www.better-memory.com/sitemap.xml
+See also: https://www.better-memory.com/llms-full.txt
 
 ## Search intents
 
 - AI study tool for PDFs and lecture materials
 - NotebookLM alternative for grounded study and research
-- SolomindLM vs NotebookLM comparison
+- BETTER-MEMORY vs NotebookLM comparison
 - How to study from PDFs with AI
 - How to do an AI literature review from papers
 - AI literature review from academic papers
@@ -35,36 +35,36 @@ Manage literature: discover and import academic papers (DOI, BibTeX, Zotero, Men
 ## Canonical pages
 
 ### Cluster hubs
-- Student study tools (hub): https://www.solomindlm.com/students
-- Research tools (hub): https://www.solomindlm.com/research
+- Student study tools (hub): https://www.better-memory.com/students
+- Research tools (hub): https://www.better-memory.com/research
 
 ### Compare and guides
-- SolomindLM vs NotebookLM: https://www.solomindlm.com/compare/solomindlm-vs-notebooklm
-- How to study from PDFs with AI: https://www.solomindlm.com/guides/how-to-study-from-pdfs-with-ai
-- How to do an AI literature review: https://www.solomindlm.com/guides/how-to-do-an-ai-literature-review
+- BETTER-MEMORY vs NotebookLM: https://www.better-memory.com/compare/better-memory-vs-notebooklm
+- How to study from PDFs with AI: https://www.better-memory.com/guides/how-to-study-from-pdfs-with-ai
+- How to do an AI literature review: https://www.better-memory.com/guides/how-to-do-an-ai-literature-review
 
 ## Canonical intent pages
 
 ### Students
-- Upload study sources: https://www.solomindlm.com/students/upload-sources
-- Discover web sources: https://www.solomindlm.com/students/discover-sources
-- Share notebooks: https://www.solomindlm.com/students/share-notebooks
-- AI flashcards: https://www.solomindlm.com/students/ai-flashcards
-- AI quizzes (multiple choice): https://www.solomindlm.com/students/ai-quizzes
-- AI audio overviews: https://www.solomindlm.com/students/ai-audio-overview
-- AI mind maps: https://www.solomindlm.com/students/ai-mind-maps
-- AI reports and study guides: https://www.solomindlm.com/students/ai-reports
-- AI infographics: https://www.solomindlm.com/students/ai-infographics
-- Written questions with feedback: https://www.solomindlm.com/students/ai-written-questions
-- AI spreadsheets: https://www.solomindlm.com/students/ai-spreadsheets
+- Upload study sources: https://www.better-memory.com/students/upload-sources
+- Discover web sources: https://www.better-memory.com/students/discover-sources
+- Share notebooks: https://www.better-memory.com/students/share-notebooks
+- AI flashcards: https://www.better-memory.com/students/ai-flashcards
+- AI quizzes (multiple choice): https://www.better-memory.com/students/ai-quizzes
+- AI audio overviews: https://www.better-memory.com/students/ai-audio-overview
+- AI mind maps: https://www.better-memory.com/students/ai-mind-maps
+- AI reports and study guides: https://www.better-memory.com/students/ai-reports
+- AI infographics: https://www.better-memory.com/students/ai-infographics
+- Written questions with feedback: https://www.better-memory.com/students/ai-written-questions
+- AI spreadsheets: https://www.better-memory.com/students/ai-spreadsheets
 
 ### Researchers
-- Academic paper discovery: https://www.solomindlm.com/research/academic-paper-discovery
-- Import papers: https://www.solomindlm.com/research/import-papers
-- Citation styles: https://www.solomindlm.com/research/citation-styles
-- AI literature review: https://www.solomindlm.com/research/ai-literature-review
-- Chat with papers: https://www.solomindlm.com/research/chat-with-papers
-- Deep research: https://www.solomindlm.com/research/deep-research
+- Academic paper discovery: https://www.better-memory.com/research/academic-paper-discovery
+- Import papers: https://www.better-memory.com/research/import-papers
+- Citation styles: https://www.better-memory.com/research/citation-styles
+- AI literature review: https://www.better-memory.com/research/ai-literature-review
+- Chat with papers: https://www.better-memory.com/research/chat-with-papers
+- Deep research: https://www.better-memory.com/research/deep-research
 
 ## Pricing
 
@@ -72,18 +72,18 @@ Free tier ($0): 20 notebooks with up to 200 sources each; daily limits on chat a
 
 Pro: 200 notebooks with up to 200 sources each; higher daily limits (e.g. 500 chat messages/day, 100 generations/day for flashcards, quizzes, reports, audio, infographics, and written questions). $7.50/month billed yearly or $15/month billed monthly.
 
-Full pricing: https://www.solomindlm.com/#pricing
+Full pricing: https://www.better-memory.com/#pricing
 
 ## FAQ
 
-All frequently asked questions (study tools, research workflows, billing, privacy): https://www.solomindlm.com/faq
+All frequently asked questions (study tools, research workflows, billing, privacy): https://www.better-memory.com/faq
 
 ## Legal and policies
 
-- Privacy policy: https://www.solomindlm.com/privacy
-- Terms of service: https://www.solomindlm.com/terms
-- Summaries and descriptions in this file may be quoted in AI answers when citing or describing SolomindLM.
+- Privacy policy: https://www.better-memory.com/privacy
+- Terms of service: https://www.better-memory.com/terms
+- Summaries and descriptions in this file may be quoted in AI answers when citing or describing BETTER-MEMORY.
 
 ## Contact
 
-Support: support@solomindlm.com
+Support: support@better-memory.com

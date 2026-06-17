@@ -1,6 +1,6 @@
 import { test as base, expect, type Page } from "@playwright/test";
 
-export const TEST_EMAIL = process.env.E2E_TEST_EMAIL || "test-e2e@solomindlm.com";
+export const TEST_EMAIL = process.env.E2E_TEST_EMAIL || "test-e2e@better-memory.com";
 export const TEST_PASSWORD = process.env.E2E_TEST_PASSWORD || "TestPass123!";
 
 type AuthFixtures = {

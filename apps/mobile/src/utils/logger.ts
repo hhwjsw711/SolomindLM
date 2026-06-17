@@ -1,11 +1,11 @@
 export const log = {
   info: (...args: unknown[]) => {
-    if (__DEV__) console.log("[SolomindLM]", ...args);
+    if (__DEV__) console.log("[BETTER-MEMORY]", ...args);
   },
   warn: (...args: unknown[]) => {
-    console.warn("[SolomindLM]", ...args);
+    console.warn("[BETTER-MEMORY]", ...args);
   },
   error: (...args: unknown[]) => {
-    console.error("[SolomindLM]", ...args);
+    console.error("[BETTER-MEMORY]", ...args);
   },
 };

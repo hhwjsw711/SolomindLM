@@ -94,7 +94,7 @@ export const MindMapView: React.FC<MindMapViewProps> = ({
           },
         },
         theme: {
-          name: "SolomindLM",
+          name: "BETTER-MEMORY",
           palette: ["#1a73e8", "#5f6368", "#3c4043"],
           cssVar: {
             "--main-color": "#1f1f1f",

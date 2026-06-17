@@ -4,7 +4,7 @@ import { MARKDOWN_MATH_NOTATION_FOR_APP } from "../_shared/markdownMathPrompt.js
 /**
  * Prompt templates for ReportGraph.
  *
- * Updated for SolomindLM to include:
+ * Updated for BETTER-MEMORY to include:
  * 1. "Key Quotes" extraction (for citations)
  * 2. "All Topics" coverage (preventing data loss)
  * 3. Deeper analysis sections (Critical Analysis, Glossaries)

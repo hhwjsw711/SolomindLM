@@ -1,6 +1,6 @@
 import * as SecureStore from "expo-secure-store";
 
-const KEY = "solomindlm.auth.bridge.v1";
+const KEY = "better-memory.auth.bridge.v1";
 
 /** Reserved for a future native Convex session bridge. */
 export async function readStoredAuthToken(): Promise<string | null> {

@@ -1,6 +1,6 @@
-# Contributing to SolomindLM
+# Contributing to BETTER-MEMORY
 
-Thank you for your interest in contributing to SolomindLM! This document provides guidelines and instructions for contributing.
+Thank you for your interest in contributing to BETTER-MEMORY! This document provides guidelines and instructions for contributing.
 
 ## Table of Contents
 
@@ -36,12 +36,12 @@ This project adheres to a code of conduct. By participating, you are expected to
 1. **Fork the repository** on GitHub
 2. **Clone your fork:**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/SolomindLM.git
-   cd SolomindLM
+   git clone https://github.com/YOUR_USERNAME/BETTER-MEMORY.git
+   cd BETTER-MEMORY
    ```
 3. **Add the upstream remote:**
    ```bash
-   git remote add upstream https://github.com/ORIGINAL_OWNER/SolomindLM.git
+   git remote add upstream https://github.com/ORIGINAL_OWNER/BETTER-MEMORY.git
    ```
 4. **Install dependencies:**
    ```bash
@@ -305,7 +305,7 @@ test(convex): add tests for document processing
 ## Questions?
 
 - 📖 Check the [README](README.md)
-- 🐛 [Open an issue](https://github.com/samintisar/SolomindLM/issues)
+- 🐛 [Open an issue](https://github.com/samintisar/BETTER-MEMORY/issues)
 - 💬 Start a discussion
 
 Thank you for contributing! 🎉

@@ -50,7 +50,7 @@ ${breadcrumbNav}
         }
       </header>
       <section aria-labelledby="seo-prerender-highlights">
-        <h2 id="seo-prerender-highlights">Why SolomindLM</h2>
+        <h2 id="seo-prerender-highlights">Why BETTER-MEMORY</h2>
         <ul>
 ${proofItems}
         </ul>
@@ -79,7 +79,7 @@ ${relatedLinks}
           : ""
       }
       <footer>
-        <p><a href="/">SolomindLM home</a></p>
+        <p><a href="/">BETTER-MEMORY home</a></p>
       </footer>
     </article>`;
 }

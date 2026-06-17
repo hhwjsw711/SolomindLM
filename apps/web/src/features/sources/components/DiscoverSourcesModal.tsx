@@ -507,7 +507,7 @@ export const DiscoverSourcesModal: React.FC<DiscoverSourcesModalProps> = ({
             <div className="flex items-center justify-center">
               <FileStack className="w-5 h-5 text-primary" />
             </div>
-            <h2 className="text-xl font-bold">SolomindLM</h2>
+            <h2 className="text-xl font-bold">BETTER-MEMORY</h2>
           </div>
           <button
             onClick={onClose}

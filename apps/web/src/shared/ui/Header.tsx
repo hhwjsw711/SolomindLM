@@ -131,7 +131,7 @@ export const Header: React.FC<HeaderProps> = ({
           aria-label={t("header.goHome")}
         >
           <img
-            src="/SolomindLM_logo.png"
+            src="/BETTER-MEMORY_logo.png"
             alt={t("header.logoAlt")}
             className="w-8 h-8 object-contain"
             onError={(e) => {
@@ -148,7 +148,7 @@ export const Header: React.FC<HeaderProps> = ({
         </button>
         {isHome ? (
           <span className="text-xl font-display font-bold text-foreground tracking-tight">
-            SolomindLM
+            BETTER-MEMORY
           </span>
         ) : (
           <>

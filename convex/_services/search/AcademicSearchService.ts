@@ -337,7 +337,7 @@ async function searchArxiv(
 
   const response = await fetch(url, {
     headers: {
-      "User-Agent": "SolomindLM/1.0 (mailto:support@solomindlm.com)",
+      "User-Agent": "BETTER-MEMORY/1.0 (mailto:support@better-memory.com)",
     },
   });
 
@@ -519,7 +519,7 @@ async function searchSemanticScholar(
   const url = `https://api.semanticscholar.org/graph/v1/paper/search?query=${encodeURIComponent(query)}&fields=${fields}&limit=${maxResults}`;
 
   const headers: Record<string, string> = {
-    "User-Agent": "SolomindLM/1.0 (mailto:support@solomindlm.com)",
+    "User-Agent": "BETTER-MEMORY/1.0 (mailto:support@better-memory.com)",
   };
   if (env.SEMANTIC_SCHOLAR_API_KEY) {
     headers["x-api-key"] = env.SEMANTIC_SCHOLAR_API_KEY;
@@ -683,7 +683,7 @@ function normalizeDoi(doi: string | null | undefined): string | undefined {
 
 async function searchOpenAlex(query: string, maxResults: number): Promise<AcademicPaper[]> {
   const logger = createServiceLogger("academic_search", "searchOpenAlex");
-  const email = env.PUBMED_EMAIL || "support@solomindlm.com";
+  const email = env.PUBMED_EMAIL || "support@better-memory.com";
   const url = `https://api.openalex.org/works?search=${encodeURIComponent(query)}&per-page=${maxResults}&mailto=${encodeURIComponent(email)}`;
 
   return invokeWithHttpRetry(async () => {
@@ -692,7 +692,7 @@ async function searchOpenAlex(query: string, maxResults: number): Promise<Academ
 
     const response = await fetch(url, {
       headers: {
-        "User-Agent": "SolomindLM/1.0 (mailto:support@solomindlm.com)",
+        "User-Agent": "BETTER-MEMORY/1.0 (mailto:support@better-memory.com)",
       },
     });
 
@@ -763,7 +763,7 @@ async function searchPubMed(
   }
 ): Promise<AcademicPaper[]> {
   const logger = createServiceLogger("academic_search", "searchPubMed");
-  const email = env.PUBMED_EMAIL || "support@solomindlm.com";
+  const email = env.PUBMED_EMAIL || "support@better-memory.com";
 
   // Step 1: esearch to get PMC IDs
   const searchUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pmc&term=${encodeURIComponent(query)}&retmax=${maxResults}&sort=relevance&retmode=json&email=${encodeURIComponent(email)}`;
@@ -774,7 +774,7 @@ async function searchPubMed(
 
     const response = await fetch(searchUrl, {
       headers: {
-        "User-Agent": "SolomindLM/1.0 (mailto:support@solomindlm.com)",
+        "User-Agent": "BETTER-MEMORY/1.0 (mailto:support@better-memory.com)",
       },
     });
 
@@ -816,7 +816,7 @@ async function searchPubMed(
 
     const response = await fetch(fetchUrl, {
       headers: {
-        "User-Agent": "SolomindLM/1.0 (mailto:support@solomindlm.com)",
+        "User-Agent": "BETTER-MEMORY/1.0 (mailto:support@better-memory.com)",
       },
     });
 

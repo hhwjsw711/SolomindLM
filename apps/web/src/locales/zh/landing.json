@@ -2,7 +2,7 @@
   "hero": {
     "headline": "用 AI 改变你的学习方式",
     "subheadline": "上传任何内容——PDF、视频、文章——生成闪卡、测验、思维导图等。适合学生、研究人员和终身学习者。",
-    "primaryCTA": "试用 SolomindLM",
+    "primaryCTA": "试用 BETTER-MEMORY",
     "secondaryCTA": "查看功能"
   },
   "features": {
@@ -34,7 +34,7 @@
   },
   "contentShowcase": {
     "title": "上传一切，学习一切",
-    "description": "上传文件、粘贴链接、导入论文或从 Google Drive 拉取——SolomindLM 将你的来源转化为交互式学习材料",
+    "description": "上传文件、粘贴链接、导入论文或从 Google Drive 拉取——BETTER-MEMORY 将你的来源转化为交互式学习材料",
     "formats": {
       "pdfs": "PDF",
       "videoTranscripts": "视频转录",
@@ -85,11 +85,11 @@
       },
       {
         "question": "支持哪些语言？",
-        "answer": "SolomindLM 目前专注于英语学习和研究工作流程。"
+        "answer": "BETTER-MEMORY 目前专注于英语学习和研究工作流程。"
       },
       {
         "question": "我可以用生成的学习材料做什么？",
-        "answer": "你可以从来源创建闪卡、测验、思维导图和音频概览等学习产出，然后在 SolomindLM 内进行复习。"
+        "answer": "你可以从来源创建闪卡、测验、思维导图和音频概览等学习产出，然后在 BETTER-MEMORY 内进行复习。"
       },
       {
         "question": "我的数据如何被使用和保护？",
@@ -100,8 +100,8 @@
         "answer": "免费方案每个账户包含 20 个笔记本，每个笔记本最多 200 个来源。Pro 方案每个账户 200 个笔记本，每个笔记本最多 200 个来源。每个方案也有 AI 生成内容的每日限制。"
       },
       {
-        "question": "SolomindLM 与 Quizlet 或 Anki 有什么不同？",
-        "answer": "SolomindLM 从你的 PDF、视频、文章和笔记出发，帮助你从这些来源内容生成学习材料，而不是要求你手动创建一切。"
+        "question": "BETTER-MEMORY 与 Quizlet 或 Anki 有什么不同？",
+        "answer": "BETTER-MEMORY 从你的 PDF、视频、文章和笔记出发，帮助你从这些来源内容生成学习材料，而不是要求你手动创建一切。"
       },
       {
         "question": "生成学习材料需要多长时间？",
@@ -121,7 +121,7 @@
       }
     ],
     "heading": "常见问题",
-    "subtitle": "关于 SolomindLM 你需要知道的一切",
+    "subtitle": "关于 BETTER-MEMORY 你需要知道的一切",
     "stillHaveQuestions": "还有问题？",
     "contactSupport": "联系支持",
     "seeAll": "查看所有常见问题"
@@ -176,7 +176,7 @@
     "toggleMenu": "切换菜单"
   },
   "footer": {
-    "tagline": "SolomindLM 是一款 AI 学习与研究助手，帮助你处理 PDF、视频和论文——从你上传的材料出发，生成闪卡、测验、报告、聊天等。",
+    "tagline": "BETTER-MEMORY 是一款 AI 学习与研究助手，帮助你处理 PDF、视频和论文——从你上传的材料出发，生成闪卡、测验、报告、聊天等。",
     "companyTitle": "公司",
     "forStudentsTitle": "学生",
     "forResearchTitle": "研究",
@@ -189,11 +189,11 @@
     "faq": "常见问题",
     "privacyPolicy": "隐私政策",
     "terms": "服务条款",
-    "copyright": "版权所有 \u00a9 {{year}} SolomindLM。保留所有权利。"
+    "copyright": "版权所有 \u00a9 {{year}} BETTER-MEMORY。保留所有权利。"
   },
   "useCases": {
     "heading": "为每一位学习者打造",
-    "subtitle": "从学生到专业人士，SolomindLM 适应你的学习风格",
+    "subtitle": "从学生到专业人士，BETTER-MEMORY 适应你的学习风格",
     "learnMore": "了解更多 \u2192",
     "items": {
       "medicalStudents": {
@@ -232,7 +232,7 @@
     "helpCenter": "帮助中心",
     "heading": "常见问题",
     "subtitle": "关于学习工具、研究工作流程、计费和隐私的所有解答——按主题整理。",
-    "ctaHeading": "准备好试试 SolomindLM 了吗？",
+    "ctaHeading": "准备好试试 BETTER-MEMORY 了吗？",
     "ctaDescription": "创建免费账户，上传你的第一批资料，几分钟内即可生成学习或研究成果。",
     "ctaButton": "创建免费账户",
     "backToHome": "返回首页"

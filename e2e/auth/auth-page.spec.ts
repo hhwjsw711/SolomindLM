@@ -61,7 +61,7 @@ test.describe("Auth — Auth page smoke tests", () => {
     await page.evaluate(() => localStorage.clear());
     await page.reload();
 
-    await page.getByRole("link", { name: "SolomindLM home" }).click();
+    await page.getByRole("link", { name: "BETTER-MEMORY home" }).click();
     await page.waitForURL("/", { timeout: 5_000 });
     await expect(page).toHaveURL("/");
   });

@@ -41,8 +41,8 @@ export function buildLegalPrerenderBody(title: string, path: "/privacy" | "/term
 
   const summary =
     path === "/privacy"
-      ? "How SolomindLM collects, uses, and shares information when you use notebooks, sources, AI features, and billing."
-      : "Terms that apply when you use SolomindLM's AI research notebooks, sources, chat, and study tools.";
+      ? "How BETTER-MEMORY collects, uses, and shares information when you use notebooks, sources, AI features, and billing."
+      : "Terms that apply when you use BETTER-MEMORY's AI research notebooks, sources, chat, and study tools.";
 
   return `    <article data-seo-prerender="true" id="seo-prerender-content">
       <header>
@@ -52,7 +52,7 @@ export function buildLegalPrerenderBody(title: string, path: "/privacy" | "/term
         <p>${escapeHtml(summary)}</p>
       </header>
       <footer>
-        <p><a href="/">SolomindLM home</a> · <a href="${other.href}">${escapeHtml(other.label)}</a></p>
+        <p><a href="/">BETTER-MEMORY home</a> · <a href="${other.href}">${escapeHtml(other.label)}</a></p>
       </footer>
     </article>`;
 }

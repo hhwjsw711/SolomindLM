@@ -20,15 +20,15 @@ describe("indexNow helpers", () => {
   });
 
   it("derives host and key location from SEO base URL", () => {
-    expect(getIndexNowHost()).toBe("www.solomindlm.com");
-    expect(getIndexNowKeyLocation("abc12345")).toBe("https://www.solomindlm.com/abc12345.txt");
+    expect(getIndexNowHost()).toBe("www.better-memory.com");
+    expect(getIndexNowKeyLocation("abc12345")).toBe("https://www.better-memory.com/abc12345.txt");
   });
 
   it("filters URLs to the canonical host over https", () => {
     const privacyUrl = canonicalUrl(SEO_BASE_URL, "/privacy");
     const filtered = filterIndexableUrls(
-      [privacyUrl, "http://www.solomindlm.com/terms", "https://evil.example/phish", privacyUrl],
-      "www.solomindlm.com"
+      [privacyUrl, "http://www.better-memory.com/terms", "https://evil.example/phish", privacyUrl],
+      "www.better-memory.com"
     );
     expect(filtered).toEqual([privacyUrl]);
   });
@@ -95,9 +95,9 @@ describe("submitIndexNow", () => {
       method: "POST",
       headers: { "Content-Type": "application/json; charset=utf-8" },
       body: JSON.stringify({
-        host: "www.solomindlm.com",
+        host: "www.better-memory.com",
         key: "test-key-123456",
-        keyLocation: "https://www.solomindlm.com/test-key-123456.txt",
+        keyLocation: "https://www.better-memory.com/test-key-123456.txt",
         urlList: [privacyUrl],
       }),
     });

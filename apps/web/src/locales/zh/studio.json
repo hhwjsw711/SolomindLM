@@ -130,7 +130,7 @@
     "title": "创建报告",
     "format": "格式",
     "describeReport": "描述你想要创建的报告",
-    "reportPlaceholder": "告诉 SolomindLM 如何构建和撰写你的报告...",
+    "reportPlaceholder": "告诉 BETTER-MEMORY 如何构建和撰写你的报告...",
     "saveAsPrompt": "保存为可复用提示词",
     "generate": "生成报告",
     "formats": {
@@ -172,7 +172,7 @@
     "title": "创建电子表格",
     "format": "格式",
     "describeSpreadsheet": "描述你想要创建的电子表格",
-    "spreadsheetPlaceholder": "告诉 SolomindLM 如何构建和组织你的电子表格...",
+    "spreadsheetPlaceholder": "告诉 BETTER-MEMORY 如何构建和组织你的电子表格...",
     "saveAsPrompt": "保存为可复用提示词",
     "generate": "生成电子表格",
     "formats": {

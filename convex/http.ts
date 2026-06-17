@@ -12,7 +12,7 @@ const streaming = new PersistentTextStreaming(components.persistentTextStreaming
 // Add Convex Auth HTTP routes
 auth.addHttpRoutes(http);
 
-// CORS configuration - dev origins + SITE_URL from Convex (e.g. https://www.solomindlm.com, comma-separated for multiple).
+// CORS configuration - dev origins + SITE_URL from Convex (e.g. https://www.better-memory.com, comma-separated for multiple).
 const DEV_ORIGINS = [
   "http://localhost:5173",
   "http://localhost:5174",

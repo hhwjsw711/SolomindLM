@@ -21,7 +21,7 @@ export function buildSeoContentPrerenderBody(page: SeoContentPageConfig): string
     ? `      <section aria-labelledby="seo-prerender-quick-answer">
         <h2 id="seo-prerender-quick-answer">Quick answer</h2>
         ${page.quickAnswer.chooseCompetitor ? `<p><strong>NotebookLM:</strong> ${escapeHtml(page.quickAnswer.chooseCompetitor)}</p>` : ""}
-        <p><strong>SolomindLM:</strong> ${escapeHtml(page.quickAnswer.chooseSolomindlm)}</p>
+        <p><strong>BETTER-MEMORY:</strong> ${escapeHtml(page.quickAnswer.chooseBetterMemory)}</p>
       </section>`
     : "";
 
@@ -30,13 +30,13 @@ export function buildSeoContentPrerenderBody(page: SeoContentPageConfig): string
         <h2 id="seo-prerender-comparison">Comparison</h2>
         <table>
           <thead>
-            <tr><th>Topic</th><th>SolomindLM</th><th>NotebookLM</th></tr>
+            <tr><th>Topic</th><th>BETTER-MEMORY</th><th>NotebookLM</th></tr>
           </thead>
           <tbody>
 ${page.comparisonTable
   .map(
     (row) =>
-      `            <tr><th scope="row">${escapeHtml(row.topic)}</th><td>${escapeHtml(row.solomindlm)}</td><td>${escapeHtml(row.competitor)}</td></tr>`
+      `            <tr><th scope="row">${escapeHtml(row.topic)}</th><td>${escapeHtml(row.betterMemory)}</td><td>${escapeHtml(row.competitor)}</td></tr>`
   )
   .join("\n")}
           </tbody>
@@ -99,7 +99,7 @@ ${relatedLinks}
         <p>${escapeHtml(page.ctaLabel)}</p>
       </section>
       <footer>
-        <p><a href="/">SolomindLM home</a></p>
+        <p><a href="/">BETTER-MEMORY home</a></p>
       </footer>
     </article>`;
 }

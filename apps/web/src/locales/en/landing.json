@@ -2,7 +2,7 @@
   "hero": {
     "headline": "Transform How You Learn with AI",
     "subheadline": "Upload any content—PDFs, videos, articles—and generate flashcards, quizzes, mind maps, and more. Perfect for students, researchers, and lifelong learners.",
-    "primaryCTA": "Try SolomindLM",
+    "primaryCTA": "Try BETTER-MEMORY",
     "secondaryCTA": "See Features"
   },
   "features": {
@@ -34,7 +34,7 @@
   },
   "contentShowcase": {
     "title": "Upload Anything, Learn Everything",
-    "description": "Upload files, paste links, import papers, or pull from Google Drive—SolomindLM turns your sources into interactive study materials",
+    "description": "Upload files, paste links, import papers, or pull from Google Drive—BETTER-MEMORY turns your sources into interactive study materials",
     "formats": {
       "pdfs": "PDFs",
       "videoTranscripts": "Video Transcripts",
@@ -85,11 +85,11 @@
       },
       {
         "question": "What languages are supported?",
-        "answer": "SolomindLM is currently focused on English-language study and research workflows."
+        "answer": "BETTER-MEMORY is currently focused on English-language study and research workflows."
       },
       {
         "question": "What can I do with generated study materials?",
-        "answer": "You can create study outputs like flashcards, quizzes, mind maps, and audio overviews from your sources, then review them inside SolomindLM."
+        "answer": "You can create study outputs like flashcards, quizzes, mind maps, and audio overviews from your sources, then review them inside BETTER-MEMORY."
       },
       {
         "question": "How is my data used and protected?",
@@ -100,8 +100,8 @@
         "answer": "The free plan includes 20 notebooks per account with up to 200 sources per notebook. Pro plans offer 200 notebooks per account with up to 200 sources per notebook. Each plan also includes daily limits on AI-generated content."
       },
       {
-        "question": "What makes SolomindLM different from Quizlet or Anki?",
-        "answer": "SolomindLM starts from your PDFs, videos, articles, and notes, then helps generate study materials from that source content instead of requiring you to create everything manually."
+        "question": "What makes BETTER-MEMORY different from Quizlet or Anki?",
+        "answer": "BETTER-MEMORY starts from your PDFs, videos, articles, and notes, then helps generate study materials from that source content instead of requiring you to create everything manually."
       },
       {
         "question": "How long does it take to generate study materials?",
@@ -121,7 +121,7 @@
       }
     ],
     "heading": "Frequently Asked Questions",
-    "subtitle": "Everything you need to know about SolomindLM",
+    "subtitle": "Everything you need to know about BETTER-MEMORY",
     "stillHaveQuestions": "Still have questions?",
     "contactSupport": "Contact Support",
     "seeAll": "See all frequently asked questions"
@@ -176,7 +176,7 @@
     "toggleMenu": "Toggle menu"
   },
   "footer": {
-    "tagline": "SolomindLM is an AI learning and research assistant that helps you work with PDFs, videos, and papers\u2014flashcards, quizzes, reports, chat, and more, starting from the material you upload.",
+    "tagline": "BETTER-MEMORY is an AI learning and research assistant that helps you work with PDFs, videos, and papers\u2014flashcards, quizzes, reports, chat, and more, starting from the material you upload.",
     "companyTitle": "Company",
     "forStudentsTitle": "For Students",
     "forResearchTitle": "For Research",
@@ -189,11 +189,11 @@
     "faq": "FAQ",
     "privacyPolicy": "Privacy Policy",
     "terms": "Terms",
-    "copyright": "Copyright \u00a9 {{year}} SolomindLM. All rights reserved."
+    "copyright": "Copyright \u00a9 {{year}} BETTER-MEMORY. All rights reserved."
   },
   "useCases": {
     "heading": "Built for Every Learner",
-    "subtitle": "From students to professionals, SolomindLM adapts to your learning style",
+    "subtitle": "From students to professionals, BETTER-MEMORY adapts to your learning style",
     "learnMore": "Learn more \u2192",
     "items": {
       "medicalStudents": {
@@ -232,7 +232,7 @@
     "helpCenter": "Help center",
     "heading": "Frequently asked questions",
     "subtitle": "Everything we answer about study tools, research workflows, billing, and privacy—organized by topic.",
-    "ctaHeading": "Ready to try SolomindLM?",
+    "ctaHeading": "Ready to try BETTER-MEMORY?",
     "ctaDescription": "Create a free account, upload your first sources, and generate study or research outputs in minutes.",
     "ctaButton": "Create free account",
     "backToHome": "Back to home"

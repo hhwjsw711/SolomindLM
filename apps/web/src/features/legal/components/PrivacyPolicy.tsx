@@ -9,7 +9,7 @@ export const PrivacyPolicy: React.FC = () => {
     <LegalPageShell title="Privacy Policy" canonical="/privacy">
       <section className="space-y-3">
         <p className="text-muted-foreground">
-          SolomindLM is operated from Canada. This Policy describes how we handle personal
+          BETTER-MEMORY is operated from Canada. This Policy describes how we handle personal
           information when you use our websites and product. It works together with our{" "}
           <Link
             to="/terms"
@@ -264,10 +264,10 @@ export const PrivacyPolicy: React.FC = () => {
         <p className="text-muted-foreground">
           Privacy questions or requests:{" "}
           <a
-            href="mailto:support@solomindlm.com"
+            href="mailto:support@better-memory.com"
             className="text-foreground underline underline-offset-2 hover:no-underline"
           >
-            support@solomindlm.com
+            support@better-memory.com
           </a>
         </p>
       </section>

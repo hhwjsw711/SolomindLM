@@ -7,8 +7,8 @@
   "redirects": [
     {
       "source": "/:path*",
-      "has": [{ "type": "host", "value": "solomindlm.com" }],
-      "destination": "https://www.solomindlm.com/:path*",
+      "has": [{ "type": "host", "value": "better-memory.com" }],
+      "destination": "https://www.better-memory.com/:path*",
       "permanent": true
     }
   ],

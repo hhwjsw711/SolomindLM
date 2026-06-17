@@ -14,7 +14,7 @@ Serena is the default for all code navigation, editing, and refactoring. **Prefe
 
 ```
 serena_get_current_config                    # Verify project activation
-serena_activate_project project="SolomindLM" # If not activated
+serena_activate_project project="BETTER-MEMORY" # If not activated
 serena_check_onboarding_performed            # Verify onboarding
 serena_list_memories                         # Review existing memories
 ```

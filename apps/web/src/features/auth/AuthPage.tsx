@@ -484,11 +484,11 @@ export function AuthPage() {
         {nativeShell ? (
           <div className="flex items-center gap-2.5 text-stone-900">
             <img
-              src="/SolomindLM_logo.png"
+              src="/BETTER-MEMORY_logo.png"
               alt={i18next.t("auth:page.logoAlt")}
               className="h-8 w-8 object-contain"
             />
-            <span className="font-serif text-lg font-semibold tracking-tight">SolomindLM</span>
+            <span className="font-serif text-lg font-semibold tracking-tight">BETTER-MEMORY</span>
           </div>
         ) : (
           <>
@@ -498,11 +498,11 @@ export function AuthPage() {
               aria-label={i18next.t("auth:page.logoTooltip")}
             >
               <img
-                src="/SolomindLM_logo.png"
+                src="/BETTER-MEMORY_logo.png"
                 alt={i18next.t("auth:page.logoAlt")}
                 className="h-8 w-8 object-contain"
               />
-              <span className="font-serif text-lg font-semibold tracking-tight">SolomindLM</span>
+              <span className="font-serif text-lg font-semibold tracking-tight">BETTER-MEMORY</span>
             </Link>
             <Link
               to="/"

@@ -101,7 +101,7 @@ function WebShellIframe({ uri, onUrlChange, onMessage }: WebShellIframeProps) {
 
   return createElement("iframe", {
     src: uri,
-    title: "SolomindLM",
+    title: "BETTER-MEMORY",
     style: {
       border: "none",
       width: "100%",

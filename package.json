@@ -1,5 +1,5 @@
 {
-  "name": "solomindlm-monorepo",
+  "name": "better-memory-monorepo",
   "version": "1.0.0",
   "private": true,
   "packageManager": "bun@1.2.2",
@@ -19,7 +19,7 @@
     "dev:web": "bun run --cwd apps/web dev",
     "dev:mobile": "bun run --cwd apps/mobile dev",
     "build": "bun run --filter \"./apps/**\" build",
-    "build:prod": "bun run --filter @solomindlm/web build",
+    "build:prod": "bun run --filter @better-memory/web build",
     "typecheck:convex": "bun x tsgo --noEmit -p convex/tsconfig.json",
     "typecheck:web": "bun x tsgo --noEmit -p apps/web/tsconfig.json",
     "typecheck:mobile": "bun x tsgo --noEmit -p apps/mobile/tsconfig.json",
@@ -51,7 +51,7 @@
     "eval:literature-review": "bun run evals/rag/cli.ts --runner literatureReview",
     "eval:literature-review:dry": "bun run evals/rag/cli.ts --dry-run --runner literatureReview",
     "eval:rag:bootstrap-env": "node scripts/bootstrap-rag-eval-env.js",
-    "eval:ragas": "conda run -n solomindlm-rag-evals python evals/ragas/run_ragas.py",
+    "eval:ragas": "conda run -n better-memory-rag-evals python evals/ragas/run_ragas.py",
     "e2e:convex:cleanup": "node scripts/cleanup-e2e.mjs",
     "e2e:convex:cleanup-folders": "node scripts/cleanup-e2e-folders.mjs",
     "e2e:convex:cleanup-notebooks": "node scripts/cleanup-e2e-notebooks.mjs"

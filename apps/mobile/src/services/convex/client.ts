@@ -18,11 +18,11 @@ function getConvexUrl(): string {
   const configured = readConfiguredConvexUrl();
   if (configured) return configured;
   if (__DEV__) {
-    console.warn("[SolomindLM] Set EXPO_PUBLIC_CONVEX_URL in apps/mobile/.env (see .env.example).");
+    console.warn("[BETTER-MEMORY] Set EXPO_PUBLIC_CONVEX_URL in apps/mobile/.env (see .env.example).");
     return DEV_MISSING_CONVEX_URL;
   }
   throw new Error(
-    "[SolomindLM] EXPO_PUBLIC_CONVEX_URL is required for production builds (set in EAS secrets or .env)."
+    "[BETTER-MEMORY] EXPO_PUBLIC_CONVEX_URL is required for production builds (set in EAS secrets or .env)."
   );
 }
 

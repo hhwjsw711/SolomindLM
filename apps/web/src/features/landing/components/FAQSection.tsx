@@ -78,7 +78,7 @@ export const FAQSection: React.FC = () => {
               className="rounded-xl transition-transform duration-200 ease-out hover:scale-[1.02] active:scale-[0.98]"
               onClick={() => {
                 // Open contact form or email
-                window.location.href = "mailto:support@solomindlm.com";
+                window.location.href = "mailto:support@better-memory.com";
               }}
             >
               {t("faq.contactSupport")}

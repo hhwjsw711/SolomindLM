@@ -1,4 +1,4 @@
-const SIGNUP_INTENT_KEY = "solomindlm_signup_intent";
+const SIGNUP_INTENT_KEY = "better-memory_signup_intent";
 
 export function setSignupIntent(intentKey: string): void {
   try {

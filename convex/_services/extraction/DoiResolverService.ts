@@ -139,7 +139,7 @@ export class DoiResolverService {
 
         const response = await fetch(url, {
           headers: {
-            "User-Agent": "SolomindLM/1.0 (mailto:support@solomindlm.com)",
+            "User-Agent": "BETTER-MEMORY/1.0 (mailto:support@better-memory.com)",
           },
         });
 
@@ -179,7 +179,7 @@ export class DoiResolverService {
     const url = `https://api.semanticscholar.org/graph/v1/paper/DOI:${encodeURIComponent(doi)}?fields=title,authors,year,abstract,openAccessPdf,externalIds,url,isOpenAccess`;
 
     const headers: Record<string, string> = {
-      "User-Agent": "SolomindLM/1.0 (mailto:support@solomindlm.com)",
+      "User-Agent": "BETTER-MEMORY/1.0 (mailto:support@better-memory.com)",
     };
     if (env.SEMANTIC_SCHOLAR_API_KEY) {
       headers["x-api-key"] = env.SEMANTIC_SCHOLAR_API_KEY;
