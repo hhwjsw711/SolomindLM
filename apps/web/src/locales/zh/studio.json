@@ -1,4 +1,14 @@
 {
+  "tools": {
+    "audio": "音频概览",
+    "mindmap": "思维导图",
+    "reports": "报告",
+    "flashcards": "闪卡",
+    "quiz": "测验",
+    "infographic": "信息图",
+    "writtenQuestions": "问答题",
+    "spreadsheets": "电子表格"
+  },
   "header": {
     "backToStudio": "返回 Studio",
     "rename": "重命名",
@@ -592,5 +602,69 @@
     "noMatch": "没有匹配的笔记。",
     "noNotes": "暂无保存的笔记。创建一个开始吧！"
   },
-  "anUnknownErrorOccurred": "发生了未知错误"
+  "anUnknownErrorOccurred": "发生了未知错误",
+  "literatureTable": {
+    "paperAdded": "论文已添加到笔记本",
+    "alreadyInNotebook": "所选论文已在此笔记本中",
+    "failedToAdd": "添加论文失败",
+    "backToStudio": "返回 Studio",
+    "addPapers": "添加论文",
+    "manageColumns": "管理列",
+    "saveTable": "保存表格",
+    "saveTableToStudio": "保存表格到 Studio",
+    "savingTable": "保存表格中",
+    "saving": "保存中...",
+    "export": "导出",
+    "exportTable": "导出表格",
+    "csvFormat": "CSV (.csv)",
+    "excelFormat": "Excel (.xlsx)",
+    "exitFullscreen": "退出全屏",
+    "fullscreenTable": "全屏表格",
+    "close": "关闭",
+    "closeTable": "关闭表格",
+    "selected": "已选择",
+    "adding": "添加中…",
+    "addToNotebook": "添加到笔记本",
+    "noPapers": "暂无表格数据",
+    "selectAll": "全选论文"
+  },
+  "literatureReport": {
+    "references": "参考文献",
+    "copyCitations": "复制全部引用",
+    "copiedCitations": "已复制引用",
+    "copyReport": "复制（含引用）",
+    "copiedReport": "已复制报告",
+    "copied": "已复制",
+    "exportReport": "导出报告",
+    "exportPdf": "导出 PDF",
+    "exportMd": "导出 Markdown (.md)",
+    "saveEditDoc": "保存并编辑文档",
+    "savingDoc": "保存文档中",
+    "noContent": "暂无内容",
+    "close": "关闭",
+    "toolbarLabel": "文献报告"
+  },
+  "prismaFlow": {
+    "title": "PRISMA 流程图",
+    "recordsIdentified": "检索记录",
+    "afterDedup": "去重后",
+    "recordsScreened": "筛选记录",
+    "excluded": "已排除",
+    "studiesIncluded": "纳入研究"
+  },
+  "proficiency": {
+    "mastered": "已掌握",
+    "learning": "学习中",
+    "progressing": "进行中",
+    "new": "新卡片",
+    "dayStreak": "天连续"
+  },
+  "flashcard": {
+    "true": "✓ 正确",
+    "false": "✗ 错误"
+  },
+  "mindmap": {
+    "untitledNode": "未命名",
+    "rootFallback": "思维导图"
+  }
 }

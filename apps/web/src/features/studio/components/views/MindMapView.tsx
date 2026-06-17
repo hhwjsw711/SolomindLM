@@ -10,11 +10,16 @@ export interface MindMapViewProps {
   onBack?: () => void;
 }
 
-function sanitizeNodeTree(node: any, fallbackTopic: string, isRoot = false): any {
+function sanitizeNodeTree(
+  node: any,
+  fallbackTopic: string,
+  untitledFallback: string,
+  isRoot = false
+): any {
   if (!node || typeof node !== "object") {
     return {
       id: isRoot ? "root" : `node-${Math.random().toString(36).slice(2, 9)}`,
-      topic: isRoot ? fallbackTopic : "Untitled",
+      topic: isRoot ? fallbackTopic : untitledFallback,
       children: [],
     };
   }
@@ -29,7 +34,9 @@ function sanitizeNodeTree(node: any, fallbackTopic: string, isRoot = false): any
         : `node-${Math.random().toString(36).slice(2, 9)}`;
 
   const children = Array.isArray(node.children)
-    ? node.children.map((child: any) => sanitizeNodeTree(child, fallbackTopic, false))
+    ? node.children.map((child: any) =>
+        sanitizeNodeTree(child, fallbackTopic, untitledFallback, false)
+      )
     : [];
 
   return {
@@ -68,7 +75,8 @@ export const MindMapView: React.FC<MindMapViewProps> = ({
       if (!el) return;
       const sanitizedRoot = sanitizeNodeTree(
         mindMapData?.nodeData,
-        (note.title && note.title.trim()) || "Mind Map",
+        (note.title && note.title.trim()) || t("mindmap.rootFallback"),
+        t("mindmap.untitledNode"),
         true
       );
 

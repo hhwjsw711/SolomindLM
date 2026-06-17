@@ -211,10 +211,10 @@ export const FlashcardView: React.FC<FlashcardViewProps> = ({ note, onBack }) =>
             </div>
             <div className="flex justify-center gap-16">
               <span className="text-xl font-semibold text-emerald-700 dark:text-emerald-400">
-                ✓ True
+                {t("flashcard.true")}
               </span>
               <span className="text-xl font-semibold text-rose-700 dark:text-rose-400">
-                ✗ False
+                {t("flashcard.false")}
               </span>
             </div>
           </div>

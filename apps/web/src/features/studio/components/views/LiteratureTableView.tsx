@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import { useBulkUpload, useGetExistingPapers } from "@/features/sources/services/documentsApi";
 import { useToast } from "@/shared/contexts/useToast";
 import { DropdownMenu } from "@/shared/ui/DropdownMenu";
@@ -163,6 +164,7 @@ export const LiteratureTableView: React.FC<LiteratureTableViewProps> = ({
   onAddPapers,
 }) => {
   const { success: toastSuccess, error: toastError } = useToast();
+  const { t } = useTranslation("studio");
   const [table, setTable] = useState<LiteratureTable>(initialTable);
   const [showColumnManager, setShowColumnManager] = useState(true);
   const [isFocusMode, setIsFocusMode] = useState(false);
@@ -226,16 +228,16 @@ export const LiteratureTableView: React.FC<LiteratureTableViewProps> = ({
         if (result.imported > 0) {
           toastSuccess(
             result.imported === 1
-              ? "Paper added to notebook"
+              ? t("literatureTable.paperAdded")
               : `${result.imported} papers added to notebook`
           );
         }
         if (result.skipped > 0 && result.imported === 0) {
-          toastError("Selected papers are already in this notebook");
+          toastError(t("literatureTable.alreadyInNotebook"));
         }
         setSelectedIds(new Set());
       } catch (err) {
-        toastError(err instanceof Error ? err.message : "Failed to add papers");
+        toastError(err instanceof Error ? err.message : t("literatureTable.failedToAdd"));
       } finally {
         setIsBulkAdding(false);
         setAddingIds(new Set());
@@ -316,7 +318,7 @@ export const LiteratureTableView: React.FC<LiteratureTableViewProps> = ({
           <button
             onClick={onBack}
             className="p-1.5 hover:bg-secondary active:bg-secondary/80 active:scale-[0.97] rounded-md transition-colors transition-transform text-foreground flex items-center justify-center shrink-0 touch-manipulation"
-            aria-label="Back to Studio"
+            aria-label={t("literatureTable.backToStudio")}
           >
             <ArrowLeft className="w-5 h-5 shrink-0" />
           </button>
@@ -339,11 +341,13 @@ export const LiteratureTableView: React.FC<LiteratureTableViewProps> = ({
           <button
             type="button"
             onClick={onAddPapers}
-            title="Add papers"
+            title={t("literatureTable.addPapers")}
             className={TABLE_TOOLBAR_BTN}
           >
             <Plus className="h-4 w-4 shrink-0" strokeWidth={2} />
-            <span className="hidden @min-[640px]/table-toolbar:inline">Add Papers</span>
+            <span className="hidden @min-[640px]/table-toolbar:inline">
+              {t("literatureTable.addPapers")}
+            </span>
           </button>
           <button
             type="button"
@@ -351,19 +355,23 @@ export const LiteratureTableView: React.FC<LiteratureTableViewProps> = ({
               setIsFocusMode(false);
               setShowColumnManager((open) => !open);
             }}
-            title="Manage columns"
+            title={t("literatureTable.manageColumns")}
             aria-pressed={columnManagerOpen}
             className={cn(TABLE_TOOLBAR_BTN, columnManagerOpen && "bg-secondary")}
           >
             <Columns3 className="h-4 w-4 shrink-0" strokeWidth={2} />
-            <span className="hidden @min-[720px]/table-toolbar:inline">Manage Columns</span>
+            <span className="hidden @min-[720px]/table-toolbar:inline">
+              {t("literatureTable.manageColumns")}
+            </span>
           </button>
           <button
             type="button"
             onClick={() => void onSave?.(table)}
             disabled={!onSave || isSaving}
-            title="Save table to Studio"
-            aria-label={isSaving ? "Saving table" : "Save table to Studio"}
+            title={t("literatureTable.saveTableToStudio")}
+            aria-label={
+              isSaving ? t("literatureTable.savingTable") : t("literatureTable.saveTableToStudio")
+            }
             className={TABLE_TOOLBAR_BTN}
           >
             {isSaving ? (
@@ -372,7 +380,7 @@ export const LiteratureTableView: React.FC<LiteratureTableViewProps> = ({
               <Save className="h-4 w-4 shrink-0" strokeWidth={2} />
             )}
             <span className="hidden @min-[860px]/table-toolbar:inline">
-              {isSaving ? "Saving..." : "Save table"}
+              {isSaving ? t("literatureTable.saving") : t("literatureTable.saveTable")}
             </span>
           </button>
           <DropdownMenu
@@ -380,11 +388,13 @@ export const LiteratureTableView: React.FC<LiteratureTableViewProps> = ({
               <button
                 type="button"
                 disabled={exportDisabled}
-                title="Export table"
+                title={t("literatureTable.exportTable")}
                 className={TABLE_TOOLBAR_BTN}
               >
                 <Download className="h-4 w-4 shrink-0" strokeWidth={2} />
-                <span className="hidden @min-[980px]/table-toolbar:inline">Export</span>
+                <span className="hidden @min-[980px]/table-toolbar:inline">
+                  {t("literatureTable.export")}
+                </span>
                 <ChevronDown
                   className="hidden h-3.5 w-3.5 shrink-0 text-muted-foreground @min-[980px]/table-toolbar:inline"
                   strokeWidth={2}
@@ -394,12 +404,12 @@ export const LiteratureTableView: React.FC<LiteratureTableViewProps> = ({
           >
             <ExportMenuItem
               icon={<Sheet className="w-4 h-4" />}
-              label="CSV (.csv)"
+              label={t("literatureTable.csvFormat")}
               onClick={handleExportCSV}
             />
             <ExportMenuItem
               icon={<Table2 className="w-4 h-4" />}
-              label="Excel (.xlsx)"
+              label={t("literatureTable.excelFormat")}
               onClick={handleExportExcel}
             />
           </DropdownMenu>
@@ -413,8 +423,16 @@ export const LiteratureTableView: React.FC<LiteratureTableViewProps> = ({
               });
             }}
             className="inline-flex shrink-0 items-center justify-center rounded-md p-1.5 text-foreground transition-colors hover:bg-secondary"
-            aria-label={isFocusMode ? "Exit full screen" : "Full screen table"}
-            title={isFocusMode ? "Exit full screen" : "Full screen"}
+            aria-label={
+              isFocusMode
+                ? t("literatureTable.exitFullscreen")
+                : t("literatureTable.fullscreenTable")
+            }
+            title={
+              isFocusMode
+                ? t("literatureTable.exitFullscreen")
+                : t("literatureTable.fullscreenTable")
+            }
           >
             {isFocusMode ? (
               <Minimize2 className="h-4 w-4 shrink-0" />
@@ -427,8 +445,8 @@ export const LiteratureTableView: React.FC<LiteratureTableViewProps> = ({
               type="button"
               onClick={onBack}
               className="inline-flex shrink-0 rounded-md p-1.5 text-foreground transition-colors hover:bg-secondary"
-              aria-label="Close table"
-              title="Close"
+              aria-label={t("literatureTable.closeTable")}
+              title={t("literatureTable.close")}
             >
               <X className="h-4 w-4 shrink-0" />
             </button>
@@ -444,7 +462,7 @@ export const LiteratureTableView: React.FC<LiteratureTableViewProps> = ({
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
           >
             <X className="h-3.5 w-3.5" />
-            {selectedIds.size} selected
+            {selectedIds.size} {t("literatureTable.selected")}
           </button>
           <button
             type="button"
@@ -455,10 +473,10 @@ export const LiteratureTableView: React.FC<LiteratureTableViewProps> = ({
             {isBulkAdding ? (
               <span className="inline-flex items-center gap-1.5">
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                Adding…
+                {t("literatureTable.adding")}
               </span>
             ) : (
-              `Add ${selectedIds.size} to notebook`
+              t("literatureTable.addToNotebook")
             )}
           </button>
         </div>
@@ -470,12 +488,12 @@ export const LiteratureTableView: React.FC<LiteratureTableViewProps> = ({
             <div className="flex flex-1 items-center justify-center">
               <div className="text-center">
                 <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">No papers in this table yet</p>
+                <p className="text-muted-foreground">{t("literatureTable.noPapers")}</p>
                 <button
                   onClick={onAddPapers}
                   className="mt-4 px-4 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
                 >
-                  Add Papers
+                  {t("literatureTable.addPapers")}
                 </button>
               </div>
             </div>
@@ -491,7 +509,7 @@ export const LiteratureTableView: React.FC<LiteratureTableViewProps> = ({
                           checked={allSelected}
                           onChange={toggleSelectAll}
                           className="h-4 w-4 rounded border-border"
-                          aria-label="Select all papers"
+                          aria-label={t("literatureTable.selectAll")}
                         />
                         <span className="text-sm font-medium text-muted-foreground">
                           Papers ({paperCount})

@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import React, { lazy, Suspense, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { DropdownMenu } from "@/shared/ui/DropdownMenu";
 import { cn, sanitizeMarkdown } from "@/shared/utils";
 import { CitationStyle, CitationStylePicker } from "../CitationStylePicker";
@@ -108,6 +109,7 @@ const ReferencesSection: React.FC<ReferencesSectionProps> = ({
   onStyleChange,
 }) => {
   const [didCopy, setDidCopy] = useState(false);
+  const { t } = useTranslation("studio");
 
   const sortedCitations = useMemo(() => {
     return Object.entries(citations).sort(([, a], [, b]) => {
@@ -132,14 +134,20 @@ const ReferencesSection: React.FC<ReferencesSectionProps> = ({
   return (
     <section className="mt-12 pt-8 border-t-2 border-border">
       <div className="mb-6 flex items-center justify-between gap-3">
-        <h2 className="text-xl font-semibold text-foreground">References</h2>
+        <h2 className="text-xl font-semibold text-foreground">
+          {t("literatureReport.references")}
+        </h2>
         <div className="flex shrink-0 items-center gap-2">
           <button
             type="button"
             onClick={handleCopyReferences}
             className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-            title={didCopy ? "Copied citations" : "Copy all citations"}
-            aria-label={didCopy ? "Copied citations" : "Copy all citations"}
+            title={
+              didCopy ? t("literatureReport.copiedCitations") : t("literatureReport.copyCitations")
+            }
+            aria-label={
+              didCopy ? t("literatureReport.copiedCitations") : t("literatureReport.copyCitations")
+            }
           >
             {didCopy ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
           </button>
@@ -275,7 +283,7 @@ function ExportMenuItem({
 
 export const LiteratureReportView: React.FC<LiteratureReportViewProps> = ({
   report,
-  toolbarLabel = "Literature Report",
+  toolbarLabel,
   onBack,
   onExport,
   onSaveAndEdit,
@@ -285,6 +293,7 @@ export const LiteratureReportView: React.FC<LiteratureReportViewProps> = ({
   const [currentStyle, setCurrentStyle] = useState<CitationStyle>(report.citationStyle);
   const [didCopyReport, setDidCopyReport] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const { t } = useTranslation("studio");
 
   const handleCopyReport = async () => {
     await navigator.clipboard.writeText(buildReportMarkdown(report, citations, currentStyle));
@@ -322,11 +331,13 @@ export const LiteratureReportView: React.FC<LiteratureReportViewProps> = ({
           <button
             onClick={onBack}
             className="p-1.5 hover:bg-secondary active:bg-secondary/80 active:scale-[0.97] rounded-md transition text-foreground flex items-center justify-center shrink-0 touch-manipulation"
-            aria-label="Back to Studio"
+            aria-label={t("literatureTable.backToStudio")}
           >
             <ArrowLeft className="w-5 h-5 shrink-0" />
           </button>
-          <span className="text-sm font-semibold text-foreground truncate">{toolbarLabel}</span>
+          <span className="text-sm font-semibold text-foreground truncate">
+            {toolbarLabel ?? t("literatureReport.toolbarLabel")}
+          </span>
         </div>
       )}
 
@@ -338,7 +349,7 @@ export const LiteratureReportView: React.FC<LiteratureReportViewProps> = ({
             className="min-w-0 flex-1 truncate text-sm font-medium text-foreground"
             title={report.title}
           >
-            {toolbarLabel}
+            {toolbarLabel ?? t("literatureReport.toolbarLabel")}
           </h2>
         </div>
 
@@ -347,8 +358,12 @@ export const LiteratureReportView: React.FC<LiteratureReportViewProps> = ({
             type="button"
             onClick={handleCopyReport}
             className={REPORT_TOOLBAR_BTN}
-            title={didCopyReport ? "Copied report" : "Copy with citations"}
-            aria-label={didCopyReport ? "Copied report" : "Copy with citations"}
+            title={
+              didCopyReport ? t("literatureReport.copiedReport") : t("literatureReport.copyReport")
+            }
+            aria-label={
+              didCopyReport ? t("literatureReport.copiedReport") : t("literatureReport.copyReport")
+            }
           >
             {didCopyReport ? (
               <Check className="h-4 w-4 shrink-0" strokeWidth={2} />
@@ -356,7 +371,7 @@ export const LiteratureReportView: React.FC<LiteratureReportViewProps> = ({
               <Copy className="h-4 w-4 shrink-0" strokeWidth={2} />
             )}
             <span className="hidden @min-[520px]/report-toolbar:inline">
-              {didCopyReport ? "Copied" : "Copy with citations"}
+              {didCopyReport ? t("literatureReport.copied") : t("literatureReport.copyReport")}
             </span>
           </button>
           <DropdownMenu
@@ -364,8 +379,8 @@ export const LiteratureReportView: React.FC<LiteratureReportViewProps> = ({
               <button
                 type="button"
                 className={REPORT_TOOLBAR_BTN}
-                title="Export report"
-                aria-label="Export report"
+                title={t("literatureReport.exportReport")}
+                aria-label={t("literatureReport.exportReport")}
               >
                 <Download className="h-4 w-4 shrink-0" strokeWidth={2} />
               </button>
@@ -373,12 +388,12 @@ export const LiteratureReportView: React.FC<LiteratureReportViewProps> = ({
           >
             <ExportMenuItem
               icon={<Printer className="h-4 w-4" />}
-              label="Export PDF"
+              label={t("literatureReport.exportPdf")}
               onClick={handleExportPdf}
             />
             <ExportMenuItem
               icon={<FileDown className="h-4 w-4" />}
-              label="Export Markdown (.md)"
+              label={t("literatureReport.exportMd")}
               onClick={handleExportMarkdown}
             />
           </DropdownMenu>
@@ -387,16 +402,18 @@ export const LiteratureReportView: React.FC<LiteratureReportViewProps> = ({
             onClick={handleSaveAndEdit}
             disabled={!onSaveAndEdit || isSaving}
             className={REPORT_TOOLBAR_BTN}
-            title="Save & Edit Document"
-            aria-label={isSaving ? "Saving document" : "Save and edit document"}
+            title={t("literatureReport.saveEditDoc")}
+            aria-label={
+              isSaving ? t("literatureReport.savingDoc") : t("literatureReport.saveEditDoc")
+            }
           >
             {isSaving ? (
               <Loader2 className="h-4 w-4 shrink-0 animate-spin" strokeWidth={2} />
             ) : (
               <Save className="h-4 w-4 shrink-0" strokeWidth={2} />
             )}
-            <span className="hidden @min-[700px]/report-toolbar:inline">
-              {isSaving ? "Saving..." : "Save & Edit Document"}
+            <span className="hidden @min-[860px]/report-toolbar:inline">
+              {isSaving ? t("literatureReport.savingDoc") : t("literatureReport.saveEditDoc")}
             </span>
           </button>
           {onBack && (
@@ -404,8 +421,8 @@ export const LiteratureReportView: React.FC<LiteratureReportViewProps> = ({
               type="button"
               onClick={onBack}
               className={REPORT_TOOLBAR_BTN}
-              aria-label={`Close ${toolbarLabel.toLowerCase()}`}
-              title="Close"
+              aria-label={`Close ${(toolbarLabel ?? t("literatureReport.toolbarLabel")).toLowerCase()}`}
+              title={t("literatureReport.close")}
             >
               <X className="h-4 w-4 shrink-0" strokeWidth={2} />
             </button>
@@ -441,7 +458,7 @@ export const LiteratureReportView: React.FC<LiteratureReportViewProps> = ({
           ) : (
             <div className="flex flex-col items-center justify-center py-12">
               <FileText className="w-12 h-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">No content available</p>
+              <p className="text-muted-foreground">{t("literatureReport.noContent")}</p>
             </div>
           )}
 

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Flashcard } from "@/shared/types";
 
 interface ProficiencyBadgeProps {
@@ -8,6 +9,7 @@ interface ProficiencyBadgeProps {
  * Compact study status for the flashcard header (no pill chrome).
  */
 export function ProficiencyBadge({ card }: ProficiencyBadgeProps) {
+  const { t } = useTranslation("studio");
   const proficiency = card.proficiency;
   const interval = proficiency?.interval || 0;
   const streak = proficiency?.streak || 0;
@@ -16,25 +18,25 @@ export function ProficiencyBadge({ card }: ProficiencyBadgeProps) {
   let dotClass: string;
 
   if (interval >= 21) {
-    label = "Mastered";
+    label = t("proficiency.mastered");
     dotClass = "bg-emerald-500/80 dark:bg-emerald-400/80";
   } else if (interval >= 7) {
-    label = "Learning";
+    label = t("proficiency.learning");
     dotClass = "bg-sky-500/80 dark:bg-sky-400/80";
   } else if (streak >= 3) {
-    label = `${streak}-day streak`;
+    label = `${streak} ${t("proficiency.dayStreak")}`;
     dotClass = "bg-amber-500/80 dark:bg-amber-400/80";
   } else if (proficiency?.totalReviews && proficiency.totalReviews > 0) {
     const accuracy = proficiency.correctCount / proficiency.totalReviews;
     if (accuracy >= 0.7) {
-      label = "Progressing";
+      label = t("proficiency.progressing");
       dotClass = "bg-violet-500/80 dark:bg-violet-400/80";
     } else {
-      label = "Learning";
+      label = t("proficiency.learning");
       dotClass = "bg-sky-500/80 dark:bg-sky-400/80";
     }
   } else {
-    label = "New";
+    label = t("proficiency.new");
     dotClass = "bg-muted-foreground/50";
   }
 

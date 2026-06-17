@@ -1,4 +1,14 @@
 {
+  "tools": {
+    "audio": "Audio Overview",
+    "mindmap": "Mind Map",
+    "reports": "Reports",
+    "flashcards": "Flashcards",
+    "quiz": "Quiz",
+    "infographic": "Infographic",
+    "writtenQuestions": "Written Questions",
+    "spreadsheets": "Spreadsheets"
+  },
   "header": {
     "backToStudio": "Back to Studio",
     "rename": "Rename",
@@ -607,5 +617,69 @@
     "noMatch": "No notes match your search.",
     "noNotes": "No saved notes yet. Create one to get started!"
   },
-  "anUnknownErrorOccurred": "An unknown error occurred"
+  "anUnknownErrorOccurred": "An unknown error occurred",
+  "literatureTable": {
+    "paperAdded": "Paper added to notebook",
+    "alreadyInNotebook": "Selected papers are already in this notebook",
+    "failedToAdd": "Failed to add papers",
+    "backToStudio": "Back to Studio",
+    "addPapers": "Add Papers",
+    "manageColumns": "Manage Columns",
+    "saveTable": "Save table",
+    "saveTableToStudio": "Save table to Studio",
+    "savingTable": "Saving table",
+    "saving": "Saving...",
+    "export": "Export",
+    "exportTable": "Export table",
+    "csvFormat": "CSV (.csv)",
+    "excelFormat": "Excel (.xlsx)",
+    "exitFullscreen": "Exit full screen",
+    "fullscreenTable": "Full screen table",
+    "close": "Close",
+    "closeTable": "Close table",
+    "selected": "selected",
+    "adding": "Adding…",
+    "addToNotebook": "Add to notebook",
+    "noPapers": "No papers in this table yet",
+    "selectAll": "Select all papers"
+  },
+  "literatureReport": {
+    "references": "References",
+    "copyCitations": "Copy all citations",
+    "copiedCitations": "Copied citations",
+    "copyReport": "Copy with citations",
+    "copiedReport": "Copied report",
+    "copied": "Copied",
+    "exportReport": "Export report",
+    "exportPdf": "Export PDF",
+    "exportMd": "Export Markdown (.md)",
+    "saveEditDoc": "Save & Edit Document",
+    "savingDoc": "Saving document",
+    "noContent": "No content available",
+    "close": "Close",
+    "toolbarLabel": "Literature Report"
+  },
+  "prismaFlow": {
+    "title": "PRISMA flow",
+    "recordsIdentified": "Records identified",
+    "afterDedup": "After deduplication",
+    "recordsScreened": "Records screened",
+    "excluded": "Excluded",
+    "studiesIncluded": "Studies included"
+  },
+  "proficiency": {
+    "mastered": "Mastered",
+    "learning": "Learning",
+    "progressing": "Progressing",
+    "new": "New",
+    "dayStreak": "-day streak"
+  },
+  "flashcard": {
+    "true": "✓ True",
+    "false": "✗ False"
+  },
+  "mindmap": {
+    "untitledNode": "Untitled",
+    "rootFallback": "Mind Map"
+  }
 }

@@ -187,10 +187,10 @@ export function StudyMode({ cards, onComplete, onRateCard, onExit }: StudyModePr
             </div>
             <div className="flex justify-center gap-12 sm:gap-16">
               <span className="text-lg font-semibold text-emerald-700 sm:text-xl dark:text-emerald-400">
-                ✓ True
+                {t("flashcard.true")}
               </span>
               <span className="text-lg font-semibold text-rose-700 sm:text-xl dark:text-rose-400">
-                ✗ False
+                {t("flashcard.false")}
               </span>
             </div>
           </div>

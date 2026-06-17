@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 export interface PrismaFlowCounts {
   recordsIdentified?: number;
@@ -17,6 +18,7 @@ interface PrismaFlowDiagramProps {
  * Lightweight PRISMA-style flow diagram for literature review sessions.
  */
 export const PrismaFlowDiagram: React.FC<PrismaFlowDiagramProps> = ({ counts, className = "" }) => {
+  const { t } = useTranslation("studio");
   const identified = counts.recordsIdentified ?? counts.recordsAfterDedupe;
   const deduped = counts.recordsAfterDedupe ?? identified;
   const screened = counts.recordsScreened ?? deduped;
@@ -29,21 +31,21 @@ export const PrismaFlowDiagram: React.FC<PrismaFlowDiagramProps> = ({ counts, cl
 
   return (
     <div className={`rounded-lg border border-border bg-muted/30 p-4 text-sm ${className}`}>
-      <p className="mb-3 font-semibold text-foreground">PRISMA flow</p>
+      <p className="mb-3 font-semibold text-foreground">{t("prismaFlow.title")}</p>
       <div className="flex flex-col items-center gap-2">
-        <FlowBox label="Records identified" value={identified} variant="blue" />
+        <FlowBox label={t("prismaFlow.recordsIdentified")} value={identified} variant="blue" />
         <Arrow />
-        <FlowBox label="After deduplication" value={deduped} variant="blue" />
+        <FlowBox label={t("prismaFlow.afterDedup")} value={deduped} variant="blue" />
         <Arrow />
         <div className="flex w-full max-w-md flex-wrap items-start justify-center gap-4">
-          <FlowBox label="Records screened" value={screened} variant="purple" />
+          <FlowBox label={t("prismaFlow.recordsScreened")} value={screened} variant="purple" />
           <div className="flex flex-col items-center gap-1">
-            <span className="text-xs text-muted-foreground">Excluded</span>
+            <span className="text-xs text-muted-foreground">{t("prismaFlow.excluded")}</span>
             <FlowBox label="" value={excluded} variant="red" compact />
           </div>
         </div>
         <Arrow />
-        <FlowBox label="Studies included" value={included} variant="green" />
+        <FlowBox label={t("prismaFlow.studiesIncluded")} value={included} variant="green" />
       </div>
     </div>
   );
