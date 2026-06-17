@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "BETTER-MEMORY",
+    "name": "Better Memory",
     "slug": "better-memory",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -58,8 +58,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow BETTER-MEMORY to access your photos to upload sources.",
-          "cameraPermission": "Allow BETTER-MEMORY to use the camera for document capture."
+          "photosPermission": "Allow Better Memory to access your photos to upload sources.",
+          "cameraPermission": "Allow Better Memory to use the camera for document capture."
         }
       ],
       "@sentry/react-native/expo"

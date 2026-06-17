@@ -54,19 +54,19 @@ export const SEO_CONTENT_PAGES: SeoContentPageConfig[] = [
   {
     path: "/compare/better-memory-vs-notebooklm",
     pageType: "compare",
-    title: "Best NotebookLM Alternative for Students & Researchers | BETTER-MEMORY",
+    title: "Best NotebookLM Alternative for Students & Researchers | Better Memory",
     description:
-      "Looking for a NotebookLM alternative? Compare BETTER-MEMORY and NotebookLM for free PDF study, audio overviews, flashcards, literature review, and research workflows.",
+      "Looking for a NotebookLM alternative? Compare Better Memory and NotebookLM for free PDF study, audio overviews, flashcards, literature review, and research workflows.",
     keywords:
-      "NotebookLM alternative, best NotebookLM alternative, NotebookLM alternative free, NotebookLM alternatives for studying, NotebookLM audio overview alternative, BETTER-MEMORY vs NotebookLM",
+      "NotebookLM alternative, best NotebookLM alternative, NotebookLM alternative free, NotebookLM alternatives for studying, NotebookLM audio overview alternative, Better Memory vs NotebookLM",
     h1: "Best NotebookLM alternative for PDFs, flashcards, and research",
     intro:
-      "BETTER-MEMORY is a strong NotebookLM alternative when you want source-grounded chat with citations plus notebook folders, web and academic discovery, literature review with twelve citation styles, and study tools such as written questions with feedback and spaced-repetition flashcards. NotebookLM fits users anchored in Google Workspace who want Audio Overviews, Video Overviews, and the Learning Guide. This page compares both so you can pick the best NotebookLM alternative for your workflow—not just a feature checklist.",
+      "Better Memory is a strong NotebookLM alternative when you want source-grounded chat with citations plus notebook folders, web and academic discovery, literature review with twelve citation styles, and study tools such as written questions with feedback and spaced-repetition flashcards. NotebookLM fits users anchored in Google Workspace who want Audio Overviews, Video Overviews, and the Learning Guide. This page compares both so you can pick the best NotebookLM alternative for your workflow—not just a feature checklist.",
     quickAnswer: {
       chooseCompetitor:
         "Choose NotebookLM if you want Google's ecosystem integration plus Audio Overviews, Video Overviews, flashcards, quizzes, reports, and the Learning Guide AI tutor on top of source-grounded chat with citations.",
       chooseBetterMemory:
-        "Choose BETTER-MEMORY if you want source-grounded chat with citations plus folders for notebooks, web and academic source discovery, literature review with twelve citation styles, chat search with one-click save to your notebook, a model switcher, voice input in chat, audio transcription, written questions with feedback, spaced-repetition flashcards, editable reports, and academic import workflows.",
+        "Choose Better Memory if you want source-grounded chat with citations plus folders for notebooks, web and academic source discovery, literature review with twelve citation styles, chat search with one-click save to your notebook, a model switcher, voice input in chat, audio transcription, written questions with feedback, spaced-repetition flashcards, editable reports, and academic import workflows.",
     },
     comparisonTable: [
       {
@@ -153,23 +153,23 @@ export const SEO_CONTENT_PAGES: SeoContentPageConfig[] = [
     ],
     sections: [
       {
-        h2: "Why choose BETTER-MEMORY as a NotebookLM alternative?",
+        h2: "Why choose Better Memory as a NotebookLM alternative?",
         paragraphs: [
-          "Most people searching for a NotebookLM alternative want the same core idea—upload sources, chat with citations, and generate study or research outputs. BETTER-MEMORY matches that foundation and adds workflows NotebookLM does not emphasize on its product pages: academic paper import, literature review with multiple citation styles, written questions with feedback, notebook folders, and in-app web and academic discovery.",
-          "If you need a free NotebookLM alternative for studying from PDFs, generating flashcards and quizzes, or running literature review on a reading list, BETTER-MEMORY is built for that path. If you primarily want Google's ecosystem, Video Overviews, and the Learning Guide AI tutor, NotebookLM may still be the better fit.",
+          "Most people searching for a NotebookLM alternative want the same core idea—upload sources, chat with citations, and generate study or research outputs. Better Memory matches that foundation and adds workflows NotebookLM does not emphasize on its product pages: academic paper import, literature review with multiple citation styles, written questions with feedback, notebook folders, and in-app web and academic discovery.",
+          "If you need a free NotebookLM alternative for studying from PDFs, generating flashcards and quizzes, or running literature review on a reading list, Better Memory is built for that path. If you primarily want Google's ecosystem, Video Overviews, and the Learning Guide AI tutor, NotebookLM may still be the better fit.",
         ],
       },
       {
-        h2: "What do BETTER-MEMORY and NotebookLM have in common?",
+        h2: "What do Better Memory and NotebookLM have in common?",
         paragraphs: [
           "Both tools are built around source-grounded AI with citations: you add documents, ask questions, and get answers and outputs that refer back to those materials rather than inventing facts from general training data alone.",
           "Each supports study-oriented outputs such as flashcards, quizzes, mind maps, audio-style recaps, reports, and infographics. Both are useful when you need to review course readings or research papers inside a dedicated workspace instead of copying text into a blank chat window.",
         ],
       },
       {
-        h2: "When is BETTER-MEMORY the better choice?",
+        h2: "When is Better Memory the better choice?",
         paragraphs: [
-          "BETTER-MEMORY fits when your workflow needs more than upload-and-chat inside one Google stack. It combines notebook folders, built-in discovery, flexible chat search, and study and research tools that NotebookLM does not emphasize on its product pages.",
+          "Better Memory fits when your workflow needs more than upload-and-chat inside one Google stack. It combines notebook folders, built-in discovery, flexible chat search, and study and research tools that NotebookLM does not emphasize on its product pages.",
         ],
         bullets: [
           "You want notebooks organized in folders and moved between them",
@@ -177,7 +177,7 @@ export const SEO_CONTENT_PAGES: SeoContentPageConfig[] = [
           "You want web or academic search in chat and to save external sources from chat into the notebook",
           "You prefer choosing among multiple models instead of a single Google model stack",
           "You need voice transcription in chat or audio file ingestion with transcription",
-          "You want written questions with feedback on your answers—a standout BETTER-MEMORY feature",
+          "You want written questions with feedback on your answers—a standout Better Memory feature",
           "You want flashcards with a spaced-repetition study mode",
           "You need to edit generated reports in place",
           "You want delete and refresh controls in the source panel",
@@ -186,7 +186,7 @@ export const SEO_CONTENT_PAGES: SeoContentPageConfig[] = [
         ],
       },
       {
-        h2: "What sets BETTER-MEMORY apart?",
+        h2: "What sets Better Memory apart?",
         paragraphs: [
           "Both products generate flashcards, quizzes, mind maps, reports, infographics, and spreadsheets from sources. The meaningful differences are workflow depth and control—not a longer list of output types.",
         ],
@@ -214,22 +214,22 @@ export const SEO_CONTENT_PAGES: SeoContentPageConfig[] = [
       {
         h2: "Which tool is better for students?",
         paragraphs: [
-          "For students, the better tool depends on scope. Both offer strong grounded chat with citations from uploads. NotebookLM adds Video Overviews and the Learning Guide AI tutor on supported plans. BETTER-MEMORY differentiates with written questions with feedback, spaced-repetition flashcards, notebook folders, in-app discovery, chat search that saves sources to your notebook, voice input, and editable reports.",
+          "For students, the better tool depends on scope. Both offer strong grounded chat with citations from uploads. NotebookLM adds Video Overviews and the Learning Guide AI tutor on supported plans. Better Memory differentiates with written questions with feedback, spaced-repetition flashcards, notebook folders, in-app discovery, chat search that saves sources to your notebook, voice input, and editable reports.",
           "Neither replaces reviewing your original PDFs before exams. Pick the tool whose outputs match how you actually study.",
         ],
       },
       {
         h2: "Which tool is better for literature review?",
         paragraphs: [
-          "BETTER-MEMORY is designed for research notebooks with academic discovery, paper import, chat across papers, and dedicated literature review mode—with twelve citation styles (APA, MLA, Chicago, IEEE, Vancouver, Harvard, and more) for formatted references in reviews and reports. NotebookLM offers source discovery, Deep Research, and literature review synthesis, but does not offer the same multi-style citation formatting for literature review deliverables.",
-          "For a reading-list-first literature review where you need import, synthesis, and field-appropriate citations, BETTER-MEMORY is the closer match. For exploratory synthesis from mixed uploads inside Google, NotebookLM remains competitive.",
+          "Better Memory is designed for research notebooks with academic discovery, paper import, chat across papers, and dedicated literature review mode—with twelve citation styles (APA, MLA, Chicago, IEEE, Vancouver, Harvard, and more) for formatted references in reviews and reports. NotebookLM offers source discovery, Deep Research, and literature review synthesis, but does not offer the same multi-style citation formatting for literature review deliverables.",
+          "For a reading-list-first literature review where you need import, synthesis, and field-appropriate citations, Better Memory is the closer match. For exploratory synthesis from mixed uploads inside Google, NotebookLM remains competitive.",
         ],
       },
       {
         h2: "Which tool is better for studying from PDFs?",
         paragraphs: [
           "Both handle PDF-grounded study well. Upload chapters or lecture slides, ask clarifying questions, then generate flashcards or quizzes. Each can also produce mind maps, audio recaps, reports, and infographics from the same sources.",
-          "NotebookLM adds Video Overviews and the Learning Guide AI tutor on supported plans. BETTER-MEMORY adds written questions with feedback, spaced-repetition flashcards, voice and audio ingestion, discovery and chat search workflows, and editable reports—pick based on control and workflow fit, not on who lists more output types.",
+          "NotebookLM adds Video Overviews and the Learning Guide AI tutor on supported plans. Better Memory adds written questions with feedback, spaced-repetition flashcards, voice and audio ingestion, discovery and chat search workflows, and editable reports—pick based on control and workflow fit, not on who lists more output types.",
         ],
       },
     ],
@@ -237,50 +237,50 @@ export const SEO_CONTENT_PAGES: SeoContentPageConfig[] = [
       {
         question: "What is the best NotebookLM alternative?",
         answer:
-          "The best NotebookLM alternative depends on your workflow. BETTER-MEMORY is a strong fit for students and researchers who want source-grounded chat plus folders, discovery, academic imports, literature review with twelve citation styles, written questions with feedback, and spaced-repetition flashcards. NotebookLM remains competitive if you prioritize Google's ecosystem, Video Overviews, and the Learning Guide AI tutor.",
+          "The best NotebookLM alternative depends on your workflow. Better Memory is a strong fit for students and researchers who want source-grounded chat plus folders, discovery, academic imports, literature review with twelve citation styles, written questions with feedback, and spaced-repetition flashcards. NotebookLM remains competitive if you prioritize Google's ecosystem, Video Overviews, and the Learning Guide AI tutor.",
       },
       {
         question: "Is there a free NotebookLM alternative?",
         answer:
-          "Yes. BETTER-MEMORY offers a free tier with notebooks, per-notebook source limits, and daily generation caps so you can upload PDFs, chat with sources, and try flashcards, quizzes, and literature review before upgrading.",
+          "Yes. Better Memory offers a free tier with notebooks, per-notebook source limits, and daily generation caps so you can upload PDFs, chat with sources, and try flashcards, quizzes, and literature review before upgrading.",
       },
       {
-        question: "Is BETTER-MEMORY a NotebookLM alternative for audio overviews?",
+        question: "Is Better Memory a NotebookLM alternative for audio overviews?",
         answer:
-          "Yes. BETTER-MEMORY generates audio overviews from your uploaded sources so you can listen to study recaps on the go—similar to NotebookLM's Audio Overviews, alongside flashcards, quizzes, and research tools in the same notebook.",
+          "Yes. Better Memory generates audio overviews from your uploaded sources so you can listen to study recaps on the go—similar to NotebookLM's Audio Overviews, alongside flashcards, quizzes, and research tools in the same notebook.",
       },
       {
-        question: "Is BETTER-MEMORY a NotebookLM alternative?",
+        question: "Is Better Memory a NotebookLM alternative?",
         answer:
-          "Yes, for many workflows. Both support source-grounded chat with citations. BETTER-MEMORY is the stronger fit when you also need folders, web and academic discovery, chat search with save-to-notebook, multiple models, written questions with feedback, spaced-repetition flashcards, editable reports, and academic imports. NotebookLM remains the better fit if you prioritize Google's ecosystem, Video Overviews, and the Learning Guide AI tutor.",
+          "Yes, for many workflows. Both support source-grounded chat with citations. Better Memory is the stronger fit when you also need folders, web and academic discovery, chat search with save-to-notebook, multiple models, written questions with feedback, spaced-repetition flashcards, editable reports, and academic imports. NotebookLM remains the better fit if you prioritize Google's ecosystem, Video Overviews, and the Learning Guide AI tutor.",
       },
       {
         question: "Which tool is better for students?",
         answer:
-          "Both handle grounded chat with citations well. NotebookLM adds Video Overviews and the Learning Guide AI tutor on supported plans. BETTER-MEMORY fits students who want written questions with feedback, spaced-repetition flashcards, discovery and chat search workflows, voice input, notebook folders, and editable reports. Compare workflows against how you actually study—not just output checklists.",
+          "Both handle grounded chat with citations well. NotebookLM adds Video Overviews and the Learning Guide AI tutor on supported plans. Better Memory fits students who want written questions with feedback, spaced-repetition flashcards, discovery and chat search workflows, voice input, notebook folders, and editable reports. Compare workflows against how you actually study—not just output checklists.",
       },
       {
         question: "Which tool is better for literature review?",
         answer:
-          "BETTER-MEMORY is built for research notebooks with paper discovery, DOI and reference-manager import, AI literature review, and twelve citation styles for formatted references in reviews and reports. NotebookLM supports discovery, Deep Research, and literature review synthesis but does not offer the same multi-style citation formatting or academic import workflow.",
+          "Better Memory is built for research notebooks with paper discovery, DOI and reference-manager import, AI literature review, and twelve citation styles for formatted references in reviews and reports. NotebookLM supports discovery, Deep Research, and literature review synthesis but does not offer the same multi-style citation formatting or academic import workflow.",
       },
       {
         question: "Does NotebookLM have written questions with feedback?",
         answer:
-          "NotebookLM offers quizzes and the Learning Guide AI tutor, but its product pages do not describe short-answer or essay practice with feedback on your written responses. BETTER-MEMORY's Written Questions tool generates prompts from your sources and gives feedback on what you submit—useful when exams require written answers, not only multiple choice.",
+          "NotebookLM offers quizzes and the Learning Guide AI tutor, but its product pages do not describe short-answer or essay practice with feedback on your written responses. Better Memory's Written Questions tool generates prompts from your sources and gives feedback on what you submit—useful when exams require written answers, not only multiple choice.",
       },
     ],
-    ctaLabel: "Try BETTER-MEMORY free",
-    conversionPromise: "Try BETTER-MEMORY free with your own PDFs, papers, and lecture materials.",
+    ctaLabel: "Try Better Memory free",
+    conversionPromise: "Try Better Memory free with your own PDFs, papers, and lecture materials.",
     signupIntentKey: "sourceUpload",
     breadcrumbParent: { name: "Compare", path: "/compare/better-memory-vs-notebooklm" },
-    navLabel: "BETTER-MEMORY vs NotebookLM",
+    navLabel: "Better Memory vs NotebookLM",
     relatedLinks: [
       {
         path: "/students/ai-written-questions",
         label: "Written questions with feedback",
         description:
-          "Practice short-answer and essay responses from your sources—BETTER-MEMORY grades your answers, not just multiple choice.",
+          "Practice short-answer and essay responses from your sources—Better Memory grades your answers, not just multiple choice.",
       },
       {
         path: "/guides/how-to-study-from-pdfs-with-ai",
@@ -308,12 +308,12 @@ export const SEO_CONTENT_PAGES: SeoContentPageConfig[] = [
     pageType: "guide",
     title: "How to Study From PDFs With AI",
     description:
-      "Learn how to turn PDFs, lecture notes, and class readings into flashcards, quizzes, mind maps, audio overviews, and study guides with BETTER-MEMORY.",
+      "Learn how to turn PDFs, lecture notes, and class readings into flashcards, quizzes, mind maps, audio overviews, and study guides with Better Memory.",
     keywords:
       "how to study from PDFs with AI, AI flashcards from PDF, turn lecture slides into quizzes, chat with PDF study guide",
     h1: "How to Study From PDFs With AI",
     intro:
-      "The best AI study workflow starts with your own material: textbook chapters, lecture slides, reading packets, and notes. BETTER-MEMORY is built for this workflow by letting you upload sources into a notebook, chat with them, and turn them into flashcards, quizzes, written questions with feedback, mind maps, reports, and audio overviews—all grounded in the documents you provide.",
+      "The best AI study workflow starts with your own material: textbook chapters, lecture slides, reading packets, and notes. Better Memory is built for this workflow by letting you upload sources into a notebook, chat with them, and turn them into flashcards, quizzes, written questions with feedback, mind maps, reports, and audio overviews—all grounded in the documents you provide.",
     sections: [
       {
         h2: "Step 1 — Add your source material",
@@ -367,7 +367,7 @@ export const SEO_CONTENT_PAGES: SeoContentPageConfig[] = [
       {
         h2: "Why this works better than manual copying",
         paragraphs: [
-          "BETTER-MEMORY starts from your actual study sources rather than asking you to build everything card by card. That makes it closer to a source-grounded study workflow than a blank flashcard app—you upload once, then branch into the formats you need for each exam.",
+          "Better Memory starts from your actual study sources rather than asking you to build everything card by card. That makes it closer to a source-grounded study workflow than a blank flashcard app—you upload once, then branch into the formats you need for each exam.",
         ],
       },
     ],
@@ -375,7 +375,7 @@ export const SEO_CONTENT_PAGES: SeoContentPageConfig[] = [
       {
         question: "Can AI make flashcards from PDFs?",
         answer:
-          "Yes. Upload or paste your PDF into a BETTER-MEMORY notebook, select the sources, and generate a flashcard deck. Review and edit each card against the original text before studying.",
+          "Yes. Upload or paste your PDF into a Better Memory notebook, select the sources, and generate a flashcard deck. Review and edit each card against the original text before studying.",
       },
       {
         question: "Can I turn lecture slides into quizzes?",
@@ -385,7 +385,7 @@ export const SEO_CONTENT_PAGES: SeoContentPageConfig[] = [
       {
         question: "Should I trust AI-generated study materials?",
         answer:
-          "Treat them as drafts. BETTER-MEMORY grounds outputs in your uploads, but you should verify wording, definitions, and edge cases against the original PDFs before exams or graded work.",
+          "Treat them as drafts. Better Memory grounds outputs in your uploads, but you should verify wording, definitions, and edge cases against the original PDFs before exams or graded work.",
       },
       {
         question: "Do I need to upload sources first?",
@@ -423,7 +423,7 @@ export const SEO_CONTENT_PAGES: SeoContentPageConfig[] = [
       },
       {
         path: "/compare/better-memory-vs-notebooklm",
-        label: "BETTER-MEMORY vs NotebookLM",
+        label: "Better Memory vs NotebookLM",
         description: "See how written questions with feedback compares to NotebookLM study tools.",
       },
     ],
@@ -436,7 +436,7 @@ export const SEO_CONTENT_PAGES: SeoContentPageConfig[] = [
     pageType: "guide",
     title: "How to Do an AI Literature Review With Your Papers (Step-by-Step)",
     description:
-      "Learn how to use AI for literature review: build a paper set, chat across sources, run literature review mode, and synthesize themes and gaps with BETTER-MEMORY—without replacing scholarly judgment.",
+      "Learn how to use AI for literature review: build a paper set, chat across sources, run literature review mode, and synthesize themes and gaps with Better Memory—without replacing scholarly judgment.",
     keywords:
       "ai for literature review, how to do literature review with AI, ai for research literature review, AI literature review from papers, import DOI BibTeX Zotero",
     h1: "How to use AI for literature review with your papers",
@@ -449,7 +449,7 @@ export const SEO_CONTENT_PAGES: SeoContentPageConfig[] = [
           "Start by discovering or importing papers into one research notebook. Scope the topic early so chat and literature review run on a coherent reading list rather than a random pile of PDFs.",
         ],
         bullets: [
-          "Discover papers through academic search in BETTER-MEMORY",
+          "Discover papers through academic search in Better Memory",
           "Import via DOI, BibTeX, Zotero, or Mendeley",
           "Upload PDFs directly when you already have files",
         ],
@@ -493,7 +493,7 @@ export const SEO_CONTENT_PAGES: SeoContentPageConfig[] = [
       {
         h2: "What it is not",
         paragraphs: [
-          "BETTER-MEMORY is not a substitute for a preregistered or fully systematic review protocol. It does not replace manual judgment on paper quality, inclusion criteria, or claims evaluation. Use it to accelerate reading and drafting while you retain responsibility for methodology and conclusions.",
+          "Better Memory is not a substitute for a preregistered or fully systematic review protocol. It does not replace manual judgment on paper quality, inclusion criteria, or claims evaluation. Use it to accelerate reading and drafting while you retain responsibility for methodology and conclusions.",
         ],
       },
       {
@@ -515,14 +515,14 @@ export const SEO_CONTENT_PAGES: SeoContentPageConfig[] = [
           "Yes. Add papers to a notebook, then use chat or literature review mode to summarize themes, methods, and gaps across the set. Always verify summaries against the original PDFs.",
       },
       {
-        question: "Is BETTER-MEMORY a systematic review tool?",
+        question: "Is Better Memory a systematic review tool?",
         answer:
           "No. It supports AI-assisted literature review and synthesis, but not preregistered systematic review protocols, screening workflows, or meta-analysis. Use it to orient and draft—not as a replacement for formal systematic methods.",
       },
       {
         question: "Can I import papers from Zotero or DOI?",
         answer:
-          "Yes. BETTER-MEMORY supports imports from DOI, BibTeX, Zotero, and Mendeley into research notebooks alongside direct PDF uploads.",
+          "Yes. Better Memory supports imports from DOI, BibTeX, Zotero, and Mendeley into research notebooks alongside direct PDF uploads.",
       },
       {
         question: "Can I chat with my reading list?",

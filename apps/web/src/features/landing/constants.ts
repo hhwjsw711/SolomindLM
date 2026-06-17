@@ -36,7 +36,7 @@ export const LANDING_CONTENT = {
     headline: "Transform How You Learn with AI",
     subheadline:
       "Upload any content—PDFs, videos, articles—and generate flashcards, quizzes, mind maps, and more. Perfect for students, researchers, and lifelong learners.",
-    primaryCTA: "Try BETTER-MEMORY",
+    primaryCTA: "Try Better Memory",
     secondaryCTA: "See Features",
   },
   features: LANDING_TOOLS.map((tool) => ({
@@ -47,7 +47,7 @@ export const LANDING_CONTENT = {
   contentShowcase: {
     title: "Upload Anything, Learn Everything",
     description:
-      "Upload files, paste links, import papers, or pull from Google Drive—BETTER-MEMORY turns your sources into interactive study materials",
+      "Upload files, paste links, import papers, or pull from Google Drive—Better Memory turns your sources into interactive study materials",
     formats: [
       { name: "PDFs", icon: "FileText" },
       { name: "Video Transcripts", icon: "Youtube" },

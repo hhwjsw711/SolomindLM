@@ -41,7 +41,7 @@ describe("applySeoToHtml", () => {
 
     const html = applySeoToHtml(MINIMAL_HTML, SEO_BASE_URL, seoPageToHeadInput(page!));
 
-    expect(html).toContain("<title>Privacy Policy - BETTER-MEMORY</title>");
+    expect(html).toContain("<title>Privacy Policy - Better Memory</title>");
     expect(html).toContain(`rel="canonical" href="${SEO_BASE_URL}/privacy"`);
     expect(html).toContain('name="robots" content="index, follow"');
   });

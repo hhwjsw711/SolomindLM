@@ -32,9 +32,9 @@ export function FaqPage() {
     <>
       <SEOMeta
         pagePath="/faq"
-        title="FAQ | BETTER-MEMORY"
-        description="Answers about BETTER-MEMORY study tools, research workflows, pricing, privacy, and how to get started with notebooks and sources."
-        keywords="BETTER-MEMORY FAQ, study tools help, research assistant questions, pricing limits, AI learning"
+        title="FAQ | Better Memory"
+        description="Answers about Better Memory study tools, research workflows, pricing, privacy, and how to get started with notebooks and sources."
+        keywords="Better Memory FAQ, study tools help, research assistant questions, pricing limits, AI learning"
       />
       <div className="min-h-screen landing-grid-pattern">
         <FaqHeader />

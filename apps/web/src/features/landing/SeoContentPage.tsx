@@ -79,11 +79,11 @@ function SeoContentHeader() {
         <Link to="/" className="inline-flex items-center gap-2.5">
           <img
             src="/BETTER-MEMORY_logo.png"
-            alt="BETTER-MEMORY"
+            alt="Better Memory"
             className="w-8 h-8 shrink-0 object-contain"
           />
           <span className="text-lg font-display font-bold text-foreground tracking-tight">
-            BETTER-MEMORY
+            Better Memory
           </span>
         </Link>
         <Link
@@ -121,7 +121,8 @@ function SeoContentHero({ page, onSignup }: { page: SeoContentPageConfig; onSign
               </p>
             ) : null}
             <p className="text-sm text-foreground leading-relaxed">
-              <span className="font-medium">BETTER-MEMORY:</span> {page.quickAnswer.chooseBetterMemory}
+              <span className="font-medium">Better Memory:</span>{" "}
+              {page.quickAnswer.chooseBetterMemory}
             </p>
           </div>
         ) : null}
@@ -180,7 +181,7 @@ function SeoContentComparisonTable({
               Topic
             </th>
             <th scope="col" className="px-4 py-3 text-left font-semibold text-foreground">
-              BETTER-MEMORY
+              Better Memory
             </th>
             <th scope="col" className="px-4 py-3 text-left font-semibold text-foreground">
               NotebookLM
@@ -250,7 +251,7 @@ function SeoContentRelatedSection({ page }: { page: SeoContentPageConfig }) {
             Related pages
           </h2>
           <p className="text-muted-foreground">
-            Continue with BETTER-MEMORY study and research workflows.
+            Continue with Better Memory study and research workflows.
           </p>
         </div>
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

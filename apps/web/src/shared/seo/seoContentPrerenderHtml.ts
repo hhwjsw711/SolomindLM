@@ -21,7 +21,7 @@ export function buildSeoContentPrerenderBody(page: SeoContentPageConfig): string
     ? `      <section aria-labelledby="seo-prerender-quick-answer">
         <h2 id="seo-prerender-quick-answer">Quick answer</h2>
         ${page.quickAnswer.chooseCompetitor ? `<p><strong>NotebookLM:</strong> ${escapeHtml(page.quickAnswer.chooseCompetitor)}</p>` : ""}
-        <p><strong>BETTER-MEMORY:</strong> ${escapeHtml(page.quickAnswer.chooseBetterMemory)}</p>
+        <p><strong>Better Memory:</strong> ${escapeHtml(page.quickAnswer.chooseBetterMemory)}</p>
       </section>`
     : "";
 
@@ -30,7 +30,7 @@ export function buildSeoContentPrerenderBody(page: SeoContentPageConfig): string
         <h2 id="seo-prerender-comparison">Comparison</h2>
         <table>
           <thead>
-            <tr><th>Topic</th><th>BETTER-MEMORY</th><th>NotebookLM</th></tr>
+            <tr><th>Topic</th><th>Better Memory</th><th>NotebookLM</th></tr>
           </thead>
           <tbody>
 ${page.comparisonTable
@@ -99,7 +99,7 @@ ${relatedLinks}
         <p>${escapeHtml(page.ctaLabel)}</p>
       </section>
       <footer>
-        <p><a href="/">BETTER-MEMORY home</a></p>
+        <p><a href="/">Better Memory home</a></p>
       </footer>
     </article>`;
 }

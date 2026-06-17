@@ -20,11 +20,11 @@ export function buildFaqPrerenderBody(): string {
   return `    <article data-seo-prerender="true" id="seo-prerender-content">
       <header>
         <h1>Frequently asked questions</h1>
-        <p>Answers about BETTER-MEMORY study tools, research workflows, pricing, privacy, and getting started.</p>
+        <p>Answers about Better Memory study tools, research workflows, pricing, privacy, and getting started.</p>
       </header>
 ${sections}
       <footer>
-        <p><a href="/">BETTER-MEMORY home</a> · <a href="/privacy">Privacy Policy</a> · <a href="/terms">Terms of Service</a></p>
+        <p><a href="/">Better Memory home</a> · <a href="/privacy">Privacy Policy</a> · <a href="/terms">Terms of Service</a></p>
       </footer>
     </article>`;
 }

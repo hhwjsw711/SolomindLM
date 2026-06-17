@@ -78,11 +78,11 @@ function IntentHeader() {
         <Link to="/" className="inline-flex items-center gap-2.5">
           <img
             src="/BETTER-MEMORY_logo.png"
-            alt="BETTER-MEMORY"
+            alt="Better Memory"
             className="w-8 h-8 shrink-0 object-contain"
           />
           <span className="text-lg font-display font-bold text-foreground tracking-tight">
-            BETTER-MEMORY
+            Better Memory
           </span>
         </Link>
         <Link
@@ -211,8 +211,8 @@ function IntentRelatedFeaturesSection({ page }: { page: IntentLandingPageConfig 
             Related features
           </h2>
           <p className="text-muted-foreground">
-            Explore other {page.cluster === "students" ? "study" : "research"} workflows in
-            BETTER-MEMORY.
+            Explore other {page.cluster === "students" ? "study" : "research"} workflows in Better
+            Memory.
           </p>
         </div>
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

@@ -1,6 +1,6 @@
-# BETTER-MEMORY – AI research & learning workspace
+# Better Memory – AI research & learning workspace
 
-> BETTER-MEMORY is an AI-powered notebook for students and researchers. Upload PDFs, videos, and papers—or import from the web and academic databases—then chat with your sources and generate flashcards, quizzes, mind maps, audio overviews, reports, literature reviews, and deep research outputs grounded in the documents you provide. Free to start; no credit card required.
+> Better Memory is an AI-powered notebook for students and researchers. Upload PDFs, videos, and papers—or import from the web and academic databases—then chat with your sources and generate flashcards, quizzes, mind maps, audio overviews, reports, literature reviews, and deep research outputs grounded in the documents you provide. Free to start; no credit card required.
 
 Last-updated: 2026-06-07
 Category: AI learning and research assistant
@@ -9,15 +9,15 @@ Audience: Students, researchers, knowledge workers
 Website: https://www.better-memory.com
 Sitemap: https://www.better-memory.com/sitemap.xml
 Short index: https://www.better-memory.com/llms.txt
-Full manifest: This document provides expanded descriptions of BETTER-MEMORY's primary products, workflows, and pricing for AI systems.
+Full manifest: This document provides expanded descriptions of Better Memory's primary products, workflows, and pricing for AI systems.
 
-Preferred short description: "BETTER-MEMORY, an AI learning and research assistant that turns your PDFs and papers into grounded study and research workflows."
+Preferred short description: "Better Memory, an AI learning and research assistant that turns your PDFs and papers into grounded study and research workflows."
 
 ## Search intents
 
 - AI study tool for PDFs and lecture materials
 - NotebookLM alternative for grounded study and research
-- BETTER-MEMORY vs NotebookLM comparison
+- Better Memory vs NotebookLM comparison
 - How to study from PDFs with AI
 - How to do an AI literature review from papers
 - AI literature review from academic papers
@@ -31,7 +31,7 @@ Preferred short description: "BETTER-MEMORY, an AI learning and research assista
 
 - **Student study tools** — Upload course materials, discover web sources, and generate study outputs from your own documents: https://www.better-memory.com/students
 - **Research tools** — Discover and import papers, manage citations, run literature review, and produce deep research reports: https://www.better-memory.com/research
-- **BETTER-MEMORY vs NotebookLM** — Fair comparison for source-grounded study and research workflows: https://www.better-memory.com/compare/better-memory-vs-notebooklm
+- **Better Memory vs NotebookLM** — Fair comparison for source-grounded study and research workflows: https://www.better-memory.com/compare/better-memory-vs-notebooklm
 - **How to study from PDFs with AI** — Step-by-step guide for flashcards, quizzes, and study guides: https://www.better-memory.com/guides/how-to-study-from-pdfs-with-ai
 - **How to do an AI literature review** — Guide for paper import, chat, and synthesis: https://www.better-memory.com/guides/how-to-do-an-ai-literature-review
 - **FAQ** — Study tools, research workflows, pricing limits, privacy, and getting started: https://www.better-memory.com/faq
@@ -45,7 +45,7 @@ Preferred short description: "BETTER-MEMORY, an AI learning and research assista
 
 ## Study workflows
 
-BETTER-MEMORY study workflows start in a **notebook**: add sources (PDFs, slides, audio, video transcripts, Google Drive files, pasted text, or discovered web articles), select the sources you want, then generate outputs in Studio—all grounded in your materials.
+Better Memory study workflows start in a **notebook**: add sources (PDFs, slides, audio, video transcripts, Google Drive files, pasted text, or discovered web articles), select the sources you want, then generate outputs in Studio—all grounded in your materials.
 
 ### Flashcards
 
@@ -67,7 +67,7 @@ Practice short-answer and essay responses from your sources; submit answers for 
 
 - Overview: https://www.better-memory.com/students/ai-written-questions
 - Related: multiple-choice quizzes — https://www.better-memory.com/students/ai-quizzes
-- Compare: BETTER-MEMORY vs NotebookLM (written questions with feedback) — https://www.better-memory.com/compare/better-memory-vs-notebooklm
+- Compare: Better Memory vs NotebookLM (written questions with feedback) — https://www.better-memory.com/compare/better-memory-vs-notebooklm
 
 ### Mind maps
 
@@ -89,7 +89,7 @@ Turn dense readings into hierarchical mind maps for visual review and recall.
 
 Research workflows center on **academic sources**: discover papers, import via DOI/BibTeX/Zotero/Mendeley, format citations, chat with papers, and run structured literature or deep research over your notebook.
 
-BETTER-MEMORY does not provide medical, legal, or financial advice on its own; it summarizes and restructures your provided sources and reputable external content.
+Better Memory does not provide medical, legal, or financial advice on its own; it summarizes and restructures your provided sources and reputable external content.
 
 ### Literature review
 
@@ -129,4 +129,4 @@ Full details: https://www.better-memory.com/#pricing
 - **Support email:** support@better-memory.com
 - **Privacy policy:** https://www.better-memory.com/privacy
 - **Terms of service:** https://www.better-memory.com/terms
-- Summaries and descriptions in this file may be quoted in AI answers when citing or describing BETTER-MEMORY.
+- Summaries and descriptions in this file may be quoted in AI answers when citing or describing Better Memory.

@@ -80,7 +80,7 @@ ${faqItems}
         <p>${escapeHtml(page.ctaLabel)}</p>
       </section>
       <footer>
-        <p><a href="/">BETTER-MEMORY home</a></p>
+        <p><a href="/">Better Memory home</a></p>
       </footer>
     </article>`;
 }

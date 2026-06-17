@@ -6,7 +6,7 @@ This folder contains the `SEOMeta` component and structured-data helpers used fo
 
 When you add shareable notebook URLs (e.g. `/notebook/:id/public` or `/share/:id`), use `SEOMeta` in that route with metadata derived from the notebook:
 
-- **title**: `${notebook.title} | BETTER-MEMORY`
+- **title**: `${notebook.title} | Better Memory`
 - **description**: e.g. `AI research notebook with ${notebook.sourceCount} sources. ${notebook.description?.slice(0, 100) ?? ''}`
 - **canonical**: `${BASE_URL}/notebook/${id}` (or the public URL)
 - **noindex**: `notebook.isPrivate` (or equivalent) so private notebooks are not indexed

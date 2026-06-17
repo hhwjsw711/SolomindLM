@@ -9,7 +9,7 @@ export const PrivacyPolicy: React.FC = () => {
     <LegalPageShell title="Privacy Policy" canonical="/privacy">
       <section className="space-y-3">
         <p className="text-muted-foreground">
-          BETTER-MEMORY is operated from Canada. This Policy describes how we handle personal
+          Better Memory is operated from Canada. This Policy describes how we handle personal
           information when you use our websites and product. It works together with our{" "}
           <Link
             to="/terms"

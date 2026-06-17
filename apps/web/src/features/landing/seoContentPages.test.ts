@@ -35,7 +35,7 @@ describe("getSeoContentBreadcrumbItems", () => {
     expect(getSeoContentBreadcrumbItems(page!)).toEqual([
       { name: "Home", path: "/" },
       { name: "Compare", path: "/compare/better-memory-vs-notebooklm" },
-      { name: "BETTER-MEMORY vs NotebookLM", path: "/compare/better-memory-vs-notebooklm" },
+      { name: "Better Memory vs NotebookLM", path: "/compare/better-memory-vs-notebooklm" },
     ]);
   });
 

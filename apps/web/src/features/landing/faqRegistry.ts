@@ -25,7 +25,7 @@ export const FAQ_CATEGORIES: FaqCategory[] = [
   {
     id: "getting-started",
     title: "Getting started",
-    description: "Accounts, notebooks, sources, and how BETTER-MEMORY fits your workflow.",
+    description: "Accounts, notebooks, sources, and how Better Memory fits your workflow.",
   },
   {
     id: "students",
@@ -60,13 +60,13 @@ const CORE_GENERAL_FAQS: RegisteredFaq[] = [
   {
     category: "getting-started",
     question: "What languages are supported?",
-    answer: "BETTER-MEMORY is currently focused on English-language study and research workflows.",
+    answer: "Better Memory is currently focused on English-language study and research workflows.",
   },
   {
     category: "students",
     question: "What can I do with generated study materials?",
     answer:
-      "You can create study outputs like flashcards, quizzes, mind maps, and audio overviews from your sources, then review them inside BETTER-MEMORY.",
+      "You can create study outputs like flashcards, quizzes, mind maps, and audio overviews from your sources, then review them inside Better Memory.",
     learnMorePath: "/students",
     learnMoreLabel: "Explore student study tools",
   },
@@ -88,9 +88,9 @@ const CORE_GENERAL_FAQS: RegisteredFaq[] = [
   },
   {
     category: "students",
-    question: "What makes BETTER-MEMORY different from Quizlet or Anki?",
+    question: "What makes Better Memory different from Quizlet or Anki?",
     answer:
-      "BETTER-MEMORY starts from your PDFs, videos, articles, and notes, then helps generate study materials from that source content instead of requiring you to create everything manually.",
+      "Better Memory starts from your PDFs, videos, articles, and notes, then helps generate study materials from that source content instead of requiring you to create everything manually.",
   },
   {
     category: "getting-started",
@@ -107,7 +107,7 @@ const HOMEPAGE_FAQ_QUESTIONS: string[] = [
   "What can I do with generated study materials?",
   "How is my data used and protected?",
   "Is there a limit on how much I can upload?",
-  "What makes BETTER-MEMORY different from Quizlet or Anki?",
+  "What makes Better Memory different from Quizlet or Anki?",
   "How long does it take to generate study materials?",
   "Do I need to upload sources before generating study materials?",
   "Is literature review mode a systematic review tool?",

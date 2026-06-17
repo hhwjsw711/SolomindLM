@@ -2,7 +2,7 @@
   "addSource": {
     "title": "Add sources",
     "discoverSources": "Discover sources",
-    "description": "Sources let BETTER-MEMORY base its responses on the information that matters most to you.",
+    "description": "Sources let Better Memory base its responses on the information that matters most to you.",
     "descriptionExamples": "(Examples: marketing plans, course reading, research notes, meeting transcripts, sales documents, etc.)",
     "uploadHeading": "Upload sources",
     "uploadInstruction": "Drag & drop or",

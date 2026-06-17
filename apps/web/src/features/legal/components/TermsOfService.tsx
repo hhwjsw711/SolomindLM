@@ -9,7 +9,7 @@ export const TermsOfService: React.FC = () => {
     <LegalPageShell title="Terms of Service" canonical="/terms">
       <section className="space-y-3">
         <p className="text-muted-foreground">
-          By creating an account or using BETTER-MEMORY (&quot;the Service&quot;), you agree to these
+          By creating an account or using Better Memory (&quot;the Service&quot;), you agree to these
           Terms and our{" "}
           <Link
             to="/privacy"
@@ -27,7 +27,7 @@ export const TermsOfService: React.FC = () => {
           {t("legal.sections.theService")}
         </h2>
         <p className="text-muted-foreground">
-          BETTER-MEMORY helps you organize research in notebooks, add sources (files, links, and
+          Better Memory helps you organize research in notebooks, add sources (files, links, and
           optional Google Drive imports where enabled), chat with retrieval over your materials,
           discover and review academic or web sources, and generate study-style outputs (for example
           reports, flashcards, quizzes, mind maps, infographics, spreadsheets, audio overviews,
@@ -157,7 +157,7 @@ export const TermsOfService: React.FC = () => {
           {t("legal.sections.governingLawAndDisputes")}
         </h2>
         <p className="text-muted-foreground">
-          BETTER-MEMORY is operated from Canada. These Terms are governed by the laws of Canada and the
+          Better Memory is operated from Canada. These Terms are governed by the laws of Canada and the
           laws of the province or territory in which we operate, without regard to conflict-of-law
           rules that would apply another jurisdiction&apos;s laws. Disputes should first be
           addressed by contacting us. Where formal resolution is needed, you and we submit to the
