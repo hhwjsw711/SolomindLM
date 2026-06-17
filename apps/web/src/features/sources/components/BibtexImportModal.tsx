@@ -71,7 +71,7 @@ export const BibtexImportModal: React.FC<BibtexImportModalProps> = ({
         setWarnings(result.warnings || []);
         setSelectedPapers(new Set(result.papers.map((_paper: ParsedPaper, i: number) => i)));
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to parse bibliography");
+        setError(err instanceof Error ? err.message : t("bibtexImport.parseError"));
       } finally {
         setIsParsing(false);
       }
@@ -190,7 +190,7 @@ export const BibtexImportModal: React.FC<BibtexImportModalProps> = ({
                   : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
-              Upload File
+              {t("bibtexImport.uploadFile")}
             </button>
             <button
               onClick={() => setActiveTab("paste")}
@@ -200,7 +200,7 @@ export const BibtexImportModal: React.FC<BibtexImportModalProps> = ({
                   : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
-              Paste Text
+              {t("bibtexImport.pasteText")}
             </button>
           </div>
 
@@ -219,11 +219,10 @@ export const BibtexImportModal: React.FC<BibtexImportModalProps> = ({
                 className="border-2 border-dashed border-border rounded-xl p-8 flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-secondary/20 transition-colors"
               >
                 <Upload className="w-8 h-8 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">
-                  Click to upload <span className="font-medium">.bib</span> or{" "}
-                  <span className="font-medium">.ris</span> file
-                </p>
-                {fileContent && <p className="text-xs text-primary">File loaded, ready to parse</p>}
+                <p className="text-sm text-muted-foreground">{t("bibtexImport.clickToUpload")}</p>
+                {fileContent && (
+                  <p className="text-xs text-primary">{t("bibtexImport.fileLoadedReady")}</p>
+                )}
               </div>
             </div>
           )}
@@ -249,7 +248,7 @@ export const BibtexImportModal: React.FC<BibtexImportModalProps> = ({
                 ) : (
                   <FileText className="w-4 h-4" />
                 )}
-                Parse Bibliography
+                {t("bibtexImport.parseBibliography")}
               </button>
             </div>
           )}
@@ -280,13 +279,15 @@ export const BibtexImportModal: React.FC<BibtexImportModalProps> = ({
           {stats && (
             <div className="flex gap-4 text-sm">
               <div className="px-3 py-1 bg-secondary/30 rounded-lg">
-                <span className="font-medium">{stats.total}</span> total
+                <span className="font-medium">{stats.total}</span> {t("bibtexImport.total")}
               </div>
               <div className="px-3 py-1 bg-primary/10 rounded-lg">
-                <span className="font-medium text-primary">{stats.withDoi}</span> with DOI
+                <span className="font-medium text-primary">{stats.withDoi}</span>{" "}
+                {t("bibtexImport.withDoi")}
               </div>
               <div className="px-3 py-1 bg-destructive/10 rounded-lg">
-                <span className="font-medium text-destructive">{stats.withoutDoi}</span> without DOI
+                <span className="font-medium text-destructive">{stats.withoutDoi}</span>{" "}
+                {t("bibtexImport.withoutDoi")}
               </div>
             </div>
           )}
@@ -296,8 +297,7 @@ export const BibtexImportModal: React.FC<BibtexImportModalProps> = ({
             <div className="bg-warning/10 border border-warning/30 rounded-lg p-4 flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
               <p className="text-sm text-warning">
-                {withoutDoiCount} paper{withoutDoiCount !== 1 ? "s" : ""} missing DOI. These may
-                have limited metadata.
+                {t("bibtexImport.papersMissingDoi", { count: withoutDoiCount })}
               </p>
             </div>
           )}
@@ -306,18 +306,18 @@ export const BibtexImportModal: React.FC<BibtexImportModalProps> = ({
           {papers.length > 0 && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="font-semibold">Preview</h3>
+                <h3 className="font-semibold">{t("bibtexImport.preview")}</h3>
                 <button
                   onClick={toggleAll}
                   className="text-sm text-primary hover:underline flex items-center gap-1"
                 >
                   {selectedPapers.size === papers.length ? (
                     <>
-                      <CheckSquare className="w-4 h-4" /> Deselect all
+                      <CheckSquare className="w-4 h-4" /> {t("bibtexImport.deselectAll")}
                     </>
                   ) : (
                     <>
-                      <Square className="w-4 h-4" /> Select all
+                      <Square className="w-4 h-4" /> {t("bibtexImport.selectAll")}
                     </>
                   )}
                 </button>
@@ -340,13 +340,17 @@ export const BibtexImportModal: React.FC<BibtexImportModalProps> = ({
                       <Square className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{paper.title || "Untitled"}</p>
+                      <p className="font-medium text-sm truncate">
+                        {paper.title || t("bibtexImport.untitled")}
+                      </p>
                       {paper.authors && paper.authors.length > 0 && (
                         <p className="text-xs text-muted-foreground truncate">
                           {paper.authors.join(", ")}
                         </p>
                       )}
-                      {!paper.doi && <span className="text-xs text-warning">No DOI</span>}
+                      {!paper.doi && (
+                        <span className="text-xs text-warning">{t("bibtexImport.noDoi")}</span>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -362,7 +366,7 @@ export const BibtexImportModal: React.FC<BibtexImportModalProps> = ({
                 ) : (
                   <Upload className="w-4 h-4" />
                 )}
-                Import {selectedPapers.size} selected paper{selectedPapers.size !== 1 ? "s" : ""}
+                {t("bibtexImport.importSelected", { count: selectedPapers.size })}
               </button>
             </div>
           )}

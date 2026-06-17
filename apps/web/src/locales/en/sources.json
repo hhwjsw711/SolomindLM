@@ -237,7 +237,25 @@
     "description": "Paste your BibTeX or RIS formatted reference below.",
     "placeholder": "Paste BibTeX or RIS content here...",
     "import": "Import Reference",
-    "failedToImport": "Failed to import reference"
+    "failedToImport": "Failed to import reference",
+    "uploadFile": "Upload File",
+    "pasteText": "Paste Text",
+    "clickToUpload": "Click to upload .bib or .ris file",
+    "fileLoadedReady": "File loaded, ready to parse",
+    "parseBibliography": "Parse Bibliography",
+    "parseError": "Failed to parse bibliography",
+    "total": "total",
+    "withDoi": "with DOI",
+    "withoutDoi": "without DOI",
+    "preview": "Preview",
+    "selectAll": "Select all",
+    "deselectAll": "Deselect all",
+    "noDoi": "No DOI",
+    "importSelected": "Import {{count}} selected paper",
+    "importSelected_plural": "Import {{count}} selected papers",
+    "papersMissingDoi": "{{count}} paper missing DOI. These may have limited metadata.",
+    "papersMissingDoi_plural": "{{count}} papers missing DOI. These may have limited metadata.",
+    "untitled": "Untitled"
   },
   "mendeleyImport": {
     "title": "Import from Mendeley",
@@ -245,7 +263,19 @@
     "selectDocuments": "Select documents to import",
     "importSelected": "Import Selected",
     "failedToLoad": "Failed to load Mendeley documents",
-    "failedToImport": "Failed to import documents"
+    "failedToImport": "Failed to import documents",
+    "instructions": "Export your Mendeley library as BibTeX, then upload the file below.",
+    "clickToUpload": "Click to upload .bib file from Mendeley",
+    "fileLoaded": "File loaded",
+    "parsing": "Parsing bibliography...",
+    "parseError": "Failed to parse file",
+    "found": "found",
+    "alreadyInNotebook": "already in notebook",
+    "newPapers": "new",
+    "allAlreadyInNotebook": "All papers from this file are already in your notebook.",
+    "importPapers": "Import {{count}} paper",
+    "importPapers_plural": "Import {{count}} papers",
+    "untitled": "Untitled"
   },
   "zoteroImport": {
     "title": "Import from Zotero",
@@ -253,6 +283,18 @@
     "selectDocuments": "Select documents to import",
     "importSelected": "Import Selected",
     "failedToLoad": "Failed to load Zotero documents",
-    "failedToImport": "Failed to import documents"
+    "failedToImport": "Failed to import documents",
+    "instructions": "Export your Zotero library as BibTeX, then upload the file below.",
+    "clickToUpload": "Click to upload .bib file from Zotero",
+    "fileLoaded": "File loaded",
+    "parsing": "Parsing bibliography...",
+    "parseError": "Failed to parse file",
+    "found": "found",
+    "alreadyInNotebook": "already in notebook",
+    "newPapers": "new",
+    "allAlreadyInNotebook": "All papers from this file are already in your notebook.",
+    "importPapers": "Import {{count}} paper",
+    "importPapers_plural": "Import {{count}} papers",
+    "untitled": "Untitled"
   }
 }

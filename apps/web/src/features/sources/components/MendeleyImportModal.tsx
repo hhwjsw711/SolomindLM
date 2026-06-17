@@ -82,7 +82,7 @@ export const MendeleyImportModal: React.FC<MendeleyImportModalProps> = ({
         const result = await parseBibliography({ content: text, format: "auto" });
         setPapers(result.papers);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to parse file");
+        setError(err instanceof Error ? err.message : t("mendeleyImport.parseError"));
       } finally {
         setIsParsing(false);
       }
@@ -147,9 +147,7 @@ export const MendeleyImportModal: React.FC<MendeleyImportModalProps> = ({
 
         {/* Body */}
         <div className="overflow-y-auto p-6 space-y-6 bg-card/50">
-          <p className="text-muted-foreground text-sm">
-            Export your Mendeley library as BibTeX, then upload the file below.
-          </p>
+          <p className="text-muted-foreground text-sm">{t("mendeleyImport.instructions")}</p>
 
           {/* File Upload */}
           <div className="space-y-4">
@@ -165,10 +163,10 @@ export const MendeleyImportModal: React.FC<MendeleyImportModalProps> = ({
               className="border-2 border-dashed border-border rounded-xl p-8 flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-secondary/20 transition-colors"
             >
               <Upload className="w-8 h-8 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
-                Click to upload <span className="font-medium">.bib</span> file from Mendeley
-              </p>
-              {fileContent && <p className="text-xs text-primary">File loaded</p>}
+              <p className="text-sm text-muted-foreground">{t("mendeleyImport.clickToUpload")}</p>
+              {fileContent && (
+                <p className="text-xs text-primary">{t("mendeleyImport.fileLoaded")}</p>
+              )}
             </div>
           </div>
 
@@ -184,7 +182,7 @@ export const MendeleyImportModal: React.FC<MendeleyImportModalProps> = ({
           {isParsing && (
             <div className="flex items-center justify-center gap-2 py-4">
               <Loader2 className="w-5 h-5 animate-spin text-primary" />
-              <p className="text-sm text-muted-foreground">Parsing bibliography...</p>
+              <p className="text-sm text-muted-foreground">{t("mendeleyImport.parsing")}</p>
             </div>
           )}
 
@@ -193,16 +191,17 @@ export const MendeleyImportModal: React.FC<MendeleyImportModalProps> = ({
             <div className="space-y-4">
               <div className="flex gap-4 text-sm">
                 <div className="px-3 py-1 bg-secondary/30 rounded-lg">
-                  <span className="font-medium">{papers.length}</span> found
+                  <span className="font-medium">{papers.length}</span> {t("mendeleyImport.found")}
                 </div>
                 {skippedCount > 0 && (
                   <div className="px-3 py-1 bg-warning/10 rounded-lg">
-                    <span className="font-medium text-warning">{skippedCount}</span> already in
-                    notebook
+                    <span className="font-medium text-warning">{skippedCount}</span>{" "}
+                    {t("mendeleyImport.alreadyInNotebook")}
                   </div>
                 )}
                 <div className="px-3 py-1 bg-primary/10 rounded-lg">
-                  <span className="font-medium text-primary">{newPapers.length}</span> new
+                  <span className="font-medium text-primary">{newPapers.length}</span>{" "}
+                  {t("mendeleyImport.newPapers")}
                 </div>
               </div>
 
@@ -216,7 +215,9 @@ export const MendeleyImportModal: React.FC<MendeleyImportModalProps> = ({
                     >
                       <Library className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{paper.title || "Untitled"}</p>
+                        <p className="font-medium text-sm truncate">
+                          {paper.title || t("mendeleyImport.untitled")}
+                        </p>
                         {paper.authors && paper.authors.length > 0 && (
                           <p className="text-xs text-muted-foreground truncate">
                             {paper.authors.join(", ")}
@@ -231,7 +232,7 @@ export const MendeleyImportModal: React.FC<MendeleyImportModalProps> = ({
               {newPapers.length === 0 && (
                 <div className="bg-secondary/20 rounded-lg p-4 text-center">
                   <p className="text-sm text-muted-foreground">
-                    All papers from this file are already in your notebook.
+                    {t("mendeleyImport.allAlreadyInNotebook")}
                   </p>
                 </div>
               )}
@@ -247,7 +248,7 @@ export const MendeleyImportModal: React.FC<MendeleyImportModalProps> = ({
                   ) : (
                     <Upload className="w-4 h-4" />
                   )}
-                  Import {newPapers.length} paper{newPapers.length !== 1 ? "s" : ""}
+                  {t("mendeleyImport.importPapers", { count: newPapers.length })}
                 </button>
               )}
             </div>

@@ -237,7 +237,25 @@
     "description": "在下方粘贴你的 BibTeX 或 RIS 格式引用。",
     "placeholder": "在此粘贴 BibTeX 或 RIS 内容...",
     "import": "导入引用",
-    "failedToImport": "导入引用失败"
+    "failedToImport": "导入引用失败",
+    "uploadFile": "上传文件",
+    "pasteText": "粘贴文本",
+    "clickToUpload": "点击上传 .bib 或 .ris 文件",
+    "fileLoadedReady": "文件已加载，待解析",
+    "parseBibliography": "解析参考文献",
+    "parseError": "解析参考文献失败",
+    "total": "总计",
+    "withDoi": "有 DOI",
+    "withoutDoi": "无 DOI",
+    "preview": "预览",
+    "selectAll": "全选",
+    "deselectAll": "取消全选",
+    "noDoi": "无 DOI",
+    "importSelected": "导入 {{count}} 篇选中的论文",
+    "importSelected_plural": "导入 {{count}} 篇选中的论文",
+    "papersMissingDoi": "{{count}} 篇论文缺少 DOI，元数据可能不完整。",
+    "papersMissingDoi_plural": "{{count}} 篇论文缺少 DOI，元数据可能不完整。",
+    "untitled": "无标题"
   },
   "mendeleyImport": {
     "title": "从 Mendeley 导入",
@@ -245,7 +263,19 @@
     "selectDocuments": "选择要导入的文档",
     "importSelected": "导入选中项",
     "failedToLoad": "加载 Mendeley 文档失败",
-    "failedToImport": "导入文档失败"
+    "failedToImport": "导入文档失败",
+    "instructions": "将你的 Mendeley 库导出为 BibTeX，然后上传以下文件。",
+    "clickToUpload": "点击上传来自 Mendeley 的 .bib 文件",
+    "fileLoaded": "文件已加载",
+    "parsing": "正在解析参考文献...",
+    "parseError": "解析文件失败",
+    "found": "找到",
+    "alreadyInNotebook": "已在笔记本中",
+    "newPapers": "新",
+    "allAlreadyInNotebook": "此文件中的所有论文都已存在于你的笔记本中。",
+    "importPapers": "导入 {{count}} 篇论文",
+    "importPapers_plural": "导入 {{count}} 篇论文",
+    "untitled": "无标题"
   },
   "zoteroImport": {
     "title": "从 Zotero 导入",
@@ -253,6 +283,18 @@
     "selectDocuments": "选择要导入的文档",
     "importSelected": "导入选中项",
     "failedToLoad": "加载 Zotero 文档失败",
-    "failedToImport": "导入文档失败"
+    "failedToImport": "导入文档失败",
+    "instructions": "将你的 Zotero 库导出为 BibTeX，然后上传以下文件。",
+    "clickToUpload": "点击上传来自 Zotero 的 .bib 文件",
+    "fileLoaded": "文件已加载",
+    "parsing": "正在解析参考文献...",
+    "parseError": "解析文件失败",
+    "found": "找到",
+    "alreadyInNotebook": "已在笔记本中",
+    "newPapers": "新",
+    "allAlreadyInNotebook": "此文件中的所有论文都已存在于你的笔记本中。",
+    "importPapers": "导入 {{count}} 篇论文",
+    "importPapers_plural": "导入 {{count}} 篇论文",
+    "untitled": "无标题"
   }
 }
