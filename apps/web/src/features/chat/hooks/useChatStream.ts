@@ -25,6 +25,7 @@ import {
 import { useStartDeepResearch } from "../services/researchApi";
 import {
   computeRemoteGenerationBlocksSend,
+  isStreamStillRelevant,
   researchProgressToStreamingActivity,
 } from "../utils/chatStreamHelpers";
 
@@ -54,19 +55,31 @@ export function useChatStream({
   const sourcesRef = useRef(sources);
   sourcesRef.current = sources;
 
+  const activeConversationIdRef = useRef(activeConversationId);
+  activeConversationIdRef.current = activeConversationId;
+  const streamOwnerConversationIdRef = useRef<string | null>(null);
+
+  const shouldApplyStreamUpdate = useCallback(() => {
+    return isStreamStillRelevant(
+      streamOwnerConversationIdRef.current,
+      activeConversationIdRef.current
+    );
+  }, []);
+
   const chatBundle = useQuery(
     api.chat.messages.listByNotebook,
-    activeNotebookId && activeNotebookId !== "new"
+    activeNotebookId && activeNotebookId !== "new" && activeConversationId
       ? {
           notebookId: activeNotebookId as Id<"notebooks">,
-          conversationId: activeConversationId
-            ? (activeConversationId as Id<"conversations">)
-            : undefined,
+          conversationId: activeConversationId as Id<"conversations">,
         }
       : "skip"
   );
 
-  const messages = useMemo(() => chatBundle?.messages ?? [], [chatBundle?.messages]);
+  const messages = useMemo(() => {
+    if (!activeConversationId) return [];
+    return chatBundle?.messages ?? [];
+  }, [activeConversationId, chatBundle?.messages]);
   const chatRemoteGenerating = chatBundle?.chatGenerating ?? false;
 
   /** True when server reports an in-flight generation and the DB still expects a reply (last row is not assistant). */
@@ -192,9 +205,11 @@ export function useChatStream({
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
     }
+    stopSendMessage();
+    streamOwnerConversationIdRef.current = null;
     resetStreamingState();
     setExternalSources([]);
-  }, [activeConversationId, resetStreamingState]);
+  }, [activeConversationId, resetStreamingState, stopSendMessage]);
 
   // Auto-release stale chat generations (when generation is stuck for >5 minutes)
   // This prevents the "Generating in another tab" message from showing forever
@@ -253,6 +268,7 @@ export function useChatStream({
       }
 
       streamStartedAtRef.current = Date.now();
+      streamOwnerConversationIdRef.current = activeConversationId;
       setIsChatStreaming(true);
       setStreamingContent("");
       setStreamingReferences(null);
@@ -309,9 +325,16 @@ export function useChatStream({
             activeNotebookId,
             messageText,
             {
-              onToken: (token) => setStreamingContent((prev) => prev + token),
-              onReferences: (refs) => setStreamingReferences(refs),
+              onToken: (token) => {
+                if (!shouldApplyStreamUpdate()) return;
+                setStreamingContent((prev) => prev + token);
+              },
+              onReferences: (refs) => {
+                if (!shouldApplyStreamUpdate()) return;
+                setStreamingReferences(refs);
+              },
               onStatus: (status, message) => {
+                if (!shouldApplyStreamUpdate()) return;
                 const allowed: ChatActivityPhase[] = [
                   "searching",
                   "reading",
@@ -337,11 +360,24 @@ export function useChatStream({
                   return [...prev, { status, message: msg }];
                 });
               },
-              onToolCalls: (tcs) => setStreamingToolCalls(tcs),
-              onGroundingChecks: (checks) => setStreamingGrounding(checks),
-              onClarification: (q) => setStreamingClarification(q),
-              onResearchPlan: (plan) => setStreamingResearchPlan(plan),
+              onToolCalls: (tcs) => {
+                if (!shouldApplyStreamUpdate()) return;
+                setStreamingToolCalls(tcs);
+              },
+              onGroundingChecks: (checks) => {
+                if (!shouldApplyStreamUpdate()) return;
+                setStreamingGrounding(checks);
+              },
+              onClarification: (q) => {
+                if (!shouldApplyStreamUpdate()) return;
+                setStreamingClarification(q);
+              },
+              onResearchPlan: (plan) => {
+                if (!shouldApplyStreamUpdate()) return;
+                setStreamingResearchPlan(plan);
+              },
               onResearchProgress: (p) => {
+                if (!shouldApplyStreamUpdate()) return;
                 const { phase, detail } = researchProgressToStreamingActivity(p);
                 const allowed: ChatActivityPhase[] = [
                   "searching",
@@ -364,16 +400,27 @@ export function useChatStream({
                   return [...prev, { status: st, message: detail }];
                 });
               },
-              onFollowUps: (qs) => setLastAssistantFollowUps(qs),
-              onExternalSources: (sources) => setExternalSources(sources),
-              onComplete: onStreamComplete,
+              onFollowUps: (qs) => {
+                if (!shouldApplyStreamUpdate()) return;
+                setLastAssistantFollowUps(qs);
+              },
+              onExternalSources: (sources) => {
+                if (!shouldApplyStreamUpdate()) return;
+                setExternalSources(sources);
+              },
+              onComplete: () => {
+                if (!shouldApplyStreamUpdate()) return;
+                onStreamComplete();
+              },
               onStopped: () => {
+                if (!shouldApplyStreamUpdate()) return;
                 setIsChatStreaming(false);
                 setStreamingJustFinished(true);
                 streamStartedAtRef.current = null;
                 abortControllerRef.current = null;
               },
               onError: () => {
+                if (!shouldApplyStreamUpdate()) return;
                 resetStreamingState();
                 abortControllerRef.current = null;
               },
@@ -397,6 +444,7 @@ export function useChatStream({
       sendMessage,
       startDeepResearch,
       resetStreamingState,
+      shouldApplyStreamUpdate,
     ]
   );
 
@@ -723,6 +771,7 @@ export function useChatStream({
       if (isChatStreaming) return;
 
       const onResearchStreamComplete = () => {
+        if (!shouldApplyStreamUpdate()) return;
         setIsChatStreaming(false);
         setStreamingJustFinished(true);
         const len = messagesRef.current.length;
@@ -732,6 +781,7 @@ export function useChatStream({
       };
 
       const pushStatus = (status: string, message?: string) => {
+        if (!shouldApplyStreamUpdate()) return;
         const allowed: ChatActivityPhase[] = [
           "searching",
           "reading",
@@ -757,6 +807,7 @@ export function useChatStream({
         });
       };
 
+      streamOwnerConversationIdRef.current = activeConversationId;
       setIsChatStreaming(true);
       setStreamingContent("");
       setStreamingReferences(null);
@@ -775,23 +826,38 @@ export function useChatStream({
         await consumePersistentTextStream(
           response,
           {
-            onToken: (token) => setStreamingContent((prev) => prev + token),
-            onReferences: (refs) => setStreamingReferences(refs),
+            onToken: (token) => {
+              if (!shouldApplyStreamUpdate()) return;
+              setStreamingContent((prev) => prev + token);
+            },
+            onReferences: (refs) => {
+              if (!shouldApplyStreamUpdate()) return;
+              setStreamingReferences(refs);
+            },
             onStatus: (status, message) => pushStatus(status, message),
             onResearchProgress: (p) => {
+              if (!shouldApplyStreamUpdate()) return;
               const { phase, detail } = researchProgressToStreamingActivity(p);
               pushStatus(phase, detail);
             },
-            onToolCalls: (tcs) => setStreamingToolCalls(tcs),
-            onGroundingChecks: (checks) => setStreamingGrounding(checks),
+            onToolCalls: (tcs) => {
+              if (!shouldApplyStreamUpdate()) return;
+              setStreamingToolCalls(tcs);
+            },
+            onGroundingChecks: (checks) => {
+              if (!shouldApplyStreamUpdate()) return;
+              setStreamingGrounding(checks);
+            },
             onComplete: onResearchStreamComplete,
             onStopped: () => {
+              if (!shouldApplyStreamUpdate()) return;
               setIsChatStreaming(false);
               setStreamingJustFinished(true);
               streamStartedAtRef.current = null;
               abortControllerRef.current = null;
             },
             onError: () => {
+              if (!shouldApplyStreamUpdate()) return;
               resetStreamingState();
               abortControllerRef.current = null;
             },
@@ -804,7 +870,7 @@ export function useChatStream({
         throw new Error("Research stream failed");
       }
     },
-    [isChatStreaming, resetStreamingState]
+    [isChatStreaming, resetStreamingState, shouldApplyStreamUpdate, activeConversationId]
   );
 
   return {

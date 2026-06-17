@@ -22,6 +22,24 @@ export function researchProgressToStreamingActivity(progress: {
   };
 }
 
+/** Only render messages for the explicitly selected thread (never the notebook primary fallback). */
+export function resolveConversationMessages<T>(
+  activeConversationId: string | null,
+  chatBundle: { messages: T[] } | undefined
+): T[] {
+  if (!activeConversationId) return [];
+  if (!chatBundle) return [];
+  return chatBundle.messages;
+}
+
+/** Ignore stream callbacks after the user switches to another conversation. */
+export function isStreamStillRelevant(
+  streamConversationId: string | null,
+  activeConversationId: string | null
+): boolean {
+  return streamConversationId === activeConversationId;
+}
+
 export function computeRemoteGenerationBlocksSend(
   chatRemoteGenerating: boolean,
   messages: Array<{ role: string }>
