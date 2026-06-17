@@ -378,7 +378,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 disabled={Boolean(disabled)}
                 aria-haspopup="listbox"
                 aria-expanded={openMenu === "mode"}
-                aria-label={t("composer.modeAriaLabel", { label: modeMeta.label })}
+                aria-label={t("composer.modeAriaLabel", { label: t(`composer.mode.${mode}`) })}
                 onClick={() => setOpenMenu((o) => (o === "mode" ? "none" : "mode"))}
                 className={[
                   "inline-flex h-9 max-w-full min-w-0 items-center gap-2 rounded-full border border-transparent px-3 text-sm font-medium font-sans transition-colors",
@@ -390,7 +390,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 ].join(" ")}
               >
                 <ModeIcon className="size-4 shrink-0 opacity-90" aria-hidden />
-                <span className="min-w-0 truncate">{modeMeta.label}</span>
+                <span className="min-w-0 truncate">{t(`composer.mode.${mode}`)}</span>
                 <ChevronDown
                   className="size-3.5 shrink-0 opacity-60"
                   strokeWidth={2.25}
@@ -408,7 +408,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                   {t("composer.modeLabel")}
                 </p>
-                {COMPOSER_MODES.map(({ id, label, icon: Icon }) => {
+                {COMPOSER_MODES.map(({ id, icon: Icon }) => {
                   const active = mode === id;
                   return (
                     <button
@@ -426,7 +426,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                       }}
                     >
                       <Icon className="size-4 shrink-0 opacity-90" />
-                      <span className="flex-1 min-w-0">{label}</span>
+                      <span className="flex-1 min-w-0">{t(`composer.mode.${id}`)}</span>
                       {active ? <Check className="size-3.5 shrink-0" strokeWidth={2.5} /> : null}
                     </button>
                   );
@@ -448,7 +448,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   className="inline-flex h-9 max-w-[min(13rem,52vw)] min-w-0 items-center gap-2 rounded-full bg-muted/50 px-3 text-sm font-medium font-sans text-foreground hover:bg-muted/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card disabled:opacity-50"
                 >
                   <DbButtonIcon className="size-4 shrink-0 opacity-70" aria-hidden />
-                  <span className="min-w-0 truncate">{dbMeta.title}</span>
+                  <span className="min-w-0 truncate">
+                    {t(`research.${researchDatabase === "all" ? "allPapers" : researchDatabase}`)}
+                  </span>
                   <ChevronDown
                     className="size-3.5 shrink-0 opacity-60"
                     strokeWidth={2.25}
@@ -467,7 +469,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     {t("research.databaseLabel")}
                   </p>
                   <div className="flex flex-col gap-0.5 px-1.5">
-                    {RESEARCH_DATABASES.map(({ id, title, description, icon: Icon }) => {
+                    {RESEARCH_DATABASES.map(({ id, icon: Icon }) => {
                       const selected = researchDatabase === id;
                       return (
                         <button
@@ -502,10 +504,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                             aria-hidden
                           />
                           <span className="col-start-3 row-start-1 min-w-0 font-semibold leading-tight text-foreground">
-                            {title}
+                            {t(`research.${id === "all" ? "allPapers" : id}`)}
                           </span>
                           <span className="col-start-3 row-start-2 min-w-0 text-xs font-normal leading-snug text-muted-foreground">
-                            {description}
+                            {t(`research.${id === "all" ? "allPapers" : id}Desc`)}
                           </span>
                         </button>
                       );
@@ -572,7 +574,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     {t("filters.sourceChannels")}
                   </p>
                   <div className="mt-2 space-y-1 border-t border-border/40 pt-2">
-                    {SOURCE_FILTERS.map(({ id, label, icon: Icon }) => {
+                    {SOURCE_FILTERS.map(({ id, icon: Icon }) => {
                       const isActive = activeFilters.includes(id);
                       return (
                         <label
@@ -584,7 +586,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                           }`}
                         >
                           <Icon className="size-4 shrink-0" />
-                          <span className="flex-1 min-w-0">{label}</span>
+                          <span className="flex-1 min-w-0">
+                            {t(`filters.${id === "notebook" ? "notebookSources" : id}`)}
+                          </span>
                           <input
                             type="checkbox"
                             checked={isActive}
