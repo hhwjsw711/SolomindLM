@@ -132,7 +132,7 @@ export const AgentActivityPanel = React.memo<AgentActivityPanelProps>(
         }
 
         const n = aggregatedSources.length;
-        const meta = n > 0 ? t("agent.resultCount", { n }) : null;
+        const meta = n > 0 ? t("agent.resultCount", { count: n }) : null;
         return { headerPrimary: primary, headerMeta: meta };
       }
 
@@ -232,8 +232,7 @@ export const AgentActivityPanel = React.memo<AgentActivityPanelProps>(
                     </span>
                     {aggregatedSources.length > 0 ? (
                       <span className="shrink-0 tabular-nums text-muted-foreground">
-                        {aggregatedSources.length} result
-                        {aggregatedSources.length === 1 ? "" : "s"}
+                        {t("agent.resultCount", { count: aggregatedSources.length })}
                       </span>
                     ) : null}
                   </div>
@@ -258,7 +257,7 @@ export const AgentActivityPanel = React.memo<AgentActivityPanelProps>(
                             <span className="shrink-0 whitespace-nowrap text-right text-[11px] text-muted-foreground">
                               {src.isFullDocument
                                 ? null
-                                : t("agent.relevantSections", { n: src.sectionCount })}
+                                : t("agent.relevantSections", { count: src.sectionCount })}
                             </span>
                             {src.openUrl ? (
                               <a
