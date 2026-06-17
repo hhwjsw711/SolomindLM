@@ -55,7 +55,7 @@ export const LiteratureReviewChatFlow: React.FC<LiteratureReviewChatFlowProps> =
   onOpenReport,
   onDismiss,
 }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation("chat");
   const isComplete = sessionStatus === "completed";
   const isFailed = sessionStatus === "failed";
   const reportPreview = report ? buildLiteratureReportChatPreview(report) : null;

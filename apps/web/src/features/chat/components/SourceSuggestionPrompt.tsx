@@ -29,7 +29,7 @@ export const SourceSuggestionPrompt: React.FC<SourceSuggestionPromptProps> = ({
   onAddSelected,
   onDismiss,
 }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation("chat");
   const listFingerprint = useMemo(
     () => JSON.stringify(sources.map((s) => [s.url, s.title, s.snippet])),
     [sources]

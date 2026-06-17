@@ -85,7 +85,7 @@ export function LandingHeroMockup({
   onGetStarted: _onGetStarted,
   className,
 }: LandingHeroMockupProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("landing");
   const [mode, setMode] = useState<HeroMode>("chat");
   const [selectedSourceIds, setSelectedSourceIds] = useState<Set<string>>(
     () => new Set(["s1", "s2", "s3"])
@@ -338,7 +338,7 @@ export function LandingHeroMockup({
                         { done: true, label: t("page.hero.rankedPassages") },
                         {
                           done: false,
-                          label: "Reading: CPSC 304 — notes.pdf",
+                          label: t("page.hero.reading"),
                           icon: Globe,
                         },
                       ].map((step) => {
@@ -410,10 +410,16 @@ export function LandingHeroMockup({
                       <div
                         className="mt-3 max-h-48 w-full max-w-md overflow-y-auto rounded-2xl border border-border bg-popover p-4 text-left shadow-xl animate-in fade-in zoom-in-95 duration-200 sm:mt-4 sm:max-h-52 sm:p-5"
                         role="note"
-                        aria-label={`Reference ${refKey}`}
+                        aria-label={t("page.hero.reference", {
+                          n: refKey,
+                          title: refDetails[refKey].sourceTitle,
+                        })}
                       >
                         <p className="mb-2 font-mono text-[10px] font-bold uppercase tracking-widest text-muted-foreground sm:text-xs">
-                          Reference {refKey} • {refDetails[refKey].sourceTitle}
+                          {t("page.hero.reference", {
+                            n: refKey,
+                            title: refDetails[refKey].sourceTitle,
+                          })}
                         </p>
                         <p className="wrap-break-word font-serif text-sm leading-relaxed text-popover-foreground">
                           {refDetails[refKey].excerpt}
@@ -438,7 +444,7 @@ export function LandingHeroMockup({
                   <div
                     className="flex min-w-0 flex-1 flex-nowrap items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                     role="tablist"
-                    aria-label="Composer mode"
+                    aria-label={t("page.hero.composerMode")}
                   >
                     {DEMO_COMPOSER_MODES.map(({ id, label, shortLabel, icon: Icon }) => {
                       const active = composerMode === id;
@@ -491,10 +497,10 @@ export function LandingHeroMockup({
         <div className="flex h-11 shrink-0 items-center gap-2 border-b border-border bg-background/80 px-3 backdrop-blur-sm sm:h-14 sm:gap-2 sm:px-5">
           <Layers className="h-3.5 w-3.5 text-muted-foreground sm:h-4 sm:w-4" aria-hidden />
           <span className="font-display text-xs font-bold uppercase tracking-wide text-foreground sm:text-sm">
-            Studio
+            {t("page.hero.studioTab")}
           </span>
           <span className="hidden font-sans text-[10px] text-muted-foreground sm:ml-2 sm:inline sm:text-xs">
-            Create study artifacts from your sources
+            {t("page.hero.studioSubtitle")}
           </span>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4 sm:px-5 sm:py-5 md:px-6">

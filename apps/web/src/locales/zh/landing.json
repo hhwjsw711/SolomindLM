@@ -161,5 +161,23 @@
     "ctaDescription": "创建免费账户，上传你的第一批资料，几分钟内即可生成学习或研究成果。",
     "ctaButton": "创建免费账户",
     "backToHome": "返回首页"
+  },
+  "page": {
+    "hero": {
+      "productPreview": "产品预览",
+      "previewMode": "预览模式",
+      "chatTab": "聊天",
+      "studioTab": "Studio",
+      "sources": "来源",
+      "chat": "聊天",
+      "searchingSources": "搜索你的来源中",
+      "hydeEmbeddings": "HyDE + 向量嵌入",
+      "rankedPassages": "已排序的相关段落",
+      "reading": "阅读中: CPSC 304 — notes.pdf",
+      "reference": "引用 {{n}} • {{title}}",
+      "sendDemo": "发送（演示）",
+      "studioSubtitle": "从你的来源创建学习素材",
+      "composerMode": "写作模式"
+    }
   }
 }

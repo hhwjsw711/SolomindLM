@@ -30,7 +30,7 @@
 - [x] `MessageBubble.tsx` — copy, retry, feedback, sources count, follow-ups
 - [x] `AgentActivityPanel.tsx` — 搜索/查询/完成状态标记
 - [x] `ResearchPlanMessage.tsx` — 频道标签、计划状态、按钮
-- [ ] `LiteratureReviewMessage.tsx` — 步骤配置、列确认、完成/错误状态
+- [x] `LiteratureReviewMessage.tsx` — 步骤配置、列确认、完成/错误状态
 - [x] Toast messages in ChatPanel (已随 ChatPanel.tsx 一并翻译)
 - [x] Utility files: `messageStatus.tsx`, `exportChat.ts`, `messageRendering.tsx`
 

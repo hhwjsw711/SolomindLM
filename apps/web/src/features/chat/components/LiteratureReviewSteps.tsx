@@ -59,7 +59,7 @@ export const LiteratureReviewSteps: React.FC<LiteratureReviewStepsProps> = ({
   onOpenRankedPapers,
   onOpenScreeningDecisions,
 }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation("chat");
   const [expandedSteps, setExpandedSteps] = useState<Set<number>>(() => {
     const initial = new Set<number>();
     steps.forEach((_, idx) => {

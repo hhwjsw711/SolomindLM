@@ -19,7 +19,7 @@ function logOnboardingError(action: string, error: unknown) {
 const ORDER = ["createNotebook", "addSource", "askQuestion", "generateArtifact"] as const;
 
 export const ChecklistCard: React.FC = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation("onboarding");
   const location = useLocation();
   const state = useOnboardingState();
   const progress = useChecklistProgress();

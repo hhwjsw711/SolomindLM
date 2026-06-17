@@ -43,7 +43,7 @@ export const LiteratureReviewMessage: React.FC<LiteratureReviewMessageProps> = (
   onOpenRankedPapers,
   onOpenScreeningDecisions,
 }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation("chat");
   const lr = message.literatureReview;
   const sessionId = (lr?.sessionId ?? null) as Id<"literatureReviewSessions"> | null;
 
@@ -322,7 +322,7 @@ const ColumnConfirmationCard: React.FC<ColumnConfirmationCardProps> = ({
   onPatch,
   onConfirm,
 }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation("chat");
   const visibleCount = columns.filter((c) => c.isVisible).length;
   const canConfirm = visibleCount > 0;
 

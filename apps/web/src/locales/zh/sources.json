@@ -206,7 +206,6 @@
     "description": "手动输入论文详情。标题和作者为必填。",
     "titleLabel": "标题 *",
     "titlePlaceholder": "论文标题",
-    "titleLabel": "标题",
     "authorsPlaceholder": "作者姓名，用逗号分隔",
     "authorsLabel": "作者",
     "authorsHelp": "用逗号分隔多个作者",

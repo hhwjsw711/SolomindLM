@@ -25,7 +25,7 @@ export const AvatarDropdown: React.FC<AvatarDropdownProps> = ({
   onShowChecklist,
   showChecklistDismissed,
 }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation("auth");
   const handleLogout = async () => {
     await onLogout();
   };

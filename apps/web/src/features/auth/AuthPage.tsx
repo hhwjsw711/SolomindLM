@@ -103,7 +103,7 @@ function AuthHeroMockup() {
   return (
     <div
       role="region"
-      aria-label="Product preview"
+      aria-label={i18next.t("auth:page.hero.productPreview")}
       className="relative hidden h-full min-h-[min(93svh,65rem)] w-full flex-col overflow-hidden rounded-3xl border border-border bg-background/90 text-left text-foreground shadow-[0_28px_90px_-28px_rgba(28,25,23,0.22)] backdrop-blur-md lg:flex"
     >
       <div
@@ -115,7 +115,7 @@ function AuthHeroMockup() {
         <div
           className="pointer-events-auto relative flex h-11 w-[min(100%,17rem)] items-stretch gap-1 rounded-2xl border border-border/80 bg-linear-to-b from-card/95 via-card/90 to-muted/30 p-1 shadow-[0_8px_30px_-8px_rgba(28,25,23,0.18),inset_0_1px_0_rgba(255,255,255,0.5)] backdrop-blur-md"
           role="tablist"
-          aria-label="Preview mode"
+          aria-label={i18next.t("auth:page.hero.previewMode")}
         >
           <div
             className="pointer-events-none absolute left-1 top-1 bottom-1 w-[calc(50%-6px)] rounded-xl bg-background/95 shadow-md ring-1 ring-primary/20 transition-transform duration-300 ease-[cubic-bezier(0.34,1.2,0.64,1)]"
@@ -151,7 +151,7 @@ function AuthHeroMockup() {
             }`}
           >
             <Layers className="h-4 w-4 shrink-0 opacity-90" aria-hidden />
-            Studio
+            {i18next.t("auth:page.hero.studioTab")}
           </button>
         </div>
       </div>
@@ -250,18 +250,18 @@ function AuthHeroMockup() {
                               className="h-3.5 w-3.5 shrink-0 text-vintage-green-600"
                               aria-hidden
                             />
-                            HyDE + embeddings
+                            {i18next.t("auth:page.hero.hydeEmbeddings")}
                           </li>
                           <li className="flex items-center gap-2">
                             <Check
                               className="h-3.5 w-3.5 shrink-0 text-vintage-green-600"
                               aria-hidden
                             />
-                            Ranked relevant passages
+                            {i18next.t("auth:page.hero.rankedPassages")}
                           </li>
                           <li className="flex items-start gap-2 pt-0.5">
                             <Globe className="mt-0.5 h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
-                            <span>Reading: CPSC 304 — notes.pdf</span>
+                            <span>{i18next.t("auth:page.hero.reading")}</span>
                           </li>
                         </ul>
                       ) : null}
@@ -304,10 +304,16 @@ function AuthHeroMockup() {
                           <div
                             className="mt-4 max-h-52 w-full max-w-md overflow-y-auto rounded-2xl border border-border bg-popover p-5 text-left shadow-xl animate-in fade-in zoom-in-95 duration-200"
                             role="note"
-                            aria-label={`Reference ${refKey}`}
+                            aria-label={i18next.t("auth:page.hero.reference", {
+                              n: refKey,
+                              title: refDetails[refKey].sourceTitle,
+                            })}
                           >
                             <p className="mb-2 font-mono text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                              Reference {refKey} • {refDetails[refKey].sourceTitle}
+                              {i18next.t("auth:page.hero.reference", {
+                                n: refKey,
+                                title: refDetails[refKey].sourceTitle,
+                              })}
                             </p>
                             <p className="wrap-break-word font-serif text-sm leading-relaxed text-popover-foreground">
                               {refDetails[refKey].excerpt}
@@ -330,7 +336,7 @@ function AuthHeroMockup() {
                       type="button"
                       onClick={flashInput}
                       className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      aria-label="Send (demo)"
+                      aria-label={i18next.t("auth:page.hero.sendDemo")}
                     >
                       <Send className="h-4 w-4" aria-hidden />
                     </button>

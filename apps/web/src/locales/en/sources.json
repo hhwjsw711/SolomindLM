@@ -206,7 +206,6 @@
     "description": "Enter paper details manually. Title and authors are required.",
     "titleLabel": "Title *",
     "titlePlaceholder": "Paper title",
-    "titleLabel": "Title",
     "authorsPlaceholder": "Author names, comma-separated",
     "authorsLabel": "Authors",
     "authorsHelp": "Separate multiple authors with commas",

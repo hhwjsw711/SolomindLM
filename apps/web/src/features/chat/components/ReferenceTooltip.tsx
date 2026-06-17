@@ -174,7 +174,7 @@ export const ReferenceTooltip: React.FC<ReferenceTooltipProps> = ({
   onOpenInSources,
   onAddToNotebook,
 }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation("chat");
   const sourceHost = useMemo(() => getSourceHost(reference.sourceUrl), [reference.sourceUrl]);
 
   const sanitized = useMemo(() => {

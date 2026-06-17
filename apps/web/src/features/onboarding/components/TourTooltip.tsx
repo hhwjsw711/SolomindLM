@@ -104,7 +104,7 @@ function logOnboardingError(action: string, error: unknown) {
 }
 
 export const TourTooltip: React.FC = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation("onboarding");
   const { tourStatus, currentStepId, skip } = useOnboarding();
   const { showError } = useServiceErrorToast();
   const [rect, setRect] = useState<Rect | null>(null);

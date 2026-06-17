@@ -23,7 +23,7 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
   sourcesFound,
   iteration,
 }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation("chat");
   const Icon = PHASE_ICONS[phase] ?? Loader2;
 
   return (

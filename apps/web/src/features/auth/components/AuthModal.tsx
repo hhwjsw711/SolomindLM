@@ -17,7 +17,7 @@ export function AuthModal({
   onAuthenticated,
   initialMode = "signIn",
 }: AuthModalProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("auth");
   useEffect(() => {
     if (!isOpen) return;
 

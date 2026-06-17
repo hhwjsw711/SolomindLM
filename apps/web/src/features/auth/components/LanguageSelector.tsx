@@ -9,7 +9,7 @@ interface LanguageSelectorProps {
 }
 
 export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ isAuthenticated }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation("auth");
   const { language, isLoading, setLanguage } = useOutputLanguage(isAuthenticated);
   const [isOpen, setIsOpen] = React.useState(false);
 

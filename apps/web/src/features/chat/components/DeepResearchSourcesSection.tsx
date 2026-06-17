@@ -47,7 +47,7 @@ export const DeepResearchSourcesSection: React.FC<DeepResearchSourcesSectionProp
   onOpenNotebookSource,
   notebookDocumentIds,
 }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation("chat");
   const [expanded, setExpanded] = useState(false);
   const [addingKey, setAddingKey] = useState<string | null>(null);
 
