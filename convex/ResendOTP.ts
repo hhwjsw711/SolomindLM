@@ -24,11 +24,11 @@ export const ResendOTP = Resend({
   },
   async sendVerificationRequest({ identifier: email, provider, token }) {
     const resend = new ResendAPI(provider.apiKey as string);
-    const from = process.env.AUTH_RESEND_FROM ?? "Solomind <onboarding@resend.dev>";
+    const from = process.env.AUTH_RESEND_FROM ?? "Better Memory <onboarding@resend.dev>";
     const { error } = await resend.emails.send({
       from,
       to: [email],
-      subject: "Verify your email for Solomind",
+      subject: "Verify your email for Better Memory",
       text: `Your verification code is: ${token}\n\nIf you did not request this, you can ignore this email.`,
     });
     if (error) {

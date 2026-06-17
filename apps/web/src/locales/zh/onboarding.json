@@ -12,6 +12,12 @@
     }
   },
   "tour": {
-    "skipTour": "跳过引导"
+    "skipTour": "跳过引导",
+    "steps": {
+      "createNotebook": "笔记本是你存放来源、聊天和学习工具的地方。创建你的第一个笔记本。",
+      "addSource": "添加 PDF、URL、YouTube 链接或粘贴文本。这是你 AI 的知识来源。",
+      "askQuestion": "向你的来源提问任何问题。回答会附带引文。",
+      "generateArtifact": "选择任意工具，生成你的第一个成果。建议从报告或闪卡开始。"
+    }
   }
 }

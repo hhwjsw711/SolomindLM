@@ -12,6 +12,12 @@
     }
   },
   "tour": {
-    "skipTour": "Skip tour"
+    "skipTour": "Skip tour",
+    "steps": {
+      "createNotebook": "Notebooks are where your sources, chats, and study tools live. Create your first one.",
+      "addSource": "Add a PDF, URL, YouTube link, or pasted text. This is the knowledge your AI will work from.",
+      "askQuestion": "Ask anything about your sources. Answers come with citations.",
+      "generateArtifact": "Pick any tool and generate your first artifact. We recommend a Report or Flashcards to start."
+    }
   }
 }

@@ -207,7 +207,7 @@ export const TourTooltip: React.FC = () => {
         className="fixed z-50 max-w-xs rounded-lg border border-border bg-popover text-popover-foreground p-4 shadow-lg"
         style={{ top: pos.top, left: pos.left, transform: anchorTransform(step.side) }}
       >
-        <p className="text-sm">{step.copy}</p>
+        <p className="text-sm">{t(`tour.steps.${step.id}`, step.copy)}</p>
         <div className="flex items-center justify-between mt-3 text-xs text-muted-foreground">
           <span>
             {stepNumber} of {TOTAL_STEPS}

@@ -24,11 +24,11 @@ export const ResendOTPPasswordReset = Resend({
   },
   async sendVerificationRequest({ identifier: email, provider, token }) {
     const resend = new ResendAPI(provider.apiKey as string);
-    const from = process.env.AUTH_RESEND_FROM ?? "Solomind <onboarding@resend.dev>";
+    const from = process.env.AUTH_RESEND_FROM ?? "Better Memory <onboarding@resend.dev>";
     const { error } = await resend.emails.send({
       from,
       to: [email],
-      subject: "Reset your Solomind password",
+      subject: "Reset your Better Memory password",
       text: `Your password reset code is: ${token}\n\nIf you did not request a reset, you can ignore this email.`,
     });
     if (error) {
