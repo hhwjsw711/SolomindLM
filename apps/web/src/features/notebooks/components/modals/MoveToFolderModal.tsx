@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { FolderItem } from "@/shared/types/index";
 
 const IconMap: Record<string, React.FC<any>> = {
@@ -41,12 +42,13 @@ export const MoveToFolderModal: React.FC<MoveToFolderModalProps> = ({
   onClose,
   onMove,
 }) => {
+  const { t } = useTranslation("notebooks");
   return (
     <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       <div className="w-full max-w-sm bg-card border border-border rounded-xl shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border">
-          <h3 className="text-lg font-bold font-sans">Move to folder</h3>
+          <h3 className="text-lg font-bold font-sans">{t("moveToFolderModal.title")}</h3>
           <button onClick={onClose} className="p-1 hover:bg-secondary rounded-xl transition-colors">
             <X className="w-5 h-5 text-muted-foreground" />
           </button>
@@ -62,8 +64,10 @@ export const MoveToFolderModal: React.FC<MoveToFolderModalProps> = ({
               <FolderOpen className="w-5 h-5 text-muted-foreground" />
             </div>
             <div>
-              <div className="font-bold text-foreground">No Folder</div>
-              <div className="text-xs text-muted-foreground">Remove from folder</div>
+              <div className="font-bold text-foreground">{t("moveToFolderModal.noFolder")}</div>
+              <div className="text-xs text-muted-foreground">
+                {t("moveToFolderModal.removeFromFolder")}
+              </div>
             </div>
           </button>
 
@@ -85,7 +89,7 @@ export const MoveToFolderModal: React.FC<MoveToFolderModalProps> = ({
                 <div className="flex-1 min-w-0">
                   <div className="font-bold text-foreground truncate">{folder.name}</div>
                   <div className="text-xs text-muted-foreground">
-                    {folder.notebookCount} notebooks
+                    {t("moveToFolderModal.notebooksCount", { count: folder.notebookCount })}
                   </div>
                 </div>
               </button>
@@ -99,7 +103,7 @@ export const MoveToFolderModal: React.FC<MoveToFolderModalProps> = ({
             onClick={onClose}
             className="px-4 py-2 rounded-xl text-sm font-bold text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
           >
-            Cancel
+            {t("moveToFolderModal.cancel")}
           </button>
         </div>
       </div>

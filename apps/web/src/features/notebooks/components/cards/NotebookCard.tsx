@@ -16,6 +16,7 @@ import {
   Users,
 } from "lucide-react";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { NotebookItem } from "@/shared/types/index";
 import { useConfirmDialog } from "@/shared/ui/useConfirmDialog";
 
@@ -55,12 +56,17 @@ function useNotebookCardActions({
   onToggleMenu,
 }: SharedNotebookCardProps) {
   const { confirm, ConfirmDialogComponent } = useConfirmDialog();
+  const { t } = useTranslation("notebooks");
 
   const handleDeleteWithConfirmation = async () => {
     const confirmed = await confirm(
-      "Delete Notebook",
-      `Are you sure you want to delete "${notebook.title}"? This action cannot be undone.`,
-      { confirmText: "Delete", cancelText: "Cancel", variant: "danger" }
+      t("notebookCard.deleteTitle"),
+      t("notebookCard.deleteConfirm", { title: notebook.title }),
+      {
+        confirmText: t("notebookCard.delete"),
+        cancelText: t("notebookCard.cancel"),
+        variant: "danger",
+      }
     );
     if (confirmed) {
       onDeleteNotebook(notebook.id);
@@ -90,19 +96,20 @@ function NotebookMenuDropdown({
   onDelete: () => void;
   onCloseMenu: () => void;
 }) {
+  const { t } = useTranslation("notebooks");
   return (
     <div className="absolute right-0 top-full mt-1 w-40 bg-popover border border-border shadow-xl rounded-md z-30 py-1 animate-in fade-in zoom-in-95 duration-150">
       <button
         onClick={onOpenCustomize}
         className="w-full text-left px-3 py-2 text-xs font-medium hover:bg-accent flex items-center gap-2 text-popover-foreground"
       >
-        <Settings2 className="w-3.5 h-3.5" /> Customize
+        <Settings2 className="w-3.5 h-3.5" /> {t("notebookCard.customize")}
       </button>
       <button
         onClick={onOpenMoveToFolder}
         className="w-full text-left px-3 py-2 text-xs font-medium hover:bg-accent flex items-center gap-2 text-popover-foreground"
       >
-        <FolderOpen className="w-3.5 h-3.5" /> Move to folder
+        <FolderOpen className="w-3.5 h-3.5" /> {t("notebookCard.moveToFolder")}
       </button>
       <button
         onClick={() => {
@@ -111,7 +118,7 @@ function NotebookMenuDropdown({
         }}
         className="w-full text-left px-3 py-2 text-xs font-medium hover:bg-destructive/10 text-destructive flex items-center gap-2"
       >
-        <Trash2 className="w-3.5 h-3.5" /> Delete
+        <Trash2 className="w-3.5 h-3.5" /> {t("notebookCard.delete")}
       </button>
     </div>
   );
@@ -119,14 +126,15 @@ function NotebookMenuDropdown({
 
 /** Shared badge for shared notebooks */
 function SharedBadge({ size = "sm" }: { size?: "sm" | "md" }) {
+  const { t } = useTranslation("notebooks");
   const sizeClasses = size === "sm" ? "gap-0.5 px-2 py-0.5 text-[9px]" : "gap-1 px-2 py-1 text-xs";
   return (
     <span
       className={`inline-flex items-center rounded-xl bg-primary/10 font-semibold uppercase tracking-wide text-primary ${sizeClasses}`}
-      title="Shared with you"
+      title={t("notebookCard.sharedWithYou")}
     >
       <Users className={size === "sm" ? "w-3 h-3 shrink-0" : "w-3.5 h-3.5"} />
-      Shared
+      {t("notebookCard.shared")}
     </span>
   );
 }

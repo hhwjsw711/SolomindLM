@@ -1,6 +1,7 @@
 import type { Id } from "@convex/_generated/dataModel";
 import { Ban, Check, Copy, GitFork, Loader2, Lock, Share2, Users, X } from "lucide-react";
 import React, { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/shared/components/ui/button";
 import { useToast } from "@/shared/contexts/useToast";
 import {
@@ -42,17 +43,19 @@ function LinkUrlRow({
   copyKey,
   copied,
   onCopy,
+  t,
 }: {
   url: string;
   copyKey: string;
   copied: string | null;
   onCopy: (key: string, text: string) => void;
+  t: (key: string) => string;
 }) {
   const done = copied === copyKey;
   return (
     <div className="mt-4 animate-in fade-in duration-200">
       <p className="mb-2 font-sans text-xs font-medium text-muted-foreground">
-        Copy and share this URL.
+        {t("shareNotebookModal.helperText")}
       </p>
       <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
         <div
@@ -73,12 +76,12 @@ function LinkUrlRow({
           {done ? (
             <>
               <Check className="h-3.5 w-3.5" />
-              <span>Copied</span>
+              <span>{t("shareNotebookModal.copied")}</span>
             </>
           ) : (
             <>
               <Copy className="h-3.5 w-3.5" />
-              <span>Copy link</span>
+              <span>{t("shareNotebookModal.copyLink")}</span>
             </>
           )}
         </Button>
@@ -88,6 +91,7 @@ function LinkUrlRow({
 }
 
 export const ShareNotebookModal: React.FC<ShareNotebookModalProps> = ({ notebookId, onClose }) => {
+  const { t } = useTranslation("notebooks");
   const { success, error: showError } = useToast();
 
   const links = useShareLinks(notebookId);
@@ -122,7 +126,7 @@ export const ShareNotebookModal: React.FC<ShareNotebookModalProps> = ({ notebook
         setForkUrl(url);
       }
     } catch (e) {
-      showError(e instanceof Error ? e.message : "Could not create share link");
+      showError(e instanceof Error ? e.message : t("couldNotCreateLink"));
     } finally {
       setBusy(null);
     }
@@ -138,9 +142,9 @@ export const ShareNotebookModal: React.FC<ShareNotebookModalProps> = ({ notebook
     setRevokingId(shareLinkId);
     try {
       await revokeLinkMutation({ shareLinkId });
-      success("Link removed");
+      success(t("linkRemoved"));
     } catch (e) {
-      showError(e instanceof Error ? e.message : "Could not remove link");
+      showError(e instanceof Error ? e.message : t("couldNotRemoveLink"));
     } finally {
       setRevokingId(null);
     }
@@ -167,14 +171,14 @@ export const ShareNotebookModal: React.FC<ShareNotebookModalProps> = ({ notebook
               id="share-notebook-title"
               className="truncate text-xl font-bold tracking-tight text-foreground"
             >
-              Share notebook
+              {t("shareNotebookModal.title")}
             </h2>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="shrink-0 rounded-xl p-2 text-muted-foreground transition-colors hover:bg-secondary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            aria-label="Close"
+            aria-label={t("shareNotebookModal.close")}
           >
             <X className="h-5 w-5" />
           </button>
@@ -187,12 +191,13 @@ export const ShareNotebookModal: React.FC<ShareNotebookModalProps> = ({ notebook
               <div className="mb-5 space-y-2">
                 <div className="flex items-center gap-2 font-sans text-xs font-bold uppercase tracking-widest text-muted-foreground/80">
                   <Users className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                  Cowork
+                  {t("shareNotebookModal.cowork")}
                 </div>
-                <p className="font-sans text-sm font-semibold text-foreground">Shared workspace</p>
+                <p className="font-sans text-sm font-semibold text-foreground">
+                  {t("shareNotebookModal.sharedWorkspace")}
+                </p>
                 <p className="text-sm leading-relaxed text-muted-foreground">
-                  Editors can manage sources, folders, Studio, and chat. Chat threads stay in sync
-                  for everyone on this notebook.
+                  {t("shareNotebookModal.coworkDescription")}
                 </p>
               </div>
               <Button
@@ -204,14 +209,20 @@ export const ShareNotebookModal: React.FC<ShareNotebookModalProps> = ({ notebook
                 {busy === "collaborate" ? (
                   <span className="flex items-center justify-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Creating link…
+                    {t("shareNotebookModal.creatingLink")}
                   </span>
                 ) : (
-                  "Create cowork link"
+                  t("shareNotebookModal.createCoworkLink")
                 )}
               </Button>
               {coworkUrl ? (
-                <LinkUrlRow url={coworkUrl} copyKey="cowork" copied={copied} onCopy={handleCopy} />
+                <LinkUrlRow
+                  url={coworkUrl}
+                  copyKey="cowork"
+                  copied={copied}
+                  onCopy={handleCopy}
+                  t={t}
+                />
               ) : null}
             </section>
 
@@ -220,14 +231,13 @@ export const ShareNotebookModal: React.FC<ShareNotebookModalProps> = ({ notebook
               <div className="mb-5 space-y-2">
                 <div className="flex items-center gap-2 font-sans text-xs font-bold uppercase tracking-widest text-muted-foreground/80">
                   <GitFork className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                  Duplicate
+                  {t("shareNotebookModal.duplicate")}
                 </div>
                 <p className="font-sans text-sm font-semibold text-foreground">
-                  Copy to their account
+                  {t("shareNotebookModal.copyToAccount")}
                 </p>
                 <p className="text-sm leading-relaxed text-muted-foreground">
-                  Recipients get sources, Studio work, and manual notes they own. Conversations are
-                  not copied.
+                  {t("shareNotebookModal.duplicateDescription")}
                 </p>
               </div>
               <Button
@@ -240,14 +250,20 @@ export const ShareNotebookModal: React.FC<ShareNotebookModalProps> = ({ notebook
                 {busy === "fork" ? (
                   <span className="flex items-center justify-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Creating link…
+                    {t("shareNotebookModal.creatingLink")}
                   </span>
                 ) : (
-                  "Create duplicate link"
+                  t("shareNotebookModal.createDuplicateLink")
                 )}
               </Button>
               {forkUrl ? (
-                <LinkUrlRow url={forkUrl} copyKey="fork" copied={copied} onCopy={handleCopy} />
+                <LinkUrlRow
+                  url={forkUrl}
+                  copyKey="fork"
+                  copied={copied}
+                  onCopy={handleCopy}
+                  t={t}
+                />
               ) : null}
             </section>
           </div>
@@ -255,7 +271,9 @@ export const ShareNotebookModal: React.FC<ShareNotebookModalProps> = ({ notebook
           {activeLinks.length > 0 ? (
             <div className="border-t border-border/80 bg-card px-6 py-5">
               <div className="mb-3 flex items-center gap-2">
-                <h4 className="font-sans text-sm font-semibold text-foreground">Active links</h4>
+                <h4 className="font-sans text-sm font-semibold text-foreground">
+                  {t("shareNotebookModal.activeLinks")}
+                </h4>
                 <span className="rounded-full bg-muted/80 px-2 py-0.5 text-xs font-medium tabular-nums text-muted-foreground">
                   {activeLinks.length}
                 </span>
@@ -277,7 +295,9 @@ export const ShareNotebookModal: React.FC<ShareNotebookModalProps> = ({ notebook
                               : "rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-foreground"
                           }
                         >
-                          {l.kind === "collaborate" ? "Cowork" : "Duplicate"}
+                          {l.kind === "collaborate"
+                            ? t("shareNotebookModal.cowork")
+                            : t("shareNotebookModal.duplicate")}
                         </span>
                         <time
                           className="text-xs text-muted-foreground"
@@ -287,7 +307,7 @@ export const ShareNotebookModal: React.FC<ShareNotebookModalProps> = ({ notebook
                         </time>
                       </div>
                       <p className="mt-1 text-xs leading-snug text-muted-foreground/90">
-                        Anyone with this link can use it until you revoke it.
+                        {t("shareNotebookModal.anyoneWithLink")}
                       </p>
                     </div>
                     <Button
@@ -300,14 +320,14 @@ export const ShareNotebookModal: React.FC<ShareNotebookModalProps> = ({ notebook
                         void handleRevoke(l.id as Id<"notebookShareLinks">);
                       }}
                       className="w-full justify-center text-destructive hover:bg-destructive/10 hover:text-destructive sm:w-auto sm:justify-end sm:shrink-0"
-                      title="Revoke this link"
+                      title={t("shareNotebookModal.revokeThisLink")}
                     >
                       {revokingId === l.id ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
                         <>
                           <Ban className="mr-1.5 h-3.5 w-3.5" />
-                          Revoke
+                          {t("shareNotebookModal.revoke")}
                         </>
                       )}
                     </Button>
@@ -320,8 +340,7 @@ export const ShareNotebookModal: React.FC<ShareNotebookModalProps> = ({ notebook
           <div className="flex gap-3 border-t border-border/80 bg-secondary/10 px-6 py-4">
             <Lock className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
             <p className="text-xs leading-relaxed text-muted-foreground">
-              Links require sign-in. You remain the owner; coworkers join as editors until you
-              remove access or revoke a link.
+              {t("shareNotebookModal.linksRequireSignIn")}
             </p>
           </div>
         </div>

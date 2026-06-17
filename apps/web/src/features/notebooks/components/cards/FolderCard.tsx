@@ -14,6 +14,7 @@ import {
   Trash2,
 } from "lucide-react";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { FolderItem } from "@/shared/types/index";
 import { useConfirmDialog } from "@/shared/ui/useConfirmDialog";
 
@@ -55,12 +56,13 @@ export const FolderCard: React.FC<FolderCardProps> = ({
 }) => {
   const FolderIcon = folder.icon ? IconMap[folder.icon] : Folder;
   const { confirm, ConfirmDialogComponent } = useConfirmDialog();
+  const { t } = useTranslation("notebooks");
 
   const handleDeleteWithConfirmation = async () => {
     const confirmed = await confirm(
-      "Delete Folder",
-      `Are you sure you want to delete "${folder.name}"? This will also remove all notebooks inside this folder.`,
-      { confirmText: "Delete", cancelText: "Cancel", variant: "danger" }
+      t("folderCard.deleteTitle"),
+      t("folderCard.deleteConfirm", { name: folder.name }),
+      { confirmText: t("folderCard.delete"), cancelText: t("folderCard.cancel"), variant: "danger" }
     );
     if (confirmed) {
       onDeleteFolder(folder.id);
@@ -98,7 +100,7 @@ export const FolderCard: React.FC<FolderCardProps> = ({
                       onClick={onOpenFolderCustomize}
                       className="w-full text-left px-3 py-2 text-xs font-medium hover:bg-accent flex items-center gap-2 text-popover-foreground"
                     >
-                      <Settings2 className="w-3.5 h-3.5" /> Customize
+                      <Settings2 className="w-3.5 h-3.5" /> {t("folderCard.customize")}
                     </button>
                     <button
                       onClick={() => {
@@ -107,7 +109,7 @@ export const FolderCard: React.FC<FolderCardProps> = ({
                       }}
                       className="w-full text-left px-3 py-2 text-xs font-medium hover:bg-destructive/10 text-destructive flex items-center gap-2"
                     >
-                      <Trash2 className="w-3.5 h-3.5" /> Delete
+                      <Trash2 className="w-3.5 h-3.5" /> {t("folderCard.delete")}
                     </button>
                   </div>
                 )}
@@ -164,7 +166,7 @@ export const FolderCard: React.FC<FolderCardProps> = ({
               <span className="font-bold text-foreground font-serif group-hover:text-primary transition-colors truncate block">
                 {folder.name}
               </span>
-              <span className="text-xs text-muted-foreground">Folder</span>
+              <span className="text-xs text-muted-foreground">{t("folderCard.folder")}</span>
             </div>
           </div>
 
@@ -200,7 +202,7 @@ export const FolderCard: React.FC<FolderCardProps> = ({
                   }}
                   className="w-full text-left px-3 py-2 text-xs font-medium hover:bg-accent flex items-center gap-2 text-popover-foreground transition-colors"
                 >
-                  <Settings2 className="w-3.5 h-3.5 shrink-0" /> Customize
+                  <Settings2 className="w-3.5 h-3.5 shrink-0" /> {t("folderCard.customize")}
                 </button>
                 <button
                   onClick={(e) => {
@@ -210,7 +212,7 @@ export const FolderCard: React.FC<FolderCardProps> = ({
                   }}
                   className="w-full text-left px-3 py-2 text-xs font-medium hover:bg-destructive/10 text-destructive flex items-center gap-2 transition-colors"
                 >
-                  <Trash2 className="w-3.5 h-3.5 shrink-0" /> Delete
+                  <Trash2 className="w-3.5 h-3.5 shrink-0" /> {t("folderCard.delete")}
                 </button>
               </div>
             )}

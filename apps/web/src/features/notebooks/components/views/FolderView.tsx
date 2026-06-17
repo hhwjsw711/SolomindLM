@@ -9,6 +9,7 @@ import {
   Plus,
 } from "lucide-react";
 import React, { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { PageSkeleton } from "@/shared/components/PageSkeleton";
 import { FolderItem, NotebookItem } from "@/shared/types/index";
 import { useNotebookHandlers, useNotebookSorting } from "../../hooks";
@@ -33,6 +34,7 @@ interface FolderViewProps {
 }
 
 export const FolderView: React.FC<FolderViewProps> = ({ folderId, viewMode: initialViewMode }) => {
+  const { t } = useTranslation("notebooks");
   const ctx = useNotebookContext();
   const onBack = ctx.folderBack;
   const onSelectNotebook = ctx.selectNotebook;
@@ -100,10 +102,10 @@ export const FolderView: React.FC<FolderViewProps> = ({ folderId, viewMode: init
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Back</span>
+            <span>{t("folderView.back")}</span>
           </button>
           <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-lg text-sm">
-            Folder not found
+            {t("folderView.folderNotFound")}
           </div>
         </div>
       </div>
@@ -121,7 +123,7 @@ export const FolderView: React.FC<FolderViewProps> = ({ folderId, viewMode: init
               className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>Back</span>
+              <span>{t("folderView.back")}</span>
             </button>
             <div className="h-6 w-px bg-border" />
             <h1 className="text-2xl font-bold text-foreground font-display">{folder.name}</h1>
@@ -133,7 +135,7 @@ export const FolderView: React.FC<FolderViewProps> = ({ folderId, viewMode: init
               <button
                 onClick={() => setViewMode("grid")}
                 className={`p-2 rounded-md transition-all ${viewMode === "grid" ? "bg-secondary text-foreground shadow-sm" : "text-muted-foreground hover:bg-secondary/50"}`}
-                title="Grid View"
+                title={t("folderView.gridView")}
               >
                 <LayoutGrid className="w-4 h-4" />
               </button>
@@ -141,7 +143,7 @@ export const FolderView: React.FC<FolderViewProps> = ({ folderId, viewMode: init
               <button
                 onClick={() => setViewMode("list")}
                 className={`p-2 rounded-md transition-all ${viewMode === "list" ? "bg-secondary text-foreground shadow-sm" : "text-muted-foreground hover:bg-secondary/50"}`}
-                title="List View"
+                title={t("folderView.listView")}
               >
                 <List className="w-4 h-4" />
               </button>
@@ -154,7 +156,7 @@ export const FolderView: React.FC<FolderViewProps> = ({ folderId, viewMode: init
                 className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl border border-border bg-card hover:bg-secondary/50 transition-colors text-sm font-medium shadow-sm min-w-[140px] justify-between"
               >
                 <span className="truncate">
-                  {sortOption === "date" ? "Most recent" : "Title (A-Z)"}
+                  {sortOption === "date" ? t("folderView.mostRecent") : t("folderView.titleAZ")}
                 </span>
                 <ChevronDown className="w-4 h-4 text-muted-foreground" />
               </button>
@@ -169,7 +171,8 @@ export const FolderView: React.FC<FolderViewProps> = ({ folderId, viewMode: init
                     className="w-full text-left px-4 py-2 text-sm hover:bg-accent flex items-center justify-between text-popover-foreground"
                   >
                     <span className="flex items-center gap-2">
-                      <Calendar className="w-3.5 h-3.5 opacity-70 shrink-0" /> Most recent
+                      <Calendar className="w-3.5 h-3.5 opacity-70 shrink-0" />{" "}
+                      {t("folderView.mostRecent")}
                     </span>
                     {sortOption === "date" && (
                       <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
@@ -183,7 +186,8 @@ export const FolderView: React.FC<FolderViewProps> = ({ folderId, viewMode: init
                     className="w-full text-left px-4 py-2 text-sm hover:bg-accent flex items-center justify-between text-popover-foreground"
                   >
                     <span className="flex items-center gap-2">
-                      <ArrowUpAZ className="w-3.5 h-3.5 opacity-70 shrink-0" /> Title (A-Z)
+                      <ArrowUpAZ className="w-3.5 h-3.5 opacity-70 shrink-0" />{" "}
+                      {t("folderView.titleAZ")}
                     </span>
                     {sortOption === "title" && (
                       <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
@@ -207,7 +211,7 @@ export const FolderView: React.FC<FolderViewProps> = ({ folderId, viewMode: init
                 <Plus className="w-7 h-7" />
               </div>
               <span className="text-base font-bold text-muted-foreground group-hover:text-primary transition-colors font-sans">
-                Create new notebook
+                {t("folderView.createNewNotebook")}
               </span>
             </div>
 
@@ -243,7 +247,7 @@ export const FolderView: React.FC<FolderViewProps> = ({ folderId, viewMode: init
                   <Plus className="w-4 h-4 shrink-0" />
                 </div>
                 <span className="font-medium text-muted-foreground group-hover:text-foreground transition-colors font-sans whitespace-nowrap">
-                  Create new notebook
+                  {t("folderView.createNewNotebook")}
                 </span>
               </div>
             </div>
@@ -294,13 +298,14 @@ export const FolderView: React.FC<FolderViewProps> = ({ folderId, viewMode: init
                 // Optimistic updates handle the UI update automatically
               } catch (error) {
                 console.error("Failed to create notebook:", error);
-                const errorMessage = error instanceof Error ? error.message : "Unknown error";
+                const errorMessage =
+                  error instanceof Error ? error.message : t("folderView.unauthorizedNotebook");
                 if (
                   errorMessage.includes("Unauthorized") ||
                   errorMessage.includes("Unauthenticated")
                 ) {
                   notebookHandlers.closeCustomize();
-                  if (onRequireAuth) onRequireAuth("You need to sign in to create a notebook.");
+                  if (onRequireAuth) onRequireAuth(t("folderView.unauthorizedNotebook"));
                 }
               }
             } else {

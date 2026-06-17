@@ -6,6 +6,7 @@ import billingEn from "./locales/en/billing.json";
 import chatEn from "./locales/en/chat.json";
 import commonEn from "./locales/en/common.json";
 import landingEn from "./locales/en/landing.json";
+import notebooksEn from "./locales/en/notebooks.json";
 import sourcesEn from "./locales/en/sources.json";
 import studioEn from "./locales/en/studio.json";
 import authZh from "./locales/zh/auth.json";
@@ -13,6 +14,7 @@ import billingZh from "./locales/zh/billing.json";
 import chatZh from "./locales/zh/chat.json";
 import commonZh from "./locales/zh/common.json";
 import landingZh from "./locales/zh/landing.json";
+import notebooksZh from "./locales/zh/notebooks.json";
 import sourcesZh from "./locales/zh/sources.json";
 import studioZh from "./locales/zh/studio.json";
 
@@ -28,6 +30,7 @@ const resources = {
   en: {
     common: commonEn,
     landing: landingEn,
+    notebooks: notebooksEn,
     chat: chatEn,
     sources: sourcesEn,
     studio: studioEn,
@@ -37,6 +40,7 @@ const resources = {
   zh: {
     common: commonZh,
     landing: landingZh,
+    notebooks: notebooksZh,
     chat: chatZh,
     sources: sourcesZh,
     studio: studioZh,

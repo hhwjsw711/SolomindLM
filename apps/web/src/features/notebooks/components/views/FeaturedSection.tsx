@@ -1,5 +1,6 @@
 import { Globe } from "lucide-react";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { NotebookItem } from "@/shared/types/index";
 import { ListHeader } from "../ListHeader";
 
@@ -14,12 +15,16 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({
   viewMode,
   onSelectNotebook,
 }) => {
+  const { t } = useTranslation("notebooks");
+
   if (featuredNotebooks.length === 0) return null;
 
   return (
     <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-display font-bold text-foreground">Featured notebooks</h2>
+        <h2 className="text-xl font-display font-bold text-foreground">
+          {t("featuredSection.title")}
+        </h2>
       </div>
 
       {viewMode === "grid" ? (
@@ -57,7 +62,7 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({
                 <div className="flex items-center gap-3 text-sm font-medium text-white/80 uppercase tracking-wide">
                   <div className="flex items-center gap-1.5">
                     <Globe className="w-3 h-3 shrink-0" />
-                    <span>{nb.sourceCount} sources</span>
+                    <span>{t("featuredSection.sourcesCount", { count: nb.sourceCount })}</span>
                   </div>
                 </div>
               </div>

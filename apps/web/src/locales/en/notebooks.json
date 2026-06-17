@@ -1,0 +1,133 @@
+{
+  "home": {
+    "all": "All",
+    "myNotebooks": "My notebooks",
+    "featuredNotebooks": "Featured notebooks",
+    "gridView": "Grid View",
+    "listView": "List View",
+    "mostRecent": "Most recent",
+    "titleAZ": "Title (A-Z)",
+    "signInToCreateNotebook": "Sign in to create a notebook.",
+    "signInToCreateFolder": "Sign in to create a folder.",
+    "unknownError": "Unknown error",
+    "unauthorizedNotebook": "You need to sign in to create a notebook.",
+    "unauthorizedFolder": "You need to sign in to create a folder."
+  },
+  "listHeader": {
+    "title": "Title",
+    "sources": "Sources"
+  },
+  "notebookCard": {
+    "deleteTitle": "Delete Notebook",
+    "deleteConfirm": "Are you sure you want to delete \"{{title}}\"? This action cannot be undone.",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "customize": "Customize",
+    "moveToFolder": "Move to folder",
+    "sharedWithYou": "Shared with you",
+    "shared": "Shared"
+  },
+  "folderCard": {
+    "deleteTitle": "Delete Folder",
+    "deleteConfirm": "Are you sure you want to delete \"{{name}}\"? This will also remove all notebooks inside this folder.",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "customize": "Customize",
+    "folder": "Folder"
+  },
+  "customizeFolderModal": {
+    "createFolder": "Create folder",
+    "customizeFolder": "Customize folder",
+    "name": "Name",
+    "folderName": "Folder name",
+    "color": "Color",
+    "icon": "Icon",
+    "cancel": "Cancel",
+    "create": "Create",
+    "save": "Save"
+  },
+  "customizeNotebookModal": {
+    "createNotebook": "Create notebook",
+    "customizeNotebook": "Customize notebook",
+    "title": "Title",
+    "notebookTitle": "Notebook title",
+    "color": "Color",
+    "icon": "Icon",
+    "cancel": "Cancel",
+    "create": "Create",
+    "save": "Save"
+  },
+  "moveToFolderModal": {
+    "title": "Move to folder",
+    "noFolder": "No Folder",
+    "removeFromFolder": "Remove from folder",
+    "notebooksCount": "{{count}} notebooks",
+    "cancel": "Cancel"
+  },
+  "shareNotebookModal": {
+    "helperText": "Copy and share this URL.",
+    "copied": "Copied",
+    "copyLink": "Copy link",
+    "couldNotCreateLink": "Could not create share link",
+    "linkRemoved": "Link removed",
+    "couldNotRemoveLink": "Could not remove link",
+    "title": "Share notebook",
+    "close": "Close",
+    "cowork": "Cowork",
+    "sharedWorkspace": "Shared workspace",
+    "coworkDescription": "Editors can manage sources, folders, Studio, and chat. Chat threads stay in sync for everyone on this notebook.",
+    "creatingLink": "Creating link...",
+    "createCoworkLink": "Create cowork link",
+    "duplicate": "Duplicate",
+    "copyToAccount": "Copy to their account",
+    "duplicateDescription": "Recipients get sources, Studio work, and manual notes they own. Conversations are not copied.",
+    "createDuplicateLink": "Create duplicate link",
+    "activeLinks": "Active links",
+    "anyoneWithLink": "Anyone with this link can use it until you revoke it.",
+    "revokeThisLink": "Revoke this link",
+    "revoke": "Revoke",
+    "linksRequireSignIn": "Links require sign-in. You remain the owner; coworkers join as editors until you remove access or revoke a link."
+  },
+  "folderView": {
+    "back": "Back",
+    "folderNotFound": "Folder not found",
+    "gridView": "Grid View",
+    "listView": "List View",
+    "mostRecent": "Most recent",
+    "titleAZ": "Title (A-Z)",
+    "createNewNotebook": "Create new notebook",
+    "unauthorizedNotebook": "You need to sign in to create a notebook."
+  },
+  "folderExpandedView": {
+    "loading": "Loading notebooks...",
+    "empty": "No notebooks in this folder"
+  },
+  "forkNotebookPage": {
+    "couldNotDuplicate": "Could not duplicate notebook",
+    "title": "Duplicate notebook",
+    "loading": "Loading...",
+    "invalidLink": "This link is invalid or has been revoked.",
+    "notForkLink": "This link is not a fork link.",
+    "youWillGetCopy": "You will get a copy of ",
+    "copyDescription": "(sources, Studio, manual notes). Chat history is not copied.",
+    "duplicating": "Duplicating...",
+    "duplicateToMyAccount": "Duplicate to my account",
+    "backToHome": "Back to home"
+  },
+  "notebookView": {
+    "selectSourceFirst": "Please select at least one source before asking a question",
+    "discuss": "Discuss {{topic}}",
+    "sources": "Sources",
+    "chat": "Chat",
+    "studio": "Studio"
+  },
+  "recentSection": {
+    "myNotebooks": "My Notebooks",
+    "createNewFolder": "Create new folder",
+    "createNewNotebook": "Create new notebook"
+  },
+  "featuredSection": {
+    "title": "Featured notebooks",
+    "sourcesCount": "{{count}} sources"
+  }
+}

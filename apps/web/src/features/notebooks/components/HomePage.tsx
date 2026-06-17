@@ -1,5 +1,6 @@
 import { ArrowUpAZ, Calendar, CheckCircle2, ChevronDown, LayoutGrid, List } from "lucide-react";
 import React, { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useLimitErrorToast } from "@/shared/hooks/useLimitErrorToast";
 import { FolderItem, NotebookItem } from "@/shared/types/index";
 import { useFolderHandlers, useNotebookHandlers, useNotebookSorting } from "../hooks";
@@ -39,6 +40,7 @@ interface HomePageProps {
 
 // Props kept for backward compatibility during migration; context is preferred.
 export const HomePage: React.FC<HomePageProps> = (_props: HomePageProps) => {
+  const { t } = useTranslation("notebooks");
   const ctx = useNotebookContext();
   const featuredNotebooks = ctx.featuredNotebooks;
   const recentNotebooks = ctx.recentNotebooks;
@@ -76,19 +78,19 @@ export const HomePage: React.FC<HomePageProps> = (_props: HomePageProps) => {
 
   const handleCreateNotebookClick = useCallback(() => {
     if (!isAuthenticated) {
-      onRequireAuth("Sign in to create a notebook.");
+      onRequireAuth(t("home.signInToCreateNotebook"));
       return;
     }
     notebookHandlers.openCreateNotebook();
-  }, [isAuthenticated, onRequireAuth, notebookHandlers.openCreateNotebook]);
+  }, [isAuthenticated, onRequireAuth, notebookHandlers.openCreateNotebook, t]);
 
   const handleCreateFolderClick = useCallback(() => {
     if (!isAuthenticated) {
-      onRequireAuth("Sign in to create a folder.");
+      onRequireAuth(t("home.signInToCreateFolder"));
       return;
     }
     folderHandlers.openCreateFolder();
-  }, [isAuthenticated, onRequireAuth, folderHandlers.openCreateFolder]);
+  }, [isAuthenticated, onRequireAuth, folderHandlers.openCreateFolder, t]);
 
   // Convex hooks for mutations
   const createNotebookHook = useCreateNotebook();
@@ -111,11 +113,11 @@ export const HomePage: React.FC<HomePageProps> = (_props: HomePageProps) => {
       const handled = await handleLimitError(error);
 
       if (!handled.isLimitError) {
-        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        const errorMessage = error instanceof Error ? error.message : t("home.unknownError");
 
         if (errorMessage.includes("Unauthorized") || errorMessage.includes("Unauthenticated")) {
           notebookHandlers.closeCustomize();
-          if (onRequireAuth) onRequireAuth("You need to sign in to create a notebook.");
+          if (onRequireAuth) onRequireAuth(t("home.unauthorizedNotebook"));
         }
       }
     }
@@ -142,11 +144,11 @@ export const HomePage: React.FC<HomePageProps> = (_props: HomePageProps) => {
       // Optimistic updates handle the UI update automatically
     } catch (error) {
       console.error("Failed to create folder:", error);
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      const errorMessage = error instanceof Error ? error.message : t("home.unknownError");
 
       if (errorMessage.includes("Unauthorized") || errorMessage.includes("Unauthenticated")) {
         folderHandlers.closeFolderCustomize();
-        if (onRequireAuth) onRequireAuth("You need to sign in to create a folder.");
+        if (onRequireAuth) onRequireAuth(t("home.unauthorizedFolder"));
       }
     }
   };
@@ -202,20 +204,24 @@ export const HomePage: React.FC<HomePageProps> = (_props: HomePageProps) => {
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           {/* Left Tabs */}
           <div className="flex items-center gap-2 self-start md:self-auto">
-            {["All", "My notebooks", "Featured notebooks"].map((tab) => (
+            {[
+              { key: "All", label: t("home.all") },
+              { key: "My notebooks", label: t("home.myNotebooks") },
+              { key: "Featured notebooks", label: t("home.featuredNotebooks") },
+            ].map(({ key, label }) => (
               <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
+                key={key}
+                onClick={() => setActiveTab(key)}
                 className={`
                   px-5 py-2 rounded-xl text-sm font-sans font-bold transition-all
                   ${
-                    activeTab === tab
+                    activeTab === key
                       ? "bg-foreground text-background shadow-md"
                       : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
                   }
                 `}
               >
-                {tab}
+                {label}
               </button>
             ))}
           </div>
@@ -227,7 +233,7 @@ export const HomePage: React.FC<HomePageProps> = (_props: HomePageProps) => {
               <button
                 onClick={() => setViewMode("grid")}
                 className={`p-2 rounded-md transition-all ${viewMode === "grid" ? "bg-secondary text-foreground shadow-sm" : "text-muted-foreground hover:bg-secondary/50"}`}
-                title="Grid View"
+                title={t("home.gridView")}
               >
                 <LayoutGrid className="w-4 h-4" />
               </button>
@@ -235,7 +241,7 @@ export const HomePage: React.FC<HomePageProps> = (_props: HomePageProps) => {
               <button
                 onClick={() => setViewMode("list")}
                 className={`p-2 rounded-md transition-all ${viewMode === "list" ? "bg-secondary text-foreground shadow-sm" : "text-muted-foreground hover:bg-secondary/50"}`}
-                title="List View"
+                title={t("home.listView")}
               >
                 <List className="w-4 h-4" />
               </button>
@@ -248,7 +254,7 @@ export const HomePage: React.FC<HomePageProps> = (_props: HomePageProps) => {
                 className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl border border-border bg-card hover:bg-secondary/50 transition-colors text-sm font-medium shadow-sm min-w-[140px] justify-between"
               >
                 <span className="truncate">
-                  {sortOption === "date" ? "Most recent" : "Title (A-Z)"}
+                  {sortOption === "date" ? t("home.mostRecent") : t("home.titleAZ")}
                 </span>
                 <ChevronDown className="w-4 h-4 text-muted-foreground" />
               </button>
@@ -263,7 +269,8 @@ export const HomePage: React.FC<HomePageProps> = (_props: HomePageProps) => {
                     className="w-full text-left px-4 py-2 text-sm hover:bg-accent flex items-center justify-between text-popover-foreground"
                   >
                     <span className="flex items-center gap-2">
-                      <Calendar className="w-3.5 h-3.5 opacity-70 shrink-0" /> Most recent
+                      <Calendar className="w-3.5 h-3.5 opacity-70 shrink-0" />{" "}
+                      {t("home.mostRecent")}
                     </span>
                     {sortOption === "date" && (
                       <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
@@ -277,7 +284,7 @@ export const HomePage: React.FC<HomePageProps> = (_props: HomePageProps) => {
                     className="w-full text-left px-4 py-2 text-sm hover:bg-accent flex items-center justify-between text-popover-foreground"
                   >
                     <span className="flex items-center gap-2">
-                      <ArrowUpAZ className="w-3.5 h-3.5 opacity-70 shrink-0" /> Title (A-Z)
+                      <ArrowUpAZ className="w-3.5 h-3.5 opacity-70 shrink-0" /> {t("home.titleAZ")}
                     </span>
                     {sortOption === "title" && (
                       <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />

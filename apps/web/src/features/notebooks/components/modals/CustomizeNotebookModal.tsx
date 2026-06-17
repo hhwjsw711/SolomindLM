@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { NotebookItem } from "@/shared/types/index";
 
 const IconMap: Record<string, React.FC<any>> = {
@@ -76,6 +77,7 @@ export const CustomizeNotebookModal: React.FC<CustomizeNotebookModalProps> = ({
   onSave,
 }) => {
   const isCreateMode = !notebook;
+  const { t } = useTranslation("notebooks");
   const [title, setTitle] = useState(notebook?.title || "");
   const [selectedColor, setSelectedColor] = useState(
     notebook?.coverColor || "bg-vintage-brown-300"
@@ -103,7 +105,9 @@ export const CustomizeNotebookModal: React.FC<CustomizeNotebookModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border">
           <h3 className="text-lg font-bold font-sans">
-            {isCreateMode ? "Create notebook" : "Customize notebook"}
+            {isCreateMode
+              ? t("customizeNotebookModal.createNotebook")
+              : t("customizeNotebookModal.customizeNotebook")}
           </h3>
           <button onClick={onClose} className="p-1 hover:bg-secondary rounded-xl transition-colors">
             <X className="w-5 h-5 text-muted-foreground" />
@@ -130,13 +134,13 @@ export const CustomizeNotebookModal: React.FC<CustomizeNotebookModalProps> = ({
           {/* Title Input */}
           <div className="space-y-2">
             <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-              <Type className="w-3.5 h-3.5" /> Title
+              <Type className="w-3.5 h-3.5" /> {t("customizeNotebookModal.title")}
             </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Notebook title"
+              placeholder={t("customizeNotebookModal.notebookTitle")}
               className="w-full px-3 py-2 bg-secondary/50 border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent font-serif"
               autoFocus
             />
@@ -145,7 +149,7 @@ export const CustomizeNotebookModal: React.FC<CustomizeNotebookModalProps> = ({
           {/* Color Picker */}
           <div className="space-y-3">
             <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-              <Palette className="w-3.5 h-3.5" /> Color
+              <Palette className="w-3.5 h-3.5" /> {t("customizeNotebookModal.color")}
             </label>
             <div className="grid grid-cols-9 gap-2">
               {COVER_COLORS.map((color) => (
@@ -161,7 +165,7 @@ export const CustomizeNotebookModal: React.FC<CustomizeNotebookModalProps> = ({
           {/* Icon Picker */}
           <div className="space-y-3">
             <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-              <Settings2 className="w-3.5 h-3.5 shrink-0" /> Icon
+              <Settings2 className="w-3.5 h-3.5 shrink-0" /> {t("customizeNotebookModal.icon")}
             </label>
             <div className="grid grid-cols-5 gap-3">
               {AVAILABLE_ICONS.map((iconName) => {
@@ -187,14 +191,14 @@ export const CustomizeNotebookModal: React.FC<CustomizeNotebookModalProps> = ({
             onClick={onClose}
             className="px-4 py-2 rounded-xl text-sm font-bold text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
           >
-            Cancel
+            {t("customizeNotebookModal.cancel")}
           </button>
           <button
             onClick={handleSave}
             disabled={!title.trim()}
             className="px-6 py-2 rounded-xl text-sm font-bold bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isCreateMode ? "Create" : "Save"}
+            {isCreateMode ? t("customizeNotebookModal.create") : t("customizeNotebookModal.save")}
           </button>
         </div>
       </div>

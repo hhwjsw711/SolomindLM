@@ -1,5 +1,6 @@
 import type { Id } from "@convex/_generated/dataModel";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
 import { AudioPlayerProvider } from "@/features/audio/AudioPlayerContext";
 
@@ -25,6 +26,7 @@ import { usePanelResize } from "@/shared/hooks/usePanelResize";
 import { isNativeShell } from "@/utils/platformDetection";
 
 export function NotebookView() {
+  const { t } = useTranslation("notebooks");
   const { user } = useAuth();
 
   const location = useLocation();
@@ -262,14 +264,16 @@ export function NotebookView() {
       );
 
       if (selectedCompletedSources.length === 0) {
-        toastError("Please select at least one source before asking a question");
+        toastError(t("notebookView.selectSourceFirst"));
 
         return;
       }
 
       setMobileActiveTab("chat");
 
-      onSendMessage(`Discuss ${trimmed.toLowerCase()}`, undefined, { channels: ["notebook"] });
+      onSendMessage(t("notebookView.discuss", { topic: trimmed.toLowerCase() }), undefined, {
+        channels: ["notebook"],
+      });
     },
     [isChatStreaming, onSendMessage, remoteGenerationBlocksSend, sources, toastError, urlNotebookId]
   );
@@ -419,7 +423,7 @@ export function NotebookView() {
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            Sources
+            {t("notebookView.sources")}
           </button>
 
           <div className="w-px h-6 bg-border"></div>
@@ -432,7 +436,7 @@ export function NotebookView() {
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            Chat
+            {t("notebookView.chat")}
           </button>
 
           <div className="w-px h-6 bg-border"></div>
@@ -446,7 +450,7 @@ export function NotebookView() {
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            Studio
+            {t("notebookView.studio")}
           </button>
         </div>
 

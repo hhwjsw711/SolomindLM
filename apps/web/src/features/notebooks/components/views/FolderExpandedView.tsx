@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { FolderItem, NotebookItem } from "@/shared/types/index";
 import { NotebookCard } from "../cards/NotebookCard";
 
@@ -28,10 +29,12 @@ export const FolderExpandedView: React.FC<FolderExpandedViewProps> = ({
   onDeleteNotebook,
   setActiveMenuId,
 }) => {
+  const { t } = useTranslation("notebooks");
+
   if (isLoading) {
     return (
       <div className="mt-2 text-center py-4 text-sm text-muted-foreground bg-card rounded-lg border border-border">
-        Loading notebooks...
+        {t("folderExpandedView.loading")}
       </div>
     );
   }
@@ -39,7 +42,7 @@ export const FolderExpandedView: React.FC<FolderExpandedViewProps> = ({
   if (notebooks.length === 0) {
     return (
       <div className="mt-2 text-center py-4 text-sm text-muted-foreground bg-card rounded-lg border border-border">
-        No notebooks in this folder
+        {t("folderExpandedView.empty")}
       </div>
     );
   }

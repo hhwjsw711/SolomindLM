@@ -1,5 +1,6 @@
 import { FolderInput, Plus } from "lucide-react";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { FolderItem, NotebookItem } from "@/shared/types/index";
 import { FolderCard } from "../cards/FolderCard";
 import { NotebookCard } from "../cards/NotebookCard";
@@ -50,13 +51,17 @@ export const RecentSection: React.FC<RecentSectionProps> = ({
   // Sorting
   getSortedNotebooks: _getSortedNotebooks,
 }) => {
+  const { t } = useTranslation("notebooks");
+
   // Filter notebooks without folders for main display
   const notebooksWithoutFolder = recentNotebooks.filter((nb) => !nb.folderId);
 
   return (
     <section className="animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100 pb-20">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-display font-bold text-foreground">My Notebooks</h2>
+        <h2 className="text-xl font-display font-bold text-foreground">
+          {t("recentSection.myNotebooks")}
+        </h2>
       </div>
 
       {viewMode === "grid" ? (
@@ -72,7 +77,7 @@ export const RecentSection: React.FC<RecentSectionProps> = ({
                 <FolderInput className="w-7 h-7" />
               </div>
               <span className="text-base font-bold text-muted-foreground group-hover:text-blue-500 transition-colors font-sans">
-                Create new folder
+                {t("recentSection.createNewFolder")}
               </span>
             </div>
           )}
@@ -85,7 +90,7 @@ export const RecentSection: React.FC<RecentSectionProps> = ({
               <Plus className="w-7 h-7" />
             </div>
             <span className="text-base font-bold text-muted-foreground group-hover:text-primary transition-colors font-sans">
-              Create new notebook
+              {t("recentSection.createNewNotebook")}
             </span>
           </div>
 
@@ -138,7 +143,7 @@ export const RecentSection: React.FC<RecentSectionProps> = ({
                   <FolderInput className="w-4 h-4 shrink-0" />
                 </div>
                 <span className="font-medium text-muted-foreground group-hover:text-blue-500 transition-colors font-sans whitespace-nowrap">
-                  Create new folder
+                  {t("recentSection.createNewFolder")}
                 </span>
               </div>
             </div>
@@ -154,7 +159,7 @@ export const RecentSection: React.FC<RecentSectionProps> = ({
                 <Plus className="w-4 h-4 shrink-0" />
               </div>
               <span className="font-medium text-muted-foreground group-hover:text-foreground transition-colors font-sans whitespace-nowrap">
-                Create new notebook
+                {t("recentSection.createNewNotebook")}
               </span>
             </div>
           </div>
