@@ -1,4 +1,5 @@
 import { AlertCircle, RefreshCw, XCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface ErrorMessageProps {
   error: string;
@@ -18,6 +19,7 @@ export function ErrorMessage({
   onDismiss,
   className = "",
 }: ErrorMessageProps) {
+  const { t } = useTranslation("common");
   const isError = type === "error";
   const Icon = isError ? XCircle : AlertCircle;
   const bgColor = isError ? "bg-destructive/10" : "bg-yellow-500/10";
@@ -36,7 +38,7 @@ export function ErrorMessage({
               className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
             >
               <RefreshCw className="w-3.5 h-3.5" />
-              Try Again
+              {t("errorMessage.tryAgain")}
             </button>
           )}
         </div>
@@ -44,7 +46,7 @@ export function ErrorMessage({
           <button
             onClick={onDismiss}
             className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
-            aria-label="Dismiss"
+            aria-label={t("errorMessage.dismiss")}
           >
             <XCircle className="w-4 h-4" />
           </button>

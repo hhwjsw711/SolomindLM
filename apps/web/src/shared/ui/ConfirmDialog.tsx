@@ -1,5 +1,6 @@
 import React from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -16,13 +17,17 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   isOpen,
   title,
   message,
-  confirmText = "Confirm",
-  cancelText = "Cancel",
+  confirmText,
+  cancelText,
   variant = "default",
   onConfirm,
   onCancel,
 }) => {
+  const { t } = useTranslation("common");
   if (!isOpen) return null;
+
+  const resolvedConfirmText = confirmText ?? t("confirmDialog.confirm");
+  const resolvedCancelText = cancelText ?? t("confirmDialog.cancel");
 
   const confirmButtonStyles = {
     danger: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
@@ -67,14 +72,14 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             onClick={onCancel}
             className="inline-flex h-9 w-full items-center justify-center rounded-md border border-border bg-card px-4 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-muted/80 sm:w-auto"
           >
-            {cancelText}
+            {resolvedCancelText}
           </button>
           <button
             type="button"
             onClick={onConfirm}
             className={`inline-flex h-9 w-full min-w-20 items-center justify-center rounded-md px-4 text-sm font-medium transition-colors sm:w-auto ${confirmButtonStyles[variant]}`}
           >
-            {confirmText}
+            {resolvedConfirmText}
           </button>
         </div>
       </div>

@@ -19,6 +19,20 @@
     "generationCompleted": "Generation completed successfully",
     "generationFailed": "Generation failed"
   },
+  "dismiss": "Dismiss",
+  "errorMessage": {
+    "tryAgain": "Try Again",
+    "dismiss": "Dismiss"
+  },
+  "protectedRoute": {
+    "loading": "Loading...",
+    "openingNotebook": "Opening notebook\u2026",
+    "signInToContinue": "Please sign in to continue"
+  },
+  "confirmDialog": {
+    "confirm": "Confirm",
+    "cancel": "Cancel"
+  },
   "errors": {
     "notebookLimit": "You've reached your notebook limit ({{current}}/{{limit}}).",
     "sourceLimit": "You've reached your source limit ({{current}}/{{limit}}).",

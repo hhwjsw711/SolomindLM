@@ -99,5 +99,67 @@
     "login": "登录",
     "getStarted": "开始使用",
     "toggleMenu": "切换菜单"
+  },
+  "footer": {
+    "tagline": "SolomindLM 是一款 AI 学习与研究助手，帮助你处理 PDF、视频和论文——从你上传的材料出发，生成闪卡、测验、报告、聊天等。",
+    "companyTitle": "公司",
+    "forStudentsTitle": "学生",
+    "forResearchTitle": "研究",
+    "comparisonsTitle": "对比",
+    "guidesTitle": "指南",
+    "allStudentTools": "所有学生工具",
+    "allResearchTools": "所有研究工具",
+    "features": "功能",
+    "pricing": "定价",
+    "faq": "常见问题",
+    "privacyPolicy": "隐私政策",
+    "terms": "服务条款",
+    "copyright": "版权所有 \u00a9 {{year}} SolomindLM。保留所有权利。"
+  },
+  "useCases": {
+    "heading": "为每一位学习者打造",
+    "subtitle": "从学生到专业人士，SolomindLM 适应你的学习风格",
+    "learnMore": "了解更多 \u2192",
+    "items": {
+      "medicalStudents": {
+        "title": "医学生",
+        "description": "将密集的讲座和研究论文转化为可记忆的闪卡和测验。",
+        "example": "上传解剖学讲义 → 生成闪卡草稿以供复习"
+      },
+      "researchers": {
+        "title": "研究人员",
+        "description": "使用笔记本中的论文进行文献综述模式。",
+        "example": "上传研究论文 → 筛选来源并撰写综合报告"
+      },
+      "languageLearners": {
+        "title": "语言学习者",
+        "description": "从任何内容创建词汇表和语法练习。",
+        "example": "上传一篇西班牙语文章 → 生成练习测验草稿"
+      },
+      "professionals": {
+        "title": "专业人士",
+        "description": "总结行业报告，用最短的阅读时间保持更新。",
+        "example": "上传市场报告 → 获取执行摘要和关键洞察"
+      },
+      "lifelongLearners": {
+        "title": "终身学习者",
+        "description": "将任何主题转化为结构化的学习体验。",
+        "example": "上传一本哲学书 → 用写作题和反馈进行练习"
+      },
+      "studyGroups": {
+        "title": "学习小组",
+        "description": "分享笔记本，让其他人协作处理相同的来源。",
+        "example": "分享笔记本链接 → 协同处理来源和工作室输出"
+      }
+    }
+  },
+  "faqPage": {
+    "helpCenter": "帮助中心",
+    "heading": "常见问题",
+    "subtitle": "关于学习工具、研究工作流程、计费和隐私的所有解答——按主题整理。",
+    "ctaHeading": "准备好试试 SolomindLM 了吗？",
+    "ctaDescription": "创建免费账户，上传你的第一批资料，几分钟内即可生成学习或研究成果。",
+    "ctaButton": "创建免费账户",
+    "backToHome": "返回首页"
   }
 }

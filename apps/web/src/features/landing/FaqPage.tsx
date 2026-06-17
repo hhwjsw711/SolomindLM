@@ -1,5 +1,6 @@
 import { ChevronDown, ChevronRight, ChevronUp } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { AuthModal } from "@/features/auth/components/AuthModal";
 import { useAuth } from "@/features/auth/useAuth";
@@ -10,6 +11,7 @@ import { Footer } from "./components/Footer";
 import { getFaqCategoriesWithItems, type RegisteredFaq } from "./faqRegistry";
 
 export function FaqPage() {
+  const { t } = useTranslation("landing");
   const { isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -38,14 +40,13 @@ export function FaqPage() {
         <FaqHeader />
         <section className="px-6 md:px-8 pt-16 pb-12 md:pt-24 md:pb-16">
           <div className="max-w-3xl mx-auto text-center space-y-6">
-            <p className="text-sm font-medium uppercase tracking-wider text-primary">Help center</p>
-            <h1 className="text-4xl md:text-5xl font-display font-bold text-foreground tracking-tight leading-tight">
-              Frequently asked questions
-            </h1>
-            <p className="text-lg text-muted-foreground leading-relaxed">
-              Everything we answer about study tools, research workflows, billing, and
-              privacy—organized by topic.
+            <p className="text-sm font-medium uppercase tracking-wider text-primary">
+              {t("faqPage.helpCenter")}
             </p>
+            <h1 className="text-4xl md:text-5xl font-display font-bold text-foreground tracking-tight leading-tight">
+              {t("faqPage.heading")}
+            </h1>
+            <p className="text-lg text-muted-foreground leading-relaxed">{t("faqPage.subtitle")}</p>
           </div>
         </section>
 
@@ -85,14 +86,11 @@ export function FaqPage() {
         <section className="px-6 md:px-8 py-16 md:py-20 border-t border-border/60 bg-card/30">
           <div className="max-w-2xl mx-auto text-center space-y-6">
             <h2 className="text-2xl md:text-3xl font-display font-bold text-foreground">
-              Ready to try SolomindLM?
+              {t("faqPage.ctaHeading")}
             </h2>
-            <p className="text-muted-foreground">
-              Create a free account, upload your first sources, and generate study or research
-              outputs in minutes.
-            </p>
+            <p className="text-muted-foreground">{t("faqPage.ctaDescription")}</p>
             <Button size="lg" onClick={openSignup} className="font-semibold px-8">
-              Create free account
+              {t("faqPage.ctaButton")}
             </Button>
           </div>
         </section>
@@ -109,6 +107,7 @@ export function FaqPage() {
 }
 
 function FaqHeader() {
+  const { t } = useTranslation("landing");
   return (
     <header className="border-b border-border/60 bg-card/40 backdrop-blur-sm sticky top-0 z-50">
       <div className="max-w-[1500px] mx-auto px-6 sm:px-8 lg:px-12 h-16 flex items-center justify-between">
@@ -126,7 +125,7 @@ function FaqHeader() {
           to="/"
           className="text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
-          Back to home
+          {t("faqPage.backToHome")}
         </Link>
       </div>
     </header>

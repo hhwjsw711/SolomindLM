@@ -1,6 +1,7 @@
 import { api } from "@convex/_generated/api";
 import { Authenticated, AuthLoading, Unauthenticated, useMutation, useQuery } from "convex/react";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 
 interface ProtectedRouteProps {
@@ -16,6 +17,7 @@ function stripShareQueryParam(search: string): string {
 }
 
 export function ProtectedRoute({ children, requireNotebookAccess = false }: ProtectedRouteProps) {
+  const { t } = useTranslation("common");
   const location = useLocation();
   const navigate = useNavigate();
   const redeemCollaborate = useMutation(api.notebooks.sharing.redeemCollaborateLink);
@@ -84,7 +86,7 @@ export function ProtectedRoute({ children, requireNotebookAccess = false }: Prot
         <div className="flex h-screen w-full items-center justify-center bg-background">
           <div className="flex flex-col items-center gap-4">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-            <p className="text-sm text-muted-foreground">Loading...</p>
+            <p className="text-sm text-muted-foreground">{t("protectedRoute.loading")}</p>
           </div>
         </div>
       </AuthLoading>
@@ -94,7 +96,7 @@ export function ProtectedRoute({ children, requireNotebookAccess = false }: Prot
           <div className="flex h-screen w-full items-center justify-center bg-background">
             <div className="flex flex-col items-center gap-4">
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-              <p className="text-sm text-muted-foreground">Opening notebook…</p>
+              <p className="text-sm text-muted-foreground">{t("protectedRoute.openingNotebook")}</p>
             </div>
           </div>
         ) : notebookAccessDenied ? (
@@ -111,7 +113,7 @@ export function ProtectedRoute({ children, requireNotebookAccess = false }: Prot
           {...({
             state: {
               from: `${location.pathname}${location.search}`,
-              message: "Please sign in to continue",
+              message: t("protectedRoute.signInToContinue"),
             },
           } as Record<string, unknown>)}
         />

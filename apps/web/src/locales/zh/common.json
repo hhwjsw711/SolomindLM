@@ -19,6 +19,20 @@
     "generationCompleted": "生成成功",
     "generationFailed": "生成失败"
   },
+  "dismiss": "关闭",
+  "errorMessage": {
+    "tryAgain": "重试",
+    "dismiss": "关闭"
+  },
+  "protectedRoute": {
+    "loading": "加载中...",
+    "openingNotebook": "正在打开笔记本…",
+    "signInToContinue": "请登录以继续"
+  },
+  "confirmDialog": {
+    "confirm": "确认",
+    "cancel": "取消"
+  },
   "errors": {
     "notebookLimit": "笔记本数量已达上限 ({{current}}/{{limit}})。",
     "sourceLimit": "来源数量已达上限 ({{current}}/{{limit}})。",

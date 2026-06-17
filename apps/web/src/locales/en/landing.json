@@ -99,5 +99,67 @@
     "login": "Log in",
     "getStarted": "Get Started",
     "toggleMenu": "Toggle menu"
+  },
+  "footer": {
+    "tagline": "SolomindLM is an AI learning and research assistant that helps you work with PDFs, videos, and papers\u2014flashcards, quizzes, reports, chat, and more, starting from the material you upload.",
+    "companyTitle": "Company",
+    "forStudentsTitle": "For Students",
+    "forResearchTitle": "For Research",
+    "comparisonsTitle": "Comparisons",
+    "guidesTitle": "Guides",
+    "allStudentTools": "All student tools",
+    "allResearchTools": "All research tools",
+    "features": "Features",
+    "pricing": "Pricing",
+    "faq": "FAQ",
+    "privacyPolicy": "Privacy Policy",
+    "terms": "Terms",
+    "copyright": "Copyright \u00a9 {{year}} SolomindLM. All rights reserved."
+  },
+  "useCases": {
+    "heading": "Built for Every Learner",
+    "subtitle": "From students to professionals, SolomindLM adapts to your learning style",
+    "learnMore": "Learn more \u2192",
+    "items": {
+      "medicalStudents": {
+        "title": "Medical Students",
+        "description": "Turn dense lectures and research papers into memorizable flashcards and quizzes.",
+        "example": "Upload an anatomy lecture \u2192 Generate a flashcard draft to review"
+      },
+      "researchers": {
+        "title": "Researchers",
+        "description": "Work through literature review mode with papers in your notebook.",
+        "example": "Upload research papers \u2192 Screen sources and draft a synthesis report"
+      },
+      "languageLearners": {
+        "title": "Language Learners",
+        "description": "Create vocabulary lists and grammar exercises from any content.",
+        "example": "Upload a Spanish article \u2192 Generate a practice quiz draft"
+      },
+      "professionals": {
+        "title": "Professionals",
+        "description": "Summarize industry reports and stay updated with minimal reading time.",
+        "example": "Upload a market report \u2192 Get executive summary and key insights"
+      },
+      "lifelongLearners": {
+        "title": "Lifelong Learners",
+        "description": "Turn any topic into a structured learning experience.",
+        "example": "Upload a philosophy book \u2192 Practice with written questions and feedback"
+      },
+      "studyGroups": {
+        "title": "Study Groups",
+        "description": "Share a notebook so others can collaborate on the same sources.",
+        "example": "Share a notebook link \u2192 Cowork on sources and Studio outputs"
+      }
+    }
+  },
+  "faqPage": {
+    "helpCenter": "Help center",
+    "heading": "Frequently asked questions",
+    "subtitle": "Everything we answer about study tools, research workflows, billing, and privacy\u2014organized by topic.",
+    "ctaHeading": "Ready to try SolomindLM?",
+    "ctaDescription": "Create a free account, upload your first sources, and generate study or research outputs in minutes.",
+    "ctaButton": "Create free account",
+    "backToHome": "Back to home"
   }
 }

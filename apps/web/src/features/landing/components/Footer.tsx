@@ -1,18 +1,8 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { getIntentPagesByCluster } from "../intentLandingPages";
 import { getComparisonPages, getGuidePages } from "../seoContentPages";
-
-const FOOTER_TAGLINE =
-  "SolomindLM is an AI learning and research assistant that helps you work with PDFs, videos, and papers—flashcards, quizzes, reports, chat, and more, starting from the material you upload.";
-
-const COMPANY_LINKS = [
-  { label: "Features", to: "/#features" },
-  { label: "Pricing", to: "/#pricing" },
-  { label: "FAQ", to: "/faq" },
-  { label: "Privacy Policy", to: "/privacy" },
-  { label: "Terms", to: "/terms" },
-] as const;
 
 function DiscordIcon({ className }: { className?: string }) {
   return (
@@ -79,11 +69,20 @@ function FooterLink({ to, children }: { to: string; children: React.ReactNode })
 }
 
 export const Footer: React.FC = () => {
+  const { t } = useTranslation("landing");
   const currentYear = new Date().getFullYear();
   const studentPages = getIntentPagesByCluster("students");
   const researchPages = getIntentPagesByCluster("research");
   const comparisonPages = getComparisonPages();
   const guidePages = getGuidePages();
+
+  const companyLinks = [
+    { label: t("footer.features"), to: "/#features" },
+    { label: t("footer.pricing"), to: "/#pricing" },
+    { label: t("footer.faq"), to: "/faq" },
+    { label: t("footer.privacyPolicy"), to: "/privacy" },
+    { label: t("footer.terms"), to: "/terms" },
+  ];
 
   return (
     <footer className="border-t border-border/60 bg-card/40">
@@ -101,7 +100,7 @@ export const Footer: React.FC = () => {
               </span>
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed max-w-sm mb-6">
-              {FOOTER_TAGLINE}
+              {t("footer.tagline")}
             </p>
             <div className="flex items-center gap-4">
               <a
@@ -135,8 +134,8 @@ export const Footer: React.FC = () => {
           </div>
 
           <div className="lg:col-span-2">
-            <FooterLinkColumn title="Company">
-              {COMPANY_LINKS.map((link) => (
+            <FooterLinkColumn title={t("footer.companyTitle")}>
+              {companyLinks.map((link) => (
                 <FooterLink key={link.to} to={link.to}>
                   {link.label}
                 </FooterLink>
@@ -145,8 +144,8 @@ export const Footer: React.FC = () => {
           </div>
 
           <div className="lg:col-span-2">
-            <FooterLinkColumn title="For Students">
-              <FooterLink to="/students">All student tools</FooterLink>
+            <FooterLinkColumn title={t("footer.forStudentsTitle")}>
+              <FooterLink to="/students">{t("footer.allStudentTools")}</FooterLink>
               {studentPages.map((page) => (
                 <FooterLink key={page.path} to={page.path}>
                   {page.navLabel}
@@ -156,8 +155,8 @@ export const Footer: React.FC = () => {
           </div>
 
           <div className="lg:col-span-3">
-            <FooterLinkColumn title="For Research">
-              <FooterLink to="/research">All research tools</FooterLink>
+            <FooterLinkColumn title={t("footer.forResearchTitle")}>
+              <FooterLink to="/research">{t("footer.allResearchTools")}</FooterLink>
               {researchPages.map((page) => (
                 <FooterLink key={page.path} to={page.path}>
                   {page.navLabel}
@@ -167,7 +166,7 @@ export const Footer: React.FC = () => {
           </div>
 
           <div className="lg:col-span-2">
-            <FooterLinkColumn title="Comparisons">
+            <FooterLinkColumn title={t("footer.comparisonsTitle")}>
               {comparisonPages.map((page) => (
                 <FooterLink key={page.path} to={page.path}>
                   {page.navLabel}
@@ -175,7 +174,7 @@ export const Footer: React.FC = () => {
               ))}
             </FooterLinkColumn>
             <div className="mt-10">
-              <FooterLinkColumn title="Guides">
+              <FooterLinkColumn title={t("footer.guidesTitle")}>
                 {guidePages.map((page) => (
                   <FooterLink key={page.path} to={page.path}>
                     {page.navLabel}
@@ -188,7 +187,7 @@ export const Footer: React.FC = () => {
 
         <div className="mt-14 pt-8 border-t border-border/60 text-center">
           <p className="text-sm text-muted-foreground">
-            Copyright &copy; {currentYear} SolomindLM. All rights reserved.
+            {t("footer.copyright", { year: currentYear })}
           </p>
         </div>
       </div>

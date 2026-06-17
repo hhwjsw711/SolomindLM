@@ -1,5 +1,6 @@
 import { BookOpen, Briefcase, GraduationCap, Languages, Microscope, Users } from "lucide-react";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 interface UseCase {
@@ -12,73 +13,75 @@ interface UseCase {
   learnMorePath?: string;
 }
 
-const useCases: UseCase[] = [
-  {
-    icon: GraduationCap,
-    title: "Medical Students",
-    description: "Turn dense lectures and research papers into memorizable flashcards and quizzes.",
-    example: "Upload an anatomy lecture → Generate a flashcard draft to review",
-    color: "text-rose-600",
-    borderColor: "border-l-rose-500",
-    learnMorePath: "/students/ai-flashcards",
-  },
-  {
-    icon: Microscope,
-    title: "Researchers",
-    description: "Work through literature review mode with papers in your notebook.",
-    example: "Upload research papers → Screen sources and draft a synthesis report",
-    color: "text-blue-600",
-    borderColor: "border-l-blue-500",
-    learnMorePath: "/research/ai-literature-review",
-  },
-  {
-    icon: Languages,
-    title: "Language Learners",
-    description: "Create vocabulary lists and grammar exercises from any content.",
-    example: "Upload a Spanish article → Generate a practice quiz draft",
-    color: "text-emerald-600",
-    borderColor: "border-l-emerald-500",
-    learnMorePath: "/students/ai-quizzes",
-  },
-  {
-    icon: Briefcase,
-    title: "Professionals",
-    description: "Summarize industry reports and stay updated with minimal reading time.",
-    example: "Upload a market report → Get executive summary and key insights",
-    color: "text-amber-600",
-    borderColor: "border-l-amber-500",
-    learnMorePath: "/students/ai-reports",
-  },
-  {
-    icon: BookOpen,
-    title: "Lifelong Learners",
-    description: "Turn any topic into a structured learning experience.",
-    example: "Upload a philosophy book → Practice with written questions and feedback",
-    color: "text-purple-600",
-    borderColor: "border-l-purple-500",
-    learnMorePath: "/students/ai-written-questions",
-  },
-  {
-    icon: Users,
-    title: "Study Groups",
-    description: "Share a notebook so others can collaborate on the same sources.",
-    example: "Share a notebook link → Cowork on sources and Studio outputs",
-    color: "text-indigo-600",
-    borderColor: "border-l-indigo-500",
-    learnMorePath: "/students/share-notebooks",
-  },
-];
-
 export const UseCasesSection: React.FC = () => {
+  const { t } = useTranslation("landing");
+
+  const useCases: UseCase[] = [
+    {
+      icon: GraduationCap,
+      title: t("useCases.items.medicalStudents.title"),
+      description: t("useCases.items.medicalStudents.description"),
+      example: t("useCases.items.medicalStudents.example"),
+      color: "text-rose-600",
+      borderColor: "border-l-rose-500",
+      learnMorePath: "/students/ai-flashcards",
+    },
+    {
+      icon: Microscope,
+      title: t("useCases.items.researchers.title"),
+      description: t("useCases.items.researchers.description"),
+      example: t("useCases.items.researchers.example"),
+      color: "text-blue-600",
+      borderColor: "border-l-blue-500",
+      learnMorePath: "/research/ai-literature-review",
+    },
+    {
+      icon: Languages,
+      title: t("useCases.items.languageLearners.title"),
+      description: t("useCases.items.languageLearners.description"),
+      example: t("useCases.items.languageLearners.example"),
+      color: "text-emerald-600",
+      borderColor: "border-l-emerald-500",
+      learnMorePath: "/students/ai-quizzes",
+    },
+    {
+      icon: Briefcase,
+      title: t("useCases.items.professionals.title"),
+      description: t("useCases.items.professionals.description"),
+      example: t("useCases.items.professionals.example"),
+      color: "text-amber-600",
+      borderColor: "border-l-amber-500",
+      learnMorePath: "/students/ai-reports",
+    },
+    {
+      icon: BookOpen,
+      title: t("useCases.items.lifelongLearners.title"),
+      description: t("useCases.items.lifelongLearners.description"),
+      example: t("useCases.items.lifelongLearners.example"),
+      color: "text-purple-600",
+      borderColor: "border-l-purple-500",
+      learnMorePath: "/students/ai-written-questions",
+    },
+    {
+      icon: Users,
+      title: t("useCases.items.studyGroups.title"),
+      description: t("useCases.items.studyGroups.description"),
+      example: t("useCases.items.studyGroups.example"),
+      color: "text-indigo-600",
+      borderColor: "border-l-indigo-500",
+      learnMorePath: "/students/share-notebooks",
+    },
+  ];
+
   return (
     <section id="use-cases" className="py-32 md:py-40 px-6">
       <div className="max-w-[1500px] w-full mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">
-            Built for Every Learner
+            {t("useCases.heading")}
           </h2>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            From students to professionals, SolomindLM adapts to your learning style
+            {t("useCases.subtitle")}
           </p>
         </div>
 
@@ -118,7 +121,7 @@ export const UseCasesSection: React.FC = () => {
                     to={useCase.learnMorePath}
                     className="inline-block mt-4 text-sm font-medium text-primary hover:underline"
                   >
-                    Learn more →
+                    {t("useCases.learnMore")}
                   </Link>
                 ) : null}
               </div>
