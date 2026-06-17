@@ -93,7 +93,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({ onGetStarted }) 
           <div
             role="tablist"
             className="inline-flex p-1 rounded-xl bg-muted/80 border border-border/80"
-            aria-label="Billing period"
+            aria-label={t("pricing.billingPeriod")}
           >
             <button
               type="button"

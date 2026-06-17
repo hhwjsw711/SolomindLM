@@ -542,9 +542,12 @@
     "toolLabels": {
       "report": "Reports",
       "spreadsheet": "Spreadsheets",
+      "spreadsheets": "Spreadsheets",
       "infographic": "Infographics",
+      "infographics": "Infographics",
       "flashcards": "Flashcards",
       "quiz": "Quizzes",
+      "quizzes": "Quizzes",
       "audio": "Audio",
       "writtenQuestions": "Written Questions",
       "mindmap": "Mind Maps"
@@ -590,9 +593,12 @@
     "toolLabels": {
       "report": "Reports",
       "spreadsheet": "Spreadsheets",
+      "spreadsheets": "Spreadsheets",
       "infographic": "Infographics",
+      "infographics": "Infographics",
       "flashcards": "Flashcards",
       "quiz": "Quizzes",
+      "quizzes": "Quizzes",
       "audio": "Audio",
       "writtenQuestions": "Written Questions",
       "mindmap": "Mind Maps"

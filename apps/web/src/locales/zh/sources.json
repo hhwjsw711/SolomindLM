@@ -28,12 +28,12 @@
     "limitReached": "已达来源上限",
     "limitReachedBody": "已达最大 {{count}} 个来源。请移除一些来源以添加新的。",
     "sourceLimit": "来源配额",
-    "loading": "加载中..."
+    "loading": "加载中…"
   },
   "discover": {
     "title": "发现来源",
     "addSources": "添加来源",
-    "searchPlaceholder": "搜索文章、论文或网站...",
+    "searchPlaceholder": "搜索文章、论文或网站…",
     "search": "搜索",
     "filters": "筛选",
     "timeRange": "时间范围",
@@ -50,7 +50,7 @@
     "resetFilters": "重置筛选",
     "gridView": "网格视图",
     "listView": "列表视图",
-    "searching": "正在搜索数据源...",
+    "searching": "正在搜索数据源…",
     "searchingSubtitle": "正在为你查找最相关的来源。",
     "searchError": "搜索遇到问题",
     "emptyState": "输入主题以发现相关来源",
@@ -138,11 +138,12 @@
     "discAbbr": "发现…",
     "discover": "发现",
     "deleteSelected": "删除选中",
+    "delete": "删除",
     "delAbbr": "删除…",
     "refreshAll": "全部刷新",
     "refreshAbbr": "刷新…",
     "reFetchTitle": "重新获取网页和 Google Drive 导入",
-    "searchPlaceholder": "搜索来源...",
+    "searchPlaceholder": "搜索来源…",
     "countOfTotal": "{{count}} / {{total}} 项",
     "itemCount": "{{count}} 项",
     "deselectAll": "取消全选",
@@ -170,21 +171,21 @@
     "sourceGuide": "来源指南",
     "topics": "主题",
     "discussTopic": "讨论 {{topic}}",
-    "generatingGuide": "正在生成来源指南...",
+    "generatingGuide": "正在生成来源指南…",
     "failedToProcess": "处理文档失败",
     "failedToProcessBody": "处理此文档时出错。请尝试重新上传。",
-    "loadingContent": "加载内容中...",
+    "loadingContent": "加载内容中…",
     "failedToLoad": "加载内容失败",
     "failedToLoadBody": "内容将在可用时自动重新加载。请确保你已登录。",
     "markdown": "Markdown",
     "originalPdf": "原始 PDF",
-    "loadingPdf": "正在加载 PDF...",
+    "loadingPdf": "正在加载 PDF…",
     "pdfFailed": "无法加载 PDF。",
     "noContent": "无可用内容。"
   },
   "sourceGuide": {
     "heading": "来源指南",
-    "summarizing": "正在总结来源..."
+    "summarizing": "正在总结来源…"
   },
   "pdfViewer": {
     "failedToLoad": "加载 PDF 失败",
@@ -199,26 +200,26 @@
   },
   "urlInput": {
     "title": "添加网站",
-    "placeholder": "https://example.com ... 用空格或换行分隔多个 URL",
+    "placeholder": "https://example.com … 用空格或换行分隔多个 URL",
     "invalidUrl": "请输入至少一个有效的 URL（以 http:// 或 https:// 开头）。",
     "cancel": "取消",
-    "adding": "添加中...",
+    "adding": "添加中…",
     "addSources": "添加来源"
   },
   "textInput": {
     "title": "粘贴文本",
-    "placeholder": "在此粘贴文本...",
+    "placeholder": "在此粘贴文本…",
     "cancel": "取消",
-    "adding": "添加中...",
+    "adding": "添加中…",
     "addSource": "添加来源"
   },
   "socialMediaInput": {
     "title": "添加视频链接",
     "description": "粘贴视频 URL 以提取其转录。支持 YouTube、TikTok、Instagram 和 X（Twitter）。用空格或换行分隔多个 URL。",
-    "placeholder": "粘贴来自 YouTube、TikTok、Instagram 或 X 的 URL... 用空格或换行分隔多个 URL",
+    "placeholder": "粘贴来自 YouTube、TikTok、Instagram 或 X 的 URL… 用空格或换行分隔多个 URL",
     "invalidUrl": "请输入至少一个有效的 URL（以 http:// 或 https:// 开头）。",
     "cancel": "取消",
-    "adding": "添加中...",
+    "adding": "添加中…",
     "addSources": "添加来源"
   },
   "manualPaper": {
@@ -238,7 +239,7 @@
     "yearLabel": "年份",
     "yearPlaceholder": "发表年份",
     "pdfUrlLabel": "PDF 链接",
-    "pdfUrlPlaceholder": "https://...",
+    "pdfUrlPlaceholder": "https://…",
     "addPaper": "添加论文",
     "failedToAdd": "添加论文失败"
   },
@@ -254,7 +255,7 @@
   "bibtexImport": {
     "title": "导入 BibTeX 或 RIS",
     "description": "在下方粘贴你的 BibTeX 或 RIS 格式引用。",
-    "placeholder": "在此粘贴 BibTeX 或 RIS 内容...",
+    "placeholder": "在此粘贴 BibTeX 或 RIS 内容…",
     "import": "导入引用",
     "failedToImport": "导入引用失败",
     "uploadFile": "上传文件",
@@ -278,7 +279,7 @@
   },
   "mendeleyImport": {
     "title": "从 Mendeley 导入",
-    "loading": "正在加载你的 Mendeley 库...",
+    "loading": "正在加载你的 Mendeley 库…",
     "selectDocuments": "选择要导入的文档",
     "importSelected": "导入选中项",
     "failedToLoad": "加载 Mendeley 文档失败",
@@ -286,7 +287,7 @@
     "instructions": "将你的 Mendeley 库导出为 BibTeX，然后上传以下文件。",
     "clickToUpload": "点击上传来自 Mendeley 的 .bib 文件",
     "fileLoaded": "文件已加载",
-    "parsing": "正在解析参考文献...",
+    "parsing": "正在解析参考文献…",
     "parseError": "解析文件失败",
     "found": "找到",
     "alreadyInNotebook": "已在笔记本中",
@@ -298,7 +299,7 @@
   },
   "zoteroImport": {
     "title": "从 Zotero 导入",
-    "loading": "正在加载你的 Zotero 库...",
+    "loading": "正在加载你的 Zotero 库…",
     "selectDocuments": "选择要导入的文档",
     "importSelected": "导入选中项",
     "failedToLoad": "加载 Zotero 文档失败",
@@ -306,7 +307,7 @@
     "instructions": "将你的 Zotero 库导出为 BibTeX，然后上传以下文件。",
     "clickToUpload": "点击上传来自 Zotero 的 .bib 文件",
     "fileLoaded": "文件已加载",
-    "parsing": "正在解析参考文献...",
+    "parsing": "正在解析参考文献…",
     "parseError": "解析文件失败",
     "found": "找到",
     "alreadyInNotebook": "已在笔记本中",

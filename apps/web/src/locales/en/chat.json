@@ -304,6 +304,7 @@
     "includeSource": "Include {{title}}"
   },
   "selectionTooltip": {
-    "addToChat": "Add to chat"
+    "addToChat": "Add to chat",
+    "removeQuote": "Remove quote"
   }
 }

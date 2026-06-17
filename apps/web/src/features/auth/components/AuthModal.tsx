@@ -58,7 +58,7 @@ export function AuthModal({
           type="button"
           onClick={onClose}
           className="absolute right-3 top-3 z-10 rounded-xl p-2 text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          aria-label="Close"
+          aria-label={t("form.close")}
         >
           <X className="h-5 w-5" aria-hidden />
         </button>

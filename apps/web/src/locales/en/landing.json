@@ -141,6 +141,7 @@
     "sectionLabel": "Pricing",
     "sectionHeading": "Start free. Upgrade when you need more.",
     "bestValue": "Best value",
+    "billingPeriod": "Billing period",
     "annual": "Annual",
     "monthlyToggle": "Monthly",
     "freeFeatures": [

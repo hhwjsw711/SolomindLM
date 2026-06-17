@@ -10,8 +10,8 @@
     "signInToCreateNotebook": "请登录以创建笔记本。",
     "signInToCreateFolder": "请登录以创建文件夹。",
     "unknownError": "未知错误",
-    "unauthorizedNotebook": "您需要登录才能创建笔记本。",
-    "unauthorizedFolder": "您需要登录才能创建文件夹。"
+    "unauthorizedNotebook": "你需要登录才能创建笔记本。",
+    "unauthorizedFolder": "你需要登录才能创建文件夹。"
   },
   "listHeader": {
     "title": "标题",
@@ -19,17 +19,17 @@
   },
   "notebookCard": {
     "deleteTitle": "删除笔记本",
-    "deleteConfirm": "您确定要删除\"{{title}}\"吗？此操作无法撤销。",
+    "deleteConfirm": "你确定要删除\"{{title}}\"吗？此操作无法撤销。",
     "delete": "删除",
     "cancel": "取消",
     "customize": "自定义",
     "moveToFolder": "移动到文件夹",
-    "sharedWithYou": "已与您共享",
+    "sharedWithYou": "已与你共享",
     "shared": "已共享"
   },
   "folderCard": {
     "deleteTitle": "删除文件夹",
-    "deleteConfirm": "您确定要删除\"{{name}}\"吗？此操作还会删除该文件夹中的所有笔记本。",
+    "deleteConfirm": "你确定要删除\"{{name}}\"吗？此操作还会删除该文件夹中的所有笔记本。",
     "delete": "删除",
     "cancel": "取消",
     "customize": "自定义",
@@ -76,17 +76,17 @@
     "cowork": "协作",
     "sharedWorkspace": "共享工作区",
     "coworkDescription": "编辑者可以管理来源、文件夹、Studio 和聊天。聊天记录对所有笔记本成员保持同步。",
-    "creatingLink": "正在创建链接...",
+    "creatingLink": "正在创建链接…",
     "createCoworkLink": "创建协作链接",
     "duplicate": "复制",
     "copyToAccount": "复制到其账户",
     "duplicateDescription": "接收者将获得由其拥有的来源、Studio 和手动笔记。对话不会被复制。",
     "createDuplicateLink": "创建复制链接",
     "activeLinks": "活跃链接",
-    "anyoneWithLink": "在您撤销之前，任何拥有此链接的人都可以使用。",
+    "anyoneWithLink": "在你撤销之前，任何拥有此链接的人都可以使用。",
     "revokeThisLink": "撤销此链接",
     "revoke": "撤销",
-    "linksRequireSignIn": "链接需要登录。您始终是所有者；协作者以编辑者身份加入，直到您移除其访问权限或撤销链接。"
+    "linksRequireSignIn": "链接需要登录。你始终是所有者；协作者以编辑者身份加入，直到你移除其访问权限或撤销链接。"
   },
   "folderView": {
     "back": "返回",
@@ -96,21 +96,21 @@
     "mostRecent": "最近更新",
     "titleAZ": "标题 (A-Z)",
     "createNewNotebook": "创建新笔记本",
-    "unauthorizedNotebook": "您需要登录才能创建笔记本。"
+    "unauthorizedNotebook": "你需要登录才能创建笔记本。"
   },
   "folderExpandedView": {
-    "loading": "正在加载笔记本...",
+    "loading": "正在加载笔记本…",
     "empty": "此文件夹中没有笔记本"
   },
   "forkNotebookPage": {
     "couldNotDuplicate": "无法复制笔记本",
     "title": "复制笔记本",
-    "loading": "加载中...",
+    "loading": "加载中…",
     "invalidLink": "此链接无效或已被撤销。",
     "notForkLink": "此链接不是复制链接。",
-    "youWillGetCopy": "您将获得一份 ",
+    "youWillGetCopy": "你将获得一份 ",
     "copyDescription": "的副本（来源、Studio、手动笔记）。聊天历史不会被复制。",
-    "duplicating": "正在复制...",
+    "duplicating": "正在复制…",
     "duplicateToMyAccount": "复制到我的账户",
     "backToHome": "返回首页"
   },

@@ -270,7 +270,11 @@ export function LandingHeroMockup({
                         type="button"
                         onClick={() => toggleSourceSelected(s.id)}
                         className="flex shrink-0 items-center justify-center rounded-xl p-1 text-primary transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        aria-label={selected ? `Deselect ${s.title}` : `Select ${s.title}`}
+                        aria-label={
+                          selected
+                            ? t("page.hero.deselect", { name: s.title })
+                            : t("page.hero.select", { name: s.title })
+                        }
                         aria-pressed={selected}
                       >
                         {selected ? (

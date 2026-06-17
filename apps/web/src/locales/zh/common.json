@@ -11,7 +11,7 @@
     "enterTitle": "输入标题"
   },
   "generation": {
-    "generating": "生成中...",
+    "generating": "生成中…",
     "completed": "已完成",
     "failed": "失败",
     "draft": "草稿",
@@ -25,7 +25,7 @@
   "audio": {
     "backToStudio": "返回 Studio",
     "audioOverview": "音频概览",
-    "loadingAudio": "加载音频中...",
+    "loadingAudio": "加载音频中…",
     "couldNotResolveUrl": "无法解析音频 URL，请尝试重新生成音频概览。",
     "couldNotResolveUrlExtended": "无法解析音频 URL，请尝试重新生成音频概览或检查网络连接。",
     "downloadAudio": "下载音频",
@@ -81,7 +81,7 @@
     "dismiss": "关闭"
   },
   "protectedRoute": {
-    "loading": "加载中...",
+    "loading": "加载中…",
     "openingNotebook": "正在打开笔记本…",
     "signInToContinue": "请登录以继续"
   },
@@ -94,7 +94,7 @@
     "sourceLimit": "来源数量已达上限 ({{current}}/{{limit}})。",
     "dailyLimit": "每日{{feature}}额度已用完 ({{current}}/{{limit}})。",
     "limitReached": "已达到上限 ({{current}}/{{limit}})。",
-    "proDailyRefresh": "此限制按滚动天刷新——请稍后再试，或联系支持以提高上限。",
+    "proDailyRefresh": "此限制按滑动窗口刷新——请稍后再试，或联系支持以提高上限。",
     "proContactSupport": "联系支持以提高限制。",
     "upgradeNotebooks": "升级以获取最多 100 个笔记本。",
     "upgradeSources": "升级以获取更多笔记本和更高的每日生成限额。要添加来源，请先从本笔记本中移除一个。",

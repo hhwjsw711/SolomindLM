@@ -48,7 +48,7 @@
         "description": "一个小型的概述，帮助你快速掌握资料来源中的核心思想"
       },
       "critique": {
-        "title": "批评分析",
+        "title": "评审分析",
         "description": "对你的资料来源进行专家评审，提供建设性反馈以帮助你改进材料"
       },
       "debate": {
@@ -67,7 +67,7 @@
     "numberOfCards": "卡片数量",
     "difficultyLevel": "难度等级",
     "areaOfFocus": "关注领域",
-    "focusPlaceholder": "例如：关注'关系代数'或'保持卡片正面在 3 个词以内'...",
+    "focusPlaceholder": "例如：关注'关系代数'或'保持卡片正面在 3 个词以内'…",
     "saveAsPrompt": "保存为可复用提示词",
     "generate": "生成卡片",
     "difficulty": {
@@ -111,7 +111,7 @@
       "scientific": { "label": "科学风", "hint": "图表、尺度和精确的标注" },
       "anime": { "label": "动漫风", "hint": "大胆的色块、富有表现力的轮廓、动感提示" },
       "clay": { "label": "黏土风", "hint": "柔和的体积、轻柔的阴影、触感表面" },
-      "editorial": { "label": "编辑风", "hint": "杂志节奏、醒目的标题、栏式排版" },
+      "editorial": { "label": "杂志风", "hint": "杂志节奏、醒目的标题、栏式排版" },
       "instructional": { "label": "教程风", "hint": "编号流程、清晰的步骤、极简装饰" },
       "bento_grid": { "label": "Bento 网格", "hint": "具有不同权重和间距的模块化瓷砖" },
       "bricks": { "label": "砖块风", "hint": "带有灰浆节奏和重复的堆叠块" }
@@ -122,7 +122,7 @@
     "numberOfQuestions": "题目数量",
     "difficultyLevel": "难度等级",
     "areaOfFocus": "关注领域",
-    "focusPlaceholder": "例如：创建'期末考试'风格的复习或关注'BCNF 范式'...",
+    "focusPlaceholder": "例如：创建'期末考试'风格的复习或关注'BCNF 范式'…",
     "saveAsPrompt": "保存为可复用提示词",
     "generate": "生成测验",
     "difficulty": {
@@ -140,7 +140,7 @@
     "title": "创建报告",
     "format": "格式",
     "describeReport": "描述你想要创建的报告",
-    "reportPlaceholder": "告诉 Better Memory 如何构建和撰写你的报告...",
+    "reportPlaceholder": "告诉 Better Memory 如何构建和撰写你的报告…",
     "saveAsPrompt": "保存为可复用提示词",
     "generate": "生成报告",
     "formats": {
@@ -182,7 +182,7 @@
     "title": "创建电子表格",
     "format": "格式",
     "describeSpreadsheet": "描述你想要创建的电子表格",
-    "spreadsheetPlaceholder": "告诉 Better Memory 如何构建和组织你的电子表格...",
+    "spreadsheetPlaceholder": "告诉 Better Memory 如何构建和组织你的电子表格…",
     "saveAsPrompt": "保存为可复用提示词",
     "generate": "生成电子表格",
     "formats": {
@@ -214,7 +214,7 @@
     "type": "类型",
     "difficulty": "难度",
     "areaOfFocus": "关注领域",
-    "focusPlaceholder": "例如：关注'数据库范式'概念或创建全面复习...",
+    "focusPlaceholder": "例如：关注'数据库范式'概念或创建全面复习…",
     "saveAsPrompt": "保存为可复用提示词",
     "generate": "生成写作题",
     "difficultyOptions": {
@@ -263,7 +263,7 @@
     "youScored": "你得了 {{score}} 分（共 {{total}} 分）",
     "review": "回顾",
     "tryAgain": "再试一次",
-    "resetting": "重置中...",
+    "resetting": "重置中…",
     "reviewMode": "回顾模式",
     "reviewModeDesc": "你正在查看之前的答案。选择已被禁用。",
     "question": "第 {{current}} 题",
@@ -292,10 +292,10 @@
     "tipText": "拖动以平移，使用控件进行缩放。"
   },
   "infographicView": {
-    "generatingInfographic": "正在生成你的信息图...",
+    "generatingInfographic": "正在生成你的信息图…",
     "infographicUnavailable": "信息图不可用",
     "imageCouldNotBeLoaded": "无法加载图像",
-    "loadingInfographic": "正在加载信息图..."
+    "loadingInfographic": "正在加载信息图…"
   },
   "spreadsheetView": {
     "spreadsheetGenerationFailed": "电子表格生成失败",
@@ -310,15 +310,15 @@
     "youScored": "你得了 {{score}} 分（共 {{maxScore}} 分）",
     "review": "回顾",
     "tryAgain": "再试一次",
-    "resetting": "重置中...",
+    "resetting": "重置中…",
     "reviewMode": "回顾模式",
     "reviewModeDesc": "你正在查看之前的答案。编辑已被禁用。",
     "question": "第 {{current}} 题",
     "answeredCount": "已答 {{answered}}/{{total}}",
     "shortAnswer": "简答",
     "essay": "论述",
-    "shortAnswerPlaceholder": "在此输入你的简答（1-3 句话）...",
-    "detailedAnswerPlaceholder": "在此输入你的详细回答...",
+    "shortAnswerPlaceholder": "在此输入你的简答（1-3 句话）…",
+    "detailedAnswerPlaceholder": "在此输入你的详细回答…",
     "characters": "个字符",
     "words": "个词",
     "answerGraded": "答案已评分",
@@ -330,18 +330,18 @@
     "previous": "上一题",
     "next": "下一题",
     "finish": "完成",
-    "grading": "评分中...",
+    "grading": "评分中…",
     "submit": "提交"
   },
   "userNoteView": {
     "emptyNote": "空笔记",
-    "loading": "加载中..."
+    "loading": "加载中…"
   },
   "activeNoteView": {
     "cancel": "取消",
     "save": "保存",
     "saving": "保存中…",
-    "reportPlaceholder": "用 Markdown 撰写你的报告...",
+    "reportPlaceholder": "用 Markdown 撰写你的报告…",
     "generationFailed": "生成失败",
     "audioError": "生成音频概述时出错",
     "audioUnavailable": "音频不可用",
@@ -357,9 +357,9 @@
     "createFlashcard": "创建一张新闪卡",
     "editFlashcardContent": "编辑闪卡内容",
     "front": "正面（问题）",
-    "frontPlaceholder": "输入问题或提示...",
+    "frontPlaceholder": "输入问题或提示…",
     "back": "背面（答案）",
-    "backPlaceholder": "输入答案或解释...",
+    "backPlaceholder": "输入答案或解释…",
     "deleteCard": "删除卡片",
     "cancel": "取消",
     "addCard": "添加卡片",
@@ -507,8 +507,8 @@
     "optional": "（可选）",
     "promptText": "提示词文本",
     "titlePlaceholder": "例如：针对考试复习关注关键概念",
-    "descriptionPlaceholder": "简要描述此提示词的作用...",
-    "promptPlaceholder": "输入你的自定义提示词...",
+    "descriptionPlaceholder": "简要描述此提示词的作用…",
+    "promptPlaceholder": "输入你的自定义提示词…",
     "public": "公开",
     "private": "私密",
     "publicDesc": "任何人都可以发现并使用此提示词",
@@ -516,7 +516,7 @@
     "publicHint": "你的提示词将在公共库中可见。其他用户可以保存和评分。你可以稍后从\"我的提示词\"选项卡取消发布。",
     "cancel": "取消",
     "savePrompt": "保存提示词",
-    "saving": "保存中...",
+    "saving": "保存中…",
     "enterTitle": "请输入标题",
     "enterPromptText": "请输入提示词文本",
     "savedAndPublished": "提示词已保存并发布到库中！",
@@ -527,9 +527,12 @@
     "toolLabels": {
       "report": "报告",
       "spreadsheet": "电子表格",
+      "spreadsheets": "电子表格",
       "infographic": "信息图",
+      "infographics": "信息图",
       "flashcards": "闪卡",
       "quiz": "测验",
+      "quizzes": "测验",
       "audio": "音频",
       "writtenQuestions": "写作题",
       "mindmap": "思维导图"
@@ -539,12 +542,12 @@
     "promptLibrary": "提示词库",
     "public": "公共",
     "myPrompts": "我的提示词",
-    "searchPlaceholder": "搜索提示词...",
+    "searchPlaceholder": "搜索提示词…",
     "mostSaved": "最多保存",
     "highestRated": "评分最高",
     "newest": "最新",
-    "loadingPrompts": "正在加载提示词...",
-    "loadingYourPrompts": "正在加载你的提示词...",
+    "loadingPrompts": "正在加载提示词…",
+    "loadingYourPrompts": "正在加载你的提示词…",
     "noPublicPrompts": "此工具尚无公共提示词",
     "noMatchSearch": "没有匹配的提示词",
     "noSavedPrompts": "你还没有保存任何提示词",
@@ -575,9 +578,12 @@
     "toolLabels": {
       "report": "报告",
       "spreadsheet": "电子表格",
+      "spreadsheets": "电子表格",
       "infographic": "信息图",
+      "infographics": "信息图",
       "flashcards": "闪卡",
       "quiz": "测验",
+      "quizzes": "测验",
       "audio": "音频",
       "writtenQuestions": "写作题",
       "mindmap": "思维导图"
@@ -596,7 +602,7 @@
   },
   "noteListView": {
     "saved": "已保存",
-    "searchPlaceholder": "搜索笔记...",
+    "searchPlaceholder": "搜索笔记…",
     "items": "项",
     "of": "/",
     "noMatch": "没有匹配的笔记。",
@@ -613,7 +619,7 @@
     "saveTable": "保存表格",
     "saveTableToStudio": "保存表格到 Studio",
     "savingTable": "保存表格中",
-    "saving": "保存中...",
+    "saving": "保存中…",
     "export": "导出",
     "exportTable": "导出表格",
     "csvFormat": "CSV (.csv)",
@@ -638,7 +644,7 @@
     "exportReport": "导出报告",
     "exportPdf": "导出 PDF",
     "exportMd": "导出 Markdown (.md)",
-    "saveEditDoc": "保存并编辑文档",
+    "saveEditDoc": "保存为可编辑文档",
     "savingDoc": "保存文档中",
     "noContent": "暂无内容",
     "close": "关闭",
@@ -657,11 +663,11 @@
     "learning": "学习中",
     "progressing": "进行中",
     "new": "新卡片",
-    "dayStreak": "天连续"
+    "dayStreak": "连续天数"
   },
   "flashcard": {
     "true": "✓ 正确",
-    "false": "✗ 错误"
+    "false": "✗ 再试"
   },
   "mindmap": {
     "untitledNode": "未命名",

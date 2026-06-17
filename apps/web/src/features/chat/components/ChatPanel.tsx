@@ -813,7 +813,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
           <div className="flex min-w-0 items-center gap-2 text-foreground">
             <MessageCircle className="h-4 w-4 shrink-0" />
             <span className="truncate font-display text-sm font-bold uppercase tracking-wide">
-              Chat
+              {t("panel.chat")}
             </span>
           </div>
           {chatHeaderToolbar}

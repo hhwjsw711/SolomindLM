@@ -1,8 +1,10 @@
 import { X } from "lucide-react";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { useSelectionQuotes } from "../contexts/SelectionQuoteContext";
 
 export const QuoteBlocks: React.FC = () => {
+  const { t } = useTranslation("chat");
   const { quotes, removeQuote } = useSelectionQuotes();
 
   if (quotes.length === 0) return null;
@@ -19,7 +21,7 @@ export const QuoteBlocks: React.FC = () => {
               type="button"
               onClick={() => removeQuote(quote.id)}
               className="absolute left-0 top-0 z-10 flex size-5 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm transition-[color,background-color,box-shadow] hover:bg-muted/80 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-              aria-label="Remove quote"
+              aria-label={t("selectionTooltip.removeQuote")}
             >
               <X className="h-2.5 w-2.5 stroke-[2.5]" />
             </button>

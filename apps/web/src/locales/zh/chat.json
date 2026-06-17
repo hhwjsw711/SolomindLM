@@ -1,9 +1,9 @@
 {
   "input": {
     "placeholder": {
-      "chat": "向你的来源提问...",
-      "deepResearch": "提出一个需要多步研究的复杂问题...",
-      "literatureReview": "描述主题、研究问题和需求，生成文献综述..."
+      "chat": "向你的来源提问…",
+      "deepResearch": "提出一个需要多步研究的复杂问题…",
+      "literatureReview": "描述主题、研究问题和需求，生成文献综述…"
     },
     "send": {
       "send": "发送消息 (Enter)",
@@ -143,7 +143,7 @@
     "lengthDefault": "默认",
     "lengthLonger": "更长",
     "lengthShorter": "更短",
-    "customPlaceholder": "告诉助手在此笔记本中如何回复...",
+    "customPlaceholder": "告诉助手在此笔记本中如何回复…",
     "newChatWarning": "开始新对话以使用不同模式。",
     "cancel": "取消",
     "save": "保存",
@@ -166,11 +166,11 @@
     "literatureReviewFailed": "启动文献综述失败，请重试。"
   },
   "status": {
-    "searching": "搜索数据源中",
-    "reading": "读取数据源中",
+    "searching": "搜索来源中",
+    "reading": "读取来源中",
     "planning": "规划中",
     "thinking": "思考中",
-    "generating": "生成回复中",
+    "generating": "生成回答中",
     "writing": "撰写回答中",
     "retrieving": "检索段落中",
     "embedding": "向量化查询中",
@@ -210,7 +210,7 @@
     "cancelledMessage": "此计划已取消。你仍然可以正常聊天。",
     "errorMessage": "出了点问题。在对话中追问，或开始新的深度研究。",
     "approvePrompt": "查看以下子问题，然后批准开始深度研究。",
-    "evidenceTable": "证据表",
+    "evidenceTable": "依据汇总表",
     "tableType": "表格",
     "deepResearchReport": "深度研究报告",
     "documentType": "文档",
@@ -229,7 +229,7 @@
     "documentType": "文档",
     "failed": "文献综述失败",
     "errorMessage": "研究过程中出了问题。",
-    "retrying": "重试中...",
+    "retrying": "重试中…",
     "retryFromLastStep": "从上一步重试",
     "extractionColumns": "提取列",
     "checkFields": "检查要包含的字段，根据需要重命名，然后继续。",
@@ -244,27 +244,27 @@
     "continue": "继续",
     "completionMessage": "我已创建了包含 {{papers}} 篇论文和 {{columns}} 列的文献综述表格。接下来我将生成一份综合报告，总结所有论文的关键发现。打开上方表格可查看和编辑提取的数据。",
     "completionMessageNoReport": "我已创建了包含 {{papers}} 篇论文和 {{columns}} 列的文献综述表格。打开上方表格可查看和编辑提取的数据。",
-    "startingResearch": "开始研究中...",
+    "startingResearch": "开始研究中…",
     "dismiss": "关闭",
     "steps": {
       "planning_title": "规划研究",
-      "planning_desc": "正在定义搜索策略和子问题...",
+      "planning_desc": "正在定义搜索策略和子问题…",
       "searching_title": "搜索相关研究",
       "searching_desc": "基于问题运行结构化搜索，收集高质量相关研究。",
       "deduplicating_title": "移除重复",
-      "deduplicating_desc": "整合各次搜索结果...",
+      "deduplicating_desc": "整合各次搜索结果…",
       "ranking_title": "排序候选论文",
       "ranking_desc": "根据质量、影响力和与问题的相关性，筛选和排序最相关的研究。",
-      "screening_title": "筛选入选研究",
-      "screening_desc": "根据入选标准审查论文，记录明确的纳入/排除决定。",
+      "screening_title": "筛选纳入的研究",
+      "screening_desc": "根据纳入标准审查论文，记录明确的纳入/排除决定。",
       "extracting_title": "提取数据并构建证据",
-      "extracting_desc": "从入选研究中提取所需信息，组织为统一格式。",
+      "extracting_desc": "从纳入的研究中提取所需信息，组织为统一格式。",
       "populating_title": "将提取数据填入单元格",
       "populating_desc": "分析每项研究并提取关键洞见，将相关信息填入表格单元格。",
       "generating_report_title": "生成报告中",
-      "generating_report_desc": "正在撰写文献综述和综合分析...",
+      "generating_report_desc": "正在撰写文献综述和综合分析…",
       "awaiting_user_input_title": "等待输入",
-      "awaiting_user_input_desc": "等待用户批准或指导...",
+      "awaiting_user_input_desc": "等待用户批准或指导…",
       "awaiting_columns_title": "确认列",
       "awaiting_columns_desc": "查看并自定义建议的提取列"
     }
@@ -282,12 +282,12 @@
     "openInSources": "在来源中打开"
   },
   "researchProgress": {
-    "planning": "规划研究中...",
-    "retrieving_notebook": "搜索笔记本来源中...",
-    "retrieving_web": "搜索网络来源中...",
-    "synthesizing": "综合分析中...",
-    "gap_analysis": "分析证据缺口...",
-    "writing": "撰写研究报告...",
+    "planning": "规划研究中…",
+    "retrieving_notebook": "搜索笔记本来源中…",
+    "retrieving_web": "搜索网络来源中…",
+    "synthesizing": "综合分析中…",
+    "gap_analysis": "分析证据缺口…",
+    "writing": "撰写研究报告…",
     "sourcesFound": "找到 {{count}} 个来源",
     "pass": "第 {{n}} 轮"
   },
@@ -304,6 +304,7 @@
     "includeSource": "包含 {{title}}"
   },
   "selectionTooltip": {
-    "addToChat": "添加到聊天"
+    "addToChat": "添加到聊天",
+    "removeQuote": "移除引用"
   }
 }

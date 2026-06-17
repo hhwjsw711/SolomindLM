@@ -126,7 +126,7 @@ export const ShareNotebookModal: React.FC<ShareNotebookModalProps> = ({ notebook
         setForkUrl(url);
       }
     } catch (e) {
-      showError(e instanceof Error ? e.message : t("couldNotCreateLink"));
+      showError(e instanceof Error ? e.message : t("shareNotebookModal.couldNotCreateLink"));
     } finally {
       setBusy(null);
     }
@@ -142,9 +142,9 @@ export const ShareNotebookModal: React.FC<ShareNotebookModalProps> = ({ notebook
     setRevokingId(shareLinkId);
     try {
       await revokeLinkMutation({ shareLinkId });
-      success(t("linkRemoved"));
+      success(t("shareNotebookModal.linkRemoved"));
     } catch (e) {
-      showError(e instanceof Error ? e.message : t("couldNotRemoveLink"));
+      showError(e instanceof Error ? e.message : t("shareNotebookModal.couldNotRemoveLink"));
     } finally {
       setRevokingId(null);
     }
