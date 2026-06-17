@@ -1,5 +1,6 @@
 import { PenTool, Search } from "lucide-react";
 import React, { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Note, StudioTool } from "@/shared/types/index";
 import { NoteItem } from "./NoteItem";
 import { ToolGrid } from "./ToolGrid";
@@ -43,6 +44,7 @@ export const NoteListView: React.FC<NoteListViewProps> = ({
   onEditCancel,
   onEditKeyDown,
 }) => {
+  const { t } = useTranslation("studio");
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -72,7 +74,7 @@ export const NoteListView: React.FC<NoteListViewProps> = ({
       <div className="space-y-3">
         <div className="flex items-center justify-between px-1">
           <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest font-sans">
-            Saved
+            {t("noteListView.saved")}
           </h3>
         </div>
         <div className="relative flex items-center">
@@ -81,14 +83,16 @@ export const NoteListView: React.FC<NoteListViewProps> = ({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search notes..."
+            placeholder={t("noteListView.searchPlaceholder")}
             className="w-full pl-9 pr-3 py-2 bg-background border border-input rounded-md text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring font-serif shadow-xs"
           />
         </div>
         <div className="flex flex-col gap-2">
           {notes.length > 0 && (
             <div className="text-xs text-muted-foreground px-1 mb-1 font-sans">
-              {filteredNotes.length} {searchQuery.trim() ? `of ${notes.length}` : ""} items
+              {filteredNotes.length}{" "}
+              {searchQuery.trim() ? `${t("noteListView.of")} ${notes.length}` : ""}{" "}
+              {t("noteListView.items")}
             </div>
           )}
           <div className="space-y-3">
@@ -115,9 +119,7 @@ export const NoteListView: React.FC<NoteListViewProps> = ({
               <div className="text-center py-8">
                 <PenTool className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
                 <p className="text-sm text-muted-foreground">
-                  {searchQuery.trim()
-                    ? "No notes match your search."
-                    : "No saved notes yet. Create one to get started!"}
+                  {searchQuery.trim() ? t("noteListView.noMatch") : t("noteListView.noNotes")}
                 </p>
               </div>
             )}

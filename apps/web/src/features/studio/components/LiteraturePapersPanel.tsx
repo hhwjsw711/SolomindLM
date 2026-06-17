@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import React, { useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useToast } from "@/shared/contexts/useToast";
 import { DropdownMenu } from "@/shared/ui/DropdownMenu";
 import { useBulkUpload, useGetExistingPapers } from "../../sources/services/documentsApi";
@@ -41,6 +42,7 @@ export const LiteraturePapersPanel: React.FC<LiteraturePapersPanelProps> = ({
   isResizing: _isResizing,
   onClose,
 }) => {
+  const { t } = useTranslation("studio");
   const { success: toastSuccess, error: toastError } = useToast();
 
   const data = useRankedPapersForSession(sessionId);
@@ -94,16 +96,16 @@ export const LiteraturePapersPanel: React.FC<LiteraturePapersPanelProps> = ({
         if (result.imported > 0) {
           toastSuccess(
             result.imported === 1
-              ? "Paper added to notebook"
-              : `${result.imported} papers added to notebook`
+              ? t("literaturePapersPanel.paperAdded")
+              : t("literaturePapersPanel.papersAdded", { count: result.imported })
           );
         }
         if (result.skipped > 0 && result.imported === 0) {
-          toastError("Selected papers are already in this notebook");
+          toastError(t("literaturePapersPanel.alreadyInNotebook"));
         }
         clearSelection();
       } catch (err) {
-        toastError(err instanceof Error ? err.message : "Failed to add papers");
+        toastError(err instanceof Error ? err.message : t("literaturePapersPanel.failedToAdd"));
       } finally {
         setIsBulkAdding(false);
         setAddingKeys(new Set());
@@ -163,7 +165,7 @@ export const LiteraturePapersPanel: React.FC<LiteraturePapersPanelProps> = ({
               className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
             >
               <X className="h-3.5 w-3.5" />
-              {selectedKeys.size} selected
+              {selectedKeys.size} {t("literaturePapersPanel.selected")}
             </button>
             <button
               type="button"
@@ -174,10 +176,10 @@ export const LiteraturePapersPanel: React.FC<LiteraturePapersPanelProps> = ({
               {isBulkAdding ? (
                 <span className="inline-flex items-center gap-1.5">
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  Adding…
+                  {t("literaturePapersPanel.adding")}
                 </span>
               ) : (
-                `Add ${selectedKeys.size} to notebook`
+                t("literaturePapersPanel.addToNotebookCount", { count: selectedKeys.size })
               )}
             </button>
           </div>
@@ -225,12 +227,13 @@ function PapersPanelHeader({
   papers: RankedPaper[];
   onClose: () => void;
 }) {
+  const { t } = useTranslation("studio");
   return (
     <div className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-border bg-background p-4">
       <div className="flex min-w-0 flex-1 items-center gap-2.5">
         <List className="h-4 w-4 shrink-0 text-foreground" strokeWidth={2} aria-hidden />
         <h2 className="truncate text-sm font-medium text-foreground">
-          Selected Papers for Detailed Review
+          {t("literaturePapersPanel.selectedPapersTitle")}
         </h2>
       </div>
       <div className="flex shrink-0 items-center gap-2">
@@ -239,27 +242,27 @@ function PapersPanelHeader({
             <button
               type="button"
               disabled={exportDisabled}
-              title="Export papers"
+              title={t("literaturePapersPanel.exportPapers")}
               className={PAPERS_PANEL_HEADER_BTN}
             >
               <Download className="h-4 w-4 shrink-0" strokeWidth={2} />
-              Export
+              {t("literaturePapersPanel.export")}
             </button>
           }
         >
           <ExportMenuItem
             icon={<FileCode2 className="h-4 w-4" />}
-            label="BibTeX (.bib)"
+            label={t("literaturePapersPanel.bibtex")}
             onClick={() => exportPapersToBibtex(papers, `${exportFilenameBase}.bib`)}
           />
           <ExportMenuItem
             icon={<Sheet className="h-4 w-4" />}
-            label="CSV (.csv)"
+            label={t("literaturePapersPanel.csv")}
             onClick={() => exportPapersToCsv(papers, `${exportFilenameBase}.csv`)}
           />
           <ExportMenuItem
             icon={<Table2 className="h-4 w-4" />}
-            label="Excel (.xlsx)"
+            label={t("literaturePapersPanel.excel")}
             onClick={() => exportPapersToExcel(papers, `${exportFilenameBase}.xlsx`)}
           />
         </DropdownMenu>
@@ -267,8 +270,8 @@ function PapersPanelHeader({
           type="button"
           onClick={onClose}
           className="inline-flex shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-          aria-label="Close papers panel"
-          title="Close"
+          aria-label={t("literaturePapersPanel.closePanel")}
+          title={t("literaturePapersPanel.close")}
         >
           <X className="h-4 w-4 shrink-0" strokeWidth={2} />
         </button>
@@ -320,20 +323,21 @@ function PaperList({
   onCite: (target: { paper: RankedPaper; index: number }) => void;
   onAdd: (paper: RankedPaper, index: number) => void;
 }) {
+  const { t } = useTranslation("studio");
   return (
     <div className="flex-1 overflow-y-auto">
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
           <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
-          <p className="text-sm">Loading ranked papers…</p>
+          <p className="text-sm">{t("literaturePapersPanel.loadingRankedPapers")}</p>
         </div>
       ) : isEmpty ? (
         <div className="flex flex-col items-center justify-center py-16 px-6 text-center text-muted-foreground">
           <BookOpen className="h-10 w-10 mb-3 opacity-40" />
-          <p className="text-sm font-medium text-foreground">No ranked papers yet</p>
-          <p className="text-xs mt-1">
-            Papers appear here after the ranking step completes in your literature review.
+          <p className="text-sm font-medium text-foreground">
+            {t("literaturePapersPanel.noRankedPapers")}
           </p>
+          <p className="text-xs mt-1">{t("literaturePapersPanel.noRankedPapersDesc")}</p>
         </div>
       ) : (
         <div className="divide-y divide-border">
@@ -377,12 +381,15 @@ const RankedPaperCard: React.FC<RankedPaperCardProps> = ({
   onCite,
   onAdd,
 }) => {
+  const { t } = useTranslation("studio");
   const summary =
     paper.abstract.length > 320 ? `${paper.abstract.slice(0, 320).trim()}…` : paper.abstract;
 
   const pdfHref = paper.pdfUrl?.trim() || paper.url;
   const meta = [
-    paper.citationCount != null ? `${paper.citationCount.toLocaleString()} Citations` : null,
+    paper.citationCount != null
+      ? `${paper.citationCount.toLocaleString()} ${t("literaturePapersPanel.citations")}`
+      : null,
     paper.year != null ? String(paper.year) : null,
     formatAuthorsLine(paper.authors),
   ]
@@ -413,7 +420,7 @@ const RankedPaperCard: React.FC<RankedPaperCardProps> = ({
             <SourceRow source={sourceLabel(paper.source)} />
             {scoreLabel ? (
               <span className="shrink-0 text-xs font-medium text-primary tabular-nums">
-                Score {scoreLabel}
+                {t("literaturePapersPanel.score", { score: scoreLabel })}
               </span>
             ) : null}
           </div>
@@ -437,7 +444,11 @@ const RankedPaperCard: React.FC<RankedPaperCardProps> = ({
       )}
 
       <div className="mt-3 flex flex-wrap items-center gap-1 text-sm">
-        <PaperAction icon={<Quote className="h-4 w-4" />} label="Cite" onClick={onCite} />
+        <PaperAction
+          icon={<Quote className="h-4 w-4" />}
+          label={t("literaturePapersPanel.cite")}
+          onClick={onCite}
+        />
         <PaperAction
           icon={
             isAdding ? (
@@ -446,18 +457,27 @@ const RankedPaperCard: React.FC<RankedPaperCardProps> = ({
               <CirclePlus className="h-4 w-4" strokeWidth={2} />
             )
           }
-          label={isInNotebook ? "In notebook" : "Add to notebook"}
+          label={
+            isInNotebook
+              ? t("literaturePapersPanel.inNotebook")
+              : t("literaturePapersPanel.addToNotebook")
+          }
           onClick={onAdd}
           disabled={isInNotebook || isAdding}
         />
-        <PaperAction icon={<FileText className="h-4 w-4" />} label="PDF" href={pdfHref} external />
+        <PaperAction
+          icon={<FileText className="h-4 w-4" />}
+          label={t("literaturePapersPanel.pdf")}
+          href={pdfHref}
+          external
+        />
         {paper.url && (
           <a
             href={paper.url}
             target="_blank"
             rel="noopener noreferrer"
             className="ml-auto text-orange-500 hover:text-orange-600"
-            aria-label="Open paper"
+            aria-label={t("literaturePapersPanel.openPaper")}
           >
             <ExternalLink className="h-4 w-4" />
           </a>
@@ -491,6 +511,7 @@ function PaperAction({
   external?: boolean;
   disabled?: boolean;
 }) {
+  const { t } = useTranslation("studio");
   if (href) {
     return (
       <a
@@ -498,7 +519,9 @@ function PaperAction({
         target={external ? "_blank" : undefined}
         rel={external ? "noopener noreferrer" : undefined}
         className={PAPER_ACTION_CLASS}
-        title={label === "PDF" ? "View PDF" : label}
+        title={
+          label === t("literaturePapersPanel.pdf") ? t("literaturePapersPanel.viewPdf") : label
+        }
       >
         {icon}
         <span>{label}</span>

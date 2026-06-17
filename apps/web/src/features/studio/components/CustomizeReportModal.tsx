@@ -1,5 +1,6 @@
 import { Bookmark, ChevronLeft, FilePlus2, Pencil, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { SaveAsPromptModal } from "./SaveAsPromptModal";
 import { StudioModalDiscoverPromptsButton } from "./StudioModalDiscoverPromptsButton";
 
@@ -181,6 +182,7 @@ export const CustomizeReportModal: React.FC<CustomizeReportModalProps> = ({
   onSelectFormat,
   embedded = false,
 }) => {
+  const { t } = useTranslation("studio");
   const [configuringFormat, setConfiguringFormat] = useState<ReportFormat | null>(null);
   const [customPrompt, setCustomPrompt] = useState("");
   const [saveAsPromptModalOpen, setSaveAsPromptModalOpen] = useState(false);
@@ -239,7 +241,7 @@ export const CustomizeReportModal: React.FC<CustomizeReportModalProps> = ({
               </button>
             )}
             <FilePlus2 className="w-5 h-5 text-primary" />
-            <h2 className="text-xl font-bold font-sans">Create report</h2>
+            <h2 className="text-xl font-bold font-sans">{t("customizeReport.title")}</h2>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <StudioModalDiscoverPromptsButton studioTool="report" onApplyPrompt={setCustomPrompt} />
@@ -256,20 +258,22 @@ export const CustomizeReportModal: React.FC<CustomizeReportModalProps> = ({
         {configuringFormat ? (
           <div className="flex-1 overflow-y-auto p-6 md:p-10 space-y-8 bg-card/50 animate-in slide-in-from-right-4 duration-300">
             <div className="p-6 rounded-xl bg-secondary/20 border border-border">
-              <h4 className="text-lg font-bold mb-2 font-serif">{configuringFormat.title}</h4>
+              <h4 className="text-lg font-bold mb-2 font-serif">
+                {t(`customizeReport.formats.${configuringFormat.id}.title`)}
+              </h4>
               <p className="text-sm text-muted-foreground font-serif leading-relaxed">
-                {configuringFormat.description}
+                {t(`customizeReport.formats.${configuringFormat.id}.description`)}
               </p>
             </div>
 
             <div className="space-y-4">
               <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70 font-sans">
-                Describe the report you want to create
+                {t("customizeReport.describeReport")}
               </h3>
               <textarea
                 value={customPrompt}
                 onChange={(e) => setCustomPrompt(e.target.value)}
-                placeholder="Tell SolomindLM how to structure and write your report..."
+                placeholder={t("customizeReport.reportPlaceholder")}
                 className="w-full h-56 bg-background border border-border rounded-lg p-6 text-base font-serif leading-relaxed focus:outline-none focus:ring-1 focus:ring-ring transition-all resize-none placeholder:text-muted-foreground/40"
               />
               <button
@@ -279,7 +283,7 @@ export const CustomizeReportModal: React.FC<CustomizeReportModalProps> = ({
                 className="flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Bookmark className="w-3.5 h-3.5" />
-                Save as reusable prompt
+                {t("customizeReport.saveAsPrompt")}
               </button>
             </div>
 
@@ -288,7 +292,7 @@ export const CustomizeReportModal: React.FC<CustomizeReportModalProps> = ({
                 onClick={handleGenerate}
                 className="px-8 py-3 bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl transition-all shadow-md active:scale-95 text-sm"
               >
-                Generate Report
+                {t("customizeReport.generate")}
               </button>
             </div>
           </div>
@@ -296,7 +300,7 @@ export const CustomizeReportModal: React.FC<CustomizeReportModalProps> = ({
           <div className="flex-1 overflow-y-auto p-6 md:p-10 space-y-10 bg-card/50 animate-in slide-in-from-left-4 duration-300">
             <div className="space-y-4">
               <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70 font-sans">
-                Format
+                {t("customizeReport.format")}
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {ALL_FORMATS.map((format) => (
@@ -305,6 +309,7 @@ export const CustomizeReportModal: React.FC<CustomizeReportModalProps> = ({
                     format={format}
                     onClick={() => handleFormatClick(format)}
                     onEditClick={(e) => handleEditClick(e, format)}
+                    t={t}
                   />
                 ))}
               </div>
@@ -328,7 +333,8 @@ const FormatCard: React.FC<{
   format: ReportFormat;
   onClick: () => void;
   onEditClick: (e: React.MouseEvent) => void;
-}> = ({ format, onClick, onEditClick }) => (
+  t: (key: string) => string;
+}> = ({ format, onClick, onEditClick, t }) => (
   <div
     onClick={onClick}
     className="group relative flex flex-col p-5 rounded-xl bg-card border border-border/50 hover:border-primary/40 hover:bg-secondary/30 transition-all cursor-pointer h-48 shadow-sm hover:shadow-md"
@@ -342,10 +348,10 @@ const FormatCard: React.FC<{
       </button>
     )}
     <h4 className="text-md font-bold mb-2 font-serif pr-6 group-hover:text-primary transition-colors">
-      {format.title}
+      {t(`customizeReport.formats.${format.id}.title`)}
     </h4>
     <p className="text-[13px] text-muted-foreground leading-relaxed line-clamp-4 font-serif">
-      {format.description}
+      {t(`customizeReport.formats.${format.id}.description`)}
     </p>
   </div>
 );

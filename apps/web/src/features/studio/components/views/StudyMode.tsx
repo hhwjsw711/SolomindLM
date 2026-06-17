@@ -1,5 +1,6 @@
 import { BookOpen, CheckCircle2, ChevronLeft, ChevronRight } from "lucide-react";
 import { lazy, Suspense, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { srsSubtextForRating } from "@/features/studio/utils/srsReviewLabels";
 import { Flashcard } from "@/shared/types";
 import { sanitizeMarkdown } from "@/shared/utils";
@@ -24,30 +25,6 @@ interface StudyModeProps {
   onRateCard: (cardIndex: number, rating: "again" | "hard" | "good" | "easy") => Promise<void>;
   onExit: () => void;
 }
-
-/** Neutral cards + saturated left stripe only — readable sans text, no tinted mud fills. */
-const RATING_BUTTONS = [
-  {
-    label: "Again",
-    rating: "again" as const,
-    stripeClass: "border-l-rose-600 dark:border-l-rose-400",
-  },
-  {
-    label: "Hard",
-    rating: "hard" as const,
-    stripeClass: "border-l-amber-600 dark:border-l-amber-400",
-  },
-  {
-    label: "Good",
-    rating: "good" as const,
-    stripeClass: "border-l-blue-600 dark:border-l-blue-400",
-  },
-  {
-    label: "Easy",
-    rating: "easy" as const,
-    stripeClass: "border-l-emerald-600 dark:border-l-emerald-400",
-  },
-] as const;
 
 const RATING_BUTTON_BASE =
   "font-sans rounded-xl border border-border bg-card px-3 py-3 pl-3.5 text-left text-sm text-foreground shadow-sm transition-colors hover:bg-muted/60 hover:border-foreground/12 active:scale-[0.99] sm:py-3.5 border-l-[4px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background";
@@ -82,10 +59,8 @@ const answerMarkdownComponents = {
   ),
 };
 
-/**
- * Study mode for spaced repetition — layout aligned with FlashcardView browse styling.
- */
 export function StudyMode({ cards, onComplete, onRateCard, onExit }: StudyModeProps) {
+  const { t } = useTranslation("studio");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [reviewedCards, setReviewedCards] = useState<number[]>([]);
@@ -94,6 +69,29 @@ export function StudyMode({ cards, onComplete, onRateCard, onExit }: StudyModePr
   const [currentStreak, setCurrentStreak] = useState(0);
   const [longestStreak, setLongestStreak] = useState(0);
   const [isSubmittingRating, setIsSubmittingRating] = useState(false);
+
+  const RATING_BUTTONS = [
+    {
+      label: t("studyMode.ratingAgain"),
+      rating: "again" as const,
+      stripeClass: "border-l-rose-600 dark:border-l-rose-400",
+    },
+    {
+      label: t("studyMode.ratingHard"),
+      rating: "hard" as const,
+      stripeClass: "border-l-amber-600 dark:border-l-amber-400",
+    },
+    {
+      label: t("studyMode.ratingGood"),
+      rating: "good" as const,
+      stripeClass: "border-l-blue-600 dark:border-l-blue-400",
+    },
+    {
+      label: t("studyMode.ratingEasy"),
+      rating: "easy" as const,
+      stripeClass: "border-l-emerald-600 dark:border-l-emerald-400",
+    },
+  ] as const;
 
   const currentCardEntry = cards[currentIndex];
   const currentCard = currentCardEntry?.card;
@@ -231,9 +229,11 @@ export function StudyMode({ cards, onComplete, onRateCard, onExit }: StudyModePr
           <CheckCircle2 className="h-10 w-10 text-emerald-600 dark:text-emerald-400" />
         </div>
 
-        <h2 className="mb-2 text-2xl font-semibold tracking-tight sm:text-3xl">Session complete</h2>
+        <h2 className="mb-2 text-2xl font-semibold tracking-tight sm:text-3xl">
+          {t("studyMode.sessionComplete")}
+        </h2>
         <p className="mb-8 max-w-sm text-sm text-muted-foreground">
-          You have reviewed all due cards in this set.
+          {t("studyMode.sessionCompleteDesc")}
         </p>
 
         <div className="mb-8 grid w-full max-w-xl grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
@@ -242,7 +242,7 @@ export function StudyMode({ cards, onComplete, onRateCard, onExit }: StudyModePr
               {reviewedCards.length}
             </div>
             <div className="mt-1 text-sm font-medium uppercase tracking-wide text-muted-foreground">
-              Reviewed
+              {t("studyMode.reviewed")}
             </div>
           </div>
           <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
@@ -250,7 +250,7 @@ export function StudyMode({ cards, onComplete, onRateCard, onExit }: StudyModePr
               {correctCount}
             </div>
             <div className="mt-1 text-sm font-medium uppercase tracking-wide text-muted-foreground">
-              Correct
+              {t("studyMode.correct")}
             </div>
           </div>
           <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
@@ -258,7 +258,7 @@ export function StudyMode({ cards, onComplete, onRateCard, onExit }: StudyModePr
               {incorrectCount}
             </div>
             <div className="mt-1 text-sm font-medium uppercase tracking-wide text-muted-foreground">
-              Again
+              {t("studyMode.again")}
             </div>
           </div>
           <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
@@ -266,7 +266,7 @@ export function StudyMode({ cards, onComplete, onRateCard, onExit }: StudyModePr
               {longestStreak}
             </div>
             <div className="mt-1 text-sm font-medium uppercase tracking-wide text-muted-foreground">
-              Best streak
+              {t("studyMode.bestStreak")}
             </div>
           </div>
         </div>
@@ -277,14 +277,14 @@ export function StudyMode({ cards, onComplete, onRateCard, onExit }: StudyModePr
             onClick={handleReset}
             className="rounded-xl border border-border bg-card px-5 py-2.5 text-sm font-medium shadow-sm transition-all hover:bg-muted/50"
           >
-            Study again
+            {t("studyMode.studyAgain")}
           </button>
           <button
             type="button"
             onClick={onExit}
             className="rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-all hover:bg-primary/90"
           >
-            Back to browse
+            {t("studyMode.backToBrowse")}
           </button>
         </div>
       </div>
@@ -296,7 +296,7 @@ export function StudyMode({ cards, onComplete, onRateCard, onExit }: StudyModePr
       <div className="flex min-h-[40vh] items-center justify-center">
         <div className="text-center">
           <BookOpen className="mx-auto mb-4 h-14 w-14 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">No cards available for study.</p>
+          <p className="text-sm text-muted-foreground">{t("studyMode.noCardsAvailable")}</p>
         </div>
       </div>
     );
@@ -304,20 +304,20 @@ export function StudyMode({ cards, onComplete, onRateCard, onExit }: StudyModePr
 
   return (
     <div className="flex w-full min-w-0 max-w-xl flex-col gap-6">
-      {/* Session progress (reviewed) — single bar + one line of copy */}
+      {/* Session progress */}
       <div className="flex flex-col gap-2">
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-sm leading-snug text-muted-foreground">
           <span>
             <span className="font-semibold tabular-nums text-foreground">
               {reviewedCards.length}
             </span>
-            <span className="font-normal"> of </span>
+            <span className="font-normal"> {t("studyMode.of")} </span>
             <span className="font-semibold tabular-nums text-foreground">{cards.length}</span>
-            <span className="font-normal"> reviewed</span>
+            <span className="font-normal"> {t("studyMode.reviewedLabel")}</span>
           </span>
           <span className="tabular-nums">
             <span className="font-semibold text-foreground/90">{remainingCards}</span>
-            <span className="font-normal"> left</span>
+            <span className="font-normal"> {t("studyMode.left")}</span>
           </span>
         </div>
         <div
@@ -326,7 +326,10 @@ export function StudyMode({ cards, onComplete, onRateCard, onExit }: StudyModePr
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={Math.round(sessionProgressPercent)}
-          aria-label={`${reviewedCards.length} of ${cards.length} cards reviewed`}
+          aria-label={t("studyMode.cardsReviewed", {
+            reviewed: reviewedCards.length,
+            total: cards.length,
+          })}
         >
           <div
             className="h-full rounded-full bg-foreground/25 transition-[width] duration-300 ease-out dark:bg-foreground/35"
@@ -335,12 +338,12 @@ export function StudyMode({ cards, onComplete, onRateCard, onExit }: StudyModePr
         </div>
       </div>
 
-      {/* Card — match browse dimensions; avoid items-center so content stays full width (prose/KaTeX won’t shrink) */}
+      {/* Card */}
       <div className="flex h-[min(40vh,22rem)] min-h-56 max-h-96 w-full min-w-0 flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-lg">
         {!showAnswer ? (
           <div className="flex min-h-0 min-w-0 flex-1 flex-col p-5 text-center sm:p-6">
             <span className="mb-2 shrink-0 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              Question
+              {t("studyMode.question")}
             </span>
             <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden [scrollbar-gutter:stable]">
               <div className="flex min-h-full w-full min-w-0 flex-col justify-center py-1 text-base font-medium text-foreground sm:text-lg">
@@ -351,7 +354,7 @@ export function StudyMode({ cards, onComplete, onRateCard, onExit }: StudyModePr
         ) : (
           <div className="flex min-h-0 min-w-0 flex-1 flex-col p-5 text-center sm:p-6">
             <span className="mb-2 shrink-0 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              Answer
+              {t("studyMode.answer")}
             </span>
             <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden [scrollbar-gutter:stable]">
               <div className="flex min-h-full w-full min-w-0 flex-col justify-center py-1">
@@ -372,7 +375,7 @@ export function StudyMode({ cards, onComplete, onRateCard, onExit }: StudyModePr
         )}
       </div>
 
-      {/* Deck position — same pattern as browse (circular arrows + track) */}
+      {/* Deck position */}
       <div className="flex flex-col gap-2.5">
         <div className="flex items-center gap-3 sm:gap-4">
           <button
@@ -380,7 +383,7 @@ export function StudyMode({ cards, onComplete, onRateCard, onExit }: StudyModePr
             onClick={handlePrevious}
             disabled={currentIndex === 0 || isSubmittingRating}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground shadow-sm transition-all hover:border-foreground/20 hover:text-foreground active:scale-[0.96] disabled:pointer-events-none disabled:opacity-35 touch-manipulation"
-            aria-label="Previous card"
+            aria-label={t("studyMode.previousCard")}
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
@@ -390,7 +393,10 @@ export function StudyMode({ cards, onComplete, onRateCard, onExit }: StudyModePr
             aria-valuemin={1}
             aria-valuemax={cards.length}
             aria-valuenow={currentIndex + 1}
-            aria-label={`Viewing card ${currentIndex + 1} of ${cards.length}`}
+            aria-label={t("studyMode.viewingCard", {
+              current: currentIndex + 1,
+              total: cards.length,
+            })}
           >
             <div
               className="h-full rounded-full bg-foreground/25 transition-[width] duration-300 ease-out dark:bg-foreground/35"
@@ -402,7 +408,7 @@ export function StudyMode({ cards, onComplete, onRateCard, onExit }: StudyModePr
             onClick={handleNext}
             disabled={currentIndex === cards.length - 1 || isSubmittingRating}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground shadow-sm transition-all hover:border-foreground/20 hover:text-foreground active:scale-[0.96] disabled:pointer-events-none disabled:opacity-35 touch-manipulation"
-            aria-label="Next card"
+            aria-label={t("studyMode.nextCard")}
           >
             <ChevronRight className="h-5 w-5" />
           </button>
@@ -413,7 +419,9 @@ export function StudyMode({ cards, onComplete, onRateCard, onExit }: StudyModePr
             ·
           </span>
           <span className="font-medium text-foreground/85">{cards.length}</span>
-          <span className="ml-2 text-sm font-normal text-muted-foreground">in deck</span>
+          <span className="ml-2 text-sm font-normal text-muted-foreground">
+            {t("studyMode.inDeck")}
+          </span>
         </p>
       </div>
 
@@ -425,12 +433,12 @@ export function StudyMode({ cards, onComplete, onRateCard, onExit }: StudyModePr
             onClick={handleShowAnswer}
             className="w-full rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:bg-primary/90 active:scale-[0.99] sm:w-auto sm:min-w-[200px]"
           >
-            Reveal answer
+            {t("studyMode.revealAnswer")}
           </button>
         ) : (
           <div className="w-full space-y-3">
             <p className="text-center font-sans text-sm font-medium leading-snug text-foreground/85">
-              How well did you know this?
+              {t("studyMode.howWellDidYouKnow")}
             </p>
             <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
               {RATING_BUTTONS.map(({ label, rating, stripeClass }) => (

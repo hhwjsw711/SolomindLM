@@ -10,6 +10,7 @@ import {
   Search,
 } from "lucide-react";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import type { TablePaperRow } from "../utils/literatureTablePaper";
 import {
   collectStudyTypeLabels,
@@ -71,6 +72,7 @@ export const LiteratureTablePaperCell: React.FC<LiteratureTablePaperCellProps> =
   onCite,
   onAddToNotebook,
 }) => {
+  const { t } = useTranslation("studio");
   const title = getPaperTitle(paper, columns);
   const citation = paper.citation;
   const studyBadges = collectStudyTypeLabels(paper, columns);
@@ -91,7 +93,7 @@ export const LiteratureTablePaperCell: React.FC<LiteratureTablePaperCellProps> =
           checked={isSelected}
           onChange={onToggleSelect}
           className="mt-1.5 h-4 w-4 rounded border-neutral-300"
-          aria-label={`Select ${title}`}
+          aria-label={t("literatureTablePaperCell.select", { title })}
         />
       </div>
 
@@ -131,7 +133,9 @@ export const LiteratureTablePaperCell: React.FC<LiteratureTablePaperCellProps> =
         )}
 
         {!paper.isIncluded && (
-          <span className="text-xs font-medium text-destructive">Excluded from review</span>
+          <span className="text-xs font-medium text-destructive">
+            {t("literatureTablePaperCell.excludedFromReview")}
+          </span>
         )}
 
         <div className="flex flex-wrap items-center gap-4 pt-1 text-sm text-neutral-600">
@@ -142,7 +146,7 @@ export const LiteratureTablePaperCell: React.FC<LiteratureTablePaperCellProps> =
             className="inline-flex items-center gap-1.5 hover:text-foreground disabled:opacity-50"
           >
             <Quote className="h-4 w-4" strokeWidth={2} />
-            <span>Cite</span>
+            <span>{t("literatureTablePaperCell.cite")}</span>
           </button>
           <button
             type="button"
@@ -155,14 +159,18 @@ export const LiteratureTablePaperCell: React.FC<LiteratureTablePaperCellProps> =
             ) : (
               <CirclePlus className="h-4 w-4" strokeWidth={2} />
             )}
-            <span>{isInNotebook ? "In notebook" : "Add to notebook"}</span>
+            <span>
+              {isInNotebook
+                ? t("literatureTablePaperCell.inNotebook")
+                : t("literatureTablePaperCell.addToNotebook")}
+            </span>
           </button>
         </div>
       </div>
 
       <div className="absolute right-0 top-1 flex flex-col items-center gap-2">
         {isOpenAccess && (
-          <span className="text-orange-500" title="Open access">
+          <span className="text-orange-500" title={t("literatureTablePaperCell.openAccess")}>
             <LockOpen className="h-4 w-4" strokeWidth={2} aria-hidden />
           </span>
         )}
@@ -172,8 +180,8 @@ export const LiteratureTablePaperCell: React.FC<LiteratureTablePaperCellProps> =
             target="_blank"
             rel="noopener noreferrer"
             className="text-red-500 hover:text-red-600"
-            title="View PDF"
-            aria-label="View PDF"
+            title={t("literatureTablePaperCell.viewPdf")}
+            aria-label={t("literatureTablePaperCell.viewPdf")}
           >
             <FileText className="h-4 w-4" strokeWidth={2} />
           </a>

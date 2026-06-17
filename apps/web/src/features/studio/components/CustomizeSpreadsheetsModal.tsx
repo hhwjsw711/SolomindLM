@@ -1,5 +1,6 @@
 import { Bookmark, ChevronLeft, Pencil, Table2, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { SaveAsPromptModal } from "./SaveAsPromptModal";
 import { StudioModalDiscoverPromptsButton } from "./StudioModalDiscoverPromptsButton";
 
@@ -29,15 +30,14 @@ interface SpreadsheetFormat {
 }
 
 // Helper function to clean backend prompts for UI display
-// Removes "Text:\n{chunk}\n\n" and final labels like "CONCEPT EXTRACTION:"
 function cleanPromptForDisplay(prompt: string): string {
   return prompt
-    .replace(/\nText:\s*\n\{chunk\}\s*\n\n/g, "") // Remove "Text:\n{chunk}\n\n"
-    .replace(/\n\{chunk\}\s*\n\n/g, "") // Also handle case without "Text:"
+    .replace(/\nText:\s*\n\{chunk\}\s*\n\n/g, "")
+    .replace(/\n\{chunk\}\s*\n\n/g, "")
     .replace(
       /\n(CONCEPT EXTRACTION|ITEM DETAILS|EVENT LOG|FINANCIAL NOTES|RESEARCH NOTES):\s*$/g,
       ""
-    ) // Remove final labels
+    )
     .trim();
 }
 
@@ -133,6 +133,7 @@ export const CustomizeSpreadsheetsModal: React.FC<CustomizeSpreadsheetsModalProp
   onGenerate,
   embedded = false,
 }) => {
+  const { t } = useTranslation("studio");
   const [configuringFormat, setConfiguringFormat] = useState<SpreadsheetFormat | null>(null);
   const [customPrompt, setCustomPrompt] = useState("");
   const [saveAsPromptModalOpen, setSaveAsPromptModalOpen] = useState(false);
@@ -191,7 +192,7 @@ export const CustomizeSpreadsheetsModal: React.FC<CustomizeSpreadsheetsModalProp
               </button>
             )}
             <Table2 className="w-5 h-5 text-primary" />
-            <h2 className="text-xl font-bold font-sans">Create spreadsheet</h2>
+            <h2 className="text-xl font-bold font-sans">{t("customizeSpreadsheets.title")}</h2>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <StudioModalDiscoverPromptsButton
@@ -211,20 +212,22 @@ export const CustomizeSpreadsheetsModal: React.FC<CustomizeSpreadsheetsModalProp
         {configuringFormat ? (
           <div className="flex-1 overflow-y-auto p-6 md:p-10 space-y-8 bg-card/50 animate-in slide-in-from-right-4 duration-300">
             <div className="p-6 rounded-xl bg-secondary/20 border border-border">
-              <h4 className="text-lg font-bold mb-2 font-serif">{configuringFormat.title}</h4>
+              <h4 className="text-lg font-bold mb-2 font-serif">
+                {t(`customizeSpreadsheets.formats.${configuringFormat.id}.title`)}
+              </h4>
               <p className="text-sm text-muted-foreground font-serif leading-relaxed">
-                {configuringFormat.description}
+                {t(`customizeSpreadsheets.formats.${configuringFormat.id}.description`)}
               </p>
             </div>
 
             <div className="space-y-4">
               <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70 font-sans">
-                Describe the spreadsheet you want to create
+                {t("customizeSpreadsheets.describeSpreadsheet")}
               </h3>
               <textarea
                 value={customPrompt}
                 onChange={(e) => setCustomPrompt(e.target.value)}
-                placeholder="Tell SolomindLM how to structure and organize your spreadsheet..."
+                placeholder={t("customizeSpreadsheets.spreadsheetPlaceholder")}
                 className="w-full h-56 bg-background border border-border rounded-lg p-6 text-base font-serif leading-relaxed focus:outline-none focus:ring-1 focus:ring-ring transition-all resize-none placeholder:text-muted-foreground/40"
               />
               <button
@@ -234,7 +237,7 @@ export const CustomizeSpreadsheetsModal: React.FC<CustomizeSpreadsheetsModalProp
                 className="flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Bookmark className="w-3.5 h-3.5" />
-                Save as reusable prompt
+                {t("customizeSpreadsheets.saveAsPrompt")}
               </button>
             </div>
 
@@ -243,7 +246,7 @@ export const CustomizeSpreadsheetsModal: React.FC<CustomizeSpreadsheetsModalProp
                 onClick={handleGenerate}
                 className="px-8 py-3 bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl transition-all shadow-md active:scale-95 text-sm"
               >
-                Generate Spreadsheet
+                {t("customizeSpreadsheets.generate")}
               </button>
             </div>
           </div>
@@ -251,7 +254,7 @@ export const CustomizeSpreadsheetsModal: React.FC<CustomizeSpreadsheetsModalProp
           <div className="flex-1 overflow-y-auto p-6 md:p-10 space-y-10 bg-card/50 animate-in slide-in-from-left-4 duration-300">
             <div className="space-y-4">
               <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70 font-sans">
-                Format
+                {t("customizeSpreadsheets.format")}
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {SPREADSHEET_FORMATS.map((format) => (
@@ -260,6 +263,7 @@ export const CustomizeSpreadsheetsModal: React.FC<CustomizeSpreadsheetsModalProp
                     format={format}
                     onClick={() => handleFormatClick(format)}
                     onEditClick={(e) => handleEditClick(e, format)}
+                    t={t}
                   />
                 ))}
               </div>
@@ -283,7 +287,8 @@ const FormatCard: React.FC<{
   format: SpreadsheetFormat;
   onClick: () => void;
   onEditClick: (e: React.MouseEvent) => void;
-}> = ({ format, onClick, onEditClick }) => (
+  t: (key: string) => string;
+}> = ({ format, onClick, onEditClick, t }) => (
   <div
     onClick={onClick}
     className="group relative flex flex-col p-5 rounded-xl bg-card border border-border/50 hover:border-primary/40 hover:bg-secondary/30 transition-all cursor-pointer h-48 shadow-sm hover:shadow-md"
@@ -297,10 +302,10 @@ const FormatCard: React.FC<{
       </button>
     )}
     <h4 className="text-md font-bold mb-2 font-serif pr-6 group-hover:text-primary transition-colors">
-      {format.title}
+      {t(`customizeSpreadsheets.formats.${format.id}.title`)}
     </h4>
     <p className="text-[13px] text-muted-foreground leading-relaxed line-clamp-4 font-serif">
-      {format.description}
+      {t(`customizeSpreadsheets.formats.${format.id}.description`)}
     </p>
   </div>
 );

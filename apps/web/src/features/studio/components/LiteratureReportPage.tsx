@@ -1,7 +1,9 @@
 import React, { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 /** Legacy full-page route — redirects into notebook split view (studio panel). */
 export const LiteratureReportPage: React.FC = () => {
+  const { t } = useTranslation("studio");
   const { id, reportId } = useParams();
   const navigate = useNavigate();
 
@@ -12,7 +14,7 @@ export const LiteratureReportPage: React.FC = () => {
 
   return (
     <div className="flex items-center justify-center h-screen">
-      <div className="text-muted-foreground">Opening report…</div>
+      <div className="text-muted-foreground">{t("literatureReportPage.openingReport")}</div>
     </div>
   );
 };

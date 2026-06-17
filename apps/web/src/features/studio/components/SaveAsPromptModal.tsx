@@ -1,34 +1,16 @@
 import { Bookmark, Eye, Globe, Loader2, Lock, X } from "lucide-react";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useToast } from "@/shared/contexts/useToast";
 import { type StudioTool, useCreatePrompt, usePublishPrompt } from "../services/promptsApi";
-
-// ── Props ──────────────────────────────────────────────────────────────
 
 interface SaveAsPromptModalProps {
   isOpen: boolean;
   onClose: () => void;
   studioTool: StudioTool;
-  /** Pre-filled prompt text from the Customize modal */
   initialPromptText: string;
-  /** Optional notebook ID to associate with the prompt */
   notebookId?: string;
 }
-
-// ── Constants ───────────────────────────────────────────────────────────
-
-const TOOL_LABELS: Record<StudioTool, string> = {
-  report: "Reports",
-  spreadsheet: "Spreadsheets",
-  infographic: "Infographics",
-  flashcards: "Flashcards",
-  quiz: "Quizzes",
-  audio: "Audio",
-  writtenQuestions: "Written Questions",
-  mindmap: "Mind Maps",
-};
-
-// ── Component ──────────────────────────────────────────────────────────
 
 export const SaveAsPromptModal: React.FC<SaveAsPromptModalProps> = ({
   isOpen,
@@ -37,6 +19,7 @@ export const SaveAsPromptModal: React.FC<SaveAsPromptModalProps> = ({
   initialPromptText,
   notebookId,
 }) => {
+  const { t } = useTranslation("studio");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [promptText, setPromptText] = useState(initialPromptText);
@@ -47,26 +30,35 @@ export const SaveAsPromptModal: React.FC<SaveAsPromptModalProps> = ({
   const publishPrompt = usePublishPrompt();
   const { success, error: showError } = useToast();
 
-  // Reset form when modal opens with new initial text
   if (isOpen && promptText !== initialPromptText) {
     setPromptText(initialPromptText);
   }
 
   if (!isOpen) return null;
 
+  const toolLabels: Record<StudioTool, string> = {
+    report: t("saveAsPromptModal.toolLabels.report"),
+    spreadsheet: t("saveAsPromptModal.toolLabels.spreadsheets"),
+    infographic: t("saveAsPromptModal.toolLabels.infographics"),
+    flashcards: t("saveAsPromptModal.toolLabels.flashcards"),
+    quiz: t("saveAsPromptModal.toolLabels.quizzes"),
+    audio: t("saveAsPromptModal.toolLabels.audio"),
+    writtenQuestions: t("saveAsPromptModal.toolLabels.writtenQuestions"),
+    mindmap: t("saveAsPromptModal.toolLabels.mindmap"),
+  };
+
   const handleSave = async () => {
     if (!title.trim()) {
-      showError("Please enter a title");
+      showError(t("saveAsPromptModal.enterTitle"));
       return;
     }
     if (!promptText.trim()) {
-      showError("Please enter prompt text");
+      showError(t("saveAsPromptModal.enterPromptText"));
       return;
     }
 
     setIsSaving(true);
     try {
-      // Create the prompt (always private initially)
       const promptId = await createPrompt({
         title: title.trim(),
         description: description.trim() || undefined,
@@ -75,22 +67,20 @@ export const SaveAsPromptModal: React.FC<SaveAsPromptModalProps> = ({
         notebookId,
       });
 
-      // If user chose to make it public, publish it
       if (makePublic && promptId) {
         await publishPrompt(promptId);
-        success("Prompt saved and published to the library!");
+        success(t("saveAsPromptModal.savedAndPublished"));
       } else {
-        success("Prompt saved to your library!");
+        success(t("saveAsPromptModal.saved"));
       }
 
-      // Reset form
       setTitle("");
       setDescription("");
       setPromptText(initialPromptText);
       setMakePublic(false);
       onClose();
     } catch (err) {
-      showError(err instanceof Error ? err.message : "Failed to save prompt");
+      showError(err instanceof Error ? err.message : t("saveAsPromptModal.failedToSave"));
     } finally {
       setIsSaving(false);
     }
@@ -122,15 +112,17 @@ export const SaveAsPromptModal: React.FC<SaveAsPromptModalProps> = ({
             </div>
             <div>
               <p data-testid="save-as-prompt-tool-label" className="text-xs text-muted-foreground">
-                {TOOL_LABELS[studioTool]}
+                {toolLabels[studioTool]}
               </p>
-              <h2 className="text-lg font-bold leading-snug tracking-tight">Save as Prompt</h2>
+              <h2 className="text-lg font-bold leading-snug tracking-tight">
+                {t("saveAsPromptModal.saveAsPrompt")}
+              </h2>
             </div>
           </div>
           <button
             data-testid="save-as-prompt-close"
             onClick={handleCancel}
-            aria-label="Close"
+            aria-label={t("saveAsPromptModal.close")}
             className="p-2 hover:bg-secondary/50 rounded-xl transition-colors"
           >
             <X className="w-5 h-5" />
@@ -142,13 +134,13 @@ export const SaveAsPromptModal: React.FC<SaveAsPromptModalProps> = ({
           {/* Title */}
           <div className="space-y-2">
             <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-              Title <span className="text-destructive">*</span>
+              {t("saveAsPromptModal.title")} <span className="text-destructive">*</span>
             </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g., Focus on key concepts for exam prep"
+              placeholder={t("saveAsPromptModal.titlePlaceholder")}
               className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:border-primary transition-colors placeholder:text-muted-foreground/50"
               maxLength={100}
             />
@@ -158,13 +150,14 @@ export const SaveAsPromptModal: React.FC<SaveAsPromptModalProps> = ({
           {/* Description (optional) */}
           <div className="space-y-2">
             <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-              Description <span className="text-muted-foreground/50">(optional)</span>
+              {t("saveAsPromptModal.description")}{" "}
+              <span className="text-muted-foreground/50">{t("saveAsPromptModal.optional")}</span>
             </label>
             <input
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Briefly describe what this prompt does..."
+              placeholder={t("saveAsPromptModal.descriptionPlaceholder")}
               className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:border-primary transition-colors placeholder:text-muted-foreground/50"
               maxLength={300}
             />
@@ -174,12 +167,12 @@ export const SaveAsPromptModal: React.FC<SaveAsPromptModalProps> = ({
           {/* Prompt Text */}
           <div className="space-y-2">
             <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-              Prompt Text <span className="text-destructive">*</span>
+              {t("saveAsPromptModal.promptText")} <span className="text-destructive">*</span>
             </label>
             <textarea
               value={promptText}
               onChange={(e) => setPromptText(e.target.value)}
-              placeholder="Enter your custom prompt..."
+              placeholder={t("saveAsPromptModal.promptPlaceholder")}
               className="w-full h-32 px-4 py-3 bg-background border border-border rounded-lg text-sm focus:outline-none focus:border-primary transition-colors resize-none placeholder:text-muted-foreground/50 font-mono"
               maxLength={2000}
             />
@@ -195,11 +188,13 @@ export const SaveAsPromptModal: React.FC<SaveAsPromptModalProps> = ({
                 <Lock className="w-5 h-5 text-muted-foreground" />
               )}
               <div>
-                <p className="text-sm font-medium">{makePublic ? "Public" : "Private"}</p>
+                <p className="text-sm font-medium">
+                  {makePublic ? t("saveAsPromptModal.public") : t("saveAsPromptModal.private")}
+                </p>
                 <p className="text-[11px] text-muted-foreground">
                   {makePublic
-                    ? "Anyone can discover and use this prompt"
-                    : "Only you can see and use this prompt"}
+                    ? t("saveAsPromptModal.publicDesc")
+                    : t("saveAsPromptModal.privateDesc")}
                 </p>
               </div>
             </div>
@@ -208,7 +203,11 @@ export const SaveAsPromptModal: React.FC<SaveAsPromptModalProps> = ({
               data-testid="save-as-prompt-visibility-toggle"
               role="switch"
               aria-checked={makePublic}
-              aria-label={makePublic ? "Set visibility to private" : "Set visibility to public"}
+              aria-label={
+                makePublic
+                  ? t("saveAsPromptModal.setVisibilityToPrivate")
+                  : t("saveAsPromptModal.setVisibilityToPublic")
+              }
               onClick={() => setMakePublic(!makePublic)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                 makePublic ? "bg-primary" : "bg-muted"
@@ -227,8 +226,7 @@ export const SaveAsPromptModal: React.FC<SaveAsPromptModalProps> = ({
             <div className="flex items-start gap-2 p-3 bg-primary/5 rounded-lg border border-primary/20">
               <Eye className="w-4 h-4 text-primary mt-0.5 shrink-0" />
               <p className="text-[11px] text-muted-foreground">
-                Your prompt will be visible in the public library. Other users can save and rate it.
-                You can always unpublish it later from the "My Prompts" tab.
+                {t("saveAsPromptModal.publicHint")}
               </p>
             </div>
           )}
@@ -241,7 +239,7 @@ export const SaveAsPromptModal: React.FC<SaveAsPromptModalProps> = ({
             disabled={isSaving}
             className="px-5 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
           >
-            Cancel
+            {t("saveAsPromptModal.cancel")}
           </button>
           <button
             onClick={handleSave}
@@ -251,12 +249,12 @@ export const SaveAsPromptModal: React.FC<SaveAsPromptModalProps> = ({
             {isSaving ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Saving...
+                {t("saveAsPromptModal.saving")}
               </>
             ) : (
               <>
                 <Bookmark className="w-4 h-4" />
-                Save Prompt
+                {t("saveAsPromptModal.savePrompt")}
               </>
             )}
           </button>

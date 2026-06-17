@@ -1,5 +1,6 @@
 import { Bookmark, HelpCircle, X } from "lucide-react";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { SaveAsPromptModal } from "./SaveAsPromptModal";
 import { StudioModalDiscoverPromptsButton } from "./StudioModalDiscoverPromptsButton";
 
@@ -23,6 +24,7 @@ export const CustomizeQuizModal: React.FC<CustomizeQuizModalProps> = ({
   onGenerate,
   embedded = false,
 }) => {
+  const { t } = useTranslation("studio");
   const [count, setCount] = useState<QuizConfig["count"]>("standard");
   const [difficulty, setDifficulty] = useState<QuizConfig["difficulty"]>("medium");
   const [focus, setFocus] = useState("");
@@ -45,7 +47,9 @@ export const CustomizeQuizModal: React.FC<CustomizeQuizModalProps> = ({
             <div className="p-2 bg-secondary/50 rounded-lg">
               <HelpCircle className="w-5 h-5 text-primary" />
             </div>
-            <h2 className="text-xl font-bold font-sans tracking-tight">Customize Quiz</h2>
+            <h2 className="text-xl font-bold font-sans tracking-tight">
+              {t("customizeQuiz.title")}
+            </h2>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <StudioModalDiscoverPromptsButton studioTool="quiz" onApplyPrompt={setFocus} />
@@ -63,7 +67,7 @@ export const CustomizeQuizModal: React.FC<CustomizeQuizModalProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-4">
               <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground font-sans">
-                Number of Questions
+                {t("customizeQuiz.numberOfQuestions")}
               </label>
               <div className="flex bg-background border border-border rounded-xl p-1 w-fit">
                 {(["fewer", "standard", "more"] as const).map((opt) => (
@@ -79,7 +83,7 @@ export const CustomizeQuizModal: React.FC<CustomizeQuizModalProps> = ({
                       }
                     `}
                   >
-                    {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                    {t(`customizeQuiz.count.${opt}`)}
                   </button>
                 ))}
               </div>
@@ -87,7 +91,7 @@ export const CustomizeQuizModal: React.FC<CustomizeQuizModalProps> = ({
 
             <div className="space-y-4">
               <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground font-sans">
-                Difficulty Level
+                {t("customizeQuiz.difficultyLevel")}
               </label>
               <div className="flex bg-background border border-border rounded-xl p-1 w-fit">
                 {(["easy", "medium", "hard"] as const).map((opt) => (
@@ -103,7 +107,7 @@ export const CustomizeQuizModal: React.FC<CustomizeQuizModalProps> = ({
                       }
                     `}
                   >
-                    {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                    {t(`customizeQuiz.difficulty.${opt}`)}
                   </button>
                 ))}
               </div>
@@ -112,12 +116,12 @@ export const CustomizeQuizModal: React.FC<CustomizeQuizModalProps> = ({
 
           <div className="space-y-4">
             <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground font-sans">
-              Area of Focus
+              {t("customizeQuiz.areaOfFocus")}
             </label>
             <textarea
               value={focus}
               onChange={(e) => setFocus(e.target.value)}
-              placeholder="e.g. Create a 'Final Exam' style review or focus on 'Boyce-Codd Normal Form'..."
+              placeholder={t("customizeQuiz.focusPlaceholder")}
               className="w-full h-44 bg-background border border-border rounded-xl p-6 text-base leading-relaxed font-serif focus:outline-none focus:ring-1 focus:ring-ring transition-all resize-none placeholder:text-muted-foreground/30"
             />
             <button
@@ -127,7 +131,7 @@ export const CustomizeQuizModal: React.FC<CustomizeQuizModalProps> = ({
               className="flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Bookmark className="w-3.5 h-3.5" />
-              Save as reusable prompt
+              {t("customizeQuiz.saveAsPrompt")}
             </button>
           </div>
 
@@ -136,7 +140,7 @@ export const CustomizeQuizModal: React.FC<CustomizeQuizModalProps> = ({
               onClick={() => onGenerate({ count, difficulty, focus })}
               className="px-10 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl transition-all shadow-md active:scale-95 text-sm"
             >
-              Generate Quiz
+              {t("customizeQuiz.generate")}
             </button>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import { Edit3, Save, Trash2, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Flashcard } from "@/shared/types";
 
 interface EditCardModalProps {
@@ -19,6 +20,7 @@ export const EditCardModal: React.FC<EditCardModalProps> = ({
   onCancel,
   onDelete,
 }) => {
+  const { t } = useTranslation("studio");
   const [front, setFront] = useState("");
   const [back, setBack] = useState("");
 
@@ -47,7 +49,7 @@ export const EditCardModal: React.FC<EditCardModalProps> = ({
   };
 
   const handleDelete = () => {
-    if (onDelete && confirm("Are you sure you want to delete this card?")) {
+    if (onDelete && confirm(t("editCardModal.confirmDelete"))) {
       onDelete();
     }
   };
@@ -65,10 +67,12 @@ export const EditCardModal: React.FC<EditCardModalProps> = ({
             </div>
             <div>
               <h2 className="text-xl font-semibold tracking-tight">
-                {isNewCard ? "Add New Card" : "Edit Card"}
+                {isNewCard ? t("editCardModal.addNewCard") : t("editCardModal.editCard")}
               </h2>
               <p className="text-sm text-muted-foreground">
-                {isNewCard ? "Create a new flashcard" : "Edit flashcard content"}
+                {isNewCard
+                  ? t("editCardModal.createFlashcard")
+                  : t("editCardModal.editFlashcardContent")}
               </p>
             </div>
           </div>
@@ -81,12 +85,12 @@ export const EditCardModal: React.FC<EditCardModalProps> = ({
           {/* Front (Question) */}
           <div className="space-y-3">
             <label className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-              Front (Question)
+              {t("editCardModal.front")}
             </label>
             <textarea
               value={front}
               onChange={(e) => setFront(e.target.value)}
-              placeholder="Enter the question or prompt..."
+              placeholder={t("editCardModal.frontPlaceholder")}
               className="w-full h-32 bg-background border border-border rounded-xl p-4 text-base leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-none placeholder:text-muted-foreground/50"
               autoFocus={isNewCard}
             />
@@ -95,12 +99,12 @@ export const EditCardModal: React.FC<EditCardModalProps> = ({
           {/* Back (Answer) */}
           <div className="space-y-3">
             <label className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-              Back (Answer)
+              {t("editCardModal.back")}
             </label>
             <textarea
               value={back}
               onChange={(e) => setBack(e.target.value)}
-              placeholder="Enter the answer or explanation..."
+              placeholder={t("editCardModal.backPlaceholder")}
               className="w-full h-32 bg-background border border-border rounded-xl p-4 text-base leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-none placeholder:text-muted-foreground/50"
             />
           </div>
@@ -115,7 +119,7 @@ export const EditCardModal: React.FC<EditCardModalProps> = ({
                 className="flex items-center gap-2 px-4 py-2 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-lg transition-colors text-sm font-medium"
               >
                 <Trash2 className="w-4 h-4" />
-                Delete Card
+                {t("editCardModal.deleteCard")}
               </button>
             )}
           </div>
@@ -124,7 +128,7 @@ export const EditCardModal: React.FC<EditCardModalProps> = ({
               onClick={onCancel}
               className="px-6 py-2.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors text-sm font-medium"
             >
-              Cancel
+              {t("editCardModal.cancel")}
             </button>
             <button
               onClick={handleSave}
@@ -132,7 +136,7 @@ export const EditCardModal: React.FC<EditCardModalProps> = ({
               className="flex items-center gap-2 px-6 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-lg transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed text-sm"
             >
               <Save className="w-4 h-4" />
-              {isNewCard ? "Add Card" : "Save Changes"}
+              {isNewCard ? t("editCardModal.addCard") : t("editCardModal.saveChanges")}
             </button>
           </div>
         </div>

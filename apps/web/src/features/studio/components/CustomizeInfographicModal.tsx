@@ -1,5 +1,6 @@
 import { Bookmark, Image, X } from "lucide-react";
 import React, { useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { SaveAsPromptModal } from "./SaveAsPromptModal";
 import { StudioModalDiscoverPromptsButton } from "./StudioModalDiscoverPromptsButton";
 
@@ -207,6 +208,7 @@ export const CustomizeInfographicModal: React.FC<CustomizeInfographicModalProps>
   onGenerate,
   embedded = false,
 }) => {
+  const { t } = useTranslation("studio");
   const [orientation, setOrientation] = useState<InfographicConfig["orientation"]>("landscape");
   const [visualStyle, setVisualStyle] = useState("auto");
   const [detailLevel, setDetailLevel] = useState<InfographicConfig["detailLevel"]>("standard");
@@ -241,7 +243,9 @@ export const CustomizeInfographicModal: React.FC<CustomizeInfographicModalProps>
             <div className="p-2 bg-secondary/50 rounded-lg">
               <Image className="w-5 h-5 text-primary" />
             </div>
-            <h2 className="text-xl font-bold font-sans tracking-tight">Customize Infographic</h2>
+            <h2 className="text-xl font-bold font-sans tracking-tight">
+              {t("customizeInfographic.title")}
+            </h2>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <StudioModalDiscoverPromptsButton
@@ -263,7 +267,7 @@ export const CustomizeInfographicModal: React.FC<CustomizeInfographicModalProps>
           <div className="flex flex-col sm:flex-row gap-6 sm:gap-10">
             <div className="space-y-4">
               <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground font-sans">
-                Choose orientation
+                {t("customizeInfographic.chooseOrientation")}
               </label>
               <div className="flex bg-background border border-border rounded-xl p-1 w-fit">
                 {(["landscape", "portrait", "square"] as const).map((opt) => (
@@ -279,7 +283,7 @@ export const CustomizeInfographicModal: React.FC<CustomizeInfographicModalProps>
                       }
                     `}
                   >
-                    {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                    {t(`customizeInfographic.orientation.${opt}`)}
                   </button>
                 ))}
               </div>
@@ -287,7 +291,7 @@ export const CustomizeInfographicModal: React.FC<CustomizeInfographicModalProps>
 
             <div className="space-y-4">
               <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground font-sans">
-                Level of detail
+                {t("customizeInfographic.levelOfDetail")}
               </label>
               <div className="flex bg-background border border-border rounded-xl p-1 w-fit">
                 {(["concise", "standard"] as const).map((opt) => (
@@ -303,7 +307,7 @@ export const CustomizeInfographicModal: React.FC<CustomizeInfographicModalProps>
                       }
                     `}
                   >
-                    {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                    {t(`customizeInfographic.detail.${opt}`)}
                   </button>
                 ))}
               </div>
@@ -313,7 +317,7 @@ export const CustomizeInfographicModal: React.FC<CustomizeInfographicModalProps>
           {/* Visual style */}
           <div className="space-y-4">
             <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground font-sans">
-              Choose visual style
+              {t("customizeInfographic.chooseVisualStyle")}
             </label>
             <div className="flex min-h-0 items-stretch gap-2 sm:gap-3">
               <button
@@ -321,7 +325,7 @@ export const CustomizeInfographicModal: React.FC<CustomizeInfographicModalProps>
                 onClick={() => scroll("left")}
                 className="hidden shrink-0 self-center rounded-lg border border-border/60 bg-card px-2 py-6 text-[10px] font-bold uppercase tracking-wider text-muted-foreground transition-colors hover:border-primary/40 hover:bg-secondary/40 hover:text-foreground sm:block"
               >
-                Prev
+                {t("customizeInfographic.prev")}
               </button>
               <div
                 ref={scrollRef}
@@ -349,15 +353,15 @@ export const CustomizeInfographicModal: React.FC<CustomizeInfographicModalProps>
                         <span
                           className={`block text-xs font-semibold leading-snug ${selected ? "text-primary" : "text-foreground"}`}
                         >
-                          {style.label}
+                          {t(`customizeInfographic.visualStyles.${style.id}.label`)}
                         </span>
                         <span className="block text-[10px] leading-snug text-muted-foreground line-clamp-2">
-                          {style.hint}
+                          {t(`customizeInfographic.visualStyles.${style.id}.hint`)}
                         </span>
                       </div>
                       {selected && (
                         <span className="absolute right-2 top-2 rounded-full bg-primary px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-primary-foreground">
-                          On
+                          {t("customizeInfographic.on")}
                         </span>
                       )}
                     </button>
@@ -369,7 +373,7 @@ export const CustomizeInfographicModal: React.FC<CustomizeInfographicModalProps>
                 onClick={() => scroll("right")}
                 className="hidden shrink-0 self-center rounded-lg border border-border/60 bg-card px-2 py-6 text-[10px] font-bold uppercase tracking-wider text-muted-foreground transition-colors hover:border-primary/40 hover:bg-secondary/40 hover:text-foreground sm:block"
               >
-                Next
+                {t("customizeInfographic.next")}
               </button>
             </div>
             <div className="flex justify-center gap-4 sm:hidden">
@@ -378,14 +382,14 @@ export const CustomizeInfographicModal: React.FC<CustomizeInfographicModalProps>
                 onClick={() => scroll("left")}
                 className="rounded-lg border border-border/60 bg-card px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground transition-colors hover:bg-secondary/40 hover:text-foreground"
               >
-                Previous
+                {t("customizeInfographic.previous")}
               </button>
               <button
                 type="button"
                 onClick={() => scroll("right")}
                 className="rounded-lg border border-border/60 bg-card px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground transition-colors hover:bg-secondary/40 hover:text-foreground"
               >
-                Next
+                {t("customizeInfographic.next")}
               </button>
             </div>
           </div>
@@ -393,12 +397,12 @@ export const CustomizeInfographicModal: React.FC<CustomizeInfographicModalProps>
           {/* Custom Prompt */}
           <div className="space-y-4">
             <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground font-sans">
-              Describe the infographic you want to create
+              {t("customizeInfographic.describeInfographic")}
             </label>
             <textarea
               value={customPrompt}
               onChange={(e) => setCustomPrompt(e.target.value)}
-              placeholder='Guide the style, color, or focus: "Use a blue color theme and highlight the 3 key stats."'
+              placeholder={t("customizeInfographic.infographicPlaceholder")}
               className="w-full h-32 bg-background border border-border rounded-xl p-6 text-base leading-relaxed font-serif focus:outline-none focus:ring-1 focus:ring-ring transition-all resize-none placeholder:text-muted-foreground/30"
             />
             <button
@@ -408,7 +412,7 @@ export const CustomizeInfographicModal: React.FC<CustomizeInfographicModalProps>
               className="flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Bookmark className="w-3.5 h-3.5" />
-              Save as reusable prompt
+              {t("customizeInfographic.saveAsPrompt")}
             </button>
           </div>
 
@@ -424,7 +428,7 @@ export const CustomizeInfographicModal: React.FC<CustomizeInfographicModalProps>
               }
               className="px-10 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl transition-all shadow-md active:scale-95 text-sm"
             >
-              Generate
+              {t("customizeInfographic.generate")}
             </button>
           </div>
         </div>

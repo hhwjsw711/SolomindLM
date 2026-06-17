@@ -1,5 +1,6 @@
 import { ArrowLeft, XCircle } from "lucide-react";
 import React, { lazy, Suspense } from "react";
+import { useTranslation } from "react-i18next";
 import { ReportNote } from "@/shared/types/index";
 import { sanitizeMarkdown } from "@/shared/utils";
 
@@ -13,6 +14,7 @@ export interface ReportViewProps {
 }
 
 export const ReportView: React.FC<ReportViewProps> = ({ note, onBack }) => {
+  const { t } = useTranslation("studio");
   const isFailed = note.status === "failed";
 
   return (
@@ -23,7 +25,7 @@ export const ReportView: React.FC<ReportViewProps> = ({ note, onBack }) => {
           <button
             onClick={onBack}
             className="p-1.5 hover:bg-secondary active:bg-secondary/80 active:scale-[0.97] rounded-md transition-colors transition-transform text-foreground flex items-center justify-center shrink-0 touch-manipulation"
-            aria-label="Back to Studio"
+            aria-label={t("header.backToStudio")}
           >
             <ArrowLeft className="w-5 h-5 shrink-0" />
           </button>
@@ -36,12 +38,14 @@ export const ReportView: React.FC<ReportViewProps> = ({ note, onBack }) => {
           <div className="flex items-center gap-3">
             <XCircle className="w-5 h-5 text-destructive shrink-0" />
             <div className="flex-1">
-              <p className="text-sm font-medium text-destructive">Report generation failed</p>
+              <p className="text-sm font-medium text-destructive">
+                {t("reportView.reportGenerationFailed")}
+              </p>
               <p className="text-xs text-destructive/70 mt-1">
                 {typeof note.metadata?.error === "object"
                   ? (note.metadata.error as { message?: string }).message ||
-                    "An unknown error occurred"
-                  : note.metadata?.error || "An unknown error occurred"}
+                    t("reportView.anUnknownErrorOccurred")
+                  : note.metadata?.error || t("reportView.anUnknownErrorOccurred")}
               </p>
             </div>
           </div>
@@ -88,11 +92,11 @@ export const ReportView: React.FC<ReportViewProps> = ({ note, onBack }) => {
             ) : isFailed ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <XCircle className="w-12 h-12 text-destructive mb-4" />
-                <p className="text-muted-foreground">Report generation failed</p>
+                <p className="text-muted-foreground">{t("reportView.reportGenerationFailed")}</p>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-12">
-                <p className="text-muted-foreground">No content available</p>
+                <p className="text-muted-foreground">{t("reportView.noContentAvailable")}</p>
               </div>
             )}
           </div>

@@ -1,7 +1,6 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/shared/utils/cn";
-
-// ── Types ────────────────────────────────────────────────────────────────
 
 export type CitationStyle =
   | "apa7"
@@ -24,31 +23,29 @@ export interface CitationStylePickerProps {
   className?: string;
 }
 
-// ── Constants ────────────────────────────────────────────────────────────
-
-const STYLE_OPTIONS: { value: CitationStyle; label: string }[] = [
-  { value: "apa7", label: "APA 7th" },
-  { value: "apa6", label: "APA 6th" },
-  { value: "mla9", label: "MLA 9th" },
-  { value: "mla8", label: "MLA 8th" },
-  { value: "chicago17", label: "Chicago 17 (Author-Date)" },
-  { value: "chicago17_notes", label: "Chicago 17 (Notes)" },
-  { value: "ama11", label: "AMA 11th" },
-  { value: "ama10", label: "AMA 10th" },
-  { value: "acs", label: "ACS" },
-  { value: "ieee", label: "IEEE" },
-  { value: "vancouver", label: "Vancouver" },
-  { value: "harvard", label: "Harvard" },
-];
-
-// ── Component ────────────────────────────────────────────────────────────
-
 export const CitationStylePicker: React.FC<CitationStylePickerProps> = ({
   value,
   onChange,
   disabled = false,
   className,
 }) => {
+  const { t } = useTranslation("studio");
+
+  const STYLE_OPTIONS: { value: CitationStyle; label: string }[] = [
+    { value: "apa7", label: t("citationStylePicker.apa7th") },
+    { value: "apa6", label: t("citationStylePicker.apa6th") },
+    { value: "mla9", label: t("citationStylePicker.mla9th") },
+    { value: "mla8", label: t("citationStylePicker.mla8th") },
+    { value: "chicago17", label: t("citationStylePicker.chicago17AuthorDate") },
+    { value: "chicago17_notes", label: t("citationStylePicker.chicago17Notes") },
+    { value: "ama11", label: t("citationStylePicker.ama11th") },
+    { value: "ama10", label: t("citationStylePicker.ama10th") },
+    { value: "acs", label: t("citationStylePicker.acs") },
+    { value: "ieee", label: t("citationStylePicker.ieee") },
+    { value: "vancouver", label: t("citationStylePicker.vancouver") },
+    { value: "harvard", label: t("citationStylePicker.harvard") },
+  ];
+
   return (
     <div className={cn("relative inline-block min-w-0 max-w-full", className)}>
       <select
@@ -56,7 +53,7 @@ export const CitationStylePicker: React.FC<CitationStylePickerProps> = ({
         onChange={(e) => onChange(e.target.value as CitationStyle)}
         disabled={disabled}
         className="w-full max-w-full appearance-none truncate bg-background border border-border rounded-md px-3 py-1.5 pr-8 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-        aria-label="Select citation style"
+        aria-label={t("citationStylePicker.selectStyle")}
       >
         {STYLE_OPTIONS.map((option) => (
           <option key={option.value} value={option.value}>
@@ -64,7 +61,6 @@ export const CitationStylePicker: React.FC<CitationStylePickerProps> = ({
           </option>
         ))}
       </select>
-      {/* Custom dropdown arrow */}
       <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
         <svg
           className="w-4 h-4 text-muted-foreground"

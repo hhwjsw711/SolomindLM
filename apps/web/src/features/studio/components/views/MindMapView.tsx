@@ -1,5 +1,6 @@
 import { ArrowLeft, Maximize2, Minimize2, XCircle, ZoomIn, ZoomOut } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { MindMapNote } from "@/shared/types/index";
 
 export interface MindMapViewProps {
@@ -45,6 +46,7 @@ export const MindMapView: React.FC<MindMapViewProps> = ({
   onToggleExpanded,
   onBack,
 }) => {
+  const { t } = useTranslation("studio");
   const containerRef = useRef<HTMLDivElement>(null);
   const mindRef = useRef<any>(null);
   const [scale, setScale] = useState(1);
@@ -72,16 +74,15 @@ export const MindMapView: React.FC<MindMapViewProps> = ({
 
       const options = {
         el,
-        direction: MindElixir.RIGHT, // Right-growing tree (Left-to-Right)
+        direction: MindElixir.RIGHT,
         draggable: true,
-        contextMenu: false, // Disable right-click context menu
-        toolBar: false, // Disable default toolbar to use custom controls
-        nodeMenu: false, // Disable node menu on right-click
+        contextMenu: false,
+        toolBar: false,
+        nodeMenu: false,
         keypress: true,
         locale: "en" as any,
         overflowHidden: false,
         mainLinkStyle: 2,
-        // Keep drag-to-pan on left mouse; marquee selection only on right mouse.
         mouseSelectionButton: 2 as any,
         before: {
           insertSibling(_el: any, _obj: any) {
@@ -92,20 +93,17 @@ export const MindMapView: React.FC<MindMapViewProps> = ({
             return true;
           },
         },
-        // SolomindLM theme: clean, card-based, minimalist
         theme: {
           name: "SolomindLM",
-          // Uniform blue/gray palette - monochrome with blue accents
           palette: ["#1a73e8", "#5f6368", "#3c4043"],
           cssVar: {
-            "--main-color": "#1f1f1f", // Dark grey text for root
-            "--main-bgcolor": "#ffffff", // White background for root
-            "--color": "#3c4043", // Dark grey text for nodes
-            "--bgcolor": "#ffffff", // White background for nodes
-            "--panel-color": "#3c4043", // Text color for panel
-            "--panel-bgcolor": "#f8f9fa", // Light grey background for canvas
-            "--panel-border-color": "#dadce0", // Google-style soft border grey
-            // Rounded corners for Material Design look
+            "--main-color": "#1f1f1f",
+            "--main-bgcolor": "#ffffff",
+            "--color": "#3c4043",
+            "--bgcolor": "#ffffff",
+            "--panel-color": "#3c4043",
+            "--panel-bgcolor": "#f8f9fa",
+            "--panel-border-color": "#dadce0",
             "--root-radius": "12px",
             "--main-radius": "8px",
             "--topic-radius": "8px",
@@ -117,7 +115,6 @@ export const MindMapView: React.FC<MindMapViewProps> = ({
       mind.init({ nodeData: sanitizedRoot });
       mindRef.current = mind;
 
-      // Center map on first render so root is visible.
       requestAnimationFrame(() => {
         try {
           if (typeof mind.toCenter === "function") {
@@ -128,21 +125,18 @@ export const MindMapView: React.FC<MindMapViewProps> = ({
         }
       });
 
-      // Set initial scale
       setScale(mind.scaleVal || 1);
 
-      // Track manual zoom changes via Ctrl+Scroll or mouse wheel
       let lastScale = mind.scaleVal || 1;
       const pollInterval = setInterval(() => {
         if (mindRef.current && mindRef.current.scaleVal) {
           const currentScale = mindRef.current.scaleVal;
-          // Only update if scale has actually changed
           if (Math.abs(currentScale - lastScale) > 0.001) {
             lastScale = currentScale;
             setScale(currentScale);
           }
         }
-      }, 100); // Poll every 100ms
+      }, 100);
 
       if (containerEl) {
         (containerEl as any)._cleanupSelection = () => {
@@ -152,7 +146,6 @@ export const MindMapView: React.FC<MindMapViewProps> = ({
     });
 
     return () => {
-      // Clean up selection prevention
       if (containerEl && (containerEl as any)._cleanupSelection) {
         (containerEl as any)._cleanupSelection();
         delete (containerEl as any)._cleanupSelection;
@@ -190,18 +183,20 @@ export const MindMapView: React.FC<MindMapViewProps> = ({
           <div className="flex items-center gap-3">
             <XCircle className="w-5 h-5 text-destructive shrink-0" />
             <div className="flex-1">
-              <p className="text-sm font-medium text-destructive">Mind map generation failed</p>
+              <p className="text-sm font-medium text-destructive">
+                {t("mindMapView.mindMapGenerationFailed")}
+              </p>
               <p className="text-xs text-destructive/70 mt-1">
                 {typeof note.metadata?.error === "object"
                   ? (note.metadata.error as { message?: string }).message ||
-                    "An unknown error occurred"
-                  : note.metadata?.error || "An unknown error occurred"}
+                    t("anUnknownErrorOccurred")
+                  : note.metadata?.error || t("anUnknownErrorOccurred")}
               </p>
             </div>
           </div>
         </div>
         <div className="flex-1 flex items-center justify-center p-8">
-          <p className="text-muted-foreground">Failed to generate mind map</p>
+          <p className="text-muted-foreground">{t("mindMapView.failedToGenerateMindMap")}</p>
         </div>
       </div>
     );
@@ -211,7 +206,7 @@ export const MindMapView: React.FC<MindMapViewProps> = ({
     return (
       <div className="flex flex-col h-full bg-background">
         <div className="flex-1 flex items-center justify-center p-8">
-          <p className="text-muted-foreground">No mind map data available</p>
+          <p className="text-muted-foreground">{t("mindMapView.noMindMapData")}</p>
         </div>
       </div>
     );
@@ -231,7 +226,7 @@ export const MindMapView: React.FC<MindMapViewProps> = ({
             <button
               onClick={onBack}
               className="md:hidden p-1.5 hover:bg-secondary rounded-md transition-colors text-foreground flex items-center justify-center shrink-0"
-              aria-label="Back to Studio"
+              aria-label={t("header.backToStudio")}
             >
               <ArrowLeft className="w-5 h-5 shrink-0" />
             </button>
@@ -240,14 +235,14 @@ export const MindMapView: React.FC<MindMapViewProps> = ({
           <button
             onClick={handleZoomOut}
             className="p-2 rounded-md hover:bg-secondary transition-colors"
-            title="Zoom Out"
+            title={t("mindMapView.zoomOut")}
           >
             <ZoomOut className="w-4 h-4" />
           </button>
           <button
             onClick={handleZoomIn}
             className="p-2 rounded-md hover:bg-secondary transition-colors"
-            title="Zoom In"
+            title={t("mindMapView.zoomIn")}
           >
             <ZoomIn className="w-4 h-4" />
           </button>
@@ -260,7 +255,7 @@ export const MindMapView: React.FC<MindMapViewProps> = ({
             <button
               onClick={onToggleExpanded}
               className="p-2 rounded-md hover:bg-secondary transition-colors"
-              title="Exit Full Screen"
+              title={t("mindMapView.exitFullScreen")}
             >
               <Minimize2 className="w-4 h-4" />
             </button>
@@ -268,7 +263,7 @@ export const MindMapView: React.FC<MindMapViewProps> = ({
             <button
               onClick={onToggleExpanded}
               className="p-2 rounded-md hover:bg-secondary transition-colors"
-              title="Expand to Full Screen"
+              title={t("mindMapView.expandToFullScreen")}
             >
               <Maximize2 className="w-4 h-4" />
             </button>
@@ -283,24 +278,24 @@ export const MindMapView: React.FC<MindMapViewProps> = ({
             <button
               onClick={handleZoomOut}
               className="p-2 rounded-md hover:bg-secondary transition-colors"
-              title="Zoom Out"
-              aria-label="Zoom Out"
+              title={t("mindMapView.zoomOut")}
+              aria-label={t("mindMapView.zoomOut")}
             >
               <ZoomOut className="w-4 h-4" />
             </button>
             <button
               onClick={handleZoomIn}
               className="p-2 rounded-md hover:bg-secondary transition-colors"
-              title="Zoom In"
-              aria-label="Zoom In"
+              title={t("mindMapView.zoomIn")}
+              aria-label={t("mindMapView.zoomIn")}
             >
               <ZoomIn className="w-4 h-4" />
             </button>
             <button
               onClick={onToggleExpanded}
               className="p-2 rounded-md hover:bg-secondary transition-colors"
-              title="Exit Full Screen"
-              aria-label="Exit Full Screen"
+              title={t("mindMapView.exitFullScreen")}
+              aria-label={t("mindMapView.exitFullScreen")}
             >
               <Minimize2 className="w-4 h-4" />
             </button>
@@ -313,7 +308,7 @@ export const MindMapView: React.FC<MindMapViewProps> = ({
       {!isExpanded && (
         <div className="px-4 py-2 border-t border-border bg-muted/20">
           <p className="text-xs text-muted-foreground">
-            <span className="font-medium">Tip:</span> Drag to pan, use controls to zoom.
+            <span className="font-medium">{t("mindMapView.tip")}</span> {t("mindMapView.tipText")}
           </p>
         </div>
       )}

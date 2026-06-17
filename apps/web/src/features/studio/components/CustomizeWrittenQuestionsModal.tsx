@@ -1,5 +1,6 @@
 import { Bookmark, MessageSquareText, X } from "lucide-react";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { SaveAsPromptModal } from "./SaveAsPromptModal";
 import { StudioModalDiscoverPromptsButton } from "./StudioModalDiscoverPromptsButton";
 
@@ -23,6 +24,7 @@ export const CustomizeWrittenQuestionsModal: React.FC<CustomizeWrittenQuestionsM
   onGenerate,
   embedded = false,
 }) => {
+  const { t } = useTranslation("studio");
   const [count, setCount] = useState<WrittenQuestionsConfig["count"]>("standard");
   const [difficulty, setDifficulty] = useState<WrittenQuestionsConfig["difficulty"]>("medium");
   const [questionType, setQuestionType] = useState<WrittenQuestionsConfig["questionType"]>("short");
@@ -47,7 +49,7 @@ export const CustomizeWrittenQuestionsModal: React.FC<CustomizeWrittenQuestionsM
               <MessageSquareText className="w-5 h-5 text-primary" />
             </div>
             <h2 className="text-xl font-bold font-sans tracking-tight">
-              Customize Written Questions
+              {t("customizeWrittenQuestions.title")}
             </h2>
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -69,7 +71,7 @@ export const CustomizeWrittenQuestionsModal: React.FC<CustomizeWrittenQuestionsM
           <div className="grid grid-cols-3 gap-x-2 gap-y-2 sm:gap-x-3">
             <div className="flex min-w-0 flex-col gap-1">
               <label className="font-sans text-[10px] font-bold uppercase tracking-wider text-muted-foreground sm:text-[11px]">
-                Count
+                {t("customizeWrittenQuestions.count")}
               </label>
               <div className="flex w-full min-w-0 rounded-lg border border-border bg-background p-0.5">
                 {(["fewer", "standard", "more"] as const).map((opt) => (
@@ -86,7 +88,9 @@ export const CustomizeWrittenQuestionsModal: React.FC<CustomizeWrittenQuestionsM
                       }
                     `}
                   >
-                    <span className="truncate">{opt.charAt(0).toUpperCase() + opt.slice(1)}</span>
+                    <span className="truncate">
+                      {t(`customizeWrittenQuestions.countOptions.${opt}`)}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -94,7 +98,7 @@ export const CustomizeWrittenQuestionsModal: React.FC<CustomizeWrittenQuestionsM
 
             <div className="flex min-w-0 flex-col gap-1">
               <label className="font-sans text-[10px] font-bold uppercase tracking-wider text-muted-foreground sm:text-[11px]">
-                Type
+                {t("customizeWrittenQuestions.type")}
               </label>
               <div className="flex w-full min-w-0 rounded-lg border border-border bg-background p-0.5">
                 {(["short", "essay"] as const).map((opt) => (
@@ -111,7 +115,9 @@ export const CustomizeWrittenQuestionsModal: React.FC<CustomizeWrittenQuestionsM
                       }
                     `}
                   >
-                    <span className="truncate">{opt.charAt(0).toUpperCase() + opt.slice(1)}</span>
+                    <span className="truncate">
+                      {t(`customizeWrittenQuestions.typeOptions.${opt}`)}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -119,7 +125,7 @@ export const CustomizeWrittenQuestionsModal: React.FC<CustomizeWrittenQuestionsM
 
             <div className="flex min-w-0 flex-col gap-1">
               <label className="font-sans text-[10px] font-bold uppercase tracking-wider text-muted-foreground sm:text-[11px]">
-                Difficulty
+                {t("customizeWrittenQuestions.difficulty")}
               </label>
               <div className="flex w-full min-w-0 rounded-lg border border-border bg-background p-0.5">
                 {(["easy", "medium", "hard"] as const).map((opt) => (
@@ -136,7 +142,9 @@ export const CustomizeWrittenQuestionsModal: React.FC<CustomizeWrittenQuestionsM
                       }
                     `}
                   >
-                    <span className="truncate">{opt.charAt(0).toUpperCase() + opt.slice(1)}</span>
+                    <span className="truncate">
+                      {t(`customizeWrittenQuestions.difficultyOptions.${opt}`)}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -145,12 +153,12 @@ export const CustomizeWrittenQuestionsModal: React.FC<CustomizeWrittenQuestionsM
 
           <div className="space-y-4">
             <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground font-sans">
-              Area of Focus
+              {t("customizeWrittenQuestions.areaOfFocus")}
             </label>
             <textarea
               value={focus}
               onChange={(e) => setFocus(e.target.value)}
-              placeholder="e.g. Focus on 'Database Normalization' concepts or create a comprehensive review..."
+              placeholder={t("customizeWrittenQuestions.focusPlaceholder")}
               className="w-full h-32 bg-background border border-border rounded-xl p-6 text-base leading-relaxed font-serif focus:outline-none focus:ring-1 focus:ring-ring transition-all resize-none placeholder:text-muted-foreground/30"
             />
             <button
@@ -160,7 +168,7 @@ export const CustomizeWrittenQuestionsModal: React.FC<CustomizeWrittenQuestionsM
               className="flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Bookmark className="w-3.5 h-3.5" />
-              Save as reusable prompt
+              {t("customizeWrittenQuestions.saveAsPrompt")}
             </button>
           </div>
 
@@ -169,7 +177,7 @@ export const CustomizeWrittenQuestionsModal: React.FC<CustomizeWrittenQuestionsM
               onClick={() => onGenerate({ count, difficulty, questionType, focus })}
               className="px-10 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl transition-all shadow-md active:scale-95 text-sm"
             >
-              Generate Written Questions
+              {t("customizeWrittenQuestions.generate")}
             </button>
           </div>
         </div>

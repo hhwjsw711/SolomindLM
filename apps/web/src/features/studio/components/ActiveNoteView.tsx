@@ -1,5 +1,6 @@
 import { Loader2, Save, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { AudioPlayer } from "@/features/audio/components/AudioPlayer";
 import type { ReportNote } from "@/shared/types/index";
 import {
@@ -32,6 +33,7 @@ interface ReportMarkdownEditorProps {
 }
 
 const ReportMarkdownEditor: React.FC<ReportMarkdownEditorProps> = ({ note, onSave, onCancel }) => {
+  const { t } = useTranslation("studio");
   const [draftContent, setDraftContent] = useState(note.content ?? "");
   const [isSaving, setIsSaving] = useState(false);
 
@@ -57,7 +59,7 @@ const ReportMarkdownEditor: React.FC<ReportMarkdownEditorProps> = ({ note, onSav
           disabled={isSaving}
           className="px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground border border-transparent hover:border-border rounded-md bg-transparent hover:bg-secondary/50 transition-colors disabled:opacity-50"
         >
-          Cancel
+          {t("activeNoteView.cancel")}
         </button>
         <button
           type="button"
@@ -66,7 +68,7 @@ const ReportMarkdownEditor: React.FC<ReportMarkdownEditorProps> = ({ note, onSav
           className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md transition-colors disabled:opacity-50"
         >
           <Save className="w-4 h-4" />
-          {isSaving ? "Saving…" : "Save"}
+          {isSaving ? t("activeNoteView.saving") : t("activeNoteView.save")}
         </button>
       </div>
       <div className="flex-1 min-h-0 p-4">
@@ -74,7 +76,7 @@ const ReportMarkdownEditor: React.FC<ReportMarkdownEditorProps> = ({ note, onSav
           value={draftContent}
           onChange={(e) => setDraftContent(e.target.value)}
           className="w-full h-full min-h-[200px] p-4 rounded-lg border border-border bg-card text-foreground font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-          placeholder="Write your report in Markdown..."
+          placeholder={t("activeNoteView.reportPlaceholder")}
           spellCheck={false}
         />
       </div>
@@ -96,10 +98,6 @@ interface ActiveNoteViewProps {
   onInfographicFullscreenChange?: (isFullscreen: boolean) => void;
 }
 
-/**
- * ActiveNoteView component displays the currently active note.
- * Conditionally renders the appropriate view component based on note type.
- */
 export const ActiveNoteView: React.FC<ActiveNoteViewProps> = ({
   activeNote,
   isMindMapExpanded,
@@ -113,6 +111,8 @@ export const ActiveNoteView: React.FC<ActiveNoteViewProps> = ({
   registerInfographicControls,
   onInfographicFullscreenChange,
 }) => {
+  const { t } = useTranslation("studio");
+
   // Report view or report markdown editor
   if (isReportNote(activeNote)) {
     if (isEditingReportContent && onSaveReportContent && onCancelEditReport) {
@@ -132,7 +132,7 @@ export const ActiveNoteView: React.FC<ActiveNoteViewProps> = ({
     return <FlashcardView note={activeNote} onBack={undefined} />;
   }
 
-  // Quiz view (no onBack on mobile - StudioPanelHeader provides single header)
+  // Quiz view
   if (isQuizNote(activeNote)) {
     return (
       <QuizView
@@ -157,7 +157,6 @@ export const ActiveNoteView: React.FC<ActiveNoteViewProps> = ({
 
   // Audio view
   if (isAudioNote(activeNote)) {
-    // Completed state with audio player
     if (activeNote.status === "completed" && activeNote.metadata.audioUrl) {
       return (
         <AudioPlayer
@@ -169,7 +168,6 @@ export const ActiveNoteView: React.FC<ActiveNoteViewProps> = ({
       );
     }
 
-    // Failed state
     if (activeNote.status === "failed") {
       return (
         <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
@@ -177,13 +175,14 @@ export const ActiveNoteView: React.FC<ActiveNoteViewProps> = ({
             <X className="w-6 h-6 text-destructive" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-destructive">Generation Failed</h3>
+            <h3 className="text-lg font-semibold text-destructive">
+              {t("activeNoteView.generationFailed")}
+            </h3>
             <p className="text-sm text-muted-foreground mt-1">
               {typeof activeNote.metadata.error === "object"
                 ? (activeNote.metadata.error as { message?: string }).message ||
-                  "An error occurred while generating the audio overview"
-                : activeNote.metadata.error ||
-                  "An error occurred while generating the audio overview"}
+                  t("activeNoteView.audioError")
+                : activeNote.metadata.error || t("activeNoteView.audioError")}
             </p>
           </div>
         </div>
@@ -191,7 +190,7 @@ export const ActiveNoteView: React.FC<ActiveNoteViewProps> = ({
     }
   }
 
-  // Studio audio overview (Convex audioOverviews — top-level audioUrl / transcript)
+  // Studio audio overview
   if (isAudioOverviewNote(activeNote)) {
     const url = activeNote.audioUrl?.trim() ?? "";
     if (activeNote.status === "completed") {
@@ -202,9 +201,9 @@ export const ActiveNoteView: React.FC<ActiveNoteViewProps> = ({
               <X className="w-6 h-6 text-muted-foreground" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold">Audio unavailable</h3>
+              <h3 className="text-lg font-semibold">{t("activeNoteView.audioUnavailable")}</h3>
               <p className="text-sm text-muted-foreground mt-1">
-                This overview finished without an audio file. Try generating it again.
+                {t("activeNoteView.audioUnavailableDesc")}
               </p>
             </div>
           </div>
@@ -234,9 +233,11 @@ export const ActiveNoteView: React.FC<ActiveNoteViewProps> = ({
             <X className="w-6 h-6 text-destructive" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-destructive">Generation Failed</h3>
+            <h3 className="text-lg font-semibold text-destructive">
+              {t("activeNoteView.generationFailed")}
+            </h3>
             <p className="text-sm text-muted-foreground mt-1">
-              {message || "An error occurred while generating the audio overview"}
+              {message || t("activeNoteView.audioError")}
             </p>
           </div>
         </div>
@@ -248,17 +249,16 @@ export const ActiveNoteView: React.FC<ActiveNoteViewProps> = ({
           <Loader2 className="w-6 h-6 text-primary animate-spin" />
         </div>
         <div>
-          <h3 className="text-lg font-semibold">Generating audio overview</h3>
+          <h3 className="text-lg font-semibold">{t("activeNoteView.generatingAudioOverview")}</h3>
           <p className="text-sm text-muted-foreground mt-1">
-            This can take a few minutes. You can keep this notebook open; the player will appear
-            when it is ready.
+            {t("activeNoteView.generatingAudioDesc")}
           </p>
         </div>
       </div>
     );
   }
 
-  // Written questions view (no onBack on mobile - StudioPanelHeader provides single header)
+  // Written questions view
   if (isWrittenQuestionsNote(activeNote)) {
     return (
       <WrittenQuestionsView
@@ -281,12 +281,12 @@ export const ActiveNoteView: React.FC<ActiveNoteViewProps> = ({
     );
   }
 
-  // Spreadsheet view (no onBack on mobile - StudioPanelHeader provides single header)
+  // Spreadsheet view
   if (isSpreadsheetNote(activeNote)) {
     return <SpreadsheetView note={activeNote} onBack={undefined} />;
   }
 
-  // User note view (saved chats and manual notes)
+  // User note view
   if (isUserNote(activeNote)) {
     return <UserNoteView note={activeNote} onBack={isMobile ? onBack : undefined} />;
   }
@@ -298,8 +298,10 @@ export const ActiveNoteView: React.FC<ActiveNoteViewProps> = ({
         <X className="w-6 h-6 text-muted-foreground" />
       </div>
       <div>
-        <h3 className="text-lg font-semibold">Unknown Note Type</h3>
-        <p className="text-sm text-muted-foreground mt-1">This note type is not supported yet.</p>
+        <h3 className="text-lg font-semibold">{t("activeNoteView.unknownNoteType")}</h3>
+        <p className="text-sm text-muted-foreground mt-1">
+          {t("activeNoteView.unknownNoteTypeDesc")}
+        </p>
       </div>
     </div>
   );

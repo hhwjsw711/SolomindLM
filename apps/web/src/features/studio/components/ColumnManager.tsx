@@ -1,5 +1,6 @@
 import { GripVertical, Plus, X } from "lucide-react";
 import React, { useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   catalogColumnInTable,
   LITERATURE_TABLE_COLUMN_CATALOG,
@@ -59,6 +60,7 @@ function ColumnToggle({
 }
 
 export const ColumnManager: React.FC<ColumnManagerProps> = ({ columns, onChange, onClose }) => {
+  const { t } = useTranslation("studio");
   const [customName, setCustomName] = useState("");
   const [customInstructions, setCustomInstructions] = useState("");
   const [showCustomForm, setShowCustomForm] = useState(false);
@@ -186,7 +188,7 @@ export const ColumnManager: React.FC<ColumnManagerProps> = ({ columns, onChange,
         <ColumnToggle
           checked={options.checked}
           onChange={options.onToggle}
-          label={`Toggle ${col.name}`}
+          label={t("columnManager.toggleColumn", { name: col.name })}
         />
         {options.draggable && (
           <GripVertical className="h-4 w-4 shrink-0 text-muted-foreground/60" aria-hidden />
@@ -198,13 +200,15 @@ export const ColumnManager: React.FC<ColumnManagerProps> = ({ columns, onChange,
   return (
     <div className="flex h-full w-[min(100%,22rem)] shrink-0 flex-col border-l border-border bg-card shadow-[-4px_0_24px_rgba(0,0,0,0.04)]">
       <div className="flex h-14 shrink-0 items-center justify-between border-b border-border px-5">
-        <h3 className="text-sm font-semibold text-foreground">Manage Columns</h3>
+        <h3 className="text-sm font-semibold text-foreground">
+          {t("columnManager.manageColumns")}
+        </h3>
         {onClose && (
           <button
             type="button"
             onClick={onClose}
             className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            aria-label="Close column manager"
+            aria-label={t("columnManager.closeColumnManager")}
           >
             <X className="h-4 w-4" />
           </button>
@@ -213,18 +217,20 @@ export const ColumnManager: React.FC<ColumnManagerProps> = ({ columns, onChange,
 
       <div className="flex-1 space-y-6 overflow-y-auto px-5 py-5">
         <section>
-          <p className="mb-3 text-sm font-medium text-foreground">Create custom column</p>
+          <p className="mb-3 text-sm font-medium text-foreground">
+            {t("columnManager.createCustomColumn")}
+          </p>
           {showCustomForm ? (
             <div className="space-y-3 rounded-xl border border-border bg-background p-4">
               <input
                 type="text"
-                placeholder="Column name"
+                placeholder={t("columnManager.columnName")}
                 value={customName}
                 onChange={(e) => setCustomName(e.target.value)}
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring/40"
               />
               <textarea
-                placeholder="Instructions for extraction (optional)"
+                placeholder={t("columnManager.extractionInstructions")}
                 value={customInstructions}
                 onChange={(e) => setCustomInstructions(e.target.value)}
                 rows={3}
@@ -236,7 +242,7 @@ export const ColumnManager: React.FC<ColumnManagerProps> = ({ columns, onChange,
                   onClick={addCustomColumn}
                   className="flex-1 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
                 >
-                  Add column
+                  {t("columnManager.addColumn")}
                 </button>
                 <button
                   type="button"
@@ -247,7 +253,7 @@ export const ColumnManager: React.FC<ColumnManagerProps> = ({ columns, onChange,
                   }}
                   className="rounded-lg border border-border px-3 py-2 text-sm hover:bg-muted"
                 >
-                  Cancel
+                  {t("columnManager.cancel")}
                 </button>
               </div>
             </div>
@@ -258,14 +264,16 @@ export const ColumnManager: React.FC<ColumnManagerProps> = ({ columns, onChange,
               className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-muted/20 px-4 py-4 text-sm font-medium text-foreground transition-colors hover:bg-muted/40"
             >
               <Plus className="h-4 w-4" />
-              Add Column
+              {t("columnManager.addColumnButton")}
             </button>
           )}
         </section>
 
         {suggestedRows.length > 0 && (
           <section>
-            <h4 className="mb-2 text-sm font-semibold text-foreground">Suggested Columns</h4>
+            <h4 className="mb-2 text-sm font-semibold text-foreground">
+              {t("columnManager.suggestedColumns")}
+            </h4>
             <div className="space-y-0.5">
               {suggestedRows.map((col) => {
                 const existing = columns.find((c) => c.id === col.id || c.name === col.name);
@@ -291,13 +299,17 @@ export const ColumnManager: React.FC<ColumnManagerProps> = ({ columns, onChange,
         )}
 
         <section>
-          <h4 className="mb-2 text-sm font-semibold text-foreground">Saved Columns</h4>
-          <p className="text-sm text-muted-foreground">No saved columns</p>
+          <h4 className="mb-2 text-sm font-semibold text-foreground">
+            {t("columnManager.savedColumns")}
+          </h4>
+          <p className="text-sm text-muted-foreground">{t("columnManager.noSavedColumns")}</p>
         </section>
 
         {(defaultCatalogRows.length > 0 || hiddenTableColumns.length > 0) && (
           <section>
-            <h4 className="mb-2 text-sm font-semibold text-foreground">Default Columns</h4>
+            <h4 className="mb-2 text-sm font-semibold text-foreground">
+              {t("columnManager.defaultColumns")}
+            </h4>
             <div className="max-h-[280px] space-y-0.5 overflow-y-auto pr-1">
               {hiddenTableColumns.map((col) =>
                 renderColumnRow(col, {

@@ -1,11 +1,8 @@
 import { ArrowLeft, XCircle } from "lucide-react";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { SpreadsheetNote } from "@/shared/types/index";
 
-/**
- * Parse CSV content into an array of rows.
- * Handles quoted values with commas inside them.
- */
 function parseCSV(content: string): string[][] {
   if (!content || !content.trim()) return [];
 
@@ -23,15 +20,12 @@ function parseCSV(content: string): string[][] {
 
       if (char === '"') {
         if (inQuotes && nextChar === '"') {
-          // Escaped quote within quotes
           current += '"';
           i++;
         } else {
-          // Toggle quote mode
           inQuotes = !inQuotes;
         }
       } else if (char === "," && !inQuotes) {
-        // Comma separator outside quotes
         values.push(current.trim());
         current = "";
       } else {
@@ -39,10 +33,8 @@ function parseCSV(content: string): string[][] {
       }
     }
 
-    // Add the last value
     values.push(current.trim());
 
-    // Only add non-empty rows
     if (values.length > 0 && values.some((v) => v.length > 0)) {
       rows.push(values);
     }
@@ -51,22 +43,23 @@ function parseCSV(content: string): string[][] {
   return rows;
 }
 
-/**
- * Component to render CSV data as a styled table.
- */
 interface SpreadsheetTableProps {
   content: string;
   noteTitle: string;
+  t: (key: string, options?: Record<string, unknown>) => string;
 }
 
-const SpreadsheetTable: React.FC<SpreadsheetTableProps> = ({ content, noteTitle: _noteTitle }) => {
+const SpreadsheetTable: React.FC<SpreadsheetTableProps> = ({
+  content,
+  noteTitle: _noteTitle,
+  t,
+}) => {
   const rows = parseCSV(content);
 
-  // Handle empty or error CSV
   if (rows.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center p-8">
-        <p className="text-muted-foreground">No data to display</p>
+        <p className="text-muted-foreground">{t("spreadsheetView.noDataToDisplay")}</p>
       </div>
     );
   }
@@ -77,7 +70,6 @@ const SpreadsheetTable: React.FC<SpreadsheetTableProps> = ({ content, noteTitle:
 
   return (
     <div className="flex flex-col h-full">
-      {/* Scrollable table container */}
       <div className="flex-1 overflow-auto">
         <table className="w-full border-collapse text-sm">
           <thead className="sticky top-0 bg-secondary/50 z-10 shadow-sm">
@@ -90,7 +82,11 @@ const SpreadsheetTable: React.FC<SpreadsheetTableProps> = ({ content, noteTitle:
                   key={idx}
                   className="px-4 py-3 text-left font-bold text-foreground border-r border-border last:border-r-0 whitespace-nowrap"
                 >
-                  {col || <span className="text-muted-foreground italic">Column {idx + 1}</span>}
+                  {col || (
+                    <span className="text-muted-foreground italic">
+                      {t("spreadsheetView.column", { num: idx + 1 })}
+                    </span>
+                  )}
                 </th>
               ))}
             </tr>
@@ -118,9 +114,10 @@ const SpreadsheetTable: React.FC<SpreadsheetTableProps> = ({ content, noteTitle:
         </table>
       </div>
 
-      {/* Footer with row count info */}
       {dataRows.length === 0 && (
-        <div className="p-8 text-center text-muted-foreground">No data rows found</div>
+        <div className="p-8 text-center text-muted-foreground">
+          {t("spreadsheetView.noDataRows")}
+        </div>
       )}
     </div>
   );
@@ -132,6 +129,7 @@ export interface SpreadsheetViewProps {
 }
 
 export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({ note, onBack }) => {
+  const { t } = useTranslation("studio");
   const isFailed = note.status === "failed";
 
   return (
@@ -142,7 +140,7 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({ note, onBack }
           <button
             onClick={onBack}
             className="p-1.5 hover:bg-secondary rounded-md transition-colors text-foreground flex items-center justify-center shrink-0"
-            aria-label="Back to Studio"
+            aria-label={t("header.backToStudio")}
           >
             <ArrowLeft className="w-5 h-5 shrink-0" />
           </button>
@@ -156,12 +154,14 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({ note, onBack }
           <div className="flex items-center gap-3">
             <XCircle className="w-5 h-5 text-destructive shrink-0" />
             <div className="flex-1">
-              <p className="text-sm font-medium text-destructive">Spreadsheet generation failed</p>
+              <p className="text-sm font-medium text-destructive">
+                {t("spreadsheetView.spreadsheetGenerationFailed")}
+              </p>
               <p className="text-xs text-destructive/70 mt-1">
                 {typeof note.metadata?.error === "object"
                   ? (note.metadata.error as { message?: string }).message ||
-                    "An unknown error occurred"
-                  : note.metadata?.error || "An unknown error occurred"}
+                    t("anUnknownErrorOccurred")
+                  : note.metadata?.error || t("anUnknownErrorOccurred")}
               </p>
             </div>
           </div>
@@ -170,15 +170,17 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({ note, onBack }
 
       <div className="flex-1 bg-card border-t border-border min-h-0">
         {note.content ? (
-          <SpreadsheetTable content={note.content} noteTitle={note.title} />
+          <SpreadsheetTable content={note.content} noteTitle={note.title} t={t} />
         ) : isFailed ? (
           <div className="flex flex-col items-center justify-center py-12">
             <XCircle className="w-12 h-12 text-destructive mb-4" />
-            <p className="text-muted-foreground">Spreadsheet generation failed</p>
+            <p className="text-muted-foreground">
+              {t("spreadsheetView.spreadsheetGenerationFailed")}
+            </p>
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-12">
-            <p className="text-muted-foreground">No content available</p>
+            <p className="text-muted-foreground">{t("spreadsheetView.noContentAvailable")}</p>
           </div>
         )}
       </div>

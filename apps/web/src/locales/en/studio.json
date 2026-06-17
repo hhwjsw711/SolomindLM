@@ -19,5 +19,593 @@
   },
   "toolGrid": {
     "create": "Create"
-  }
+  },
+  "customizeAudio": {
+    "title": "Customize Audio Overview",
+    "format": "Format",
+    "length": "Length",
+    "focusLabel": "What should the AI hosts focus on in this episode?",
+    "focusPlaceholder": "Things to try\n• Focus on a specific source (\"only cover the article about Italy\")\n• Focus on a specific topic (\"just discuss the novel's main character\")\n• Target a specific audience (\"explain to someone new to biology\")",
+    "saveAsPrompt": "Save as reusable prompt",
+    "generate": "Generate Audio",
+    "formats": {
+      "deep_dive": {
+        "title": "Deep Dive",
+        "description": "A lively conversation between two hosts, unpacking and connecting topics in your sources"
+      },
+      "brief": {
+        "title": "Brief",
+        "description": "A bite-sized overview to help you grasp the core ideas from your sources quickly"
+      },
+      "critique": {
+        "title": "Critique",
+        "description": "An expert review of your sources, offering constructive feedback to help you improve your material"
+      },
+      "debate": {
+        "title": "Debate",
+        "description": "A thoughtful debate between two hosts, illuminating different perspectives on your sources"
+      }
+    },
+    "lengthOptions": {
+      "short": "Short",
+      "default": "Default",
+      "long": "Long"
+    }
+  },
+  "customizeFlashcards": {
+    "title": "Customize Flashcards",
+    "numberOfCards": "Number of Cards",
+    "difficultyLevel": "Difficulty Level",
+    "areaOfFocus": "Area of Focus",
+    "focusPlaceholder": "e.g. Focus on 'Relational Algebra' or 'Keep card fronts under 3 words'...",
+    "saveAsPrompt": "Save as reusable prompt",
+    "generate": "Generate Cards",
+    "difficulty": {
+      "easy": "Easy",
+      "medium": "Medium",
+      "hard": "Hard"
+    },
+    "count": {
+      "fewer": "Fewer",
+      "standard": "Standard",
+      "more": "More"
+    }
+  },
+  "customizeInfographic": {
+    "title": "Customize Infographic",
+    "chooseOrientation": "Choose orientation",
+    "levelOfDetail": "Level of detail",
+    "chooseVisualStyle": "Choose visual style",
+    "describeInfographic": "Describe the infographic you want to create",
+    "infographicPlaceholder": "Guide the style, color, or focus: \"Use a blue color theme and highlight the 3 key stats.\"",
+    "saveAsPrompt": "Save as reusable prompt",
+    "generate": "Generate",
+    "prev": "Prev",
+    "next": "Next",
+    "previous": "Previous",
+    "on": "On",
+    "orientation": {
+      "landscape": "Landscape",
+      "portrait": "Portrait",
+      "square": "Square"
+    },
+    "detail": {
+      "concise": "Concise",
+      "standard": "Standard"
+    },
+    "visualStyles": {
+      "auto": { "label": "Auto-select", "hint": "Balanced layout and palette from your content" },
+      "sketch_note": {
+        "label": "Sketch Note",
+        "hint": "Loose lines, markers, and handwritten labels"
+      },
+      "kawaii": { "label": "Kawaii", "hint": "Soft pastels, rounded shapes, friendly emphasis" },
+      "professional": {
+        "label": "Professional",
+        "hint": "Clean grids, restrained color, crisp hierarchy"
+      },
+      "scientific": { "label": "Scientific", "hint": "Diagrams, scales, and precise annotations" },
+      "anime": { "label": "Anime", "hint": "Bold color blocks, expressive outlines, motion cues" },
+      "clay": { "label": "Clay", "hint": "Soft volumes, gentle shadows, tactile surfaces" },
+      "editorial": {
+        "label": "Editorial",
+        "hint": "Magazine rhythm, strong headline, column flow"
+      },
+      "instructional": {
+        "label": "Instructional",
+        "hint": "Numbered flow, clear steps, minimal decoration"
+      },
+      "bento_grid": {
+        "label": "Bento Grid",
+        "hint": "Modular tiles with varied weights and spacing"
+      },
+      "bricks": { "label": "Bricks", "hint": "Stacked blocks with mortar rhythm and repetition" }
+    }
+  },
+  "customizeQuiz": {
+    "title": "Customize Quiz",
+    "numberOfQuestions": "Number of Questions",
+    "difficultyLevel": "Difficulty Level",
+    "areaOfFocus": "Area of Focus",
+    "focusPlaceholder": "e.g. Create a 'Final Exam' style review or focus on 'Boyce-Codd Normal Form'...",
+    "saveAsPrompt": "Save as reusable prompt",
+    "generate": "Generate Quiz",
+    "difficulty": {
+      "easy": "Easy",
+      "medium": "Medium",
+      "hard": "Hard"
+    },
+    "count": {
+      "fewer": "Fewer",
+      "standard": "Standard",
+      "more": "More"
+    }
+  },
+  "customizeReport": {
+    "title": "Create report",
+    "format": "Format",
+    "describeReport": "Describe the report you want to create",
+    "reportPlaceholder": "Tell SolomindLM how to structure and write your report...",
+    "saveAsPrompt": "Save as reusable prompt",
+    "generate": "Generate Report",
+    "formats": {
+      "custom": {
+        "title": "Create Your Own",
+        "description": "Craft reports your way by specifying structure, style, tone, and more"
+      },
+      "briefing": {
+        "title": "Briefing Doc",
+        "description": "Overview of your sources featuring key insights and quotes"
+      },
+      "study_guide": {
+        "title": "Study Guide",
+        "description": "Short-answer quiz, suggested essay questions, and glossary of key terms"
+      },
+      "blog_post": {
+        "title": "Blog Post",
+        "description": "Insightful takeaways distilled into a highly readable article"
+      },
+      "summary": {
+        "title": "Summary",
+        "description": "A concise synthesis of the essential information from your sources."
+      },
+      "technical_report": {
+        "title": "Technical Report",
+        "description": "Detailed technical documentation with specifications, methodologies, data analysis, and findings."
+      },
+      "concept_explainer": {
+        "title": "Concept Explainer",
+        "description": "Accessible explanations of core concepts with definitions, examples, and relationship mapping."
+      },
+      "methodology_overview": {
+        "title": "Methodology Overview",
+        "description": "Comprehensive documentation of research methods, frameworks, data collection, and analysis approaches."
+      }
+    }
+  },
+  "customizeSpreadsheets": {
+    "title": "Create spreadsheet",
+    "format": "Format",
+    "describeSpreadsheet": "Describe the spreadsheet you want to create",
+    "spreadsheetPlaceholder": "Tell SolomindLM how to structure and organize your spreadsheet...",
+    "saveAsPrompt": "Save as reusable prompt",
+    "generate": "Generate Spreadsheet",
+    "formats": {
+      "custom": {
+        "title": "Create Your Own",
+        "description": "Create a custom spreadsheet based on your specific requirements and instructions."
+      },
+      "data_extraction": {
+        "title": "Data Table",
+        "description": "Extract and organize key data points, facts, and figures from your sources into a structured table."
+      },
+      "comparison_table": {
+        "title": "Comparison",
+        "description": "Compare and contrast different concepts, products, or ideas across multiple dimensions."
+      },
+      "timeline": {
+        "title": "Timeline",
+        "description": "Organize events, milestones, or developments in chronological order with key details."
+      },
+      "financial_summary": {
+        "title": "Financial",
+        "description": "Extract and organize financial data, metrics, and figures into a summary table."
+      }
+    }
+  },
+  "customizeWrittenQuestions": {
+    "title": "Customize Written Questions",
+    "count": "Count",
+    "type": "Type",
+    "difficulty": "Difficulty",
+    "areaOfFocus": "Area of Focus",
+    "focusPlaceholder": "e.g. Focus on 'Database Normalization' concepts or create a comprehensive review...",
+    "saveAsPrompt": "Save as reusable prompt",
+    "generate": "Generate Written Questions",
+    "difficultyOptions": {
+      "easy": "Easy",
+      "medium": "Medium",
+      "hard": "Hard"
+    },
+    "countOptions": {
+      "fewer": "Fewer",
+      "standard": "Standard",
+      "more": "More"
+    },
+    "typeOptions": {
+      "short": "Short",
+      "essay": "Essay"
+    }
+  },
+  "flashcardView": {
+    "browseMode": "Browse Mode",
+    "studyMode": "Study Mode",
+    "editMode": "Edit Mode",
+    "due": "Due",
+    "all": "All",
+    "dueLabel": "due",
+    "addCard": "Add Card",
+    "allCaughtUp": "All caught up",
+    "noCardsDue": "No cards are due for review right now. Check back later.",
+    "backToBrowse": "Back to browse",
+    "noFlashcardsShowAll": "No flashcards available. Try showing all cards.",
+    "noFlashcardsMastered": "No flashcards available. All cards are mastered!",
+    "question": "Question",
+    "answer": "Answer",
+    "tapToFlip": "Tap or Space to flip",
+    "tapToEdit": "Tap to edit",
+    "tapToFlipBack": "Tap or Space to flip back",
+    "previousCard": "Previous card",
+    "nextCard": "Next card",
+    "cardOf": "Card {{current}} of {{total}}",
+    "flashcardQuestion": "Flashcard question. Press Enter or Space to reveal answer.",
+    "flashcardAnswer": "Flashcard answer. Press Enter or Space to show question.",
+    "whichCards": "Which cards to show"
+  },
+  "quizView": {
+    "noQuestions": "No questions available",
+    "quizComplete": "Quiz Complete!",
+    "youScored": "You scored {{score}} out of {{total}}",
+    "review": "Review",
+    "tryAgain": "Try Again",
+    "resetting": "Resetting...",
+    "reviewMode": "Review Mode",
+    "reviewModeDesc": "You are viewing your previous answers. Selection is disabled.",
+    "question": "Question {{current}}",
+    "total": "{{total}} Total",
+    "hint": "Hint",
+    "hintDefault": "Try to recall the definition from your notes.",
+    "previous": "Previous",
+    "next": "Next",
+    "finish": "Finish",
+    "explanation": "Explanation"
+  },
+  "reportView": {
+    "reportGenerationFailed": "Report generation failed",
+    "anUnknownErrorOccurred": "An unknown error occurred",
+    "noContentAvailable": "No content available"
+  },
+  "mindMapView": {
+    "mindMapGenerationFailed": "Mind map generation failed",
+    "failedToGenerateMindMap": "Failed to generate mind map",
+    "noMindMapData": "No mind map data available",
+    "zoomOut": "Zoom Out",
+    "zoomIn": "Zoom In",
+    "exitFullScreen": "Exit Full Screen",
+    "expandToFullScreen": "Expand to Full Screen",
+    "tip": "Tip:",
+    "tipText": "Drag to pan, use controls to zoom."
+  },
+  "infographicView": {
+    "generatingInfographic": "Generating your infographic...",
+    "infographicUnavailable": "Infographic Unavailable",
+    "imageCouldNotBeLoaded": "The image could not be loaded",
+    "loadingInfographic": "Loading infographic..."
+  },
+  "spreadsheetView": {
+    "spreadsheetGenerationFailed": "Spreadsheet generation failed",
+    "noContentAvailable": "No content available",
+    "noDataToDisplay": "No data to display",
+    "noDataRows": "No data rows found",
+    "column": "Column {{num}}"
+  },
+  "writtenQuestionsView": {
+    "noQuestions": "No questions available",
+    "assessmentComplete": "Assessment Complete!",
+    "youScored": "You scored {{score}} out of {{maxScore}} points",
+    "review": "Review",
+    "tryAgain": "Try Again",
+    "resetting": "Resetting...",
+    "reviewMode": "Review Mode",
+    "reviewModeDesc": "You are viewing your previous answers. Editing is disabled.",
+    "question": "Question {{current}}",
+    "answeredCount": "{{answered}} of {{total}} Answered",
+    "shortAnswer": "SHORT ANSWER",
+    "essay": "ESSAY",
+    "shortAnswerPlaceholder": "Type your short answer here (1-3 sentences)...",
+    "detailedAnswerPlaceholder": "Type your detailed answer here...",
+    "characters": "characters",
+    "words": "words",
+    "answerGraded": "Answer Graded",
+    "score": "Score",
+    "yourAnswer": "Your Answer",
+    "feedback": "Feedback",
+    "strengths": "Strengths",
+    "areasForImprovement": "Areas for Improvement",
+    "previous": "Previous",
+    "next": "Next",
+    "finish": "Finish",
+    "grading": "Grading...",
+    "submit": "Submit"
+  },
+  "userNoteView": {
+    "emptyNote": "Empty note",
+    "loading": "Loading..."
+  },
+  "activeNoteView": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving…",
+    "reportPlaceholder": "Write your report in Markdown...",
+    "generationFailed": "Generation Failed",
+    "audioError": "An error occurred while generating the audio overview",
+    "audioUnavailable": "Audio unavailable",
+    "audioUnavailableDesc": "This overview finished without an audio file. Try generating it again.",
+    "generatingAudioOverview": "Generating audio overview",
+    "generatingAudioDesc": "This can take a few minutes. You can keep this notebook open; the player will appear when it is ready.",
+    "unknownNoteType": "Unknown Note Type",
+    "unknownNoteTypeDesc": "This note type is not supported yet."
+  },
+  "editCardModal": {
+    "addNewCard": "Add New Card",
+    "editCard": "Edit Card",
+    "createFlashcard": "Create a new flashcard",
+    "editFlashcardContent": "Edit flashcard content",
+    "front": "Front (Question)",
+    "frontPlaceholder": "Enter the question or prompt...",
+    "back": "Back (Answer)",
+    "backPlaceholder": "Enter the answer or explanation...",
+    "deleteCard": "Delete Card",
+    "cancel": "Cancel",
+    "addCard": "Add Card",
+    "saveChanges": "Save Changes",
+    "confirmDelete": "Are you sure you want to delete this card?"
+  },
+  "studyMode": {
+    "sessionComplete": "Session complete",
+    "sessionCompleteDesc": "You have reviewed all due cards in this set.",
+    "reviewed": "Reviewed",
+    "correct": "Correct",
+    "again": "Again",
+    "bestStreak": "Best streak",
+    "studyAgain": "Study again",
+    "backToBrowse": "Back to browse",
+    "noCardsAvailable": "No cards available for study.",
+    "question": "Question",
+    "answer": "Answer",
+    "of": "of",
+    "reviewedLabel": "reviewed",
+    "left": "left",
+    "inDeck": "in deck",
+    "revealAnswer": "Reveal answer",
+    "howWellDidYouKnow": "How well did you know this?",
+    "ratingAgain": "Again",
+    "ratingHard": "Hard",
+    "ratingGood": "Good",
+    "ratingEasy": "Easy",
+    "previousCard": "Previous card",
+    "nextCard": "Next card",
+    "viewingCard": "Viewing card {{current}} of {{total}}",
+    "cardsReviewed": "{{reviewed}} of {{total}} cards reviewed"
+  },
+  "literaturePapersPanel": {
+    "selectedPapersTitle": "Selected Papers for Detailed Review",
+    "export": "Export",
+    "close": "Close",
+    "closePanel": "Close papers panel",
+    "exportPapers": "Export papers",
+    "bibtex": "BibTeX (.bib)",
+    "csv": "CSV (.csv)",
+    "excel": "Excel (.xlsx)",
+    "loadingRankedPapers": "Loading ranked papers…",
+    "noRankedPapers": "No ranked papers yet",
+    "noRankedPapersDesc": "Papers appear here after the ranking step completes in your literature review.",
+    "citations": "Citations",
+    "score": "Score {{score}}",
+    "cite": "Cite",
+    "addToNotebook": "Add to notebook",
+    "inNotebook": "In notebook",
+    "pdf": "PDF",
+    "viewPdf": "View PDF",
+    "openPaper": "Open paper",
+    "selected": "selected",
+    "addToNotebookCount": "Add {{count}} to notebook",
+    "adding": "Adding…",
+    "paperAdded": "Paper added to notebook",
+    "papersAdded": "{{count}} papers added to notebook",
+    "alreadyInNotebook": "Selected papers are already in this notebook",
+    "failedToAdd": "Failed to add papers"
+  },
+  "literatureScreeningPanel": {
+    "title": "Screening Decisions and Outcome Summary",
+    "export": "Export",
+    "closePanel": "Close screening panel",
+    "loadingDecisions": "Loading screening decisions…",
+    "noDecisions": "No screening decisions yet",
+    "noDecisionsDesc": "Decisions appear here after the screening step completes in your literature review.",
+    "papers": "Papers",
+    "screeningResults": "Screening Results",
+    "included": "Included",
+    "excluded": "Excluded",
+    "hideCriteria": "Hide screening criteria",
+    "viewCriteria": "View screening criteria",
+    "cite": "Cite",
+    "myReferences": "My References"
+  },
+  "literatureTablePaperCell": {
+    "excludedFromReview": "Excluded from review",
+    "cite": "Cite",
+    "addToNotebook": "Add to notebook",
+    "inNotebook": "In notebook",
+    "openAccess": "Open access",
+    "viewPdf": "View PDF",
+    "select": "Select {{title}}"
+  },
+  "literatureTablePage": {
+    "openingTable": "Opening table…"
+  },
+  "literatureReportPage": {
+    "openingReport": "Opening report…"
+  },
+  "literatureStudioView": {
+    "tableSaved": "Table saved to Studio",
+    "failedToSaveTable": "Failed to save table",
+    "reportSaved": "Report saved to Studio",
+    "failedToSaveReport": "Failed to save report"
+  },
+  "citationStylePicker": {
+    "selectStyle": "Select citation style",
+    "apa7th": "APA 7th",
+    "apa6th": "APA 6th",
+    "mla9th": "MLA 9th",
+    "mla8th": "MLA 8th",
+    "chicago17AuthorDate": "Chicago 17 (Author-Date)",
+    "chicago17Notes": "Chicago 17 (Notes)",
+    "ama11th": "AMA 11th",
+    "ama10th": "AMA 10th",
+    "acs": "ACS",
+    "ieee": "IEEE",
+    "vancouver": "Vancouver",
+    "harvard": "Harvard"
+  },
+  "citePaperModal": {
+    "citePaper": "Cite Paper",
+    "close": "Close",
+    "citationStyle": "Citation style",
+    "fullCitation": "Full citation",
+    "inTextCitation": "In-text citation",
+    "copyCitation": "Copy Citation",
+    "copyInText": "Copy In-Text",
+    "citationCopied": "Citation copied",
+    "inTextCitationCopied": "In-text citation copied"
+  },
+  "columnManager": {
+    "manageColumns": "Manage Columns",
+    "closeColumnManager": "Close column manager",
+    "createCustomColumn": "Create custom column",
+    "columnName": "Column name",
+    "extractionInstructions": "Instructions for extraction (optional)",
+    "addColumn": "Add column",
+    "cancel": "Cancel",
+    "addColumnButton": "Add Column",
+    "suggestedColumns": "Suggested Columns",
+    "savedColumns": "Saved Columns",
+    "noSavedColumns": "No saved columns",
+    "defaultColumns": "Default Columns",
+    "toggleColumn": "Toggle {{name}}"
+  },
+  "saveAsPromptModal": {
+    "saveAsPrompt": "Save as Prompt",
+    "close": "Close",
+    "title": "Title",
+    "description": "Description",
+    "optional": "(optional)",
+    "promptText": "Prompt Text",
+    "titlePlaceholder": "e.g., Focus on key concepts for exam prep",
+    "descriptionPlaceholder": "Briefly describe what this prompt does...",
+    "promptPlaceholder": "Enter your custom prompt...",
+    "public": "Public",
+    "private": "Private",
+    "publicDesc": "Anyone can discover and use this prompt",
+    "privateDesc": "Only you can see and use this prompt",
+    "publicHint": "Your prompt will be visible in the public library. Other users can save and rate it. You can always unpublish it later from the \"My Prompts\" tab.",
+    "cancel": "Cancel",
+    "savePrompt": "Save Prompt",
+    "saving": "Saving...",
+    "enterTitle": "Please enter a title",
+    "enterPromptText": "Please enter prompt text",
+    "savedAndPublished": "Prompt saved and published to the library!",
+    "saved": "Prompt saved to your library!",
+    "failedToSave": "Failed to save prompt",
+    "setVisibilityToPrivate": "Set visibility to private",
+    "setVisibilityToPublic": "Set visibility to public",
+    "toolLabels": {
+      "report": "Reports",
+      "spreadsheet": "Spreadsheets",
+      "infographic": "Infographics",
+      "flashcards": "Flashcards",
+      "quiz": "Quizzes",
+      "audio": "Audio",
+      "writtenQuestions": "Written Questions",
+      "mindmap": "Mind Maps"
+    }
+  },
+  "discoverPromptsModal": {
+    "promptLibrary": "Prompt library",
+    "public": "Public",
+    "myPrompts": "My Prompts",
+    "searchPlaceholder": "Search prompts...",
+    "mostSaved": "Most saved",
+    "highestRated": "Highest rated",
+    "newest": "Newest",
+    "loadingPrompts": "Loading prompts...",
+    "loadingYourPrompts": "Loading your prompts...",
+    "noPublicPrompts": "No public prompts yet for this tool",
+    "noMatchSearch": "No prompts match your search",
+    "noSavedPrompts": "You haven't saved any prompts yet",
+    "browsePublicHint": "Browse the Public tab to discover and save prompts",
+    "use": "Use",
+    "save": "Save",
+    "rate": "Rate:",
+    "cancel": "Cancel",
+    "report": "Report",
+    "confirm": "Confirm",
+    "reportThisPrompt": "Report this prompt?",
+    "publish": "Publish",
+    "unpublish": "Unpublish",
+    "savedCopy": "Saved copy",
+    "delete": "Delete",
+    "promptSaved": "Prompt saved to your library",
+    "failedToSave": "Failed to save prompt",
+    "ratingSubmitted": "Rating submitted",
+    "failedToRate": "Failed to rate prompt",
+    "promptReported": "Prompt reported",
+    "failedToReport": "Failed to report prompt",
+    "promptPublished": "Prompt published",
+    "failedToPublish": "Failed to publish",
+    "promptUnpublished": "Prompt unpublished",
+    "failedToUnpublish": "Failed to unpublish",
+    "promptDeleted": "Prompt deleted",
+    "failedToDelete": "Failed to delete",
+    "toolLabels": {
+      "report": "Reports",
+      "spreadsheet": "Spreadsheets",
+      "infographic": "Infographics",
+      "flashcards": "Flashcards",
+      "quiz": "Quizzes",
+      "audio": "Audio",
+      "writtenQuestions": "Written Questions",
+      "mindmap": "Mind Maps"
+    }
+  },
+  "studioModalDiscoverPromptsButton": {
+    "discoverPrompts": "Discover Prompts",
+    "discoverPromptsAria": "Discover prompts"
+  },
+  "noteItem": {
+    "rename": "Rename",
+    "delete": "Delete",
+    "editTitle": "Edit note title",
+    "moreOptions": "More options",
+    "playAudio": "Play audio overview"
+  },
+  "noteListView": {
+    "saved": "Saved",
+    "searchPlaceholder": "Search notes...",
+    "items": "items",
+    "of": "of",
+    "noMatch": "No notes match your search.",
+    "noNotes": "No saved notes yet. Create one to get started!"
+  },
+  "anUnknownErrorOccurred": "An unknown error occurred"
 }

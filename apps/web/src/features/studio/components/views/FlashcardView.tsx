@@ -9,6 +9,7 @@ import {
   RotateCw,
 } from "lucide-react";
 import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   useAddCard,
   useCardReview,
@@ -37,6 +38,7 @@ export interface FlashcardViewProps {
 type ViewMode = "browse" | "study" | "edit";
 
 export const FlashcardView: React.FC<FlashcardViewProps> = ({ note, onBack }) => {
+  const { t } = useTranslation("studio");
   // State
   const [mode, setMode] = useState<ViewMode>("browse");
   const [showMastered, setShowMastered] = useState((note.metadata as any)?.showMastered ?? false);
@@ -259,7 +261,7 @@ export const FlashcardView: React.FC<FlashcardViewProps> = ({ note, onBack }) =>
           <button
             onClick={onBack}
             className="p-2 hover:bg-muted active:bg-muted/70 rounded-lg transition-colors"
-            aria-label="Back to Studio"
+            aria-label={t("header.backToStudio")}
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
@@ -279,8 +281,8 @@ export const FlashcardView: React.FC<FlashcardViewProps> = ({ note, onBack }) =>
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
               }`}
-              title="Browse Mode"
-              aria-label="Browse Mode"
+              title={t("flashcardView.browseMode")}
+              aria-label={t("flashcardView.browseMode")}
             >
               <BookOpen className="w-4.5 h-4.5" />
             </button>
@@ -293,8 +295,8 @@ export const FlashcardView: React.FC<FlashcardViewProps> = ({ note, onBack }) =>
                   : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
               }`}
               disabled={dueCards.length === 0}
-              title="Study Mode"
-              aria-label="Study Mode"
+              title={t("flashcardView.studyMode")}
+              aria-label={t("flashcardView.studyMode")}
             >
               <Brain className="w-4.5 h-4.5" />
             </button>
@@ -306,8 +308,8 @@ export const FlashcardView: React.FC<FlashcardViewProps> = ({ note, onBack }) =>
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
               }`}
-              title="Edit Mode"
-              aria-label="Edit Mode"
+              title={t("flashcardView.editMode")}
+              aria-label={t("flashcardView.editMode")}
             >
               <Edit3 className="w-4.5 h-4.5" />
             </button>
@@ -321,7 +323,7 @@ export const FlashcardView: React.FC<FlashcardViewProps> = ({ note, onBack }) =>
             <div
               className="flex items-center gap-0.5 p-1 bg-muted/50 rounded-xl"
               role="group"
-              aria-label="Which cards to show"
+              aria-label={t("flashcardView.whichCards")}
             >
               <button
                 type="button"
@@ -332,7 +334,7 @@ export const FlashcardView: React.FC<FlashcardViewProps> = ({ note, onBack }) =>
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 }`}
               >
-                Due
+                {t("flashcardView.due")}
               </button>
               <button
                 type="button"
@@ -343,7 +345,7 @@ export const FlashcardView: React.FC<FlashcardViewProps> = ({ note, onBack }) =>
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 }`}
               >
-                All
+                {t("flashcardView.all")}
               </button>
             </div>
           )}
@@ -351,7 +353,9 @@ export const FlashcardView: React.FC<FlashcardViewProps> = ({ note, onBack }) =>
           {mode === "study" && activeStudyCards.length > 0 && (
             <span className="tabular-nums text-sm font-medium leading-none text-foreground/90">
               {activeStudyCards.length}
-              <span className="ml-1 font-normal text-muted-foreground">due</span>
+              <span className="ml-1 font-normal text-muted-foreground">
+                {t("flashcardView.dueLabel")}
+              </span>
             </span>
           )}
 
@@ -362,7 +366,7 @@ export const FlashcardView: React.FC<FlashcardViewProps> = ({ note, onBack }) =>
               className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-sm font-medium transition-all"
             >
               <Plus className="w-4 h-4" />
-              Add Card
+              {t("flashcardView.addCard")}
             </button>
           )}
         </div>
@@ -386,17 +390,15 @@ export const FlashcardView: React.FC<FlashcardViewProps> = ({ note, onBack }) =>
               <Brain className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
-              <h3 className="mb-2 text-2xl font-semibold">All caught up</h3>
-              <p className="text-muted-foreground">
-                No cards are due for review right now. Check back later.
-              </p>
+              <h3 className="mb-2 text-2xl font-semibold">{t("flashcardView.allCaughtUp")}</h3>
+              <p className="text-muted-foreground">{t("flashcardView.noCardsDue")}</p>
             </div>
             <button
               type="button"
               onClick={() => handleModeChange("browse")}
               className="rounded-xl bg-primary px-6 py-3 font-medium text-primary-foreground transition-all hover:bg-primary/90"
             >
-              Back to browse
+              {t("flashcardView.backToBrowse")}
             </button>
           </div>
         )}
@@ -408,8 +410,8 @@ export const FlashcardView: React.FC<FlashcardViewProps> = ({ note, onBack }) =>
             </div>
             <p className="text-lg text-muted-foreground">
               {showMastered
-                ? "No flashcards available. Try showing all cards."
-                : "No flashcards available. All cards are mastered!"}
+                ? t("flashcardView.noFlashcardsShowAll")
+                : t("flashcardView.noFlashcardsMastered")}
             </p>
           </div>
         )}
@@ -423,8 +425,8 @@ export const FlashcardView: React.FC<FlashcardViewProps> = ({ note, onBack }) =>
               aria-label={
                 mode === "browse"
                   ? isFlipped
-                    ? "Flashcard answer. Press Enter or Space to show question."
-                    : "Flashcard question. Press Enter or Space to reveal answer."
+                    ? t("flashcardView.flashcardAnswer")
+                    : t("flashcardView.flashcardQuestion")
                   : undefined
               }
               onKeyDown={(e) => {
@@ -453,7 +455,7 @@ export const FlashcardView: React.FC<FlashcardViewProps> = ({ note, onBack }) =>
                 {/* Front */}
                 <div className="absolute inset-0 backface-hidden bg-card rounded-2xl flex flex-col items-center p-5 sm:p-6 text-center overflow-hidden border border-border">
                   <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground mb-2 shrink-0">
-                    Question
+                    {t("flashcardView.question")}
                   </span>
                   <div className="flex-1 min-h-0 w-full overflow-y-auto overflow-x-hidden text-base sm:text-lg font-medium text-foreground [scrollbar-gutter:stable]">
                     <div className="min-h-full w-full flex flex-col items-center justify-center py-1">
@@ -466,14 +468,18 @@ export const FlashcardView: React.FC<FlashcardViewProps> = ({ note, onBack }) =>
                     }`}
                   >
                     <RotateCw className="h-3 w-3 opacity-70" aria-hidden />
-                    <span>{mode === "browse" ? "Tap or Space to flip" : "Tap to edit"}</span>
+                    <span>
+                      {mode === "browse"
+                        ? t("flashcardView.tapToFlip")
+                        : t("flashcardView.tapToEdit")}
+                    </span>
                   </p>
                 </div>
 
                 {/* Back */}
                 <div className="absolute inset-0 backface-hidden rotate-y-180 bg-muted/30 rounded-2xl flex flex-col items-center p-5 sm:p-6 text-center overflow-hidden border border-border">
                   <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground mb-2 shrink-0">
-                    Answer
+                    {t("flashcardView.answer")}
                   </span>
                   <div className="flex-1 min-h-0 w-full overflow-y-auto overflow-x-hidden text-base sm:text-lg font-medium text-foreground [scrollbar-gutter:stable]">
                     <div className="min-h-full w-full flex flex-col items-center justify-center py-1 prose prose-base sm:prose-lg max-w-none text-center">
@@ -523,21 +529,21 @@ export const FlashcardView: React.FC<FlashcardViewProps> = ({ note, onBack }) =>
                   {mode === "browse" && (
                     <p className="mt-2 flex items-center justify-center gap-1.5 text-sm text-muted-foreground shrink-0">
                       <RotateCw className="h-3 w-3 opacity-70" aria-hidden />
-                      <span>Tap or Space to flip back</span>
+                      <span>{t("flashcardView.tapToFlipBack")}</span>
                     </p>
                   )}
                 </div>
               </div>
             </div>
 
-            {/* Navigation: progress + circular arrows (distinct from header segments) */}
+            {/* Navigation: progress + circular arrows */}
             <div className="flex w-full max-w-xl mx-auto shrink-0 flex-col items-stretch gap-2.5">
               <div className="flex items-center gap-3 sm:gap-4">
                 <button
                   type="button"
                   onClick={handlePrev}
                   className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground shadow-sm transition-all hover:border-foreground/20 hover:text-foreground active:scale-[0.96] touch-manipulation"
-                  aria-label="Previous card"
+                  aria-label={t("flashcardView.previousCard")}
                 >
                   <ChevronLeft className="h-5 w-5" />
                 </button>
@@ -547,7 +553,10 @@ export const FlashcardView: React.FC<FlashcardViewProps> = ({ note, onBack }) =>
                   aria-valuemin={1}
                   aria-valuemax={filteredCards.length}
                   aria-valuenow={boundedBrowseIndex + 1}
-                  aria-label={`Card ${boundedBrowseIndex + 1} of ${filteredCards.length}`}
+                  aria-label={t("flashcardView.cardOf", {
+                    current: boundedBrowseIndex + 1,
+                    total: filteredCards.length,
+                  })}
                 >
                   <div
                     className="h-full rounded-full bg-foreground/25 transition-[width] duration-300 ease-out dark:bg-foreground/35"
@@ -560,7 +569,7 @@ export const FlashcardView: React.FC<FlashcardViewProps> = ({ note, onBack }) =>
                   type="button"
                   onClick={handleNext}
                   className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground shadow-sm transition-all hover:border-foreground/20 hover:text-foreground active:scale-[0.96] touch-manipulation"
-                  aria-label="Next card"
+                  aria-label={t("flashcardView.nextCard")}
                 >
                   <ChevronRight className="h-5 w-5" />
                 </button>

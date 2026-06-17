@@ -1,6 +1,7 @@
 import { createCitationEngine } from "@convex/_utils/CitationEngine";
 import { Copy, Quote, X } from "lucide-react";
 import React, { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useToast } from "@/shared/contexts/useToast";
 import type { RankedPaper } from "../types/rankedPaper";
 import { rankedPaperToCitation } from "../utils/rankedPaperMappers";
@@ -19,6 +20,7 @@ export const CitePaperModal: React.FC<CitePaperModalProps> = ({
   isOpen,
   onClose,
 }) => {
+  const { t } = useTranslation("studio");
   const [style, setStyle] = useState<CitationStyle>("apa7");
   const { success: toastSuccess } = useToast();
 
@@ -50,7 +52,7 @@ export const CitePaperModal: React.FC<CitePaperModalProps> = ({
   const copy = async (text: string, label: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      toastSuccess(`${label} copied`);
+      toastSuccess(`${label} ${t("citePaperModal.citationCopied")}`);
     } catch {
       // ignore
     }
@@ -69,34 +71,37 @@ export const CitePaperModal: React.FC<CitePaperModalProps> = ({
           <div className="flex items-center gap-2">
             <Quote className="h-5 w-5 text-primary" />
             <h2 id="cite-paper-title" className="text-lg font-semibold text-foreground">
-              Cite Paper
+              {t("citePaperModal.citePaper")}
             </h2>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-            aria-label="Close"
+            aria-label={t("citePaperModal.close")}
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
         <div className="px-6 py-4 space-y-4 overflow-y-auto flex-1 min-h-0">
-          <Field label="Citation style">
+          <Field label={t("citePaperModal.citationStyle")}>
             <CitationStylePicker value={style} onChange={setStyle} />
           </Field>
 
-          <Field label="Full citation">
+          <Field label={t("citePaperModal.fullCitation")}>
             <CitationBox text={fullCitation} />
-            <CopyButton label="Copy Citation" onClick={() => void copy(fullCitation, "Citation")} />
+            <CopyButton
+              label={t("citePaperModal.copyCitation")}
+              onClick={() => void copy(fullCitation, t("citePaperModal.citationCopied"))}
+            />
           </Field>
 
-          <Field label="In-text citation">
+          <Field label={t("citePaperModal.inTextCitation")}>
             <CitationBox text={inlineCitation} />
             <CopyButton
-              label="Copy In-Text"
-              onClick={() => void copy(inlineCitation, "In-text citation")}
+              label={t("citePaperModal.copyInText")}
+              onClick={() => void copy(inlineCitation, t("citePaperModal.inTextCitationCopied"))}
             />
           </Field>
         </div>

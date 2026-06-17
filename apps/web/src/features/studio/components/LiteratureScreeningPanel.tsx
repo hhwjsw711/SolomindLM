@@ -14,6 +14,7 @@ import {
   XCircle,
 } from "lucide-react";
 import React, { useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   useLiteratureReviewScreeningDecisions,
   useLiteratureReviewSession,
@@ -141,6 +142,7 @@ function ScreeningPanelHeader({
   onExport: () => void;
   onClose: () => void;
 }) {
+  const { t } = useTranslation("studio");
   return (
     <div className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-border bg-background p-4">
       <div className="min-w-0 flex-1">
@@ -154,13 +156,13 @@ function ScreeningPanelHeader({
           className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Download className="h-3.5 w-3.5" />
-          Export
+          {t("literatureScreeningPanel.export")}
         </button>
         <button
           type="button"
           onClick={onClose}
           className="shrink-0 rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-          aria-label="Close screening panel"
+          aria-label={t("literatureScreeningPanel.closePanel")}
         >
           <X className="h-4 w-4" />
         </button>
@@ -170,22 +172,24 @@ function ScreeningPanelHeader({
 }
 
 function LoadingState() {
+  const { t } = useTranslation("studio");
   return (
     <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
       <Loader2 className="mb-3 h-8 w-8 animate-spin text-muted-foreground" />
-      <p className="text-sm">Loading screening decisions…</p>
+      <p className="text-sm">{t("literatureScreeningPanel.loadingDecisions")}</p>
     </div>
   );
 }
 
 function EmptyState() {
+  const { t } = useTranslation("studio");
   return (
     <div className="flex flex-col items-center justify-center py-16 px-6 text-center text-muted-foreground">
       <BookOpen className="h-10 w-10 mb-3 opacity-40" />
-      <p className="text-sm font-medium text-foreground">No screening decisions yet</p>
-      <p className="text-xs mt-1">
-        Decisions appear here after the screening step completes in your literature review.
+      <p className="text-sm font-medium text-foreground">
+        {t("literatureScreeningPanel.noDecisions")}
       </p>
+      <p className="text-xs mt-1">{t("literatureScreeningPanel.noDecisionsDesc")}</p>
     </div>
   );
 }
@@ -201,11 +205,14 @@ function ScreeningDecisionGrid({
   expandedDecisionKeys: Set<number>;
   onToggleExpanded: (paperIndex: number) => void;
 }) {
+  const { t } = useTranslation("studio");
   return (
     <div className="min-w-[760px]">
       <div className="sticky top-0 z-10 grid grid-cols-[minmax(300px,0.95fr)_minmax(420px,1fr)] border-b border-border bg-muted/40 text-[11px] font-medium text-muted-foreground backdrop-blur">
-        <div className="border-r border-border px-4 py-2.5">Papers ({decisions.length})</div>
-        <div className="px-4 py-2.5">Screening Results</div>
+        <div className="border-r border-border px-4 py-2.5">
+          {t("literatureScreeningPanel.papers")} ({decisions.length})
+        </div>
+        <div className="px-4 py-2.5">{t("literatureScreeningPanel.screeningResults")}</div>
       </div>
       <ul>
         {decisions.map((decision) => (
@@ -252,6 +259,7 @@ function ScreeningDecisionRow({
 }
 
 function PaperSummaryCell({ decision }: { decision: LiteratureScreeningDecision }) {
+  const { t } = useTranslation("studio");
   const authors = formatAuthorsLine(decision.authors);
   const meta = [decision.year != null ? String(decision.year) : null, authors]
     .filter(Boolean)
@@ -271,11 +279,11 @@ function PaperSummaryCell({ decision }: { decision: LiteratureScreeningDecision 
         <div className="flex flex-wrap gap-3 pt-1 text-[11px] text-muted-foreground">
           <span className="inline-flex items-center gap-1">
             <Quote className="h-3 w-3" />
-            Cite
+            {t("literatureScreeningPanel.cite")}
           </span>
           <span className="inline-flex items-center gap-1">
             <PlusCircle className="h-3 w-3" />
-            My References
+            {t("literatureScreeningPanel.myReferences")}
           </span>
         </div>
       </div>
@@ -295,6 +303,7 @@ function ScreeningResultCell({
   isExpanded: boolean;
   onToggleExpanded: () => void;
 }) {
+  const { t } = useTranslation("studio");
   const isIncluded = decision.decision === "included";
 
   return (
@@ -313,7 +322,9 @@ function ScreeningResultCell({
           className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground"
           aria-expanded={isExpanded}
         >
-          {isExpanded ? "Hide screening criteria" : "View screening criteria"}
+          {isExpanded
+            ? t("literatureScreeningPanel.hideCriteria")
+            : t("literatureScreeningPanel.viewCriteria")}
           <ChevronDown
             className={cn("h-3.5 w-3.5 transition-transform", isExpanded && "rotate-180")}
           />
@@ -361,7 +372,10 @@ function CriterionIcon({ status }: { status: CriterionStatus }) {
 }
 
 function DecisionBadge({ included }: { included: boolean }) {
-  const label = included ? "Included" : "Excluded";
+  const { t } = useTranslation("studio");
+  const label = included
+    ? t("literatureScreeningPanel.included")
+    : t("literatureScreeningPanel.excluded");
   const Icon = included ? CheckCircle2 : XCircle;
   return (
     <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-foreground">

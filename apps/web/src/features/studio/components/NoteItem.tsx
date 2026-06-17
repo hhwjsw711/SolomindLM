@@ -1,6 +1,7 @@
 import { MoreVertical, Pencil, Play, Trash2 } from "lucide-react";
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import { isAudioNote, isAudioOverviewNote, Note } from "@/shared/types/index";
 import { getStudioGeneratingListLines } from "../utils/studioGenerationLabels";
 import { NoteIcon } from "./NoteIcon";
@@ -42,6 +43,7 @@ export const NoteItem: React.FC<NoteItemProps> = ({
   onMenuToggle,
   onMenuClose,
 }) => {
+  const { t } = useTranslation("studio");
   const inputRef = useRef<HTMLInputElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const [menuPosition, setMenuPosition] = useState<{ top: number; right: number } | null>(null);
@@ -114,7 +116,7 @@ export const NoteItem: React.FC<NoteItemProps> = ({
                 onKeyDown={onEditKeyDown}
                 onClick={(e) => e.stopPropagation()}
                 className="w-full bg-transparent border-b border-primary text-sm font-bold text-foreground font-serif focus:outline-none mb-1 p-0 rounded-none"
-                aria-label="Edit note title"
+                aria-label={t("noteItem.editTitle")}
               />
             ) : (
               <h4
@@ -180,7 +182,7 @@ export const NoteItem: React.FC<NoteItemProps> = ({
                 onPlayAudio?.(note);
               }}
               className="text-teal-700/85 hover:text-teal-900 dark:text-teal-400/90 dark:hover:text-teal-300 p-1.5 rounded-md hover:bg-teal-500/10 transition-colors flex items-center justify-center shrink-0"
-              aria-label="Play audio overview"
+              aria-label={t("noteItem.playAudio")}
             >
               <Play className="w-3.5 h-3.5 fill-current shrink-0" />
             </button>
@@ -193,7 +195,7 @@ export const NoteItem: React.FC<NoteItemProps> = ({
                 onMenuToggle();
               }}
               className="text-muted-foreground hover:text-foreground p-1 rounded-sm hover:bg-secondary transition-colors flex items-center justify-center shrink-0"
-              aria-label="More options"
+              aria-label={t("noteItem.moreOptions")}
               aria-expanded={isMenuOpen}
             >
               <MoreVertical className="w-3.5 h-3.5 shrink-0" />
@@ -217,7 +219,7 @@ export const NoteItem: React.FC<NoteItemProps> = ({
                     }}
                     className="w-full text-left px-3 py-2 text-xs hover:bg-accent text-popover-foreground flex items-center gap-2"
                   >
-                    <Pencil className="w-3.5 h-3.5 shrink-0" /> Rename
+                    <Pencil className="w-3.5 h-3.5 shrink-0" /> {t("noteItem.rename")}
                   </button>
                   <button
                     onClick={(e) => {
@@ -227,7 +229,7 @@ export const NoteItem: React.FC<NoteItemProps> = ({
                     }}
                     className="w-full text-left px-3 py-2 text-xs hover:bg-destructive/10 text-destructive flex items-center gap-2"
                   >
-                    <Trash2 className="w-3.5 h-3.5 shrink-0" /> Delete
+                    <Trash2 className="w-3.5 h-3.5 shrink-0" /> {t("noteItem.delete")}
                   </button>
                 </div>,
                 document.body

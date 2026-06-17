@@ -1,5 +1,6 @@
 import { AlertCircle, ArrowLeft, Award, CheckCircle2, Eye, MessageSquareText } from "lucide-react";
 import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   useResetWrittenAnswers,
   useSubmitWrittenAnswer,
@@ -24,7 +25,7 @@ export const WrittenQuestionsView: React.FC<WrittenQuestionsViewProps> = ({
   onNoteUpdate,
   onBack,
 }) => {
-  // Initialize currentIndex from note.metadata.lastViewedIndex if available
+  const { t } = useTranslation("studio");
   const questions = note.questions || [];
   const initialIndex = (note.metadata as any)?.lastViewedIndex ?? 0;
   const [currentIndex, setCurrentIndex] = useState(
@@ -38,15 +39,12 @@ export const WrittenQuestionsView: React.FC<WrittenQuestionsViewProps> = ({
   const [reviewMode, setReviewMode] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
 
-  // Hooks for mutations
   const submitAnswerMutation = useSubmitWrittenAnswer();
   const resetAnswersMutation = useResetWrittenAnswers();
   const latestNote = useWrittenQuestionSet(note.id);
 
-  // Track if we've initialized the index from saved progress
   const hasInitializedIndex = useRef(false);
 
-  // Restore saved index on mount (from latestNote which has the latest data from server)
   useEffect(() => {
     if (!hasInitializedIndex.current && latestNote) {
       const savedIndex = (latestNote.metadata as any)?.lastViewedIndex ?? 0;
@@ -58,14 +56,9 @@ export const WrittenQuestionsView: React.FC<WrittenQuestionsViewProps> = ({
     }
   }, [latestNote, questions.length]);
 
-  // Persist progress - track last viewed index
-  // Use useMemo to prevent re-initializing when other state changes
   const stableCurrentIndex = useMemo(() => currentIndex, [currentIndex]);
   useUpdateWrittenQuestionsProgress(note.id, stableCurrentIndex);
 
-  // Sync userAnswers from server only when server data actually changes (e.g. after submit/reset).
-  // Using a serialized key prevents the effect from running on every render (latestNote?.userAnswers
-  // can get a new reference each time), which would overwrite local typing with server state.
   const serverUserAnswersKey = JSON.stringify(latestNote?.userAnswers ?? {});
   useEffect(() => {
     if (latestNote?.userAnswers) {
@@ -75,12 +68,11 @@ export const WrittenQuestionsView: React.FC<WrittenQuestionsViewProps> = ({
 
   const currentQuestion = questions[currentIndex];
 
-  // If no questions, show empty state
   if (questions.length === 0) {
     return (
       <div className="flex flex-col h-full items-center justify-center p-8">
         <div className="text-center space-y-4">
-          <p className="text-muted-foreground">No questions available</p>
+          <p className="text-muted-foreground">{t("writtenQuestionsView.noQuestions")}</p>
         </div>
       </div>
     );
@@ -97,11 +89,9 @@ export const WrittenQuestionsView: React.FC<WrittenQuestionsViewProps> = ({
       }
     : undefined;
 
-  // Check if current question is answered
   const isAnswered = currentAnswer.trim().length > 0;
   const isGraded = !!currentGradedResult;
 
-  // Calculate total progress
   const answeredCount = Object.keys(userAnswers).filter(
     (qid) => userAnswers[qid]?.answer?.trim().length > 0
   ).length;
@@ -113,7 +103,6 @@ export const WrittenQuestionsView: React.FC<WrittenQuestionsViewProps> = ({
     setIsSubmitting(true);
 
     try {
-      // Submit answer for grading - now synchronous, returns graded result
       const result = await submitAnswerMutation({
         writtenQuestionsId: note.id,
         questionId: currentQuestion.id,
@@ -122,8 +111,6 @@ export const WrittenQuestionsView: React.FC<WrittenQuestionsViewProps> = ({
 
       console.log("Grading complete:", result);
 
-      // The useEffect will sync userAnswers from latestNote when the database updates
-      // Just notify parent of the update
       if (latestNote && onNoteUpdate) {
         onNoteUpdate(latestNote);
       }
@@ -162,14 +149,11 @@ export const WrittenQuestionsView: React.FC<WrittenQuestionsViewProps> = ({
   const resetQuestions = async () => {
     setIsResetting(true);
     try {
-      // Call API to reset all answers on the server
       await resetAnswersMutation(note.id);
-      // Reset local state
       setCurrentIndex(0);
       setShowResults(false);
       setReviewMode(false);
       setUserAnswers({});
-      // Notify parent to refresh note
       if (latestNote && onNoteUpdate) {
         onNoteUpdate(latestNote);
       }
@@ -187,18 +171,15 @@ export const WrittenQuestionsView: React.FC<WrittenQuestionsViewProps> = ({
     setReviewMode(true);
   };
 
-  // Calculate final score
   const calculateTotalScore = () => {
     let totalScore = 0;
 
-    // Sum up scores from graded answers only
     Object.values(userAnswers).forEach((answerObj) => {
       if (answerObj?.graded) {
         totalScore += answerObj.score || 0;
       }
     });
 
-    // Calculate total possible points from ALL questions, not just answered ones
     const maxTotalScore = questions.reduce((sum, q) => sum + (q.rubric?.maxPoints || 0), 0);
 
     return { score: totalScore, maxScore: maxTotalScore };
@@ -215,9 +196,11 @@ export const WrittenQuestionsView: React.FC<WrittenQuestionsViewProps> = ({
             <Award className="w-10 h-10" />
           </div>
           <div>
-            <h3 className="text-2xl font-bold font-serif mb-2">Assessment Complete!</h3>
+            <h3 className="text-2xl font-bold font-serif mb-2">
+              {t("writtenQuestionsView.assessmentComplete")}
+            </h3>
             <p className="text-muted-foreground">
-              You scored {score} out of {maxScore} points
+              {t("writtenQuestionsView.youScored", { score, maxScore })}
             </p>
           </div>
           <div className="w-full bg-secondary rounded-xl h-3 overflow-hidden">
@@ -233,7 +216,7 @@ export const WrittenQuestionsView: React.FC<WrittenQuestionsViewProps> = ({
               className="flex-1 py-3 bg-secondary text-secondary-foreground font-bold rounded-lg hover:bg-secondary/80 transition-colors flex items-center justify-center gap-2"
             >
               <Eye className="w-4 h-4" />
-              Review
+              {t("writtenQuestionsView.review")}
             </button>
             <button
               onClick={resetQuestions}
@@ -243,10 +226,10 @@ export const WrittenQuestionsView: React.FC<WrittenQuestionsViewProps> = ({
               {isResetting ? (
                 <>
                   <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                  Resetting...
+                  {t("writtenQuestionsView.resetting")}
                 </>
               ) : (
-                "Try Again"
+                t("writtenQuestionsView.tryAgain")
               )}
             </button>
           </div>
@@ -263,7 +246,7 @@ export const WrittenQuestionsView: React.FC<WrittenQuestionsViewProps> = ({
           <button
             onClick={onBack}
             className="p-1.5 hover:bg-secondary rounded-md transition-colors text-foreground flex items-center justify-center shrink-0"
-            aria-label="Back to Studio"
+            aria-label={t("header.backToStudio")}
           >
             <ArrowLeft className="w-5 h-5 shrink-0" />
           </button>
@@ -278,10 +261,10 @@ export const WrittenQuestionsView: React.FC<WrittenQuestionsViewProps> = ({
               <Eye className="w-5 h-5 text-vintage-amber-700 dark:text-vintage-amber-300 shrink-0" />
               <div>
                 <span className="text-sm font-semibold text-vintage-amber-800 dark:text-vintage-amber-200">
-                  Review Mode
+                  {t("writtenQuestionsView.reviewMode")}
                 </span>
                 <p className="text-xs text-vintage-amber-700 dark:text-vintage-amber-300">
-                  You are viewing your previous answers. Editing is disabled.
+                  {t("writtenQuestionsView.reviewModeDesc")}
                 </p>
               </div>
             </div>
@@ -290,9 +273,12 @@ export const WrittenQuestionsView: React.FC<WrittenQuestionsViewProps> = ({
           {/* Progress Header */}
           <div className="mb-8">
             <div className="flex justify-between text-xs md:text-sm font-bold uppercase tracking-widest text-muted-foreground mb-3 font-sans">
-              <span>Question {currentIndex + 1}</span>
+              <span>{t("writtenQuestionsView.question", { current: currentIndex + 1 })}</span>
               <span>
-                {answeredCount} of {totalCount} Answered
+                {t("writtenQuestionsView.answeredCount", {
+                  answered: answeredCount,
+                  total: totalCount,
+                })}
               </span>
             </div>
             <div className="w-full bg-secondary/50 rounded-xl h-1.5 overflow-hidden">
@@ -308,12 +294,16 @@ export const WrittenQuestionsView: React.FC<WrittenQuestionsViewProps> = ({
             {currentQuestion.questionType === "short" ? (
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-secondary text-foreground border border-border">
                 <MessageSquareText className="w-3.5 h-3.5 text-muted-foreground" />
-                <span className="text-xs font-semibold uppercase tracking-wide">SHORT ANSWER</span>
+                <span className="text-xs font-semibold uppercase tracking-wide">
+                  {t("writtenQuestionsView.shortAnswer")}
+                </span>
               </div>
             ) : (
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-secondary text-foreground border border-border">
                 <MessageSquareText className="w-3.5 h-3.5 text-muted-foreground" />
-                <span className="text-xs font-semibold uppercase tracking-wide">ESSAY</span>
+                <span className="text-xs font-semibold uppercase tracking-wide">
+                  {t("writtenQuestionsView.essay")}
+                </span>
                 <span className="text-xs font-semibold text-muted-foreground ml-1">
                   {currentQuestion.rubric.maxPoints} pts
                 </span>
@@ -366,8 +356,8 @@ export const WrittenQuestionsView: React.FC<WrittenQuestionsViewProps> = ({
                 onChange={(e) => handleAnswerChange(e.target.value)}
                 placeholder={
                   currentQuestion.questionType === "short"
-                    ? "Type your short answer here (1-3 sentences)..."
-                    : "Type your detailed answer here..."
+                    ? t("writtenQuestionsView.shortAnswerPlaceholder")
+                    : t("writtenQuestionsView.detailedAnswerPlaceholder")
                 }
                 disabled={reviewMode}
                 className={`flex-1 w-full bg-background border-2 rounded-xl p-6 text-base leading-relaxed font-serif focus:outline-none focus:ring-1 focus:ring-ring transition-all resize-none placeholder:text-muted-foreground/40 ${
@@ -375,8 +365,13 @@ export const WrittenQuestionsView: React.FC<WrittenQuestionsViewProps> = ({
                 } ${reviewMode ? "opacity-70 cursor-not-allowed bg-muted/30" : ""}`}
               />
               <div className="flex items-center justify-between text-xs text-muted-foreground mt-2 font-mono shrink-0">
-                <span>{currentAnswer.length} characters</span>
-                <span>{currentAnswer.split(/\s+/).filter(Boolean).length} words</span>
+                <span>
+                  {currentAnswer.length} {t("writtenQuestionsView.characters")}
+                </span>
+                <span>
+                  {currentAnswer.split(/\s+/).filter(Boolean).length}{" "}
+                  {t("writtenQuestionsView.words")}
+                </span>
               </div>
             </div>
           ) : (
@@ -388,14 +383,18 @@ export const WrittenQuestionsView: React.FC<WrittenQuestionsViewProps> = ({
                   <div className="flex items-center gap-3">
                     <CheckCircle2 className="w-6 h-6 text-primary" />
                     <div>
-                      <span className="text-sm font-semibold text-primary">Answer Graded</span>
+                      <span className="text-sm font-semibold text-primary">
+                        {t("writtenQuestionsView.answerGraded")}
+                      </span>
                       <div className="text-2xl font-bold text-primary mt-0.5">
                         {currentGradedResult.score} / {currentGradedResult.maxScore}
                       </div>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm text-muted-foreground">Score</div>
+                    <div className="text-sm text-muted-foreground">
+                      {t("writtenQuestionsView.score")}
+                    </div>
                     <div className="text-lg font-bold text-foreground">
                       {Math.round((currentGradedResult.score / currentGradedResult.maxScore) * 100)}
                       %
@@ -407,7 +406,7 @@ export const WrittenQuestionsView: React.FC<WrittenQuestionsViewProps> = ({
               {/* Your Answer */}
               <div className="p-4 bg-secondary/30 rounded-xl border border-border">
                 <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                  Your Answer
+                  {t("writtenQuestionsView.yourAnswer")}
                 </span>
                 <div className="mt-2 text-base leading-relaxed text-foreground whitespace-pre-wrap font-serif">
                   {userAnswers[currentQuestion.id]?.answer || ""}
@@ -417,7 +416,7 @@ export const WrittenQuestionsView: React.FC<WrittenQuestionsViewProps> = ({
               {/* Feedback */}
               <div className="p-4 bg-vintage-blue-50 dark:bg-vintage-blue-50 rounded-xl border border-vintage-blue-200 dark:border-vintage-blue-200">
                 <span className="text-sm font-bold uppercase tracking-wide text-vintage-blue-700 dark:text-vintage-blue-700">
-                  Feedback
+                  {t("writtenQuestionsView.feedback")}
                 </span>
                 <div className="mt-2 text-base leading-relaxed text-vintage-blue-700 dark:text-vintage-blue-700">
                   {currentGradedResult.feedback}
@@ -428,7 +427,7 @@ export const WrittenQuestionsView: React.FC<WrittenQuestionsViewProps> = ({
               {currentGradedResult.strengths && currentGradedResult.strengths.length > 0 && (
                 <div className="p-4 bg-vintage-green-50 dark:bg-vintage-green-50 rounded-xl border border-vintage-green-200 dark:border-vintage-green-200">
                   <span className="text-sm font-bold uppercase tracking-wide text-vintage-green-700 dark:text-vintage-green-700">
-                    Strengths
+                    {t("writtenQuestionsView.strengths")}
                   </span>
                   <ul className="mt-2 space-y-2">
                     {currentGradedResult.strengths.map((strength, idx) => (
@@ -448,7 +447,7 @@ export const WrittenQuestionsView: React.FC<WrittenQuestionsViewProps> = ({
               {currentGradedResult.improvements && currentGradedResult.improvements.length > 0 && (
                 <div className="p-4 bg-vintage-orange-50 dark:bg-vintage-orange-50 rounded-xl border border-vintage-orange-200 dark:border-vintage-orange-200">
                   <span className="text-sm font-bold uppercase tracking-wide text-vintage-orange-700 dark:text-vintage-orange-700">
-                    Areas for Improvement
+                    {t("writtenQuestionsView.areasForImprovement")}
                   </span>
                   <ul className="mt-2 space-y-2">
                     {currentGradedResult.improvements.map((improvement, idx) => (
@@ -477,13 +476,15 @@ export const WrittenQuestionsView: React.FC<WrittenQuestionsViewProps> = ({
               disabled={currentIndex === 0}
               className="px-4 py-2 text-sm font-bold text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:hover:text-muted-foreground transition-colors"
             >
-              Previous
+              {t("writtenQuestionsView.previous")}
             </button>
             <button
               onClick={handleNext}
               className="px-6 py-2 bg-primary text-primary-foreground text-sm font-bold rounded-xl hover:bg-primary/90 transition-all shadow-md active:translate-y-0.5 min-w-[100px]"
             >
-              {currentIndex === questions.length - 1 ? "Finish" : "Next"}
+              {currentIndex === questions.length - 1
+                ? t("writtenQuestionsView.finish")
+                : t("writtenQuestionsView.next")}
             </button>
           </div>
 
@@ -496,12 +497,12 @@ export const WrittenQuestionsView: React.FC<WrittenQuestionsViewProps> = ({
               {isSubmitting ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Grading...
+                  {t("writtenQuestionsView.grading")}
                 </>
               ) : (
                 <>
                   <CheckCircle2 className="w-4 h-4" />
-                  Submit
+                  {t("writtenQuestionsView.submit")}
                 </>
               )}
             </button>

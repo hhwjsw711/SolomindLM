@@ -1,5 +1,6 @@
 import { Bookmark, Layers, X } from "lucide-react";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { SaveAsPromptModal } from "./SaveAsPromptModal";
 import { StudioModalDiscoverPromptsButton } from "./StudioModalDiscoverPromptsButton";
 
@@ -22,6 +23,7 @@ export const CustomizeFlashcardsModal: React.FC<CustomizeFlashcardsModalProps> =
   onGenerate,
   embedded = false,
 }) => {
+  const { t } = useTranslation("studio");
   const [count, setCount] = useState<FlashcardConfig["count"]>("standard");
   const [difficulty, setDifficulty] = useState<FlashcardConfig["difficulty"]>("medium");
   const [topic, setTopic] = useState("");
@@ -44,7 +46,9 @@ export const CustomizeFlashcardsModal: React.FC<CustomizeFlashcardsModalProps> =
             <div className="p-2 bg-secondary/50 rounded-lg">
               <Layers className="w-5 h-5 text-primary" />
             </div>
-            <h2 className="text-xl font-bold font-sans tracking-tight">Customize Flashcards</h2>
+            <h2 className="text-xl font-bold font-sans tracking-tight">
+              {t("customizeFlashcards.title")}
+            </h2>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <StudioModalDiscoverPromptsButton studioTool="flashcards" onApplyPrompt={setTopic} />
@@ -62,7 +66,7 @@ export const CustomizeFlashcardsModal: React.FC<CustomizeFlashcardsModalProps> =
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-4">
               <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground font-sans">
-                Number of Cards
+                {t("customizeFlashcards.numberOfCards")}
               </label>
               <div className="flex bg-background border border-border rounded-xl p-1 w-fit">
                 {(["fewer", "standard", "more"] as const).map((opt) => (
@@ -78,7 +82,7 @@ export const CustomizeFlashcardsModal: React.FC<CustomizeFlashcardsModalProps> =
                       }
                     `}
                   >
-                    {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                    {t(`customizeFlashcards.count.${opt}`)}
                   </button>
                 ))}
               </div>
@@ -86,7 +90,7 @@ export const CustomizeFlashcardsModal: React.FC<CustomizeFlashcardsModalProps> =
 
             <div className="space-y-4">
               <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground font-sans">
-                Difficulty Level
+                {t("customizeFlashcards.difficultyLevel")}
               </label>
               <div className="flex bg-background border border-border rounded-xl p-1 w-fit">
                 {(["easy", "medium", "hard"] as const).map((opt) => (
@@ -102,7 +106,7 @@ export const CustomizeFlashcardsModal: React.FC<CustomizeFlashcardsModalProps> =
                       }
                     `}
                   >
-                    {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                    {t(`customizeFlashcards.difficulty.${opt}`)}
                   </button>
                 ))}
               </div>
@@ -111,12 +115,12 @@ export const CustomizeFlashcardsModal: React.FC<CustomizeFlashcardsModalProps> =
 
           <div className="space-y-4">
             <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground font-sans">
-              Area of Focus
+              {t("customizeFlashcards.areaOfFocus")}
             </label>
             <textarea
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
-              placeholder="e.g. Focus on 'Relational Algebra' or 'Keep card fronts under 3 words'..."
+              placeholder={t("customizeFlashcards.focusPlaceholder")}
               className="w-full h-44 bg-background border border-border rounded-xl p-6 text-base leading-relaxed font-serif focus:outline-none focus:ring-1 focus:ring-ring transition-all resize-none placeholder:text-muted-foreground/30"
             />
             <button
@@ -126,7 +130,7 @@ export const CustomizeFlashcardsModal: React.FC<CustomizeFlashcardsModalProps> =
               className="flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Bookmark className="w-3.5 h-3.5" />
-              Save as reusable prompt
+              {t("customizeFlashcards.saveAsPrompt")}
             </button>
           </div>
 
@@ -135,7 +139,7 @@ export const CustomizeFlashcardsModal: React.FC<CustomizeFlashcardsModalProps> =
               onClick={() => onGenerate({ count, difficulty, topic })}
               className="px-10 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl transition-all shadow-md active:scale-95 text-sm"
             >
-              Generate Cards
+              {t("customizeFlashcards.generate")}
             </button>
           </div>
         </div>

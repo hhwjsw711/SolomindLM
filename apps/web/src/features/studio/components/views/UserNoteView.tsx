@@ -1,5 +1,6 @@
 import { ArrowLeft, FileText } from "lucide-react";
 import React, { lazy, Suspense } from "react";
+import { useTranslation } from "react-i18next";
 import { UserNote } from "@/shared/types/index";
 import { sanitizeMarkdown } from "@/shared/utils";
 
@@ -13,6 +14,8 @@ export interface UserNoteViewProps {
 }
 
 export const UserNoteView: React.FC<UserNoteViewProps> = ({ note, onBack }) => {
+  const { t } = useTranslation("studio");
+
   return (
     <div className={`flex flex-col h-full bg-background ${onBack ? "md:pt-0 pt-16" : ""}`}>
       {/* Mobile Back Button */}
@@ -21,7 +24,7 @@ export const UserNoteView: React.FC<UserNoteViewProps> = ({ note, onBack }) => {
           <button
             onClick={onBack}
             className="p-1.5 hover:bg-secondary active:bg-secondary/80 active:scale-[0.97] rounded-md transition-colors transition-transform text-foreground flex items-center justify-center shrink-0 touch-manipulation"
-            aria-label="Back to Studio"
+            aria-label={t("header.backToStudio")}
           >
             <ArrowLeft className="w-5 h-5 shrink-0" />
           </button>
@@ -35,7 +38,9 @@ export const UserNoteView: React.FC<UserNoteViewProps> = ({ note, onBack }) => {
           {note.content ? (
             <Suspense
               fallback={
-                <div className="prose prose-sm dark:prose-invert max-w-none">Loading...</div>
+                <div className="prose prose-sm dark:prose-invert max-w-none">
+                  {t("userNoteView.loading")}
+                </div>
               }
             >
               <MarkdownRenderer
@@ -61,7 +66,9 @@ export const UserNoteView: React.FC<UserNoteViewProps> = ({ note, onBack }) => {
           ) : (
             <div className="flex flex-col items-center justify-center h-64 text-center space-y-4">
               <FileText className="w-12 h-12 text-muted-foreground/50" />
-              <p className="text-muted-foreground font-serif italic">Empty note</p>
+              <p className="text-muted-foreground font-serif italic">
+                {t("userNoteView.emptyNote")}
+              </p>
             </div>
           )}
         </div>

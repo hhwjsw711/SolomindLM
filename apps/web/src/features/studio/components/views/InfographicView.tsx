@@ -1,5 +1,6 @@
 import { RefreshCw } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { InfographicNote } from "@/shared/types/index";
 
 export type InfographicViewControls = {
@@ -10,7 +11,6 @@ export type InfographicViewControls = {
 export interface InfographicViewProps {
   note: InfographicNote;
   onNoteUpdate?: (note: InfographicNote) => void;
-  /** Register Download / Fullscreen actions for StudioPanelHeader (desktop + mobile). */
   registerControls?: (controls: InfographicViewControls | null) => void;
   onFullscreenChange?: (isFullscreen: boolean) => void;
 }
@@ -21,6 +21,7 @@ export const InfographicView: React.FC<InfographicViewProps> = ({
   registerControls,
   onFullscreenChange,
 }) => {
+  const { t } = useTranslation("studio");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [imageError, setImageError] = useState(false);
 
@@ -86,7 +87,9 @@ export const InfographicView: React.FC<InfographicViewProps> = ({
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 text-center space-y-4">
         <div className="w-12 h-12 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-        <p className="text-muted-foreground font-serif italic">Generating your infographic...</p>
+        <p className="text-muted-foreground font-serif italic">
+          {t("infographicView.generatingInfographic")}
+        </p>
         {note.metadata?.currentStep && (
           <p className="text-xs text-muted-foreground">{note.metadata.currentStep}</p>
         )}
@@ -98,9 +101,11 @@ export const InfographicView: React.FC<InfographicViewProps> = ({
   if (note.status === "failed" || imageError) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 text-center space-y-4">
-        <p className="text-lg font-semibold text-foreground mb-2">Infographic Unavailable</p>
+        <p className="text-lg font-semibold text-foreground mb-2">
+          {t("infographicView.infographicUnavailable")}
+        </p>
         <p className="text-sm text-muted-foreground">
-          {note.metadata?.error || "The image could not be loaded"}
+          {note.metadata?.error || t("infographicView.imageCouldNotBeLoaded")}
         </p>
       </div>
     );
@@ -133,7 +138,7 @@ export const InfographicView: React.FC<InfographicViewProps> = ({
             <div className="w-full h-full flex items-center justify-center aspect-video">
               <div className="text-center p-8">
                 <RefreshCw className="w-8 h-8 text-muted-foreground animate-spin mx-auto mb-4" />
-                <p className="text-muted-foreground">Loading infographic...</p>
+                <p className="text-muted-foreground">{t("infographicView.loadingInfographic")}</p>
               </div>
             </div>
           )}

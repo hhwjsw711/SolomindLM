@@ -1,5 +1,6 @@
 import { AudioLines, Bookmark, X } from "lucide-react";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { SaveAsPromptModal } from "./SaveAsPromptModal";
 import { StudioModalDiscoverPromptsButton } from "./StudioModalDiscoverPromptsButton";
 
@@ -54,6 +55,7 @@ export const CustomizeAudioModal: React.FC<CustomizeAudioModalProps> = ({
   onGenerate,
   embedded = false,
 }) => {
+  const { t } = useTranslation("studio");
   const [selectedFormat, setSelectedFormat] = useState("deep_dive");
   const [length, setLength] = useState<AudioConfig["length"]>("default");
   const [focus, setFocus] = useState("");
@@ -76,7 +78,9 @@ export const CustomizeAudioModal: React.FC<CustomizeAudioModalProps> = ({
             <div className="p-2 rounded-lg bg-teal-500/10">
               <AudioLines className="w-5 h-5 text-teal-700 dark:text-teal-400" />
             </div>
-            <h2 className="text-xl font-bold font-sans tracking-tight">Customize Audio Overview</h2>
+            <h2 className="text-xl font-bold font-sans tracking-tight">
+              {t("customizeAudio.title")}
+            </h2>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <StudioModalDiscoverPromptsButton studioTool="audio" onApplyPrompt={setFocus} />
@@ -94,7 +98,7 @@ export const CustomizeAudioModal: React.FC<CustomizeAudioModalProps> = ({
           {/* Format Selection */}
           <div className="space-y-4">
             <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground font-sans">
-              Format
+              {t("customizeAudio.format")}
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {FORMATS.map((format) => (
@@ -114,11 +118,11 @@ export const CustomizeAudioModal: React.FC<CustomizeAudioModalProps> = ({
                     <span
                       className={`font-bold text-sm ${selectedFormat === format.id ? "text-primary" : "text-foreground"}`}
                     >
-                      {format.title}
+                      {t(`customizeAudio.formats.${format.id}.title`)}
                     </span>
                   </div>
                   <p className="text-[13px] text-muted-foreground leading-relaxed font-serif">
-                    {format.description}
+                    {t(`customizeAudio.formats.${format.id}.description`)}
                   </p>
                 </button>
               ))}
@@ -127,7 +131,7 @@ export const CustomizeAudioModal: React.FC<CustomizeAudioModalProps> = ({
 
           <div className="space-y-4">
             <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground font-sans">
-              Length
+              {t("customizeAudio.length")}
             </label>
             <div className="flex bg-background border border-border rounded-xl p-1 w-fit">
               {(["short", "default", "long"] as const).map((opt) => (
@@ -143,7 +147,7 @@ export const CustomizeAudioModal: React.FC<CustomizeAudioModalProps> = ({
                     }
                   `}
                 >
-                  {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                  {t(`customizeAudio.lengthOptions.${opt}`)}
                 </button>
               ))}
             </div>
@@ -152,12 +156,12 @@ export const CustomizeAudioModal: React.FC<CustomizeAudioModalProps> = ({
           {/* Focus Area */}
           <div className="space-y-4">
             <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground font-sans">
-              What should the AI hosts focus on in this episode?
+              {t("customizeAudio.focusLabel")}
             </label>
             <textarea
               value={focus}
               onChange={(e) => setFocus(e.target.value)}
-              placeholder='Things to try&#10;• Focus on a specific source ("only cover the article about Italy")&#10;• Focus on a specific topic ("just discuss the novel&apos;s main character")&#10;• Target a specific audience ("explain to someone new to biology")'
+              placeholder={t("customizeAudio.focusPlaceholder")}
               className="w-full h-44 bg-background border border-border rounded-xl p-6 text-base leading-relaxed font-serif focus:outline-none focus:ring-1 focus:ring-ring transition-all resize-none placeholder:text-muted-foreground/30"
             />
             <button
@@ -167,7 +171,7 @@ export const CustomizeAudioModal: React.FC<CustomizeAudioModalProps> = ({
               className="flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Bookmark className="w-3.5 h-3.5" />
-              Save as reusable prompt
+              {t("customizeAudio.saveAsPrompt")}
             </button>
           </div>
 
@@ -177,7 +181,7 @@ export const CustomizeAudioModal: React.FC<CustomizeAudioModalProps> = ({
               onClick={() => onGenerate({ formatId: selectedFormat, length, focus })}
               className="px-10 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl transition-all shadow-md active:scale-95 text-sm"
             >
-              Generate Audio
+              {t("customizeAudio.generate")}
             </button>
           </div>
         </div>

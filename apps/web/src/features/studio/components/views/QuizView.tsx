@@ -9,6 +9,7 @@ import {
   XCircle,
 } from "lucide-react";
 import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   useQuiz,
   useResetQuizAnswers,
@@ -30,7 +31,7 @@ export interface QuizViewProps {
 }
 
 export const QuizView: React.FC<QuizViewProps> = ({ note, onNoteUpdate, onBack }) => {
-  // Initialize currentIndex from note.metadata.lastViewedIndex if available
+  const { t } = useTranslation("studio");
   const initialIndex = (note.metadata as any)?.lastViewedIndex ?? 0;
   const [currentIndex, setCurrentIndex] = useState(
     Math.min(initialIndex, Math.max(0, note.questions.length - 1))
@@ -45,10 +46,8 @@ export const QuizView: React.FC<QuizViewProps> = ({ note, onNoteUpdate, onBack }
   const resetAnswers = useResetQuizAnswers();
   const latestNote = useQuiz(note.id);
 
-  // Track if we've initialized the index from saved progress
   const hasInitializedIndex = useRef(false);
 
-  // Restore saved index on mount (from latestNote which has the latest data from server)
   useEffect(() => {
     if (!hasInitializedIndex.current && latestNote) {
       const savedIndex = (latestNote.metadata as any)?.lastViewedIndex ?? 0;
@@ -60,13 +59,9 @@ export const QuizView: React.FC<QuizViewProps> = ({ note, onNoteUpdate, onBack }
     }
   }, [latestNote, note.questions.length]);
 
-  // Persist progress - track last viewed index
-  // Use useMemo to prevent re-initializing when other state changes
   const stableCurrentIndex = useMemo(() => currentIndex, [currentIndex]);
   useUpdateQuizProgress(note.id, stableCurrentIndex);
 
-  // Sync userAnswers with note.userAnswers
-  // Using a serialized key prevents the effect from running on every render
   const serverUserAnswersKey = JSON.stringify(latestNote?.userAnswers ?? {});
   useEffect(() => {
     if (latestNote?.userAnswers) {
@@ -88,25 +83,20 @@ export const QuizView: React.FC<QuizViewProps> = ({ note, onNoteUpdate, onBack }
     return u;
   }, [userAnswers, currentIndex, currentQuestion, displayQuestion.options.length]);
 
-  // Derived state
   const isAnswered = userAnswers[currentIndex] !== undefined;
 
   const handleSelect = async (index: number) => {
     if (isAnswered || reviewMode) return;
 
-    // Update local state immediately for responsiveness
     setUserAnswers((prev) => ({ ...prev, [currentIndex]: index }));
 
-    // Submit to server in the background
     try {
       await submitAnswer(note.id, currentIndex, index);
-      // Notify parent of the update (syncs with notes list)
       if (latestNote && onNoteUpdate) {
         onNoteUpdate(latestNote);
       }
     } catch (error) {
       console.error("Failed to submit answer:", error);
-      // Revert the local state on error
       setUserAnswers((prev) => {
         const newState = { ...prev };
         delete newState[currentIndex];
@@ -134,15 +124,12 @@ export const QuizView: React.FC<QuizViewProps> = ({ note, onNoteUpdate, onBack }
   const resetQuiz = async () => {
     setIsResetting(true);
     try {
-      // Call API to reset all answers on the server (also resets lastViewedIndex)
       await resetAnswers(note.id);
-      // Reset local state
       setCurrentIndex(0);
       setUserAnswers({});
       setShowResults(false);
       setShowHint(false);
       setReviewMode(false);
-      // Notify parent of the update
       if (latestNote && onNoteUpdate) {
         onNoteUpdate(latestNote);
       }
@@ -164,7 +151,7 @@ export const QuizView: React.FC<QuizViewProps> = ({ note, onNoteUpdate, onBack }
   if (questions.length === 0)
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 text-center space-y-4">
-        <p className="text-muted-foreground font-serif italic">No questions available</p>
+        <p className="text-muted-foreground font-serif italic">{t("quizView.noQuestions")}</p>
       </div>
     );
 
@@ -180,9 +167,9 @@ export const QuizView: React.FC<QuizViewProps> = ({ note, onNoteUpdate, onBack }
             <Sparkles className="w-10 h-10" />
           </div>
           <div>
-            <h3 className="text-2xl font-bold font-serif mb-2">Quiz Complete!</h3>
+            <h3 className="text-2xl font-bold font-serif mb-2">{t("quizView.quizComplete")}</h3>
             <p className="text-muted-foreground">
-              You scored {score} out of {questions.length}
+              {t("quizView.youScored", { score, total: questions.length })}
             </p>
           </div>
           <div className="w-full bg-secondary rounded-xl h-3 overflow-hidden">
@@ -197,7 +184,7 @@ export const QuizView: React.FC<QuizViewProps> = ({ note, onNoteUpdate, onBack }
               className="flex-1 py-3 bg-secondary text-secondary-foreground font-bold rounded-lg hover:bg-secondary/80 transition-colors flex items-center justify-center gap-2"
             >
               <Eye className="w-4 h-4" />
-              Review
+              {t("quizView.review")}
             </button>
             <button
               onClick={resetQuiz}
@@ -207,10 +194,10 @@ export const QuizView: React.FC<QuizViewProps> = ({ note, onNoteUpdate, onBack }
               {isResetting ? (
                 <>
                   <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                  Resetting...
+                  {t("quizView.resetting")}
                 </>
               ) : (
-                "Try Again"
+                t("quizView.tryAgain")
               )}
             </button>
           </div>
@@ -227,7 +214,7 @@ export const QuizView: React.FC<QuizViewProps> = ({ note, onNoteUpdate, onBack }
           <button
             onClick={onBack}
             className="p-1.5 hover:bg-secondary rounded-md transition-colors text-foreground flex items-center justify-center shrink-0"
-            aria-label="Back to Studio"
+            aria-label={t("header.backToStudio")}
           >
             <ArrowLeft className="w-5 h-5 shrink-0" />
           </button>
@@ -242,10 +229,10 @@ export const QuizView: React.FC<QuizViewProps> = ({ note, onNoteUpdate, onBack }
               <Eye className="w-5 h-5 text-vintage-amber-700 dark:text-vintage-amber-300 shrink-0" />
               <div>
                 <span className="text-sm font-semibold text-vintage-amber-800 dark:text-vintage-amber-200">
-                  Review Mode
+                  {t("quizView.reviewMode")}
                 </span>
                 <p className="text-xs text-vintage-amber-700 dark:text-vintage-amber-300">
-                  You are viewing your previous answers. Selection is disabled.
+                  {t("quizView.reviewModeDesc")}
                 </p>
               </div>
             </div>
@@ -253,8 +240,8 @@ export const QuizView: React.FC<QuizViewProps> = ({ note, onNoteUpdate, onBack }
 
           <div className="mb-8">
             <div className="flex justify-between text-xs md:text-sm font-bold uppercase tracking-widest text-muted-foreground mb-3 font-sans">
-              <span>Question {currentIndex + 1}</span>
-              <span>{questions.length} Total</span>
+              <span>{t("quizView.question", { current: currentIndex + 1 })}</span>
+              <span>{t("quizView.total", { total: questions.length })}</span>
             </div>
             <div className="w-full bg-secondary/50 rounded-xl h-1.5 overflow-hidden">
               <div
@@ -388,7 +375,7 @@ export const QuizView: React.FC<QuizViewProps> = ({ note, onNoteUpdate, onBack }
                 <Info className="w-6 h-6 shrink-0 mt-1 text-vintage-blue-700 dark:text-vintage-blue-700" />
                 <div className="flex-1 min-w-0">
                   <span className="font-semibold text-base text-vintage-blue-700 dark:text-vintage-blue-700">
-                    Explanation
+                    {t("quizView.explanation")}
                   </span>
                   <div className="text-base mt-2 leading-relaxed prose prose-base prose-stone dark:prose-invert max-w-none wrap-break-word text-vintage-blue-700 dark:text-vintage-blue-700">
                     <Suspense
@@ -460,7 +447,7 @@ export const QuizView: React.FC<QuizViewProps> = ({ note, onNoteUpdate, onBack }
                 className="flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary/50 hover:bg-secondary text-sm font-medium transition-colors text-muted-foreground hover:text-foreground"
               >
                 <Lightbulb className="w-4 h-4" />
-                <span>Hint</span>
+                <span>{t("quizView.hint")}</span>
                 <ChevronUp
                   className={`w-3 h-3 transition-transform ${showHint ? "rotate-180" : ""}`}
                 />
@@ -468,9 +455,9 @@ export const QuizView: React.FC<QuizViewProps> = ({ note, onNoteUpdate, onBack }
               {showHint && (
                 <div className="absolute bottom-full left-0 mb-3 w-72 p-4 bg-popover border border-border rounded-xl shadow-xl text-sm leading-relaxed animate-in fade-in slide-in-from-bottom-2 z-20">
                   <span className="font-bold block mb-1 text-xs uppercase tracking-wide text-primary">
-                    Hint
+                    {t("quizView.hint")}
                   </span>
-                  {currentQuestion.hint || "Try to recall the definition from your notes."}
+                  {currentQuestion.hint || t("quizView.hintDefault")}
                 </div>
               )}
             </div>
@@ -481,13 +468,13 @@ export const QuizView: React.FC<QuizViewProps> = ({ note, onNoteUpdate, onBack }
               disabled={currentIndex === 0}
               className="px-4 py-2 text-sm font-bold text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:hover:text-muted-foreground transition-colors"
             >
-              Previous
+              {t("quizView.previous")}
             </button>
             <button
               onClick={handleNext}
               className="px-6 py-2 bg-primary text-primary-foreground text-sm font-bold rounded-xl hover:bg-primary/90 transition-all shadow-md active:translate-y-0.5 min-w-[100px]"
             >
-              {currentIndex === questions.length - 1 ? "Finish" : "Next"}
+              {currentIndex === questions.length - 1 ? t("quizView.finish") : t("quizView.next")}
             </button>
           </div>
         </div>
