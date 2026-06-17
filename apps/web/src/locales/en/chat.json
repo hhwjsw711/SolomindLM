@@ -272,6 +272,8 @@
   "deepResearchSources": {
     "usedInAnswer": "Used in answer",
     "searchedOnly": "Searched only",
+    "used": "Used",
+    "searched": "Searched",
     "loadingSources": "Loading sources\u2026",
     "sourcesSearched": "Sources searched",
     "totalUsed": "{{total}} total \u00b7 {{used}} used in answer",
