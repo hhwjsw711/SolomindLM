@@ -78,7 +78,27 @@
     "web": "Web",
     "news": "News",
     "academic": "Academic",
-    "finance": "Finance"
+    "finance": "Finance",
+    "academicFilters": {
+      "papers": "Academic papers",
+      "publicationYear": "Publication year",
+      "allYears": "All years",
+      "last": "Last",
+      "years": "years",
+      "custom": "Custom",
+      "from": "From",
+      "to": "To",
+      "hasPdf": "Has PDF",
+      "openAccess": "Open access",
+      "citationsMin": "Citations ≥",
+      "min1": "Min 1",
+      "fieldOfStudy": "Field of Study",
+      "searchFields": "Search fields",
+      "see": "See",
+      "more": "more…",
+      "journalRating": "Journal Rating - SJR",
+      "tierDescription": "Tier preference is saved for this session. Journal-level filtering will apply when venue metrics are available in discovery results."
+    }
   },
   "sourcesPanel": {
     "deleteSourceTitle": "Delete Source",

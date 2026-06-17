@@ -78,7 +78,27 @@
     "web": "网络",
     "news": "新闻",
     "academic": "学术",
-    "finance": "财经"
+    "finance": "财经",
+    "academicFilters": {
+      "papers": "学术论文",
+      "publicationYear": "发表年份",
+      "allYears": "全部年份",
+      "last": "最近",
+      "years": "年",
+      "custom": "自定义",
+      "from": "从",
+      "to": "到",
+      "hasPdf": "有 PDF",
+      "openAccess": "开放获取",
+      "citationsMin": "引用数 ≥",
+      "min1": "至少 1",
+      "fieldOfStudy": "研究领域",
+      "searchFields": "搜索领域",
+      "see": "查看",
+      "more": "更多…",
+      "journalRating": "期刊评级 - SJR",
+      "tierDescription": "层级偏好仅在本会话中保留。来源发现结果中包含期刊指标时，将应用期刊级别筛选。"
+    }
   },
   "sourcesPanel": {
     "deleteSourceTitle": "删除来源",

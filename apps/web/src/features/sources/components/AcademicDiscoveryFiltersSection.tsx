@@ -1,5 +1,6 @@
 import { Check, ChevronDown, ChevronRight, Search } from "lucide-react";
 import React, { useMemo, useState } from "react";
+import i18next from "@/i18n";
 import {
   ACADEMIC_FIELD_GROUPS,
   ACADEMIC_SJR_TIERS,
@@ -132,11 +133,13 @@ export const AcademicDiscoveryFiltersSection: React.FC<AcademicDiscoveryFiltersS
         .filter(Boolean)
         .join(" ")}
     >
-      <p className="text-xs font-semibold text-foreground">Academic papers</p>
+      <p className="text-xs font-semibold text-foreground">
+        {i18next.t("sources:discover.academicFilters.papers")}
+      </p>
 
       <div className="space-y-2 pt-1">
         <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-          Publication year
+          {i18next.t("sources:discover.academicFilters.publicationYear")}
         </p>
         <label className="flex cursor-pointer items-start gap-2 rounded-lg py-1 text-sm">
           <input
@@ -146,7 +149,7 @@ export const AcademicDiscoveryFiltersSection: React.FC<AcademicDiscoveryFiltersS
             checked={yearMode === "all"}
             onChange={() => setAcademic({ publicationYearMode: "all" })}
           />
-          <span>All years</span>
+          <span>{i18next.t("sources:discover.academicFilters.allYears")}</span>
         </label>
         <label className="flex cursor-pointer items-start gap-2 rounded-lg py-1 text-sm">
           <input
@@ -159,7 +162,7 @@ export const AcademicDiscoveryFiltersSection: React.FC<AcademicDiscoveryFiltersS
             }
           />
           <span className="flex flex-1 flex-wrap items-center gap-2">
-            <span>Last</span>
+            <span>{i18next.t("sources:discover.academicFilters.last")}</span>
             <input
               type="number"
               min={1}
@@ -173,7 +176,7 @@ export const AcademicDiscoveryFiltersSection: React.FC<AcademicDiscoveryFiltersS
               }
               className="w-14 rounded-md border border-border bg-background px-2 py-1 text-center text-sm disabled:opacity-50"
             />
-            <span>years</span>
+            <span>{i18next.t("sources:discover.academicFilters.years")}</span>
           </span>
         </label>
         <label className="flex cursor-pointer items-start gap-2 rounded-lg py-1 text-sm">
@@ -185,10 +188,12 @@ export const AcademicDiscoveryFiltersSection: React.FC<AcademicDiscoveryFiltersS
             onChange={() => setAcademic({ publicationYearMode: "custom" })}
           />
           <span className="grid flex-1 grid-cols-2 gap-2">
-            <span className="col-span-2">Custom</span>
+            <span className="col-span-2">
+              {i18next.t("sources:discover.academicFilters.custom")}
+            </span>
             <input
               type="number"
-              placeholder="From"
+              placeholder={i18next.t("sources:discover.academicFilters.from")}
               disabled={yearMode !== "custom"}
               value={academic.customYearFrom ?? ""}
               onChange={(e) =>
@@ -200,7 +205,7 @@ export const AcademicDiscoveryFiltersSection: React.FC<AcademicDiscoveryFiltersS
             />
             <input
               type="number"
-              placeholder="To"
+              placeholder={i18next.t("sources:discover.academicFilters.to")}
               disabled={yearMode !== "custom"}
               value={academic.customYearTo ?? ""}
               onChange={(e) =>
@@ -216,12 +221,12 @@ export const AcademicDiscoveryFiltersSection: React.FC<AcademicDiscoveryFiltersS
 
       <div className="border-t border-border/40 pt-1">
         <FilterToggle
-          label="Has PDF"
+          label={i18next.t("sources:discover.academicFilters.hasPdf")}
           checked={Boolean(academic.hasFullText)}
           onChange={(v) => setAcademic({ hasFullText: v || undefined })}
         />
         <FilterToggle
-          label="Open access"
+          label={i18next.t("sources:discover.academicFilters.openAccess")}
           checked={Boolean(academic.openAccessOnly)}
           onChange={(v) => setAcademic({ openAccessOnly: v || undefined })}
         />
@@ -229,12 +234,12 @@ export const AcademicDiscoveryFiltersSection: React.FC<AcademicDiscoveryFiltersS
 
       <div className="space-y-1.5 border-t border-border/40 pt-3">
         <label className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-          Citations ≥
+          {i18next.t("sources:discover.academicFilters.citationsMin")}
         </label>
         <input
           type="number"
           min={0}
-          placeholder="Min 1"
+          placeholder={i18next.t("sources:discover.academicFilters.min1")}
           value={academic.minCitations ?? ""}
           onChange={(e) => {
             const raw = e.target.value;
@@ -255,7 +260,7 @@ export const AcademicDiscoveryFiltersSection: React.FC<AcademicDiscoveryFiltersS
           className="flex w-full items-center justify-between gap-2 py-3 text-left text-sm font-medium text-foreground"
           onClick={() => setExpanded((e) => (e === "field" ? null : "field"))}
         >
-          Field of Study
+          {i18next.t("sources:discover.academicFilters.fieldOfStudy")}
           {expanded === "field" ? (
             <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
           ) : (
@@ -268,7 +273,7 @@ export const AcademicDiscoveryFiltersSection: React.FC<AcademicDiscoveryFiltersS
               <Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="search"
-                placeholder="Search fields"
+                placeholder={i18next.t("sources:discover.academicFilters.searchFields")}
                 value={fieldQuery}
                 onChange={(e) => setFieldQuery(e.target.value)}
                 className="w-full rounded-lg border border-border bg-background py-2 pl-8 pr-3 text-sm focus:border-primary focus:outline-none"
@@ -332,7 +337,8 @@ export const AcademicDiscoveryFiltersSection: React.FC<AcademicDiscoveryFiltersS
                             }))
                           }
                         >
-                          See {more.length} more…
+                          {i18next.t("sources:discover.academicFilters.see")} {more.length}{" "}
+                          {i18next.t("sources:discover.academicFilters.more")}
                         </button>
                       )}
                     </div>
@@ -350,7 +356,7 @@ export const AcademicDiscoveryFiltersSection: React.FC<AcademicDiscoveryFiltersS
           className="flex w-full items-center justify-between gap-2 py-3 text-left text-sm font-medium text-foreground"
           onClick={() => setExpanded((e) => (e === "sjr" ? null : "sjr"))}
         >
-          Journal Rating - SJR
+          {i18next.t("sources:discover.academicFilters.journalRating")}
           {expanded === "sjr" ? (
             <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
           ) : (
@@ -360,8 +366,7 @@ export const AcademicDiscoveryFiltersSection: React.FC<AcademicDiscoveryFiltersS
         {expanded === "sjr" && (
           <div className="space-y-2 pb-3 animate-in fade-in slide-in-from-top-1 duration-150">
             <p className="text-[11px] leading-snug text-muted-foreground">
-              Tier preference is saved for this session. Journal-level filtering will apply when
-              venue metrics are available in discovery results.
+              {i18next.t("sources:discover.academicFilters.tierDescription")}
             </p>
             {ACADEMIC_SJR_TIERS.map((tier) => {
               const selected = worstQ === tier.id;

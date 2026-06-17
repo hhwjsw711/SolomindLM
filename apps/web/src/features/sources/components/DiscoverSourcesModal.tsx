@@ -181,25 +181,25 @@ function academicAccessChip(
   const pdf = Boolean(r.metadata.pdfUrl?.trim());
   if (pdf) {
     return {
-      label: "OA PDF",
+      label: i18next.t("sources:discover.oaPdf"),
       title: i18next.t("sources:discover.oaPdfTooltip"),
       className: `${META_CHIP} border-emerald-200/70 bg-emerald-50/80 text-emerald-950`,
     };
   }
   if (r.metadata.openAccess) {
     return {
-      label: "Open access",
+      label: i18next.t("sources:discover.openAccess"),
       className: `${META_CHIP} border-violet-200/70 bg-violet-50/80 text-violet-950`,
     };
   }
   if (r.metadata.landingPageUrl?.trim() || r.metadata.doi?.trim()) {
     return {
-      label: "External access",
+      label: i18next.t("sources:discover.externalAccess"),
       className: `${META_CHIP} border-amber-200/70 bg-amber-50/80 text-amber-950`,
     };
   }
   return {
-    label: "Metadata only",
+    label: i18next.t("sources:discover.metadataOnly"),
     className: `${META_CHIP} border-border/80 bg-muted/40 text-muted-foreground`,
   };
 }
@@ -209,18 +209,18 @@ function getScoreBadge(score: number) {
     "inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[11px] font-medium leading-none";
   if (score >= 0.8) {
     return {
-      label: "high relevance",
+      label: i18next.t("sources:discover.scoreHigh"),
       className: `${base} border border-green-300/80 bg-green-100/90 text-green-950`,
     };
   }
   if (score >= 0.6) {
     return {
-      label: "medium relevance",
+      label: i18next.t("sources:discover.scoreMedium"),
       className: `${base} border border-amber-300/80 bg-amber-100/90 text-amber-950`,
     };
   }
   return {
-    label: "low relevance",
+    label: i18next.t("sources:discover.scoreLow"),
     className: `${base} border border-rose-300/80 bg-rose-100/90 text-rose-950`,
   };
 }
@@ -365,7 +365,7 @@ export const DiscoverSourcesModal: React.FC<DiscoverSourcesModalProps> = ({
         return next;
       });
     } catch (err) {
-      showError(err instanceof Error ? err.message : "Failed to add source");
+      showError(err instanceof Error ? err.message : i18next.t("sources:discover.failedToAdd"));
     } finally {
       setAddingIds((prev) => {
         const next = new Set(prev);
@@ -395,7 +395,7 @@ export const DiscoverSourcesModal: React.FC<DiscoverSourcesModalProps> = ({
         await addResult(result);
         _succeeded++;
       } catch (err) {
-        showError(err instanceof Error ? err.message : "Failed to add source");
+        showError(err instanceof Error ? err.message : i18next.t("sources:discover.failedToAdd"));
       }
     }
 
@@ -412,7 +412,7 @@ export const DiscoverSourcesModal: React.FC<DiscoverSourcesModalProps> = ({
       const response = await createDocument({
         notebookId: noteId!,
         type: "paper_record",
-        fileName: result.title || "Paper",
+        fileName: result.title || i18next.t("sources:discover.paper"),
         paperRecord: {
           abstract: result.snippet || "",
           authors: result.metadata.authors ?? [],
@@ -525,7 +525,7 @@ export const DiscoverSourcesModal: React.FC<DiscoverSourcesModalProps> = ({
             }`}
           >
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <h3 className="text-2xl font-medium">Discover sources</h3>
+              <h3 className="text-2xl font-medium">{i18next.t("sources:discover.title")}</h3>
               {onAddSourcesClick && (
                 <button
                   type="button"
@@ -533,7 +533,7 @@ export const DiscoverSourcesModal: React.FC<DiscoverSourcesModalProps> = ({
                   className="hidden sm:inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-border hover:bg-secondary/50 transition-colors text-sm font-medium"
                 >
                   <FileStack className="w-4 h-4 shrink-0" />
-                  Add sources
+                  {i18next.t("sources:discover.addSources")}
                 </button>
               )}
             </div>
@@ -555,7 +555,11 @@ export const DiscoverSourcesModal: React.FC<DiscoverSourcesModalProps> = ({
                   disabled={isLoading || !query.trim()}
                   className="absolute right-1.5 top-1/2 -translate-y-1/2 h-9 px-5 bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-all inline-flex items-center gap-1.5"
                 >
-                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Search"}
+                  {isLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    i18next.t("sources:discover.search")
+                  )}
                 </button>
               </form>
             </div>
@@ -580,7 +584,7 @@ export const DiscoverSourcesModal: React.FC<DiscoverSourcesModalProps> = ({
                     }`}
                   >
                     <Icon className="w-3.5 h-3.5 shrink-0" />
-                    {config.label}
+                    {i18next.t(`sources:discover.${key}`)}
                   </button>
                 );
               })}
@@ -598,16 +602,18 @@ export const DiscoverSourcesModal: React.FC<DiscoverSourcesModalProps> = ({
                   }`}
                 >
                   <SlidersHorizontal className="w-3.5 h-3.5 shrink-0" />
-                  Filters
+                  {i18next.t("sources:discover.filters")}
                 </button>
                 {showFilters && (
                   <div className="absolute right-0 top-full z-20 mt-2 max-h-[min(70vh,520px)] w-[min(19rem,calc(100vw-2rem))] overflow-y-auto overflow-x-hidden rounded-xl border border-border bg-card p-3 shadow-lg animate-in fade-in slide-in-from-top-2 duration-150">
-                    <p className="text-sm font-semibold text-foreground">Filters</p>
+                    <p className="text-sm font-semibold text-foreground">
+                      {i18next.t("sources:discover.filters")}
+                    </p>
 
                     <div className="mt-3 space-y-3">
                       <div>
                         <label className="mb-1.5 block text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                          Time range
+                          {i18next.t("sources:discover.timeRange")}
                         </label>
                         <select
                           value={filters.timeRange || ""}
@@ -619,17 +625,17 @@ export const DiscoverSourcesModal: React.FC<DiscoverSourcesModalProps> = ({
                           }
                           className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm focus:border-primary focus:outline-none"
                         >
-                          <option value="">All time</option>
-                          <option value="day">Past day</option>
-                          <option value="week">Past week</option>
-                          <option value="month">Past month</option>
-                          <option value="year">Past year</option>
+                          <option value="">{i18next.t("sources:discover.allTime")}</option>
+                          <option value="day">{i18next.t("sources:discover.pastDay")}</option>
+                          <option value="week">{i18next.t("sources:discover.pastWeek")}</option>
+                          <option value="month">{i18next.t("sources:discover.pastMonth")}</option>
+                          <option value="year">{i18next.t("sources:discover.pastYear")}</option>
                         </select>
                       </div>
 
                       <div>
                         <label className="mb-1.5 block text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                          Sort by
+                          {i18next.t("sources:discover.sortBy")}
                         </label>
                         <select
                           value={filters.sortBy}
@@ -641,15 +647,21 @@ export const DiscoverSourcesModal: React.FC<DiscoverSourcesModalProps> = ({
                           }
                           className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm focus:border-primary focus:outline-none"
                         >
-                          <option value="relevance">Relevance</option>
-                          <option value="date">Date</option>
-                          <option value="citations">Citations</option>
+                          <option value="relevance">
+                            {i18next.t("sources:discover.relevance")}
+                          </option>
+                          <option value="date">{i18next.t("sources:discover.date")}</option>
+                          <option value="citations">
+                            {i18next.t("sources:discover.citations")}
+                          </option>
                         </select>
                       </div>
 
                       <div>
                         <label className="mb-1.5 block text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                          Total results: {filters.maxResults}
+                          {i18next.t("sources:discover.totalResults", {
+                            count: filters.maxResults,
+                          })}
                         </label>
                         <input
                           type="range"
@@ -685,7 +697,7 @@ export const DiscoverSourcesModal: React.FC<DiscoverSourcesModalProps> = ({
                       onClick={() => setFilters(DEFAULT_FILTERS)}
                       className="mt-3 w-full rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-destructive/30 hover:text-destructive"
                     >
-                      Reset filters
+                      {i18next.t("sources:discover.resetFilters")}
                     </button>
                   </div>
                 )}
@@ -695,7 +707,11 @@ export const DiscoverSourcesModal: React.FC<DiscoverSourcesModalProps> = ({
                 type="button"
                 onClick={() => setViewMode((v) => (v === "list" ? "grid" : "list"))}
                 className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-transparent bg-secondary/30 text-muted-foreground hover:bg-secondary/50 hover:border-border transition-colors shrink-0"
-                title={viewMode === "list" ? "Grid view" : "List view"}
+                title={
+                  viewMode === "list"
+                    ? i18next.t("sources:discover.gridView")
+                    : i18next.t("sources:discover.listView")
+                }
               >
                 {viewMode === "list" ? (
                   <LayoutGrid className="w-4 h-4" />
@@ -713,16 +729,16 @@ export const DiscoverSourcesModal: React.FC<DiscoverSourcesModalProps> = ({
               <div className="flex flex-col items-center justify-center min-h-80 text-center space-y-3">
                 <Loader2 className="w-8 h-8 text-primary animate-spin" />
                 <div>
-                  <p className="font-medium text-sm">Searching across sources...</p>
+                  <p className="font-medium text-sm">{i18next.t("sources:discover.searching")}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Finding the most relevant sources for you.
+                    {i18next.t("sources:discover.searchingSubtitle")}
                   </p>
                 </div>
               </div>
             ) : error ? (
               <div className="flex flex-col items-center justify-center min-h-80 text-center p-6">
                 <p className="text-destructive font-medium text-sm mb-0.5">
-                  Search encountered an issue
+                  {i18next.t("sources:discover.searchError")}
                 </p>
                 <p className="text-muted-foreground text-xs">{error}</p>
               </div>
@@ -759,7 +775,7 @@ export const DiscoverSourcesModal: React.FC<DiscoverSourcesModalProps> = ({
             ) : (
               <div className="flex flex-col items-center justify-center min-h-80 text-center opacity-40">
                 <Search className="w-8 h-8 mb-3" />
-                <p className="text-sm italic">Enter a topic to discover related sources</p>
+                <p className="text-sm italic">{i18next.t("sources:discover.emptyState")}</p>
               </div>
             )}
           </div>
@@ -768,7 +784,7 @@ export const DiscoverSourcesModal: React.FC<DiscoverSourcesModalProps> = ({
         {selectedCount > 0 && (
           <div className="flex items-center justify-between p-4 bg-secondary/10 border-t border-border gap-3 shrink-0 rounded-b-xl animate-in slide-in-from-bottom-2 duration-200">
             <span className="text-sm text-muted-foreground font-medium">
-              {selectedCount} selected
+              {i18next.t("sources:discover.selectedCount", { count: selectedCount })}
             </span>
             <div className="flex gap-2">
               <button
@@ -776,7 +792,7 @@ export const DiscoverSourcesModal: React.FC<DiscoverSourcesModalProps> = ({
                 onClick={clearSelection}
                 className="px-3 py-1.5 text-xs font-medium text-muted-foreground border border-border rounded-md hover:border-border/80 transition-colors"
               >
-                Clear
+                {i18next.t("sources:discover.clear")}
               </button>
               <button
                 type="button"
@@ -784,7 +800,7 @@ export const DiscoverSourcesModal: React.FC<DiscoverSourcesModalProps> = ({
                 disabled={isAtLimit}
                 className="px-4 py-1.5 text-xs font-semibold bg-primary/10 text-primary rounded-md hover:bg-primary hover:text-primary-foreground transition-all disabled:opacity-50"
               >
-                Add selected
+                {i18next.t("sources:discover.addSelected")}
               </button>
             </div>
           </div>
@@ -861,7 +877,7 @@ const ResultRow: React.FC<ResultRowProps> = ({
           <span
             className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-medium leading-none ${typeStyle.typeChip}`}
           >
-            {typeConfig.label}
+            {i18next.t(`sources:discover.${result.sourceType}`)}
           </span>
           <span className={`${META_CHIP} gap-1`}>
             <Favicon url={result.url} size={12} />
@@ -891,7 +907,7 @@ const ResultRow: React.FC<ResultRowProps> = ({
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
             className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-border/60 text-muted-foreground transition-colors hover:border-primary/30 hover:text-primary"
-            aria-label="Open source in new tab"
+            aria-label={i18next.t("sources:discover.openSource")}
           >
             <ExternalLink className="w-3 h-3" />
           </a>
@@ -913,18 +929,18 @@ const ResultRow: React.FC<ResultRowProps> = ({
               ? "bg-primary/50 text-primary-foreground cursor-wait"
               : "bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground"
         }`}
-        title={isAtLimit ? "Source limit reached" : undefined}
+        title={isAtLimit ? i18next.t("sources:discover.sourceLimitReached") : undefined}
       >
         {isAdding ? (
           <Loader2 className="w-3 h-3 animate-spin" />
         ) : isAdded ? (
-          "Added"
+          i18next.t("sources:discover.added")
         ) : isAtLimit ? (
-          "Limit"
+          i18next.t("sources:discover.limit")
         ) : (
           <>
             <Plus className="w-3 h-3" />
-            Add
+            {i18next.t("sources:discover.add")}
           </>
         )}
       </button>
@@ -961,7 +977,7 @@ const ResultCard: React.FC<ResultCardProps> = ({ result, isAdding, isAdded, isAt
             className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${typeStyle.typeChip}`}
           >
             <Icon className={`h-3 w-3 ${typeStyle.icon}`} />
-            {config.label}
+            {i18next.t(`sources:discover.${result.sourceType}`)}
           </div>
           <a
             href={result.url}
@@ -1004,7 +1020,7 @@ const ResultCard: React.FC<ResultCardProps> = ({ result, isAdding, isAdded, isAt
           {result.sourceType === "academic" && result.metadata.citationCount !== undefined && (
             <span className={META_CHIP}>
               <Quote className="w-2.5 h-2.5 shrink-0" />
-              {result.metadata.citationCount.toLocaleString()} cites
+              {i18next.t("sources:discover.citesCount", { count: result.metadata.citationCount })}
             </span>
           )}
         </div>
@@ -1022,18 +1038,18 @@ const ResultCard: React.FC<ResultCardProps> = ({ result, isAdding, isAdded, isAt
                 ? "bg-primary/50 text-primary-foreground cursor-wait"
                 : "bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground"
           }`}
-          title={isAtLimit ? "Source limit reached" : undefined}
+          title={isAtLimit ? i18next.t("sources:discover.sourceLimitReached") : undefined}
         >
           {isAdding ? (
             <Loader2 className="w-3 h-3 animate-spin" />
           ) : isAdded ? (
-            "Added"
+            i18next.t("sources:discover.added")
           ) : isAtLimit ? (
-            "Limit"
+            i18next.t("sources:discover.limit")
           ) : (
             <>
               <Plus className="w-3 h-3" />
-              Add
+              {i18next.t("sources:discover.add")}
             </>
           )}
         </button>
