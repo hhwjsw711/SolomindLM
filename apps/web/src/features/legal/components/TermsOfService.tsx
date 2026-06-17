@@ -1,8 +1,10 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { LegalPageShell } from "./LegalPageShell";
 
 export const TermsOfService: React.FC = () => {
+  const { t } = useTranslation();
   return (
     <LegalPageShell title="Terms of Service" canonical="/terms">
       <section className="space-y-3">
@@ -13,7 +15,7 @@ export const TermsOfService: React.FC = () => {
             to="/privacy"
             className="text-foreground underline underline-offset-2 hover:no-underline"
           >
-            Privacy Policy
+            {t("legal.privacyPolicy")}
           </Link>
           . If you disagree, do not use the Service. We may update these Terms; continued use after
           changes means you accept the updated Terms.
@@ -21,7 +23,9 @@ export const TermsOfService: React.FC = () => {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-foreground">The Service</h2>
+        <h2 className="text-base font-semibold text-foreground">
+          {t("legal.sections.theService")}
+        </h2>
         <p className="text-muted-foreground">
           SolomindLM helps you organize research in notebooks, add sources (files, links, and
           optional Google Drive imports where enabled), chat with retrieval over your materials,
@@ -37,7 +41,7 @@ export const TermsOfService: React.FC = () => {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-foreground">Accounts</h2>
+        <h2 className="text-base font-semibold text-foreground">{t("legal.sections.accounts")}</h2>
         <ul className="list-disc space-y-2 pl-5 text-muted-foreground">
           <li>You must be at least 13 years old to use the Service.</li>
           <li>
@@ -50,7 +54,9 @@ export const TermsOfService: React.FC = () => {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-foreground">Subscriptions and billing</h2>
+        <h2 className="text-base font-semibold text-foreground">
+          {t("legal.sections.subscriptionsAndBilling")}
+        </h2>
         <p className="text-muted-foreground">
           We may offer free and paid plans. Paid subscriptions are billed through Stripe on the
           terms shown at checkout. Unless required by law, fees are generally non-refundable. You
@@ -61,7 +67,9 @@ export const TermsOfService: React.FC = () => {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-foreground">Acceptable use</h2>
+        <h2 className="text-base font-semibold text-foreground">
+          {t("legal.sections.acceptableUse")}
+        </h2>
         <p className="text-muted-foreground">You agree not to:</p>
         <ul className="list-disc space-y-2 pl-5 text-muted-foreground">
           <li>Violate law or others&apos; rights, including intellectual property and privacy.</li>
@@ -78,7 +86,9 @@ export const TermsOfService: React.FC = () => {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-foreground">Your content</h2>
+        <h2 className="text-base font-semibold text-foreground">
+          {t("legal.sections.yourContent")}
+        </h2>
         <p className="text-muted-foreground">
           You keep ownership of content you submit. You give us permission to host, process, and
           display it as needed to run the Service (including sending portions to subprocessors
@@ -88,7 +98,9 @@ export const TermsOfService: React.FC = () => {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-foreground">AI-generated output</h2>
+        <h2 className="text-base font-semibold text-foreground">
+          {t("legal.sections.aiGeneratedOutput")}
+        </h2>
         <p className="text-muted-foreground">
           Outputs may be wrong, incomplete, or outdated. They are informational aids, not
           professional advice. You are responsible for how you use them, including verifying
@@ -97,7 +109,7 @@ export const TermsOfService: React.FC = () => {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-foreground">Our rights</h2>
+        <h2 className="text-base font-semibold text-foreground">{t("legal.sections.ourRights")}</h2>
         <p className="text-muted-foreground">
           The Service, its software, and our branding are owned by us or our licensors. Do not copy
           or misuse them except as allowed by these Terms or law.
@@ -105,7 +117,9 @@ export const TermsOfService: React.FC = () => {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-foreground">Disclaimers</h2>
+        <h2 className="text-base font-semibold text-foreground">
+          {t("legal.sections.disclaimers")}
+        </h2>
         <p className="text-muted-foreground">
           THE SERVICE IS PROVIDED &quot;AS IS&quot; WITHOUT WARRANTIES OF ANY KIND, TO THE MAXIMUM
           EXTENT PERMITTED BY LAW. We do not guarantee uninterrupted or error-free operation. We do
@@ -114,7 +128,9 @@ export const TermsOfService: React.FC = () => {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-foreground">Limitation of liability</h2>
+        <h2 className="text-base font-semibold text-foreground">
+          {t("legal.sections.limitationOfLiability")}
+        </h2>
         <p className="text-muted-foreground">
           To the maximum extent permitted by law, we are not liable for indirect, incidental,
           special, consequential, or punitive damages, or for loss of data, profits, or goodwill.
@@ -125,7 +141,9 @@ export const TermsOfService: React.FC = () => {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-foreground">Termination</h2>
+        <h2 className="text-base font-semibold text-foreground">
+          {t("legal.sections.termination")}
+        </h2>
         <p className="text-muted-foreground">
           You may stop using the Service at any time. We may suspend or terminate access for
           violations, risk, legal requirements, or prolonged inactivity, with or without notice
@@ -135,7 +153,9 @@ export const TermsOfService: React.FC = () => {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-foreground">Governing law and disputes</h2>
+        <h2 className="text-base font-semibold text-foreground">
+          {t("legal.sections.governingLawAndDisputes")}
+        </h2>
         <p className="text-muted-foreground">
           SolomindLM is operated from Canada. These Terms are governed by the laws of Canada and the
           laws of the province or territory in which we operate, without regard to conflict-of-law
@@ -148,7 +168,7 @@ export const TermsOfService: React.FC = () => {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-foreground">Indemnity</h2>
+        <h2 className="text-base font-semibold text-foreground">{t("legal.sections.indemnity")}</h2>
         <p className="text-muted-foreground">
           You will defend and indemnify us and our affiliates, officers, and agents against
           third-party claims arising from your use of the Service, your content, or your breach of
@@ -157,7 +177,7 @@ export const TermsOfService: React.FC = () => {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-foreground">General</h2>
+        <h2 className="text-base font-semibold text-foreground">{t("legal.sections.general")}</h2>
         <ul className="list-disc space-y-2 pl-5 text-muted-foreground">
           <li>These Terms and the Privacy Policy are the entire agreement on this subject.</li>
           <li>If a provision is unenforceable, the rest remains in effect.</li>
@@ -166,7 +186,7 @@ export const TermsOfService: React.FC = () => {
       </section>
 
       <section className="space-y-3 border-t border-border pt-10">
-        <h2 className="text-base font-semibold text-foreground">Contact</h2>
+        <h2 className="text-base font-semibold text-foreground">{t("legal.sections.contact")}</h2>
         <p className="text-muted-foreground">
           Questions about these Terms:{" "}
           <a

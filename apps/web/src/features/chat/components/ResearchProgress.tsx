@@ -1,13 +1,14 @@
 import { BookOpen, Globe, Loader2, PenTool, Sparkles } from "lucide-react";
 import React from "react";
+import { useTranslation } from "react-i18next";
 
-const PHASE_CONFIG: Record<string, { label: string; icon: React.ElementType }> = {
-  planning: { label: "Planning research...", icon: Sparkles },
-  retrieving_notebook: { label: "Searching notebook sources...", icon: BookOpen },
-  retrieving_web: { label: "Searching the web...", icon: Globe },
-  synthesizing: { label: "Synthesizing findings...", icon: Sparkles },
-  gap_analysis: { label: "Analyzing evidence gaps...", icon: Sparkles },
-  writing: { label: "Writing research report...", icon: PenTool },
+const PHASE_ICONS: Record<string, React.ElementType> = {
+  planning: Sparkles,
+  retrieving_notebook: BookOpen,
+  retrieving_web: Globe,
+  synthesizing: Sparkles,
+  gap_analysis: Sparkles,
+  writing: PenTool,
 };
 
 interface ResearchProgressProps {
@@ -22,18 +23,24 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
   sourcesFound,
   iteration,
 }) => {
-  const config = PHASE_CONFIG[phase] ?? { label: phase, icon: Loader2 };
-  const Icon = config.icon;
+  const { t } = useTranslation();
+  const Icon = PHASE_ICONS[phase] ?? Loader2;
 
   return (
     <div className="flex items-center gap-3 px-3 py-2 bg-muted/40 rounded-lg text-sm">
       <Icon className="w-4 h-4 text-primary animate-pulse" />
-      <span className="text-foreground font-medium">{config.label}</span>
+      <span className="text-foreground font-medium">
+        {t(`researchProgress.${phase}`, { defaultValue: phase })}
+      </span>
       {sourcesFound !== undefined && (
-        <span className="text-muted-foreground text-xs">{sourcesFound} sources found</span>
+        <span className="text-muted-foreground text-xs">
+          {t("researchProgress.sourcesFound", { count: sourcesFound })}
+        </span>
       )}
       {iteration !== undefined && iteration > 0 && (
-        <span className="text-muted-foreground text-xs">Pass {iteration + 1}</span>
+        <span className="text-muted-foreground text-xs">
+          {t("researchProgress.pass", { n: iteration + 1 })}
+        </span>
       )}
     </div>
   );

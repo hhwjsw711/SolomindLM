@@ -1,5 +1,6 @@
 import { Loader2 } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { MiniAudioPlayer } from "@/features/audio/components/MiniAudioPlayer";
 import { useAudioPlayerContext } from "@/features/audio/useAudioPlayer";
 import {
@@ -60,6 +61,7 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
   sources = [],
   notebookId,
 }) => {
+  const { t } = useTranslation();
   const { notes, onUpdateNote, onUpdateNoteFull, onDeleteNote, onAddNote, onSaveReportContent } =
     useStudioContext();
 
@@ -336,7 +338,7 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
             isLoadingFullNote || !activeNote ? (
               <div className="flex h-full items-center justify-center text-muted-foreground">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden />
-                <span className="sr-only">Loading note…</span>
+                <span className="sr-only">{t("protectedRoute.loading")}</span>
               </div>
             ) : (
               <ActiveNoteView

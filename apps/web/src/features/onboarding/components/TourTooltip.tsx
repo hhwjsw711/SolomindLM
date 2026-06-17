@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import { useServiceErrorToast } from "@/shared/hooks/useServiceErrorToast";
 import { useOnboarding } from "../OnboardingContext";
 import { findStep, STEP_IDS, type StepDefinition, TOTAL_STEPS } from "../steps";
@@ -103,6 +104,7 @@ function logOnboardingError(action: string, error: unknown) {
 }
 
 export const TourTooltip: React.FC = () => {
+  const { t } = useTranslation();
   const { tourStatus, currentStepId, skip } = useOnboarding();
   const { showError } = useServiceErrorToast();
   const [rect, setRect] = useState<Rect | null>(null);
@@ -215,7 +217,7 @@ export const TourTooltip: React.FC = () => {
             onClick={handleSkip}
             className="underline hover:text-foreground transition-colors"
           >
-            Skip tour
+            {t("tour.skipTour")}
           </button>
         </div>
       </div>

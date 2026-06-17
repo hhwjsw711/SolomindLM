@@ -1,7 +1,9 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { useSelectionTooltip } from "../contexts/SelectionQuoteContext";
 
 export const SelectionTooltip: React.FC = () => {
+  const { t } = useTranslation();
   const { tooltip, hideTooltip, handleAddToChat } = useSelectionTooltip();
 
   if (!tooltip.visible) return null;
@@ -21,7 +23,7 @@ export const SelectionTooltip: React.FC = () => {
         onClick={handleAddToChat}
         className="inline-flex items-center justify-center rounded-lg bg-foreground px-4 py-2 font-serif text-[13px] font-normal tracking-normal text-background shadow-lg ring-1 ring-black/4 outline-none transition-[transform,filter] hover:brightness-[1.05] active:scale-[0.98] dark:ring-white/8 dark:hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
-        <span className="select-none whitespace-nowrap">Add to chat</span>
+        <span className="select-none whitespace-nowrap">{t("selectionTooltip.addToChat")}</span>
       </button>
       <div
         className="absolute left-1/2 top-full -translate-x-1/2 size-0 border-x-[7px] border-x-transparent border-t-[7px] border-t-foreground"

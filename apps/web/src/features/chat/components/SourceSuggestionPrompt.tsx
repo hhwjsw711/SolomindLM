@@ -1,5 +1,6 @@
 import { ExternalLink, Globe, GraduationCap, Newspaper, Plus, TrendingUp, X } from "lucide-react";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Favicon } from "@/shared/components/Favicon";
 
 export interface ExternalSource {
@@ -28,6 +29,7 @@ export const SourceSuggestionPrompt: React.FC<SourceSuggestionPromptProps> = ({
   onAddSelected,
   onDismiss,
 }) => {
+  const { t } = useTranslation();
   const listFingerprint = useMemo(
     () => JSON.stringify(sources.map((s) => [s.url, s.title, s.snippet])),
     [sources]
@@ -69,11 +71,9 @@ export const SourceSuggestionPrompt: React.FC<SourceSuggestionPromptProps> = ({
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0">
           <h4 className="font-semibold text-sm text-primary">
-            Found {sources.length} external source{sources.length === 1 ? "" : "s"}
+            {t("sourceSuggestion.foundSources", { count: sources.length })}
           </h4>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Select the ones to add to this notebook.
-          </p>
+          <p className="text-xs text-muted-foreground mt-0.5">{t("sourceSuggestion.selectHint")}</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <button
@@ -81,13 +81,13 @@ export const SourceSuggestionPrompt: React.FC<SourceSuggestionPromptProps> = ({
             onClick={allSelected ? deselectAll : selectAll}
             className="text-xs font-medium text-primary hover:underline"
           >
-            {allSelected ? "Deselect all" : "Select all"}
+            {allSelected ? t("sourceSuggestion.deselectAll") : t("sourceSuggestion.selectAll")}
           </button>
           <button
             type="button"
             onClick={onDismiss}
             className="p-1.5 rounded-lg hover:bg-muted/80 transition-colors"
-            title="Dismiss"
+            title={t("sourceSuggestion.dismiss")}
           >
             <X className="w-4 h-4" />
           </button>
@@ -108,7 +108,7 @@ export const SourceSuggestionPrompt: React.FC<SourceSuggestionPromptProps> = ({
                 className="mt-1 h-3.5 w-3.5 shrink-0 rounded border-border text-primary focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 focus-visible:ring-offset-background cursor-pointer"
                 checked={isChecked}
                 onChange={() => toggleIndex(index)}
-                aria-label={`Include ${source.title}`}
+                aria-label={t("sourceSuggestion.includeSource", { title: source.title })}
               />
               {source.sourceType === "web" ? (
                 <Favicon url={source.url} size={16} className="mt-0.5" />
@@ -146,14 +146,16 @@ export const SourceSuggestionPrompt: React.FC<SourceSuggestionPromptProps> = ({
           className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:pointer-events-none"
         >
           <Plus className="w-4 h-4" />
-          {selected.size === 0 ? "Add to notebook" : `Add ${selected.size} to notebook`}
+          {selected.size === 0
+            ? t("sourceSuggestion.addToNotebook")
+            : t("sourceSuggestion.addCountToNotebook", { count: selected.size })}
         </button>
         <button
           type="button"
           onClick={onDismiss}
           className="px-4 py-2 border border-border rounded-lg text-sm font-medium hover:bg-muted/80 transition-colors"
         >
-          Skip
+          {t("sourceSuggestion.skip")}
         </button>
       </div>
     </div>

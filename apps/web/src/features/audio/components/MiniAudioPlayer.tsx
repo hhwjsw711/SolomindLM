@@ -1,5 +1,6 @@
 import { ChevronUp, Download, Pause, Play, RotateCcw, RotateCw, X } from "lucide-react";
 import React, { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { formatAudioTime, useAudioPlayer } from "../hooks/useAudioPlayer";
 import { useResolvedAudioPlaybackUrl } from "../hooks/useResolvedAudioPlaybackUrl";
 
@@ -17,12 +18,13 @@ interface MiniAudioPlayerProps {
 export const MiniAudioPlayer: React.FC<MiniAudioPlayerProps> = ({
   audioUrl,
   audioOverviewId,
-  title = "Audio Overview",
+  title: _title,
   transcript: _transcript,
   isVisible,
   onClose,
   onExpand,
 }) => {
+  const { t } = useTranslation();
   const resolvedPlayback = useResolvedAudioPlaybackUrl(audioUrl, audioOverviewId);
   const audioSource = typeof resolvedPlayback === "string" ? resolvedPlayback : null;
   const {
@@ -42,6 +44,7 @@ export const MiniAudioPlayer: React.FC<MiniAudioPlayerProps> = ({
   const isResolving = resolvedPlayback === undefined;
   const isUnavailable = resolvedPlayback === null;
   const canPlay = !!audioSource && !error;
+  const title = _title || t("audio.audioOverview");
 
   /** Autoplay once per visible session / source — must not depend on `isPlaying` or pause immediately resumes. */
   const lastAutoplaySourceRef = useRef<string | null>(null);
@@ -66,14 +69,14 @@ export const MiniAudioPlayer: React.FC<MiniAudioPlayerProps> = ({
         <div className="flex items-center justify-center py-4">
           <div className="text-center">
             <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-primary mb-1"></div>
-            <p className="text-xs text-muted-foreground">Loading audio...</p>
+            <p className="text-xs text-muted-foreground">{t("audio.loadingAudio")}</p>
           </div>
         </div>
       )}
 
       {isUnavailable && (
         <div className="px-4 py-2 text-center text-xs text-destructive">
-          Could not resolve audio URL. Try regenerating the audio overview or check your connection.
+          {t("audio.couldNotResolveUrlExtended")}
         </div>
       )}
 
@@ -98,7 +101,7 @@ export const MiniAudioPlayer: React.FC<MiniAudioPlayerProps> = ({
               className={`p-2 hover:bg-secondary rounded-lg transition-colors text-muted-foreground hover:text-foreground ${
                 audioSource ? "" : "pointer-events-none opacity-50"
               }`}
-              title="Download audio"
+              title={t("audio.downloadAudio")}
             >
               <Download className="w-4 h-4" />
             </a>
@@ -107,7 +110,7 @@ export const MiniAudioPlayer: React.FC<MiniAudioPlayerProps> = ({
             <button
               onClick={onExpand}
               className="p-2 hover:bg-secondary rounded-lg transition-colors text-muted-foreground hover:text-foreground"
-              title="Expand player"
+              title={t("audio.expandPlayer")}
             >
               <ChevronUp className="w-4 h-4" />
             </button>
@@ -116,7 +119,7 @@ export const MiniAudioPlayer: React.FC<MiniAudioPlayerProps> = ({
             <button
               onClick={onClose}
               className="p-2 hover:bg-secondary rounded-lg transition-colors text-muted-foreground hover:text-foreground"
-              title="Close player"
+              title={t("audio.closePlayer")}
             >
               <X className="w-4 h-4" />
             </button>
@@ -149,8 +152,8 @@ export const MiniAudioPlayer: React.FC<MiniAudioPlayerProps> = ({
             onClick={() => skipBy(-5)}
             disabled={!canSeek}
             className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-xl transition-colors shrink-0 disabled:cursor-not-allowed disabled:opacity-50"
-            aria-label="Backward 5 seconds"
-            title="Backward 5s"
+            aria-label={t("audio.backward5sAria")}
+            title={t("audio.backward5s")}
           >
             <RotateCcw className="w-4 h-4" />
           </button>
@@ -160,7 +163,7 @@ export const MiniAudioPlayer: React.FC<MiniAudioPlayerProps> = ({
             onClick={togglePlay}
             disabled={!canPlay || isResolving}
             className="p-2 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 transition-colors shrink-0 disabled:cursor-not-allowed disabled:opacity-50"
-            aria-label={isPlaying ? "Pause" : "Play"}
+            aria-label={isPlaying ? t("audio.pause") : t("audio.play")}
           >
             {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
           </button>
@@ -170,8 +173,8 @@ export const MiniAudioPlayer: React.FC<MiniAudioPlayerProps> = ({
             onClick={() => skipBy(5)}
             disabled={!canSeek}
             className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-xl transition-colors shrink-0 disabled:cursor-not-allowed disabled:opacity-50"
-            aria-label="Forward 5 seconds"
-            title="Forward 5s"
+            aria-label={t("audio.forward5sAria")}
+            title={t("audio.forward5s")}
           >
             <RotateCw className="w-4 h-4" />
           </button>
@@ -181,7 +184,7 @@ export const MiniAudioPlayer: React.FC<MiniAudioPlayerProps> = ({
             onClick={cyclePlaybackRate}
             disabled={!canPlay}
             className="px-2.5 py-1 text-xs font-medium bg-secondary hover:bg-secondary/80 rounded-lg transition-colors text-muted-foreground hover:text-foreground shrink-0 disabled:cursor-not-allowed disabled:opacity-50"
-            title="Change playback speed"
+            title={t("audio.changePlaybackSpeed")}
           >
             {playbackRate}x
           </button>

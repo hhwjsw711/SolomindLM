@@ -1,8 +1,10 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { LegalPageShell } from "./LegalPageShell";
 
 export const PrivacyPolicy: React.FC = () => {
+  const { t } = useTranslation();
   return (
     <LegalPageShell title="Privacy Policy" canonical="/privacy">
       <section className="space-y-3">
@@ -13,17 +15,21 @@ export const PrivacyPolicy: React.FC = () => {
             to="/terms"
             className="text-foreground underline underline-offset-2 hover:no-underline"
           >
-            Terms of Service
+            {t("legal.termsOfService")}
           </Link>
           . If you do not agree, please do not use the Service.
         </p>
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-foreground">Information we collect</h2>
+        <h2 className="text-base font-semibold text-foreground">
+          {t("legal.sections.informationWeCollect")}
+        </h2>
 
         <div className="space-y-2">
-          <h3 className="text-sm font-medium text-foreground">Account and authentication</h3>
+          <h3 className="text-sm font-medium text-foreground">
+            {t("legal.sections.accountAndAuthentication")}
+          </h3>
           <ul className="list-disc space-y-2 pl-5 text-muted-foreground">
             <li>
               Email address and, if you use Google sign-in, basic profile details provided by
@@ -38,7 +44,9 @@ export const PrivacyPolicy: React.FC = () => {
         </div>
 
         <div className="space-y-2">
-          <h3 className="text-sm font-medium text-foreground">Content you provide</h3>
+          <h3 className="text-sm font-medium text-foreground">
+            {t("legal.sections.contentYouProvide")}
+          </h3>
           <ul className="list-disc space-y-2 pl-5 text-muted-foreground">
             <li>
               Files and URLs you add to notebooks, including text extracted or imported from those
@@ -67,7 +75,9 @@ export const PrivacyPolicy: React.FC = () => {
         </div>
 
         <div className="space-y-2">
-          <h3 className="text-sm font-medium text-foreground">Usage, device, and billing</h3>
+          <h3 className="text-sm font-medium text-foreground">
+            {t("legal.sections.usageDeviceAndBilling")}
+          </h3>
           <ul className="list-disc space-y-2 pl-5 text-muted-foreground">
             <li>
               Product usage signals needed to operate features, enforce limits, and improve
@@ -86,7 +96,9 @@ export const PrivacyPolicy: React.FC = () => {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-foreground">How we use information</h2>
+        <h2 className="text-base font-semibold text-foreground">
+          {t("legal.sections.howWeUseInformation")}
+        </h2>
         <ul className="list-disc space-y-2 pl-5 text-muted-foreground">
           <li>Provide, secure, and troubleshoot the Service.</li>
           <li>Process and retrieve your sources for search, chat, and generation features.</li>
@@ -100,7 +112,9 @@ export const PrivacyPolicy: React.FC = () => {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-foreground">Subprocessors and integrations</h2>
+        <h2 className="text-base font-semibold text-foreground">
+          {t("legal.sections.subprocessorsAndIntegrations")}
+        </h2>
         <p className="text-muted-foreground">
           We use service providers that process data on our behalf. Their own policies also apply.
           Examples tied to the current product implementation include:
@@ -162,7 +176,7 @@ export const PrivacyPolicy: React.FC = () => {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-foreground">Security</h2>
+        <h2 className="text-base font-semibold text-foreground">{t("legal.sections.security")}</h2>
         <p className="text-muted-foreground">
           We use HTTPS in the browser, access controls tied to your account, and provider-side
           protections appropriate to a hosted SaaS product. No method of transmission or storage is
@@ -171,7 +185,9 @@ export const PrivacyPolicy: React.FC = () => {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-foreground">Retention and your choices</h2>
+        <h2 className="text-base font-semibold text-foreground">
+          {t("legal.sections.retentionAndYourChoices")}
+        </h2>
         <p className="text-muted-foreground">
           We keep information while your account is active and for a limited period afterward for
           backups, legal compliance, and dispute resolution. You can delete many items inside the
@@ -187,7 +203,7 @@ export const PrivacyPolicy: React.FC = () => {
 
       <section className="space-y-3">
         <h2 className="text-base font-semibold text-foreground">
-          Cookies, local storage, and analytics
+          {t("legal.sections.cookiesLocalStorageAndAnalytics")}
         </h2>
         <p className="text-muted-foreground">
           We use cookies and similar technologies needed for authentication, preferences (such as
@@ -198,7 +214,7 @@ export const PrivacyPolicy: React.FC = () => {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-foreground">Children</h2>
+        <h2 className="text-base font-semibold text-foreground">{t("legal.sections.children")}</h2>
         <p className="text-muted-foreground">
           The Service is not directed to children under 13, and we do not knowingly collect their
           personal information. If you believe we have, contact us and we will take appropriate
@@ -207,7 +223,9 @@ export const PrivacyPolicy: React.FC = () => {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-foreground">Canadian privacy law</h2>
+        <h2 className="text-base font-semibold text-foreground">
+          {t("legal.sections.canadianPrivacyLaw")}
+        </h2>
         <p className="text-muted-foreground">
           If you are in Canada, our collection, use, and disclosure of your personal information is
           subject to applicable Canadian privacy legislation, including the federal{" "}
@@ -220,7 +238,9 @@ export const PrivacyPolicy: React.FC = () => {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-foreground">International transfers</h2>
+        <h2 className="text-base font-semibold text-foreground">
+          {t("legal.sections.internationalTransfers")}
+        </h2>
         <p className="text-muted-foreground">
           We are based in Canada, but we use service providers (for example hosting, AI, and
           payments) that may process or store data in Canada, the United States, and other
@@ -231,7 +251,7 @@ export const PrivacyPolicy: React.FC = () => {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-foreground">Changes</h2>
+        <h2 className="text-base font-semibold text-foreground">{t("legal.sections.changes")}</h2>
         <p className="text-muted-foreground">
           We may update this Policy from time to time. We will post the new version on this page and
           adjust the &quot;Last updated&quot; date. For material changes, we may also notify you by
@@ -240,7 +260,7 @@ export const PrivacyPolicy: React.FC = () => {
       </section>
 
       <section className="space-y-3 border-t border-border pt-10">
-        <h2 className="text-base font-semibold text-foreground">Contact</h2>
+        <h2 className="text-base font-semibold text-foreground">{t("legal.sections.contact")}</h2>
         <p className="text-muted-foreground">
           Privacy questions or requests:{" "}
           <a

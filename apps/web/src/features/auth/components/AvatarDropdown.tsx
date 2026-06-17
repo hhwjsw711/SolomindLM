@@ -1,5 +1,6 @@
 import { ListChecks, LogIn, LogOut, Moon, Sun } from "lucide-react";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import type { User } from "../useAuth";
 import { LanguageSelector } from "./LanguageSelector";
 
@@ -24,11 +25,13 @@ export const AvatarDropdown: React.FC<AvatarDropdownProps> = ({
   onShowChecklist,
   showChecklistDismissed,
 }) => {
+  const { t } = useTranslation();
   const handleLogout = async () => {
     await onLogout();
   };
 
-  const displayLabel = user?.email ?? user?.name ?? (isAuthenticated ? "Signed in" : null);
+  const displayLabel =
+    user?.email ?? user?.name ?? (isAuthenticated ? t("dropdown.signedIn") : null);
 
   return (
     <>
@@ -54,7 +57,7 @@ export const AvatarDropdown: React.FC<AvatarDropdownProps> = ({
           ) : (
             <Moon className="w-4 h-4 text-muted-foreground shrink-0" />
           )}
-          <span>{theme === "light" ? "Dark mode" : "Light mode"}</span>
+          <span>{theme === "light" ? t("dropdown.darkMode") : t("dropdown.lightMode")}</span>
         </button>
 
         {/* Language Selector */}
@@ -67,7 +70,7 @@ export const AvatarDropdown: React.FC<AvatarDropdownProps> = ({
             role="menuitem"
           >
             <ListChecks className="w-4 h-4 text-muted-foreground shrink-0" />
-            <span>Show getting-started checklist</span>
+            <span>{t("dropdown.showChecklist")}</span>
           </button>
         )}
 
@@ -82,7 +85,7 @@ export const AvatarDropdown: React.FC<AvatarDropdownProps> = ({
           ) : (
             <LogIn className="w-4 h-4 text-muted-foreground shrink-0" />
           )}
-          <span>{isAuthenticated ? "Logout" : "Login"}</span>
+          <span>{isAuthenticated ? t("dropdown.logout") : t("dropdown.login")}</span>
         </button>
       </div>
     </>

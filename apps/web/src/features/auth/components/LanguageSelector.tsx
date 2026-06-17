@@ -1,5 +1,6 @@
 import { Check, ChevronRight, Globe } from "lucide-react";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { SUPPORTED_LANGUAGES } from "../constants/languages";
 import { useOutputLanguage } from "../hooks/useOutputLanguage";
 
@@ -8,6 +9,7 @@ interface LanguageSelectorProps {
 }
 
 export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ isAuthenticated }) => {
+  const { t } = useTranslation();
   const { language, isLoading, setLanguage } = useOutputLanguage(isAuthenticated);
   const [isOpen, setIsOpen] = React.useState(false);
 
@@ -31,7 +33,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ isAuthentica
         aria-haspopup="listbox"
       >
         <Globe className="w-4 h-4 text-muted-foreground shrink-0" />
-        <span className="text-foreground">Output language</span>
+        <span className="text-foreground">{t("dropdown.outputLanguage")}</span>
         <ChevronRight
           className={`ml-auto w-4 h-4 text-muted-foreground shrink-0 transition-transform ${isOpen ? "rotate-90" : ""}`}
         />
@@ -44,7 +46,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ isAuthentica
           onMouseDown={(e) => e.stopPropagation()}
           onPointerDown={(e) => e.stopPropagation()}
           role="listbox"
-          aria-label="Output language options"
+          aria-label={t("dropdown.outputLanguageOptions")}
         >
           {SUPPORTED_LANGUAGES.map((supportedLanguage) => {
             const isSelected = supportedLanguage.code === language;

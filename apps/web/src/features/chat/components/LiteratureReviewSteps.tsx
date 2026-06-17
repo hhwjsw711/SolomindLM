@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import React, { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   canOpenRankedPapersDrilldown,
   canOpenScreeningDrilldown,
@@ -58,6 +59,7 @@ export const LiteratureReviewSteps: React.FC<LiteratureReviewStepsProps> = ({
   onOpenRankedPapers,
   onOpenScreeningDecisions,
 }) => {
+  const { t } = useTranslation();
   const [expandedSteps, setExpandedSteps] = useState<Set<number>>(() => {
     const initial = new Set<number>();
     steps.forEach((_, idx) => {
@@ -104,7 +106,7 @@ export const LiteratureReviewSteps: React.FC<LiteratureReviewStepsProps> = ({
     return (
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-        <span>Starting research...</span>
+        <span>{t("literatureReview.startingResearch")}</span>
       </div>
     );
   }

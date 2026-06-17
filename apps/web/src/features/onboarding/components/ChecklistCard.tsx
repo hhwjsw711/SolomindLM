@@ -1,5 +1,6 @@
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
 import { useServiceErrorToast } from "@/shared/hooks/useServiceErrorToast";
 import {
@@ -11,20 +12,14 @@ import { ChecklistItem } from "./ChecklistItem";
 
 const COLLAPSED_KEY = "onboardingChecklistCollapsed";
 
-const ITEM_LABELS: Record<string, string> = {
-  createNotebook: "Create your first notebook",
-  addSource: "Add a source",
-  askQuestion: "Ask a question in chat",
-  generateArtifact: "Generate your first artifact",
-};
-
-const ORDER = ["createNotebook", "addSource", "askQuestion", "generateArtifact"] as const;
-
 function logOnboardingError(action: string, error: unknown) {
   console.error(`[onboarding] ${action}`, error);
 }
 
+const ORDER = ["createNotebook", "addSource", "askQuestion", "generateArtifact"] as const;
+
 export const ChecklistCard: React.FC = () => {
+  const { t } = useTranslation();
   const location = useLocation();
   const state = useOnboardingState();
   const progress = useChecklistProgress();
@@ -71,12 +66,12 @@ export const ChecklistCard: React.FC = () => {
     <div className="fixed bottom-4 right-4 z-[45] w-72 rounded-lg border border-border bg-popover text-popover-foreground shadow-lg">
       <div className="flex items-center justify-between p-3 border-b border-border">
         <span className="text-sm font-semibold">
-          Get started — {completed} of {ORDER.length}
+          {t("checklist.title", { completed, total: ORDER.length })}
         </span>
         <div className="flex items-center gap-1">
           <button
             type="button"
-            aria-label={collapsed ? "Expand" : "Collapse"}
+            aria-label={collapsed ? t("checklist.expand") : t("checklist.collapse")}
             onClick={() => setCollapsed((c) => !c)}
             className="p-1 hover:bg-accent rounded"
           >
@@ -84,7 +79,7 @@ export const ChecklistCard: React.FC = () => {
           </button>
           <button
             type="button"
-            aria-label="Dismiss"
+            aria-label={t("checklist.dismiss")}
             onClick={handleDismiss}
             className="p-1 hover:bg-accent rounded"
           >
@@ -95,7 +90,7 @@ export const ChecklistCard: React.FC = () => {
       {!collapsed && (
         <ul className="p-3">
           {ORDER.map((id) => (
-            <ChecklistItem key={id} label={ITEM_LABELS[id]} done={progress[id]} />
+            <ChecklistItem key={id} label={t(`checklist.items.${id}`)} done={progress[id]} />
           ))}
         </ul>
       )}

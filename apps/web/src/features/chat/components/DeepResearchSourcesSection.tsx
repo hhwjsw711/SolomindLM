@@ -11,6 +11,7 @@ import {
   Plus,
 } from "lucide-react";
 import React, { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Favicon } from "@/shared/components/Favicon";
 import { useAddExternalSources } from "../../sources/services/documentsApi";
 import { useResearchRunEvidence } from "../services/researchApi";
@@ -25,11 +26,6 @@ const SOURCE_TYPE_ICON: Record<string, React.ElementType> = {
   academic: GraduationCap,
   news: Newspaper,
 };
-
-const STATUS_LABEL = {
-  usedInAnswer: "Used in answer",
-  searchedOnly: "Searched only",
-} as const;
 
 const STATUS_CLASS = {
   usedInAnswer: "border-primary/30 bg-primary/10 text-primary",
@@ -51,6 +47,7 @@ export const DeepResearchSourcesSection: React.FC<DeepResearchSourcesSectionProp
   onOpenNotebookSource,
   notebookDocumentIds,
 }) => {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [addingKey, setAddingKey] = useState<string | null>(null);
 
@@ -69,7 +66,7 @@ export const DeepResearchSourcesSection: React.FC<DeepResearchSourcesSectionProp
     return (
       <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
         <Loader2 className="size-4 animate-spin" />
-        Loading sources…
+        {t("deepResearchSources.loadingSources")}
       </div>
     );
   }
@@ -111,9 +108,11 @@ export const DeepResearchSourcesSection: React.FC<DeepResearchSourcesSectionProp
         ) : (
           <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
         )}
-        <span className="text-sm font-semibold text-foreground">Sources searched</span>
+        <span className="text-sm font-semibold text-foreground">
+          {t("deepResearchSources.sourcesSearched")}
+        </span>
         <span className="text-xs text-muted-foreground">
-          {sources.length} total · {usedCount} used in answer
+          {t("deepResearchSources.totalUsed", { total: sources.length, used: usedCount })}
         </span>
       </button>
 
@@ -148,7 +147,7 @@ export const DeepResearchSourcesSection: React.FC<DeepResearchSourcesSectionProp
                     <span
                       className={`inline-flex rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${STATUS_CLASS[source.status]}`}
                     >
-                      {STATUS_LABEL[source.status]}
+                      {t(`deepResearchSources.${source.status}`)}
                     </span>
                     <span className="rounded-md border border-border/50 bg-background/70 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">
                       {source.sourceType}
@@ -172,7 +171,7 @@ export const DeepResearchSourcesSection: React.FC<DeepResearchSourcesSectionProp
                           className="inline-flex items-center gap-1 rounded-md border border-border/60 px-2 py-1 text-xs font-medium text-foreground transition-colors hover:border-primary/30 hover:text-primary"
                         >
                           <ExternalLink className="size-3" />
-                          Open
+                          {t("deepResearchSources.open")}
                         </a>
                         {notebookId ? (
                           <button
@@ -186,7 +185,7 @@ export const DeepResearchSourcesSection: React.FC<DeepResearchSourcesSectionProp
                             ) : (
                               <Plus className="size-3" />
                             )}
-                            Add to notebook
+                            {t("deepResearchSources.addToNotebook")}
                           </button>
                         ) : null}
                       </>
@@ -198,7 +197,7 @@ export const DeepResearchSourcesSection: React.FC<DeepResearchSourcesSectionProp
                         className="inline-flex items-center gap-1 rounded-md border border-border/60 px-2 py-1 text-xs font-medium text-foreground transition-colors hover:border-primary/30 hover:text-primary"
                       >
                         <BookOpen className="size-3" />
-                        Open in sources
+                        {t("deepResearchSources.openInSources")}
                       </button>
                     ) : null}
                   </div>

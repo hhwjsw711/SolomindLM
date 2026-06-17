@@ -1,5 +1,6 @@
 import { ArrowLeft } from "lucide-react";
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { SEOMeta } from "@/shared/seo/SEOMeta";
 import { LEGAL_LAST_UPDATED } from "../legalMeta";
@@ -11,10 +12,11 @@ type LegalPageShellProps = {
 };
 
 export function LegalPageShell({ title, canonical, children }: LegalPageShellProps) {
+  const { t } = useTranslation();
   const other =
     canonical === "/terms"
-      ? { href: "/privacy", label: "Privacy Policy" }
-      : { href: "/terms", label: "Terms of Service" };
+      ? { href: "/privacy", label: t("legal.privacyPolicy") }
+      : { href: "/terms", label: t("legal.termsOfService") };
 
   return (
     <>
@@ -27,7 +29,7 @@ export function LegalPageShell({ title, canonical, children }: LegalPageShellPro
               className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
               <ArrowLeft className="size-4 shrink-0" aria-hidden />
-              Home
+              {t("legal.home")}
             </Link>
             <Link
               to={other.href}
@@ -40,10 +42,12 @@ export function LegalPageShell({ title, canonical, children }: LegalPageShellPro
 
         <main className="mx-auto max-w-2xl px-5 py-10 md:py-14">
           <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Legal
+            {t("legal.legal")}
           </p>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">{title}</h1>
-          <p className="mt-3 text-sm text-muted-foreground">Last updated: {LEGAL_LAST_UPDATED}</p>
+          <p className="mt-3 text-sm text-muted-foreground">
+            {t("legal.lastUpdated")} {LEGAL_LAST_UPDATED}
+          </p>
           <div className="mt-10 space-y-10 text-sm leading-relaxed md:text-[15px]">{children}</div>
         </main>
       </div>

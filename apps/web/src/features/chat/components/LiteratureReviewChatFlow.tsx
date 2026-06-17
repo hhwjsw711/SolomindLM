@@ -1,5 +1,6 @@
 import { ArrowRight, FileSpreadsheet, FileText, X } from "lucide-react";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { buildLiteratureReportChatPreview } from "../utils/literatureReportPreview";
 import { LiteratureReviewSteps } from "./LiteratureReviewSteps";
 import type { ResearchStep } from "./researchStepTypes";
@@ -54,6 +55,7 @@ export const LiteratureReviewChatFlow: React.FC<LiteratureReviewChatFlowProps> =
   onOpenReport,
   onDismiss,
 }) => {
+  const { t } = useTranslation();
   const isComplete = sessionStatus === "completed";
   const isFailed = sessionStatus === "failed";
   const reportPreview = report ? buildLiteratureReportChatPreview(report) : null;
@@ -81,7 +83,7 @@ export const LiteratureReviewChatFlow: React.FC<LiteratureReviewChatFlowProps> =
                   icon={<FileSpreadsheet className="h-6 w-6 shrink-0 text-primary" />}
                   title={table.title}
                   meta={`${table.papers.length} papers · ${table.columns.filter((c) => c.isVisible).length} columns`}
-                  typeLabel="Table"
+                  typeLabel={t("literatureReview.tableType")}
                   onClick={onOpenTable}
                 />
               )}
@@ -90,7 +92,7 @@ export const LiteratureReviewChatFlow: React.FC<LiteratureReviewChatFlowProps> =
                   icon={<FileText className="h-6 w-6 shrink-0 text-primary" />}
                   title={report.title}
                   meta={`${report.sections.length} sections`}
-                  typeLabel="Document"
+                  typeLabel={t("literatureReview.documentType")}
                   onClick={onOpenReport}
                 />
               )}
@@ -101,12 +103,15 @@ export const LiteratureReviewChatFlow: React.FC<LiteratureReviewChatFlowProps> =
           {isComplete && table && (
             <div className="mt-8 text-base leading-relaxed text-foreground">
               <p>
-                I've created your literature review table with{" "}
-                <strong>{table.papers.length} papers</strong> and{" "}
-                <strong>{table.columns.filter((c) => c.isVisible).length} columns</strong>
                 {report
-                  ? ". Now I'll generate a comprehensive report summarizing the key findings across all papers..."
-                  : ". You can open the table above to review and edit the extracted data."}
+                  ? t("literatureReview.completionMessage", {
+                      papers: table.papers.length,
+                      columns: table.columns.filter((c) => c.isVisible).length,
+                    })
+                  : t("literatureReview.completionMessageNoReport", {
+                      papers: table.papers.length,
+                      columns: table.columns.filter((c) => c.isVisible).length,
+                    })}
               </p>
               {reportPreview && (
                 <p className="mt-4 text-[15px] leading-relaxed text-foreground">{reportPreview}</p>
@@ -123,7 +128,7 @@ export const LiteratureReviewChatFlow: React.FC<LiteratureReviewChatFlowProps> =
                 className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
                 <X className="h-3.5 w-3.5" />
-                Dismiss
+                {t("literatureReview.dismiss")}
               </button>
             </div>
           )}
@@ -131,9 +136,11 @@ export const LiteratureReviewChatFlow: React.FC<LiteratureReviewChatFlowProps> =
           {/* Failed state */}
           {isFailed && (
             <div className="mt-5 rounded-lg border border-destructive/20 bg-destructive/5 p-3">
-              <div className="text-sm font-medium text-destructive">Literature Review Failed</div>
+              <div className="text-sm font-medium text-destructive">
+                {t("literatureReview.failed")}
+              </div>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Something went wrong during the research process.
+                {t("literatureReview.errorMessage")}
               </p>
             </div>
           )}

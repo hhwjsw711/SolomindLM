@@ -1,6 +1,7 @@
 import { X } from "lucide-react";
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import { type AuthFormInitialMode, AuthFormPanel } from "@/features/auth/components/AuthFormPanel";
 
 interface AuthModalProps {
@@ -16,6 +17,7 @@ export function AuthModal({
   onAuthenticated,
   initialMode = "signIn",
 }: AuthModalProps) {
+  const { t } = useTranslation();
   useEffect(() => {
     if (!isOpen) return;
 
@@ -49,7 +51,7 @@ export function AuthModal({
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Sign in or create account"
+        aria-label={t("form.signIn")}
         className="relative z-10 w-full max-w-md max-h-[min(90vh,720px)] overflow-y-auto"
       >
         <button

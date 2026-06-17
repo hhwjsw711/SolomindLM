@@ -1,5 +1,6 @@
 import { Plus } from "lucide-react";
 import React, { lazy, Suspense, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Favicon } from "@/shared/components/Favicon";
 import { ReferenceChunk } from "@/shared/types/index";
 import { sanitizeMarkdown } from "@/shared/utils";
@@ -173,6 +174,7 @@ export const ReferenceTooltip: React.FC<ReferenceTooltipProps> = ({
   onOpenInSources,
   onAddToNotebook,
 }) => {
+  const { t } = useTranslation();
   const sourceHost = useMemo(() => getSourceHost(reference.sourceUrl), [reference.sourceUrl]);
 
   const sanitized = useMemo(() => {
@@ -212,7 +214,7 @@ export const ReferenceTooltip: React.FC<ReferenceTooltipProps> = ({
               }}
             >
               <p className={headerTypography}>
-                Reference {hoveredRefId}
+                {t("reference.label", { refId: hoveredRefId })}
                 {sourceHost ? ` • ${sourceHost}` : ""}
               </p>
               <p className="mt-1 text-sm font-semibold leading-snug text-foreground wrap-break-word [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2] overflow-hidden">
@@ -228,7 +230,7 @@ export const ReferenceTooltip: React.FC<ReferenceTooltipProps> = ({
               onClick={(e) => e.stopPropagation()}
             >
               <p className={headerTypography}>
-                Reference {hoveredRefId}
+                {t("reference.label", { refId: hoveredRefId })}
                 {sourceHost ? ` • ${sourceHost}` : ""}
               </p>
               <p className="mt-1 text-sm font-semibold leading-snug text-foreground wrap-break-word [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2] overflow-hidden">
@@ -237,7 +239,7 @@ export const ReferenceTooltip: React.FC<ReferenceTooltipProps> = ({
             </a>
           ) : (
             <div className="min-w-0 flex-1">
-              <p className={headerTypography}>Reference {hoveredRefId}</p>
+              <p className={headerTypography}>{t("reference.label", { refId: hoveredRefId })}</p>
               <p className="mt-1 text-sm font-semibold leading-snug text-foreground wrap-break-word [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2] overflow-hidden">
                 {reference.sourceTitle}
               </p>
@@ -261,7 +263,7 @@ export const ReferenceTooltip: React.FC<ReferenceTooltipProps> = ({
               className="flex w-full items-center justify-center gap-2 rounded-xl border border-border/60 bg-muted/20 px-3 py-2.5 text-sm font-semibold text-muted-foreground shadow-none transition-[color,background-color,border-color,box-shadow] hover:border-primary hover:bg-primary hover:text-primary-foreground hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-popover"
             >
               <Plus className="size-4 shrink-0" strokeWidth={2.25} aria-hidden />
-              Add to notebook
+              {t("sources.addToNotebook")}
             </button>
           </div>
         )}

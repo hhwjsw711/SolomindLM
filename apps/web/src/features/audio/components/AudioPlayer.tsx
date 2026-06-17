@@ -1,5 +1,6 @@
 import { ArrowLeft, Download, Pause, Play, RotateCcw, RotateCw } from "lucide-react";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { formatAudioTime, useAudioPlayer } from "../hooks/useAudioPlayer";
 import { useResolvedAudioPlaybackUrl } from "../hooks/useResolvedAudioPlaybackUrl";
 
@@ -18,6 +19,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
   title,
   onBack,
 }) => {
+  const { t } = useTranslation();
   const resolvedPlayback = useResolvedAudioPlaybackUrl(audioUrl, audioOverviewId);
   const audioSource = typeof resolvedPlayback === "string" ? resolvedPlayback : null;
   const {
@@ -45,12 +47,12 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
           <button
             onClick={onBack}
             className="p-1.5 hover:bg-secondary rounded-md transition-colors text-foreground flex items-center justify-center shrink-0"
-            aria-label="Back to Studio"
+            aria-label={t("audio.backToStudio")}
           >
             <ArrowLeft className="w-5 h-5 shrink-0" />
           </button>
           <span className="text-sm font-semibold text-foreground truncate">
-            {title || "Audio Overview"}
+            {title || t("audio.audioOverview")}
           </span>
         </div>
       )}
@@ -60,14 +62,14 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
           <div className="flex items-center justify-center py-8">
             <div className="text-center">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-2"></div>
-              <p className="text-sm text-muted-foreground">Loading audio...</p>
+              <p className="text-sm text-muted-foreground">{t("audio.loadingAudio")}</p>
             </div>
           </div>
         )}
 
         {isUnavailable && (
           <p className="text-sm text-destructive text-center py-4">
-            Could not resolve audio URL. Try regenerating the audio overview.
+            {t("audio.couldNotResolveUrl")}
           </p>
         )}
 
@@ -78,7 +80,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
         {/* Header */}
         <div className="flex items-center justify-between shrink-0">
-          <h3 className="font-bold text-foreground">{title || "Audio Overview"}</h3>
+          <h3 className="font-bold text-foreground">{title || t("audio.audioOverview")}</h3>
           <div className="flex gap-2">
             <a
               href={audioSource ?? "#"}
@@ -86,7 +88,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
               className={`p-2 hover:bg-secondary rounded-lg transition-colors ${
                 audioSource ? "" : "pointer-events-none opacity-50"
               }`}
-              title="Download audio"
+              title={t("audio.downloadAudio")}
             >
               <Download className="w-4 h-4" />
             </a>
@@ -118,8 +120,8 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
             onClick={() => skipBy(-5)}
             disabled={!canSeek}
             className="p-2 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-xl transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-            aria-label="Backward 5 seconds"
-            title="Backward 5s"
+            aria-label={t("audio.backward5sAria")}
+            title={t("audio.backward5s")}
           >
             <RotateCcw className="w-5 h-5" />
           </button>
@@ -127,7 +129,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
             onClick={togglePlay}
             disabled={!canPlay || isResolving}
             className="p-3 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-            aria-label={isPlaying ? "Pause" : "Play"}
+            aria-label={isPlaying ? t("audio.pause") : t("audio.play")}
           >
             {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
           </button>
@@ -135,8 +137,8 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
             onClick={() => skipBy(5)}
             disabled={!canSeek}
             className="p-2 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-xl transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-            aria-label="Forward 5 seconds"
-            title="Forward 5s"
+            aria-label={t("audio.forward5sAria")}
+            title={t("audio.forward5s")}
           >
             <RotateCw className="w-5 h-5" />
           </button>
@@ -144,7 +146,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
             onClick={cyclePlaybackRate}
             disabled={!canPlay}
             className="px-3 py-1 text-sm font-medium bg-secondary hover:bg-secondary/80 rounded-lg transition-colors"
-            title="Change playback speed"
+            title={t("audio.changePlaybackSpeed")}
           >
             {playbackRate}x
           </button>
@@ -153,7 +155,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
         {/* Transcript - Always shown and takes up remaining space */}
         {transcript && (
           <div className="flex-1 overflow-hidden flex flex-col border-t border-border pt-4 min-h-0">
-            <h4 className="font-semibold text-sm mb-2 shrink-0">Transcript</h4>
+            <h4 className="font-semibold text-sm mb-2 shrink-0">{t("audio.transcript")}</h4>
             <div className="flex-1 overflow-y-auto text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
               {transcript}
             </div>

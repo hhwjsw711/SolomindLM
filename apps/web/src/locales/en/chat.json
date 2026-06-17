@@ -243,6 +243,9 @@
     "continuing": "Continuing\u2026",
     "continue": "Continue",
     "completionMessage": "I've created your literature review table with {{papers}} papers and {{columns}} columns. Now I'll generate a comprehensive report summarizing the key findings across all papers. Open the table above to review and edit the extracted data.",
+    "completionMessageNoReport": "I've created your literature review table with {{papers}} papers and {{columns}} columns. Open the table above to review and edit the extracted data.",
+    "startingResearch": "Starting research...",
+    "dismiss": "Dismiss",
     "steps": {
       "planning_title": "Planning Research",
       "planning_desc": "Defining search strategy and sub-questions...",
@@ -265,5 +268,40 @@
       "awaiting_columns_title": "Confirming Columns",
       "awaiting_columns_desc": "Review and customize the suggested extraction columns"
     }
+  },
+  "deepResearchSources": {
+    "usedInAnswer": "Used in answer",
+    "searchedOnly": "Searched only",
+    "loadingSources": "Loading sources\u2026",
+    "sourcesSearched": "Sources searched",
+    "totalUsed": "{{total}} total \u00b7 {{used}} used in answer",
+    "open": "Open",
+    "addToNotebook": "Add to notebook",
+    "openInSources": "Open in sources"
+  },
+  "researchProgress": {
+    "planning": "Planning research...",
+    "retrieving_notebook": "Searching notebook sources...",
+    "retrieving_web": "Searching the web...",
+    "synthesizing": "Synthesizing findings...",
+    "gap_analysis": "Analyzing evidence gaps...",
+    "writing": "Writing research report...",
+    "sourcesFound": "{{count}} sources found",
+    "pass": "Pass {{n}}"
+  },
+  "sourceSuggestion": {
+    "foundSources": "Found {{count}} external source",
+    "foundSources_plural": "Found {{count}} external sources",
+    "selectHint": "Select the ones to add to this notebook.",
+    "selectAll": "Select all",
+    "deselectAll": "Deselect all",
+    "dismiss": "Dismiss",
+    "addToNotebook": "Add to notebook",
+    "addCountToNotebook": "Add {{count}} to notebook",
+    "skip": "Skip",
+    "includeSource": "Include {{title}}"
+  },
+  "selectionTooltip": {
+    "addToChat": "Add to chat"
   }
 }

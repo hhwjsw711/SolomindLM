@@ -1,6 +1,7 @@
 import type { Id } from "@convex/_generated/dataModel";
 import { ArrowRight, Check, FileSpreadsheet, FileText, Loader2, Plus, X } from "lucide-react";
 import React, { useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { Message } from "@/shared/types/index";
 import {
   useConfirmLiteratureReviewColumns,
@@ -27,54 +28,6 @@ const VISIBLE_LITERATURE_STEP_TYPES = new Set([
   "populating",
 ]);
 
-const stepConfig: Record<string, { title: string; description: string }> = {
-  planning: {
-    title: "Planning Research",
-    description: "Defining search strategy and sub-questions...",
-  },
-  searching: {
-    title: "Searching relevant studies",
-    description:
-      "Run structured searches based on the question to gather high-quality and relevant studies.",
-  },
-  deduplicating: {
-    title: "Removing Duplicates",
-    description: "Consolidating results across searches...",
-  },
-  ranking: {
-    title: "Ranking candidate papers",
-    description:
-      "Refine and rank the most relevant studies based on their quality, impact, and relevance to your question.",
-  },
-  screening: {
-    title: "Screening the selected studies",
-    description:
-      "Review papers against the eligibility criteria and record clear include/exclude decisions.",
-  },
-  extracting: {
-    title: "Extracting data and structuring the evidence",
-    description:
-      "Extract the required information from included studies and organize it into a consistent format.",
-  },
-  populating: {
-    title: "Populating extracted data into cells",
-    description:
-      "Analyze each study and extract key insights to fill in the table cells with relevant information.",
-  },
-  generating_report: {
-    title: "Generating Report",
-    description: "Writing literature review and synthesis...",
-  },
-  awaiting_user_input: {
-    title: "Awaiting Input",
-    description: "Waiting for user approval or guidance...",
-  },
-  awaiting_columns: {
-    title: "Confirming Columns",
-    description: "Review and customize the suggested extraction columns",
-  },
-};
-
 interface LiteratureReviewMessageProps {
   message: Message;
   onOpenTable?: (tableId: Id<"literatureTables">) => void;
@@ -90,6 +43,7 @@ export const LiteratureReviewMessage: React.FC<LiteratureReviewMessageProps> = (
   onOpenRankedPapers,
   onOpenScreeningDecisions,
 }) => {
+  const { t } = useTranslation();
   const lr = message.literatureReview;
   const sessionId = (lr?.sessionId ?? null) as Id<"literatureReviewSessions"> | null;
 
@@ -188,8 +142,10 @@ export const LiteratureReviewMessage: React.FC<LiteratureReviewMessageProps> = (
         return {
           type: step.stepType,
           status: step.status as ResearchStep["status"],
-          title: stepConfig[step.stepType]?.title || step.stepType,
-          description: stepConfig[step.stepType]?.description || "",
+          title: t(`literatureReview.steps.${step.stepType}_title`, {
+            defaultValue: step.stepType,
+          }),
+          description: t(`literatureReview.steps.${step.stepType}_desc`, { defaultValue: "" }),
           details: step.details,
           searchQueries: resolvedQueries,
           papersFound: resolvedPapersFound,
@@ -279,16 +235,16 @@ export const LiteratureReviewMessage: React.FC<LiteratureReviewMessageProps> = (
           {tableIdResolved && notebookId && (
             <ResultCard
               icon={<FileSpreadsheet className="h-6 w-6 shrink-0 text-primary" />}
-              title={table?.title ?? "Literature Table"}
-              typeLabel="Table"
+              title={table?.title ?? t("literatureReview.tableFallback")}
+              typeLabel={t("literatureReview.tableType")}
               onClick={() => onOpenTable?.(tableIdResolved)}
             />
           )}
           {reportIdResolved && notebookId && (
             <ResultCard
               icon={<FileText className="h-6 w-6 shrink-0 text-primary" />}
-              title={report?.title ?? "Literature Report"}
-              typeLabel="Document"
+              title={report?.title ?? t("literatureReview.reportFallback")}
+              typeLabel={t("literatureReview.documentType")}
               onClick={() => onOpenReport?.(reportIdResolved)}
             />
           )}
@@ -299,12 +255,15 @@ export const LiteratureReviewMessage: React.FC<LiteratureReviewMessageProps> = (
       {isComplete && table && (
         <div className="mt-8 text-base leading-relaxed text-foreground">
           <p>
-            I&apos;ve created your literature review table with{" "}
-            <strong>{includedPaperCount} papers</strong> and{" "}
-            <strong>{visibleColumnCount} columns</strong>
             {report
-              ? ". Now I'll generate a comprehensive report summarizing the key findings across all papers..."
-              : ". Open the table above to review and edit the extracted data."}
+              ? t("literatureReview.completionMessage", {
+                  papers: includedPaperCount,
+                  columns: visibleColumnCount,
+                })
+              : t("literatureReview.completionMessageNoReport", {
+                  papers: includedPaperCount,
+                  columns: visibleColumnCount,
+                })}
           </p>
           {reportPreview && (
             <p className="mt-4 text-[15px] leading-relaxed text-foreground">{reportPreview}</p>
@@ -315,9 +274,9 @@ export const LiteratureReviewMessage: React.FC<LiteratureReviewMessageProps> = (
       {/* Failed state */}
       {isFailed && (
         <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3">
-          <div className="text-sm font-medium text-destructive">Literature Review Failed</div>
+          <div className="text-sm font-medium text-destructive">{t("literatureReview.failed")}</div>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {error || "Something went wrong during the research process."}
+            {error || t("literatureReview.errorMessage")}
           </p>
           <div className="mt-3 flex items-center gap-2">
             <button
@@ -328,10 +287,10 @@ export const LiteratureReviewMessage: React.FC<LiteratureReviewMessageProps> = (
               {isRetrying ? (
                 <span className="flex items-center gap-1.5">
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  Retrying...
+                  {t("literatureReview.retrying")}
                 </span>
               ) : (
-                "Retry from last step"
+                t("literatureReview.retryFromLastStep")
               )}
             </button>
           </div>
@@ -363,6 +322,7 @@ const ColumnConfirmationCard: React.FC<ColumnConfirmationCardProps> = ({
   onPatch,
   onConfirm,
 }) => {
+  const { t } = useTranslation();
   const visibleCount = columns.filter((c) => c.isVisible).length;
   const canConfirm = visibleCount > 0;
 
@@ -370,10 +330,10 @@ const ColumnConfirmationCard: React.FC<ColumnConfirmationCardProps> = ({
     <div className="mb-6 overflow-hidden rounded-xl border border-border bg-card font-sans">
       <div className="border-b border-border px-4 py-3.5 sm:px-5">
         <h3 className="text-[15px] font-semibold tracking-tight text-foreground">
-          Extraction columns
+          {t("literatureReview.extractionColumns")}
         </h3>
         <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-          Check the fields to include, rename as needed, then continue.
+          {t("literatureReview.checkFields")}
         </p>
       </div>
 
@@ -390,7 +350,7 @@ const ColumnConfirmationCard: React.FC<ColumnConfirmationCardProps> = ({
                   )
                 }
                 className="mt-0.5 size-4 shrink-0 rounded border-input accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
-                aria-label={`Include ${col.name}`}
+                aria-label={t("literatureReview.includeColumn", { name: col.name })}
               />
 
               <div className="min-w-0 flex-1">
@@ -408,7 +368,7 @@ const ColumnConfirmationCard: React.FC<ColumnConfirmationCardProps> = ({
                       ? "text-foreground"
                       : "text-muted-foreground line-through decoration-muted-foreground/50"
                   }`}
-                  aria-label={`Column name ${idx + 1}`}
+                  aria-label={t("literatureReview.columnName", { idx: idx + 1 })}
                 />
                 {col.isVisible && col.instructions?.trim() ? (
                   <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground line-clamp-2">
@@ -421,8 +381,8 @@ const ColumnConfirmationCard: React.FC<ColumnConfirmationCardProps> = ({
                 type="button"
                 onClick={() => onPatch((prev) => prev.filter((_, i) => i !== idx))}
                 className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
-                title="Remove column"
-                aria-label={`Remove ${col.name}`}
+                title={t("literatureReview.removeColumn")}
+                aria-label={t("literatureReview.removeColumnAria", { name: col.name })}
               >
                 <X className="size-3.5" strokeWidth={2.25} />
               </button>
@@ -439,7 +399,7 @@ const ColumnConfirmationCard: React.FC<ColumnConfirmationCardProps> = ({
               ...prev,
               {
                 id: `custom-${Date.now()}`,
-                name: "New column",
+                name: t("literatureReview.newColumn"),
                 instructions: "",
                 isVisible: true,
               },
@@ -448,15 +408,14 @@ const ColumnConfirmationCard: React.FC<ColumnConfirmationCardProps> = ({
           className="inline-flex items-center gap-1.5 rounded-md px-1 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
         >
           <Plus className="size-4" strokeWidth={2} />
-          Add column
+          {t("literatureReview.addColumn")}
         </button>
       </div>
 
       <div className="flex flex-col gap-3 border-t border-border bg-muted px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
         <p className="text-sm text-muted-foreground">
-          <span className="font-medium tabular-nums text-foreground">{visibleCount}</span>
-          {" of "}
-          <span className="tabular-nums">{columns.length}</span> selected
+          <span className="font-medium tabular-nums text-foreground">{visibleCount}</span>{" "}
+          {t("literatureReview.ofSelected", { n: columns.length })}
         </p>
         <button
           type="button"
@@ -467,12 +426,12 @@ const ColumnConfirmationCard: React.FC<ColumnConfirmationCardProps> = ({
           {isConfirming ? (
             <>
               <Loader2 className="size-4 animate-spin" />
-              Continuing…
+              {t("literatureReview.continuing")}
             </>
           ) : (
             <>
               <Check className="size-4" strokeWidth={2.5} />
-              Continue
+              {t("literatureReview.continue")}
             </>
           )}
         </button>

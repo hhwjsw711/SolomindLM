@@ -243,6 +243,9 @@
     "continuing": "继续中\u2026",
     "continue": "继续",
     "completionMessage": "我已创建了包含 {{papers}} 篇论文和 {{columns}} 列的文献综述表格。接下来我将生成一份综合报告，总结所有论文的关键发现。打开上方表格可查看和编辑提取的数据。",
+    "completionMessageNoReport": "我已创建了包含 {{papers}} 篇论文和 {{columns}} 列的文献综述表格。打开上方表格可查看和编辑提取的数据。",
+    "startingResearch": "开始研究中...",
+    "dismiss": "关闭",
     "steps": {
       "planning_title": "规划研究",
       "planning_desc": "正在定义搜索策略和子问题...",
@@ -265,5 +268,40 @@
       "awaiting_columns_title": "确认列",
       "awaiting_columns_desc": "查看并自定义建议的提取列"
     }
+  },
+  "deepResearchSources": {
+    "usedInAnswer": "回答中引用",
+    "searchedOnly": "仅搜索",
+    "loadingSources": "加载来源中\u2026",
+    "sourcesSearched": "已搜索的来源",
+    "totalUsed": "共 {{total}} 个 \u00b7 {{used}} 个用于回答",
+    "open": "打开",
+    "addToNotebook": "添加到笔记本",
+    "openInSources": "在来源中打开"
+  },
+  "researchProgress": {
+    "planning": "规划研究中...",
+    "retrieving_notebook": "搜索笔记本来源中...",
+    "retrieving_web": "搜索网络来源中...",
+    "synthesizing": "综合分析中...",
+    "gap_analysis": "分析证据缺口...",
+    "writing": "撰写研究报告...",
+    "sourcesFound": "找到 {{count}} 个来源",
+    "pass": "第 {{n}} 轮"
+  },
+  "sourceSuggestion": {
+    "foundSources": "找到 {{count}} 个外部来源",
+    "foundSources_plural": "找到 {{count}} 个外部来源",
+    "selectHint": "选择要添加到此笔记本的来源。",
+    "selectAll": "全选",
+    "deselectAll": "取消全选",
+    "dismiss": "关闭",
+    "addToNotebook": "添加到笔记本",
+    "addCountToNotebook": "添加 {{count}} 个到笔记本",
+    "skip": "跳过",
+    "includeSource": "包含 {{title}}"
+  },
+  "selectionTooltip": {
+    "addToChat": "添加到聊天"
   }
 }

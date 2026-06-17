@@ -1,0 +1,17 @@
+{
+  "checklist": {
+    "title": "Get started — {{completed}} of {{total}}",
+    "expand": "Expand",
+    "collapse": "Collapse",
+    "dismiss": "Dismiss",
+    "items": {
+      "createNotebook": "Create your first notebook",
+      "addSource": "Add a source",
+      "askQuestion": "Ask a question in chat",
+      "generateArtifact": "Generate your first artifact"
+    }
+  },
+  "tour": {
+    "skipTour": "Skip tour"
+  }
+}

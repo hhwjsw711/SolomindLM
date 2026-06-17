@@ -17,6 +17,7 @@ import {
   Youtube,
 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { CustomizeAudioModal } from "@/features/studio/components/CustomizeAudioModal";
 import { CustomizeFlashcardsModal } from "@/features/studio/components/CustomizeFlashcardsModal";
 import { CustomizeInfographicModal } from "@/features/studio/components/CustomizeInfographicModal";
@@ -84,6 +85,7 @@ export function LandingHeroMockup({
   onGetStarted: _onGetStarted,
   className,
 }: LandingHeroMockupProps) {
+  const { t } = useTranslation();
   const [mode, setMode] = useState<HeroMode>("chat");
   const [selectedSourceIds, setSelectedSourceIds] = useState<Set<string>>(
     () => new Set(["s1", "s2", "s3"])
@@ -167,7 +169,7 @@ export function LandingHeroMockup({
   return (
     <div
       role="region"
-      aria-label="Product preview demo"
+      aria-label={t("page.hero.productPreview")}
       className={`relative isolate flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden bg-background/95 text-left text-foreground${className ? ` ${className}` : ""}`}
     >
       <div
@@ -179,7 +181,7 @@ export function LandingHeroMockup({
         <div
           className="pointer-events-auto relative flex h-10 w-[min(100%,16rem)] items-stretch gap-1 rounded-2xl border border-border/80 bg-linear-to-b from-card/95 via-card/90 to-muted/30 p-1 shadow-[0_8px_30px_-8px_rgba(28,25,23,0.18),inset_0_1px_0_rgba(255,255,255,0.5)] backdrop-blur-md sm:h-11 sm:w-[min(100%,17rem)]"
           role="tablist"
-          aria-label="Preview mode"
+          aria-label={t("page.hero.previewMode")}
         >
           <div
             className="pointer-events-none absolute bottom-1 left-1 top-1 w-[calc(50%-6px)] rounded-xl bg-background/95 shadow-md ring-1 ring-primary/20 transition-transform duration-300 ease-[cubic-bezier(0.34,1.2,0.64,1)]"
@@ -201,7 +203,7 @@ export function LandingHeroMockup({
             }`}
           >
             <MessageCircle className="h-3.5 w-3.5 shrink-0 opacity-90 sm:h-4 sm:w-4" aria-hidden />
-            Chat
+            {t("page.hero.chatTab")}
           </button>
           <button
             type="button"
@@ -215,7 +217,7 @@ export function LandingHeroMockup({
             }`}
           >
             <Layers className="h-3.5 w-3.5 shrink-0 opacity-90 sm:h-4 sm:w-4" aria-hidden />
-            Studio
+            {t("page.hero.studioTab")}
           </button>
         </div>
       </div>
@@ -232,7 +234,7 @@ export function LandingHeroMockup({
             <div className="flex h-11 shrink-0 items-center gap-1.5 border-b border-border bg-background/80 px-3 backdrop-blur-sm sm:h-14 sm:gap-2 sm:px-4">
               <FileStack className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" aria-hidden />
               <span className="font-display text-xs font-bold uppercase tracking-wide sm:text-sm">
-                Sources
+                {t("page.hero.sources")}
               </span>
             </div>
             <div className="flex flex-1 flex-col gap-2 overflow-y-auto p-2.5 sm:gap-2.5 sm:p-3">
@@ -289,7 +291,7 @@ export function LandingHeroMockup({
               <div className="flex items-center gap-1.5 text-foreground sm:gap-2">
                 <MessageCircle className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" aria-hidden />
                 <span className="font-display text-xs font-bold uppercase tracking-wide sm:text-sm">
-                  Chat
+                  {t("page.hero.chat")}
                 </span>
               </div>
               <div className="flex items-center gap-1.5" aria-hidden>
@@ -323,7 +325,7 @@ export function LandingHeroMockup({
                       className="h-3.5 w-3.5 shrink-0 text-primary/80 sm:h-4 sm:w-4"
                       aria-hidden
                     />
-                    <span className="font-sans">Searching your sources</span>
+                    <span className="font-sans"> {t("page.hero.searchingSources")}</span>
                     <ChevronDown
                       className={`ml-auto h-3.5 w-3.5 shrink-0 transition sm:h-4 sm:w-4 ${activityOpen ? "rotate-180" : ""}`}
                       aria-hidden
@@ -332,8 +334,8 @@ export function LandingHeroMockup({
                   {activityOpen ? (
                     <div className="space-y-1.5 rounded-lg border border-border/60 bg-muted/25 px-2.5 py-2 sm:px-3 sm:py-2.5">
                       {[
-                        { done: true, label: "Semantic search across sources" },
-                        { done: true, label: "Ranked relevant passages" },
+                        { done: true, label: t("page.hero.hydeEmbeddings") },
+                        { done: true, label: t("page.hero.rankedPassages") },
                         {
                           done: false,
                           label: "Reading: CPSC 304 — notes.pdf",
@@ -468,7 +470,7 @@ export function LandingHeroMockup({
                     type="button"
                     onClick={flashInput}
                     className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:h-9 sm:w-9"
-                    aria-label="Send (demo)"
+                    aria-label={t("page.hero.sendDemo")}
                   >
                     <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden />
                   </button>
