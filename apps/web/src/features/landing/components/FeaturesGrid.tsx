@@ -80,7 +80,7 @@ export const FeaturesGrid: React.FC = () => {
         </p>
         {intentPath ? (
           <Link to={intentPath} className="mt-3 text-sm font-medium text-primary hover:underline">
-            Learn more →
+            {t("features.learnMore")}
           </Link>
         ) : null}
       </div>

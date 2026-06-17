@@ -9,6 +9,11 @@ export const FAQSection: React.FC = () => {
   const { t } = useTranslation("landing");
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
+  const faqItems = LANDING_FAQS.map((faq, i) => ({
+    question: t(`faq.items.${i}.question`, faq.question),
+    answer: t(`faq.items.${i}.answer`, faq.answer),
+  }));
+
   const toggleFAQ = (index: number) => {
     setOpenIndex(openIndex === index ? null : index);
   };
@@ -27,7 +32,7 @@ export const FAQSection: React.FC = () => {
 
           {/* FAQ List */}
           <div className="space-y-4">
-            {LANDING_FAQS.map((faq, index) => (
+            {faqItems.map((faq, index) => (
               <div
                 key={index}
                 className="bg-card border border-border rounded-xl overflow-hidden transition-all duration-300 hover:shadow-md"

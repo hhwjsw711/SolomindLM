@@ -90,7 +90,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onGetStarted }) => {
             className="text-6xl md:text-8xl font-display font-extrabold text-foreground tracking-tight"
             style={{ lineHeight: "1.1" }}
           >
-            Learn{" "}
+            {t("heroSection.headlinePart1")}{" "}
             <span
               style={{
                 background: "linear-gradient(135deg, #f97316 0%, #fbbf24 50%, #fb7185 100%)",
@@ -99,11 +99,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onGetStarted }) => {
                 backgroundClip: "text",
               }}
             >
-              Anything
+              {t("heroSection.headlinePart2")}
             </span>
           </h1>
           <p className="text-xl md:text-2xl text-muted-foreground font-display font-light leading-relaxed max-w-2xl mx-auto animate-in fade-in duration-700 delay-200">
-            AI that enhances learning, not replaces thinking.
+            {t("heroSection.tagline")}
           </p>
         </div>
 

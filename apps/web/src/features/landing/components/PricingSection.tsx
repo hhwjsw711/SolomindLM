@@ -22,19 +22,19 @@ export const PricingSection: React.FC<PricingSectionProps> = ({ onGetStarted }) 
   const { t } = useTranslation("landing");
   const [billing, setBilling] = useState<"yearly" | "monthly">("yearly");
 
+  const freeFeatures: string[] = t("pricing.freeFeatures", {
+    returnObjects: true,
+  }) as unknown as string[];
+  const proFeatures: string[] = t("pricing.proFeatures", {
+    returnObjects: true,
+  }) as unknown as string[];
+
   const pricingPlans: PricingPlan[] = [
     {
       name: t("pricing.heading"),
       price: "$0",
       descriptionKey: "pricing.freeDescription",
-      features: [
-        "20 notebooks · 200 sources each",
-        "50 chat messages / day",
-        "5 flashcards, quizzes, reports / day",
-        "5 audio overviews / day",
-        "5 infographics / day",
-        "5 written questions / day",
-      ],
+      features: freeFeatures,
       ctaKey: "pricing.startFree",
       highlighted: false,
       billingKey: "free",
@@ -42,16 +42,9 @@ export const PricingSection: React.FC<PricingSectionProps> = ({ onGetStarted }) 
     {
       name: t("pricing.proHeading"),
       price: "$7.50",
-      period: "/mo, billed yearly",
+      period: t("pricing.periodYearly"),
       descriptionKey: "pricing.proYearlyDescription",
-      features: [
-        "200 notebooks · 200 sources each",
-        "500 chat messages / day",
-        "100 flashcards, quizzes, reports / day",
-        "100 audio overviews / day",
-        "100 infographics / day",
-        "100 written questions / day",
-      ],
+      features: proFeatures,
       ctaKey: "pricing.getPro",
       highlighted: true,
       billingKey: "yearly",
@@ -59,16 +52,9 @@ export const PricingSection: React.FC<PricingSectionProps> = ({ onGetStarted }) 
     {
       name: t("pricing.proHeading"),
       price: "$15",
-      period: "/mo",
+      period: t("pricing.periodMonthly"),
       descriptionKey: "pricing.proMonthlyDescription",
-      features: [
-        "200 notebooks · 200 sources each",
-        "500 chat messages / day",
-        "100 flashcards, quizzes, reports / day",
-        "100 audio overviews / day",
-        "100 infographics / day",
-        "100 written questions / day",
-      ],
+      features: proFeatures,
       ctaKey: "pricing.getPro",
       highlighted: false,
       billingKey: "monthly",

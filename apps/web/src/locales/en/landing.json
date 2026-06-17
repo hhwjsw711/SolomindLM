@@ -6,6 +6,19 @@
     "secondaryCTA": "See Features"
   },
   "features": {
+    "ragTitle": "Grounded RAG System",
+    "chatTitle": "AI Chat",
+    "deepResearchTitle": "Deep Research",
+    "literatureReviewTitle": "Literature Review",
+    "audioTitle": "Audio Overview",
+    "mindmapTitle": "Mind Map",
+    "reportsTitle": "Reports",
+    "flashcardsTitle": "Flashcards",
+    "quizTitle": "Quiz",
+    "infographicTitle": "Infographic",
+    "writtenQuestionsTitle": "Written Questions",
+    "spreadsheetsTitle": "Spreadsheets",
+    "learnMore": "Learn more →",
     "rag": "Answers from your uploaded sources",
     "chat": "Ask questions using your notebook sources",
     "deepResearch": "Multi-step research with web and notebook sources",
@@ -50,6 +63,8 @@
   },
   "heroSection": {
     "headline": "Learn Anything",
+    "headlinePart1": "Learn",
+    "headlinePart2": "Anything",
     "tagline": "AI that enhances learning, not replaces thinking.",
     "placeholder": [
       "Summarize this PDF...",
@@ -63,6 +78,48 @@
     ]
   },
   "faq": {
+    "items": [
+      {
+        "question": "How accurate is the AI-generated content?",
+        "answer": "Generated content is based on the sources you add, but it should still be reviewed against the original material before you rely on it for studying or research."
+      },
+      {
+        "question": "What languages are supported?",
+        "answer": "SolomindLM is currently focused on English-language study and research workflows."
+      },
+      {
+        "question": "What can I do with generated study materials?",
+        "answer": "You can create study outputs like flashcards, quizzes, mind maps, and audio overviews from your sources, then review them inside SolomindLM."
+      },
+      {
+        "question": "How is my data used and protected?",
+        "answer": "Your content is used to run the product you see—search, chat, and generation—and is handled as described in our Privacy Policy. We use trusted infrastructure and AI providers as subprocessors; we don't sell your personal information."
+      },
+      {
+        "question": "Is there a limit on how much I can upload?",
+        "answer": "The free plan includes 20 notebooks per account with up to 200 sources per notebook. Pro plans offer 200 notebooks per account with up to 200 sources per notebook. Each plan also includes daily limits on AI-generated content."
+      },
+      {
+        "question": "What makes SolomindLM different from Quizlet or Anki?",
+        "answer": "SolomindLM starts from your PDFs, videos, articles, and notes, then helps generate study materials from that source content instead of requiring you to create everything manually."
+      },
+      {
+        "question": "How long does it take to generate study materials?",
+        "answer": "Processing time depends on the source length, file type, and the output you choose to generate."
+      },
+      {
+        "question": "Do I need to upload sources before generating study materials?",
+        "answer": "Yes. Studio tools work on sources you add to a notebook—uploads, discovered articles, or pasted text. You choose which sources to include for each generation."
+      },
+      {
+        "question": "Is literature review mode a systematic review tool?",
+        "answer": "No. It assists with screening, ranking, and synthesis across papers in your notebook, but it does not replace preregistered systematic review protocols or exhaustive search requirements."
+      },
+      {
+        "question": "Is there a free plan for students?",
+        "answer": "Yes. Free accounts include notebooks with per-notebook source limits and daily caps on AI generation. Pro plans raise notebook limits."
+      }
+    ],
     "heading": "Frequently Asked Questions",
     "subtitle": "Everything you need to know about SolomindLM",
     "stillHaveQuestions": "Still have questions?",
@@ -85,7 +142,25 @@
     "sectionHeading": "Start free. Upgrade when you need more.",
     "bestValue": "Best value",
     "annual": "Annual",
-    "monthlyToggle": "Monthly"
+    "monthlyToggle": "Monthly",
+    "freeFeatures": [
+      "20 notebooks · 200 sources each",
+      "50 chat messages / day",
+      "5 flashcards, quizzes, reports / day",
+      "5 audio overviews / day",
+      "5 infographics / day",
+      "5 written questions / day"
+    ],
+    "proFeatures": [
+      "200 notebooks · 200 sources each",
+      "500 chat messages / day",
+      "100 flashcards, quizzes, reports / day",
+      "100 audio overviews / day",
+      "100 infographics / day",
+      "100 written questions / day"
+    ],
+    "periodYearly": "/mo, billed yearly",
+    "periodMonthly": "/mo"
   },
   "featuresGrid": {
     "heading": "Powerful Learning Tools",

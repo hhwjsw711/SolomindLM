@@ -147,7 +147,7 @@ export function useLandingContent() {
     },
     features: LANDING_TOOLS.map((tool) => ({
       id: tool.id,
-      title: tool.label,
+      title: t(`features.${tool.id}Title`, tool.label),
       description: t(`features.${tool.id}`, getFeatureDescription(tool.id)),
     })),
     contentShowcase: {

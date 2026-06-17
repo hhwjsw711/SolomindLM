@@ -6,6 +6,19 @@
     "secondaryCTA": "查看功能"
   },
   "features": {
+    "ragTitle": "基于来源的 RAG 系统",
+    "chatTitle": "AI 聊天",
+    "deepResearchTitle": "深度研究",
+    "literatureReviewTitle": "文献综述",
+    "audioTitle": "音频概览",
+    "mindmapTitle": "思维导图",
+    "reportsTitle": "报告",
+    "flashcardsTitle": "闪卡",
+    "quizTitle": "测验",
+    "infographicTitle": "信息图",
+    "writtenQuestionsTitle": "问答题",
+    "spreadsheetsTitle": "电子表格",
+    "learnMore": "了解更多 →",
     "rag": "基于上传来源的智能回答",
     "chat": "使用笔记本来源提出问题",
     "deepResearch": "结合网络和笔记本来源的多步研究",
@@ -50,6 +63,8 @@
   },
   "heroSection": {
     "headline": "学习一切",
+    "headlinePart1": "学习",
+    "headlinePart2": "一切",
     "tagline": "AI 增强学习，而非替代思考。",
     "placeholder": [
       "总结这篇 PDF...",
@@ -63,6 +78,48 @@
     ]
   },
   "faq": {
+    "items": [
+      {
+        "question": "AI 生成的内容有多准确？",
+        "answer": "生成的内容基于你添加的来源，但应在依赖它进行学习或研究之前对照原始材料进行检查。"
+      },
+      {
+        "question": "支持哪些语言？",
+        "answer": "SolomindLM 目前专注于英语学习和研究工作流程。"
+      },
+      {
+        "question": "我可以用生成的学习材料做什么？",
+        "answer": "你可以从来源创建闪卡、测验、思维导图和音频概览等学习产出，然后在 SolomindLM 内进行复习。"
+      },
+      {
+        "question": "我的数据如何被使用和保护？",
+        "answer": "你的内容用于运行你看到的产品——搜索、聊天和生成——并按照我们的隐私政策处理。我们使用可信的基础设施和 AI 提供商作为子处理方；我们不出售你的个人信息。"
+      },
+      {
+        "question": "我可以上传的内容有数量限制吗？",
+        "answer": "免费方案每个账户包含 20 个笔记本，每个笔记本最多 200 个来源。Pro 方案每个账户 200 个笔记本，每个笔记本最多 200 个来源。每个方案也有 AI 生成内容的每日限制。"
+      },
+      {
+        "question": "SolomindLM 与 Quizlet 或 Anki 有什么不同？",
+        "answer": "SolomindLM 从你的 PDF、视频、文章和笔记出发，帮助你从这些来源内容生成学习材料，而不是要求你手动创建一切。"
+      },
+      {
+        "question": "生成学习材料需要多长时间？",
+        "answer": "处理时间取决于来源长度、文件类型和你选择的输出类型。"
+      },
+      {
+        "question": "生成学习材料前需要先上传来源吗？",
+        "answer": "是的。Studio 工具基于你添加到笔记本中的来源运行——上传内容、发现的文章或粘贴的文本。你可以选择每次生成要包含哪些来源。"
+      },
+      {
+        "question": "文献综述模式是系统性审稿工具吗？",
+        "answer": "不是。它协助你对笔记本中的论文进行筛选、排序和综合分析，但不能替代预注册的系统综述方案或全面检索要求。"
+      },
+      {
+        "question": "学生有免费方案吗？",
+        "answer": "有。免费账户包含每个笔记本的来源限制和每日 AI 生成上限。Pro 方案提高了笔记本限额。"
+      }
+    ],
     "heading": "常见问题",
     "subtitle": "关于 SolomindLM 你需要知道的一切",
     "stillHaveQuestions": "还有问题？",
@@ -85,7 +142,25 @@
     "sectionHeading": "免费开始，需要时升级。",
     "bestValue": "最超值",
     "annual": "按年",
-    "monthlyToggle": "按月"
+    "monthlyToggle": "按月",
+    "freeFeatures": [
+      "20 个笔记本 · 每个 200 个来源",
+      "每天 50 条聊天消息",
+      "每天 5 组闪卡、测验、报告",
+      "每天 5 条音频概览",
+      "每天 5 张信息图",
+      "每天 5 组问答题"
+    ],
+    "proFeatures": [
+      "200 个笔记本 · 每个 200 个来源",
+      "每天 500 条聊天消息",
+      "每天 100 组闪卡、测验、报告",
+      "每天 100 条音频概览",
+      "每天 100 张信息图",
+      "每天 100 组问答题"
+    ],
+    "periodYearly": "月付，按年计费",
+    "periodMonthly": "月付"
   },
   "featuresGrid": {
     "heading": "强大的学习工具",
