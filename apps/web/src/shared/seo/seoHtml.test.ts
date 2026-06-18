@@ -21,7 +21,7 @@ const MINIMAL_HTML = `<!doctype html>
     <meta name="description" content="Old description" />
     <link rel="canonical" href="https://example.com/" />
   </head>
-  <body><div id="seo-prerender"></div><div id="root"></div></body>
+  <body><noscript><div id="seo-prerender"></div></noscript><div id="root"></div></body>
 </html>`;
 
 describe("canonicalUrl", () => {

@@ -12,13 +12,6 @@ if (!convexUrl) throw new Error("VITE_CONVEX_URL is required");
 
 const convex = new ConvexReactClient(convexUrl);
 
-// React 19 entry point with Convex auth - plugins removed, testing hooks
-
-const seoPrerender = document.getElementById("seo-prerender");
-if (seoPrerender) {
-  seoPrerender.style.display = "none";
-}
-
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error("Could not find root element");
 
@@ -31,6 +24,3 @@ root.render(
     </ConvexAuthProvider>
   </React.StrictMode>
 );
-requestAnimationFrame(() => {
-  rootElement.classList.add("root-ready");
-});

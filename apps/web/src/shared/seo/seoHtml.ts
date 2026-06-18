@@ -143,14 +143,17 @@ export function applySeoToHtml(
   return out;
 }
 
-const SEO_PRERENDER_PATTERN = /<div id="seo-prerender">\s*<\/div>/;
+const SEO_PRERENDER_PATTERN = /<noscript>\s*<div id="seo-prerender">\s*<\/div>\s*<\/noscript>/;
 
-/** Inject static crawlable content inside #seo-prerender — separate from React's #root to avoid mount-time flash. */
+/** Inject static crawlable content inside <noscript> — invisible to JS users, crawlable by search engines. */
 export function injectPrerenderBody(html: string, bodyHtml: string): string {
   if (!SEO_PRERENDER_PATTERN.test(html)) {
     throw new Error(
-      'injectPrerenderBody: expected <div id="seo-prerender"></div> in HTML template'
+      'injectPrerenderBody: expected <noscript><div id="seo-prerender"></div></noscript> in HTML template'
     );
   }
-  return html.replace(SEO_PRERENDER_PATTERN, `<div id="seo-prerender">\n${bodyHtml}\n    </div>`);
+  return html.replace(
+    SEO_PRERENDER_PATTERN,
+    `<noscript>\n<div id="seo-prerender">\n${bodyHtml}\n    </div>\n  </noscript>`
+  );
 }

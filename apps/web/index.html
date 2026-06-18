@@ -60,13 +60,6 @@
       .dark #seo-prerender-content a {
         color: oklch(0.75 0.06 70);
       }
-      #root {
-        opacity: 0;
-        transition: opacity 0.15s ease;
-      }
-      #root.root-ready {
-        opacity: 1;
-      }
     </style>
     <!-- Favicons -->
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
@@ -161,7 +154,7 @@
   <body
     class="bg-background text-foreground antialiased font-serif selection:bg-accent selection:text-accent-foreground"
   >
-    <div id="seo-prerender"></div>
+    <noscript><div id="seo-prerender"></div></noscript>
     <div id="root"></div>
     <script type="module" src="/src/index.tsx"></script>
   </body>
