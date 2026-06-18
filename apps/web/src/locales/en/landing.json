@@ -277,5 +277,16 @@
       "select": "Select {{name}}",
       "deselect": "Deselect {{name}}"
     }
+  },
+  "clusterHub": {
+    "forStudents": "For students",
+    "forResearchers": "For researchers",
+    "backToHome": "Back to home",
+    "exploreTools": "Explore {{type}} tools",
+    "exploreDescription": "Each page explains one workflow in plain language—what it does, what you need to get started, and what to verify before you rely on the output.",
+    "guidesAndComparisons": "Guides and comparisons",
+    "guidesDescription_students": "Practical workflows and tool comparisons to help you choose the right approach for studying from your materials.",
+    "guidesDescription_research": "Practical workflows and tool comparisons to help you choose the right approach for managing your reading list.",
+    "frequentlyAskedQuestions": "Frequently asked questions"
   }
 }

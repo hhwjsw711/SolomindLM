@@ -283,5 +283,9 @@
     "invalidInput": "Invalid input.",
     "somethingWentWrong": "Something went wrong.",
     "unexpectedError": "An unexpected error occurred."
+  },
+  "auth": {
+    "signInTitle": "Sign In - Better Memory",
+    "signInDescription": "Sign in to Better Memory to manage your notebooks, sources, and study materials."
   }
 }

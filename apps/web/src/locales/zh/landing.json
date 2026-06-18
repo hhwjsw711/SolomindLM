@@ -277,5 +277,16 @@
       "select": "选择 {{name}}",
       "deselect": "取消选择 {{name}}"
     }
+  },
+  "clusterHub": {
+    "forStudents": "学生专区",
+    "forResearchers": "研究专区",
+    "backToHome": "返回首页",
+    "exploreTools": "探索{{type}}工具",
+    "exploreDescription": "每个页面用通俗语言解释一个工作流程——它的功能、需要准备什么，以及在使用输出前需要核实什么。",
+    "guidesAndComparisons": "指南与对比",
+    "guidesDescription_students": "实用的工作流指南和工具对比，帮助你选择最适合从材料中学习的方法。",
+    "guidesDescription_research": "实用的工作流指南和工具对比，帮助你选择最适合管理阅读列表的方法。",
+    "frequentlyAskedQuestions": "常见问题"
   }
 }

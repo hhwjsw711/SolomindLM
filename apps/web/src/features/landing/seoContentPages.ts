@@ -1091,12 +1091,16 @@ export function getSeoContentPaths(): string[] {
   return SEO_CONTENT_PAGES.map((page) => page.path);
 }
 
-export function getComparisonPages(): SeoContentPageConfig[] {
-  return SEO_CONTENT_PAGES.filter((page) => page.pageType === "compare");
+export function getComparisonPages(locale: LandingLocale = "en"): SeoContentPageConfig[] {
+  return SEO_CONTENT_PAGE_SOURCES.filter((page) => page.pageType === "compare").map((page) =>
+    localizeSeoContentPage(page, locale)
+  );
 }
 
-export function getGuidePages(): SeoContentPageConfig[] {
-  return SEO_CONTENT_PAGES.filter((page) => page.pageType === "guide");
+export function getGuidePages(locale: LandingLocale = "en"): SeoContentPageConfig[] {
+  return SEO_CONTENT_PAGE_SOURCES.filter((page) => page.pageType === "guide").map((page) =>
+    localizeSeoContentPage(page, locale)
+  );
 }
 
 export function isSeoContentPath(path: string): boolean {
@@ -1104,22 +1108,24 @@ export function isSeoContentPath(path: string): boolean {
 }
 
 export function getSeoContentBreadcrumbItems(
-  page: SeoContentPageConfig
+  page: SeoContentPageConfig,
+  locale: LandingLocale = "en"
 ): SeoContentBreadcrumbItem[] {
   const compareHubPath = "/compare/better-memory-vs-notebooklm";
   const guideHubPath = "/guides/how-to-study-from-pdfs-with-ai";
+  const isZh = locale === "zh";
 
   if (page.pageType === "compare") {
     return [
-      { name: "Home", path: "/" },
-      { name: "Compare", path: compareHubPath },
+      { name: isZh ? "首页" : "Home", path: "/" },
+      { name: isZh ? "对比" : "Compare", path: compareHubPath },
       { name: page.navLabel, path: page.path },
     ];
   }
 
   return [
-    { name: "Home", path: "/" },
-    { name: "Guides", path: guideHubPath },
+    { name: isZh ? "首页" : "Home", path: "/" },
+    { name: isZh ? "指南" : "Guides", path: guideHubPath },
     { name: page.navLabel, path: page.path },
   ];
 }

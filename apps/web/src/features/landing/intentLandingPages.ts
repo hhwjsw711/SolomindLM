@@ -1513,8 +1513,13 @@ export const INTENT_LANDING_PAGES: IntentLandingPageConfig[] = INTENT_LANDING_PA
   (page) => localizeIntentPage(page)
 );
 
-export function getIntentPagesByCluster(cluster: IntentLandingCluster): IntentLandingPageConfig[] {
-  return INTENT_LANDING_PAGES.filter((page) => page.cluster === cluster);
+export function getIntentPagesByCluster(
+  cluster: IntentLandingCluster,
+  locale: LandingLocale = "en"
+): IntentLandingPageConfig[] {
+  return INTENT_LANDING_PAGE_SOURCES.filter((page) => page.cluster === cluster).map((page) =>
+    localizeIntentPage(page, locale)
+  );
 }
 
 export function getIntentLandingPageByPath(
@@ -1549,10 +1554,19 @@ export type IntentBreadcrumbItem = {
   path: string;
 };
 
-export function getIntentBreadcrumbItems(page: IntentLandingPageConfig): IntentBreadcrumbItem[] {
+export function getIntentBreadcrumbItems(
+  page: IntentLandingPageConfig,
+  locale: LandingLocale = "en"
+): IntentBreadcrumbItem[] {
+  const isZh = locale === "zh";
+  const clusterLabel = isZh
+    ? page.cluster === "students"
+      ? "学生"
+      : "研究"
+    : CLUSTER_HUB_LABELS[page.cluster];
   return [
-    { name: "Home", path: "/" },
-    { name: CLUSTER_HUB_LABELS[page.cluster], path: CLUSTER_HUB_PATHS[page.cluster] },
+    { name: isZh ? "首页" : "Home", path: "/" },
+    { name: clusterLabel, path: CLUSTER_HUB_PATHS[page.cluster] },
     { name: page.navLabel, path: page.path },
   ];
 }
