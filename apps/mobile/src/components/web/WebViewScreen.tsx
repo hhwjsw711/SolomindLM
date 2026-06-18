@@ -1,4 +1,5 @@
 import { useNativeConvexAuthBridge } from "@mobile/context/useNativeConvexAuthBridge";
+import { mt } from "@mobile/i18n";
 import { convexDeploymentUrl, isConvexDeploymentConfigured } from "@mobile/services/convex/client";
 import { NATIVE_SHELL_INJECT } from "@mobile/utils/constants";
 import Constants from "expo-constants";
@@ -36,15 +37,13 @@ export function WebViewScreen({ path, onUrlChange, syncConvexAuth = true }: WebV
   if (!base) {
     return (
       <View style={[styles.loading, { padding: 24 }]}>
-        <Text style={{ textAlign: "center" }}>
-          Set EXPO_PUBLIC_WEB_URL in apps/mobile/.env (copy from .env.example).
-        </Text>
+        <Text style={{ textAlign: "center" }}>{mt("webView.missingWebUrl")}</Text>
       </View>
     );
   }
   const uri = `${base}${path.startsWith("/") ? path : `/${path}`}`;
 
-  // `react-native-webview` does not support the web platform — use an iframe for Expo web preview.
+  // `react-native-webview` does not support the web platform; use an iframe for Expo web preview.
   if (Platform.OS === "web") {
     return (
       <View style={styles.webview}>

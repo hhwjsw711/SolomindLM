@@ -1,3 +1,5 @@
+import { mt } from "@mobile/i18n";
+
 export async function uploadPickedFileToNotebook(options: {
   generateUploadUrl: () => Promise<string>;
   createDocument: (args: {
@@ -18,7 +20,7 @@ export async function uploadPickedFileToNotebook(options: {
 
   const fileRes = await fetch(options.fileUri);
   if (!fileRes.ok) {
-    throw new Error("Could not read file for upload");
+    throw new Error(mt("fileUpload.readFileFailed"));
   }
   const buffer = await fileRes.arrayBuffer();
 
@@ -31,7 +33,7 @@ export async function uploadPickedFileToNotebook(options: {
   });
 
   if (!uploadResponse.ok) {
-    throw new Error("Failed to upload file to storage");
+    throw new Error(mt("fileUpload.storageUploadFailed"));
   }
 
   const { storageId } = (await uploadResponse.json()) as { storageId: string };

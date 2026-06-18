@@ -1,3 +1,4 @@
+import { mt } from "@mobile/i18n";
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
 
@@ -26,7 +27,7 @@ export async function pickDocument(): Promise<PickedFile | null> {
 export async function pickFromCamera(): Promise<PickedFile | null> {
   const { status } = await ImagePicker.requestCameraPermissionsAsync();
   if (status !== "granted") {
-    throw new Error("Camera permission denied");
+    throw new Error(mt("fileUpload.cameraPermissionDenied"));
   }
   const result = await ImagePicker.launchCameraAsync({
     mediaTypes: ["images"],
@@ -46,7 +47,7 @@ export async function pickFromCamera(): Promise<PickedFile | null> {
 export async function pickFromLibrary(): Promise<PickedFile | null> {
   const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (status !== "granted") {
-    throw new Error("Photo library permission denied");
+    throw new Error(mt("fileUpload.photoLibraryPermissionDenied"));
   }
   const result = await ImagePicker.launchImageLibraryAsync({
     mediaTypes: ["images"],

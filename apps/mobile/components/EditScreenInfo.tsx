@@ -1,3 +1,4 @@
+import { mt } from "@mobile/i18n";
 import React from "react";
 import { StyleSheet } from "react-native";
 import Colors from "@/constants/Colors";
@@ -14,7 +15,7 @@ export default function EditScreenInfo({ path }: { path: string }) {
           lightColor="rgba(0,0,0,0.8)"
           darkColor="rgba(255,255,255,0.8)"
         >
-          Open up the code for this screen:
+          {mt("editScreen.openCode")}
         </Text>
 
         <View
@@ -30,7 +31,7 @@ export default function EditScreenInfo({ path }: { path: string }) {
           lightColor="rgba(0,0,0,0.8)"
           darkColor="rgba(255,255,255,0.8)"
         >
-          Change any of the text, save the file, and your app will automatically update.
+          {mt("editScreen.changeText")}
         </Text>
       </View>
 
@@ -40,7 +41,7 @@ export default function EditScreenInfo({ path }: { path: string }) {
           href="https://docs.expo.io/get-started/create-a-new-app/#opening-the-app-on-your-phonetablet"
         >
           <Text style={styles.helpLinkText} lightColor={Colors.light.tint}>
-            Tap here if your app doesn't automatically update after making changes
+            {mt("editScreen.helpLink")}
           </Text>
         </ExternalLink>
       </View>

@@ -1,5 +1,6 @@
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
+import { mt } from "@mobile/i18n";
 import {
   pickDocument,
   pickFromCamera,
@@ -32,10 +33,7 @@ export function FileUploadButton({ notebookId, style }: { notebookId: string; st
     } | null>
   ) => {
     if (!isAuthenticated) {
-      Alert.alert(
-        "Sign in required",
-        "Open the Home tab and complete sign-in in the web view so your session syncs to the app. Then try again."
-      );
+      Alert.alert(mt("fileUpload.signInRequiredTitle"), mt("fileUpload.signInRequiredMessage"));
       return;
     }
     try {
@@ -59,9 +57,12 @@ export function FileUploadButton({ notebookId, style }: { notebookId: string; st
         mimeType: picked.mimeType,
         fileSize: picked.size,
       });
-      Alert.alert("Uploaded", "Your file was added to this notebook.");
+      Alert.alert(mt("fileUpload.uploadedTitle"), mt("fileUpload.uploadedMessage"));
     } catch (e) {
-      Alert.alert("Upload failed", e instanceof Error ? e.message : "Unknown error");
+      Alert.alert(
+        mt("fileUpload.uploadFailedTitle"),
+        e instanceof Error ? e.message : mt("fileUpload.unknownError")
+      );
     } finally {
       setBusy(false);
     }
@@ -72,11 +73,11 @@ export function FileUploadButton({ notebookId, style }: { notebookId: string; st
       style={[styles.fab, style]}
       disabled={busy}
       onPress={() =>
-        Alert.alert("Add source", "Choose a source", [
-          { text: "File", onPress: () => void runUpload(pickDocument) },
-          { text: "Photo library", onPress: () => void runUpload(pickFromLibrary) },
-          { text: "Camera", onPress: () => void runUpload(pickFromCamera) },
-          { text: "Cancel", style: "cancel" },
+        Alert.alert(mt("fileUpload.addSourceTitle"), mt("fileUpload.chooseSourceMessage"), [
+          { text: mt("fileUpload.file"), onPress: () => void runUpload(pickDocument) },
+          { text: mt("fileUpload.photoLibrary"), onPress: () => void runUpload(pickFromLibrary) },
+          { text: mt("fileUpload.camera"), onPress: () => void runUpload(pickFromCamera) },
+          { text: mt("fileUpload.cancel"), style: "cancel" },
         ])
       }
     >
