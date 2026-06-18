@@ -143,12 +143,14 @@ export function applySeoToHtml(
   return out;
 }
 
-const ROOT_DIV_PATTERN = /<div id="root">\s*<\/div>/;
+const SEO_PRERENDER_PATTERN = /<div id="seo-prerender">\s*<\/div>/;
 
-/** Inject static crawlable content inside #root before React hydrates. */
+/** Inject static crawlable content inside #seo-prerender — separate from React's #root to avoid mount-time flash. */
 export function injectPrerenderBody(html: string, bodyHtml: string): string {
-  if (!ROOT_DIV_PATTERN.test(html)) {
-    throw new Error('injectPrerenderBody: expected <div id="root"></div> in HTML template');
+  if (!SEO_PRERENDER_PATTERN.test(html)) {
+    throw new Error(
+      'injectPrerenderBody: expected <div id="seo-prerender"></div> in HTML template'
+    );
   }
-  return html.replace(ROOT_DIV_PATTERN, `<div id="root">\n${bodyHtml}\n    </div>`);
+  return html.replace(SEO_PRERENDER_PATTERN, `<div id="seo-prerender">\n${bodyHtml}\n    </div>`);
 }

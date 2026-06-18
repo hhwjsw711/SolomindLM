@@ -21,7 +21,7 @@ const MINIMAL_HTML = `<!doctype html>
     <meta name="description" content="Old description" />
     <link rel="canonical" href="https://example.com/" />
   </head>
-  <body><div id="root"></div></body>
+  <body><div id="seo-prerender"></div><div id="root"></div></body>
 </html>`;
 
 describe("canonicalUrl", () => {
@@ -112,7 +112,7 @@ describe("injectPrerenderBody", () => {
     expect(html).toContain("<h1>Privacy Policy</h1>");
   });
 
-  it("injects static article HTML inside #root", () => {
+  it("injects static article HTML inside #seo-prerender", () => {
     const intentPage = getIntentLandingPageByPath("/students/ai-flashcards");
     expect(intentPage).toBeDefined();
 
@@ -126,7 +126,7 @@ describe("injectPrerenderBody", () => {
     expect(html).toContain('href="/students"');
     expect(html).toContain("Related features");
     expect(html).toContain('href="/students/ai-quizzes"');
-    expect(html).not.toMatch(/<div id="root"><\/div>/);
+    expect(html).toMatch(/<div id="root"><\/div>/);
   });
 
   it("escapes HTML in intent page copy", () => {

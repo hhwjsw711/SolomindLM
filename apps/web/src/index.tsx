@@ -14,6 +14,11 @@ const convex = new ConvexReactClient(convexUrl);
 
 // React 19 entry point with Convex auth - plugins removed, testing hooks
 
+const seoPrerender = document.getElementById("seo-prerender");
+if (seoPrerender) {
+  seoPrerender.style.display = "none";
+}
+
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error("Could not find root element");
 
