@@ -190,7 +190,8 @@
     "faq": "FAQ",
     "privacyPolicy": "Privacy Policy",
     "terms": "Terms",
-    "copyright": "Copyright \u00a9 {{year}} Better Memory. All rights reserved."
+    "copyright": "Copyright \u00a9 {{year}} Better Memory. All rights reserved.",
+    "wechatQrHint": "Scan to add on WeChat"
   },
   "useCases": {
     "heading": "Built for Every Learner",
