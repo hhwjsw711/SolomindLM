@@ -60,6 +60,13 @@
       .dark #seo-prerender-content a {
         color: oklch(0.75 0.06 70);
       }
+      #root {
+        opacity: 0;
+        transition: opacity 0.15s ease;
+      }
+      #root.root-ready {
+        opacity: 1;
+      }
     </style>
     <!-- Favicons -->
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />

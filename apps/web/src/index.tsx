@@ -31,3 +31,6 @@ root.render(
     </ConvexAuthProvider>
   </React.StrictMode>
 );
+requestAnimationFrame(() => {
+  rootElement.classList.add("root-ready");
+});
