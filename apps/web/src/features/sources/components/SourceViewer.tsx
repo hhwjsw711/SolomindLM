@@ -12,8 +12,11 @@ import { useTranslation } from "react-i18next";
 import { Source } from "@/shared/types";
 import { sanitizeMarkdown } from "@/shared/utils";
 import { cn } from "@/shared/utils/cn";
+import { extractYouTubeVideoId } from "@/shared/utils/youtubeEmbed";
 import { useGenerateSourceGuide, useGetSignedUrl } from "../services/documentsApi";
+import { isYouTubeSource } from "../utils/sourceTypes";
 import { PdfViewer } from "./PdfViewer";
+import { YouTubeEmbedUnavailable, YouTubeVideoPreview } from "./YouTubeVideoPreview";
 
 const MarkdownRenderer = lazy(() =>
   import("@/shared/components/MarkdownRenderer").then((m) => ({ default: m.default }))
@@ -105,6 +108,8 @@ export const SourceViewer: React.FC<SourceViewerProps> = ({
     guideError,
     generateSourceGuide,
   ]);
+
+  const youtubeVideoId = isYouTubeSource(source) ? extractYouTubeVideoId(source.url) : null;
 
   return (
     <div className="p-6 space-y-4 animate-in fade-in slide-in-from-right-4 duration-200">
@@ -203,6 +208,14 @@ export const SourceViewer: React.FC<SourceViewerProps> = ({
         <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4">
           <p className="text-xs text-destructive">{guideError}</p>
         </div>
+      ) : null}
+
+      {isYouTubeSource(source) ? (
+        youtubeVideoId ? (
+          <YouTubeVideoPreview key={youtubeVideoId} videoId={youtubeVideoId} title={source.title} />
+        ) : (
+          <YouTubeEmbedUnavailable url={source.url} />
+        )
       ) : null}
 
       {/* Error State */}

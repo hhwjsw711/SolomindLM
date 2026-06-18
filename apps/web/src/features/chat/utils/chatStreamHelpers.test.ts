@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   computeRemoteGenerationBlocksSend,
+  isStreamStillRelevant,
+  resolveConversationMessages,
   researchProgressToStreamingActivity,
 } from "./chatStreamHelpers";
 
@@ -33,6 +35,30 @@ describe("researchProgressToStreamingActivity", () => {
       phase: "thinking",
       detail: "planning subquestions",
     });
+  });
+});
+
+describe("resolveConversationMessages", () => {
+  it("returns empty when no conversation is selected", () => {
+    expect(resolveConversationMessages(null, { messages: [{ role: "user" }] })).toEqual([]);
+  });
+
+  it("returns empty while the selected conversation is loading", () => {
+    expect(resolveConversationMessages("conv_1", undefined)).toEqual([]);
+  });
+
+  it("returns bundle messages when a conversation is selected and loaded", () => {
+    const messages = [{ role: "assistant", content: "hi" }];
+    expect(resolveConversationMessages("conv_1", { messages })).toBe(messages);
+  });
+});
+
+describe("isStreamStillRelevant", () => {
+  it("is true only when stream and active conversation match", () => {
+    expect(isStreamStillRelevant("conv_a", "conv_a")).toBe(true);
+    expect(isStreamStillRelevant("conv_a", "conv_b")).toBe(false);
+    expect(isStreamStillRelevant(null, null)).toBe(true);
+    expect(isStreamStillRelevant("conv_a", null)).toBe(false);
   });
 });
 
