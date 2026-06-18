@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useUserLimits } from "@/features/billing/services/subscriptionApi";
 import { useToast } from "@/shared/contexts/useToast";
 import { useLimitErrorToast } from "@/shared/hooks/useLimitErrorToast";
@@ -71,6 +72,7 @@ export function useSourceUpload({
   const userLimits = useUserLimits();
   const { handleLimitError } = useLimitErrorToast();
   const { error: showError, info: showInfo } = useToast();
+  const { t } = useTranslation("sources");
 
   // Use provided limit or get from subscription
   const maxSources = sourceLimit ?? userLimits.sourceLimit;
@@ -99,18 +101,21 @@ export function useSourceUpload({
     if (files.length === 0) return;
 
     if (!userId || !noteId) {
-      showInfo("Please log in and select a notebook before uploading files.");
+      showInfo(t("uploadErrors.loginFiles"));
       return;
     }
 
     if (sourcesCount >= maxSources) {
       await handleLimitError(
         new Error(
-          `Source limit reached (${sourcesCount}/${maxSources}). Remove a source to add more, or upgrade for other premium benefits.`
+          t("uploadErrors.sourceLimitReachedError", { count: sourcesCount, max: maxSources })
         ),
         {
-          errorMessage: `You've reached your source limit (${sourcesCount}/${maxSources}).`,
-          upgradeMessage: `This notebook allows up to ${maxSources} sources. Remove one to add another; upgrade for more notebooks and higher daily limits.`,
+          errorMessage: t("uploadErrors.sourceLimitReachedToast", {
+            count: sourcesCount,
+            max: maxSources,
+          }),
+          upgradeMessage: t("uploadErrors.sourceLimitUpgrade", { max: maxSources }),
         }
       );
       return;
@@ -126,7 +131,7 @@ export function useSourceUpload({
       console.error("Upload failed:", err);
       const handled = await handleLimitError(err);
       if (!handled.isLimitError) {
-        showError(err instanceof Error ? err.message : "Upload failed");
+        showError(err instanceof Error ? err.message : t("uploadErrors.uploadFailedFallback"));
       }
     } finally {
       setIsUploading(false);
@@ -145,25 +150,28 @@ export function useSourceUpload({
   // URL upload handler
   const handleUrlUpload = async (urls: string[]) => {
     if (!userId || !noteId) {
-      showInfo("Please log in and select a notebook before uploading URLs.");
+      showInfo(t("uploadErrors.loginUrls"));
       return;
     }
 
     if (sourcesCount >= maxSources) {
       await handleLimitError(
         new Error(
-          `Source limit reached (${sourcesCount}/${maxSources}). Remove a source to add more, or upgrade for other premium benefits.`
+          t("uploadErrors.sourceLimitReachedError", { count: sourcesCount, max: maxSources })
         ),
         {
-          errorMessage: `You've reached your source limit (${sourcesCount}/${maxSources}).`,
-          upgradeMessage: `This notebook allows up to ${maxSources} sources. Remove one to add another; upgrade for more notebooks and higher daily limits.`,
+          errorMessage: t("uploadErrors.sourceLimitReachedToast", {
+            count: sourcesCount,
+            max: maxSources,
+          }),
+          upgradeMessage: t("uploadErrors.sourceLimitUpgrade", { max: maxSources }),
         }
       );
       return;
     }
 
     if (urls.length === 0) {
-      showError("Please enter at least one valid URL (starting with http:// or https://).");
+      showError(t("uploadErrors.invalidUrl"));
       return;
     }
 
@@ -180,23 +188,28 @@ export function useSourceUpload({
           });
           onDocumentUploaded?.(result.documentId);
         } catch (err) {
-          const errorMsg = err instanceof Error ? err.message : "Upload failed";
+          const errorMsg =
+            err instanceof Error ? err.message : t("uploadErrors.uploadFailedFallback");
           errors.push(`${url}: ${errorMsg}`);
           console.error(`URL upload failed for ${url}:`, err);
         }
       }
 
       if (errors.length > 0 && errors.length === urls.length) {
-        showError(`Failed to upload all URLs: ${errors.join("; ")}`, { duration: 10_000 });
+        showError(t("uploadErrors.allUrlsFailed", { errors: errors.join("; ") }), {
+          duration: 10_000,
+        });
         return;
       } else if (errors.length > 0) {
-        showError(`Some URLs failed: ${errors.join("; ")}`, { duration: 10_000 });
+        showError(t("uploadErrors.someUrlsFailed", { errors: errors.join("; ") }), {
+          duration: 10_000,
+        });
       }
     } catch (err) {
       console.error("URL upload failed:", err);
       const handled = await handleLimitError(err);
       if (!handled.isLimitError) {
-        showError(err instanceof Error ? err.message : "Upload failed");
+        showError(err instanceof Error ? err.message : t("uploadErrors.uploadFailedFallback"));
       }
       throw err;
     } finally {
@@ -207,25 +220,28 @@ export function useSourceUpload({
   // Social Media upload handler (YouTube, TikTok, Instagram, X)
   const handleSocialMediaUpload = async (urls: string[]) => {
     if (!userId || !noteId) {
-      showInfo("Please log in and select a notebook before uploading social media content.");
+      showInfo(t("uploadErrors.loginSocial"));
       return;
     }
 
     if (sourcesCount >= maxSources) {
       await handleLimitError(
         new Error(
-          `Source limit reached (${sourcesCount}/${maxSources}). Remove a source to add more, or upgrade for other premium benefits.`
+          t("uploadErrors.sourceLimitReachedError", { count: sourcesCount, max: maxSources })
         ),
         {
-          errorMessage: `You've reached your source limit (${sourcesCount}/${maxSources}).`,
-          upgradeMessage: `This notebook allows up to ${maxSources} sources. Remove one to add another; upgrade for more notebooks and higher daily limits.`,
+          errorMessage: t("uploadErrors.sourceLimitReachedToast", {
+            count: sourcesCount,
+            max: maxSources,
+          }),
+          upgradeMessage: t("uploadErrors.sourceLimitUpgrade", { max: maxSources }),
         }
       );
       return;
     }
 
     if (urls.length === 0) {
-      showError("Please enter at least one valid URL (starting with http:// or https://).");
+      showError(t("uploadErrors.invalidUrl"));
       return;
     }
 
@@ -242,23 +258,28 @@ export function useSourceUpload({
           });
           onDocumentUploaded?.(result.documentId);
         } catch (err) {
-          const errorMsg = err instanceof Error ? err.message : "Upload failed";
+          const errorMsg =
+            err instanceof Error ? err.message : t("uploadErrors.uploadFailedFallback");
           errors.push(`${url}: ${errorMsg}`);
           console.error(`Social media upload failed for ${url}:`, err);
         }
       }
 
       if (errors.length > 0 && errors.length === urls.length) {
-        showError(`Failed to upload all URLs: ${errors.join("; ")}`, { duration: 10_000 });
+        showError(t("uploadErrors.allUrlsFailed", { errors: errors.join("; ") }), {
+          duration: 10_000,
+        });
         return;
       } else if (errors.length > 0) {
-        showError(`Some URLs failed: ${errors.join("; ")}`, { duration: 10_000 });
+        showError(t("uploadErrors.someUrlsFailed", { errors: errors.join("; ") }), {
+          duration: 10_000,
+        });
       }
     } catch (err) {
       console.error("Social media upload failed:", err);
       const handled = await handleLimitError(err);
       if (!handled.isLimitError) {
-        showError(err instanceof Error ? err.message : "Upload failed");
+        showError(err instanceof Error ? err.message : t("uploadErrors.uploadFailedFallback"));
       }
       throw err;
     } finally {
@@ -269,18 +290,21 @@ export function useSourceUpload({
   // Text upload handler
   const handleTextUpload = async (text: string) => {
     if (!userId || !noteId) {
-      showInfo("Please log in and select a notebook before uploading text.");
+      showInfo(t("uploadErrors.loginText"));
       return;
     }
 
     if (sourcesCount >= maxSources) {
       await handleLimitError(
         new Error(
-          `Source limit reached (${sourcesCount}/${maxSources}). Remove a source to add more, or upgrade for other premium benefits.`
+          t("uploadErrors.sourceLimitReachedError", { count: sourcesCount, max: maxSources })
         ),
         {
-          errorMessage: `You've reached your source limit (${sourcesCount}/${maxSources}).`,
-          upgradeMessage: `This notebook allows up to ${maxSources} sources. Remove one to add another; upgrade for more notebooks and higher daily limits.`,
+          errorMessage: t("uploadErrors.sourceLimitReachedToast", {
+            count: sourcesCount,
+            max: maxSources,
+          }),
+          upgradeMessage: t("uploadErrors.sourceLimitUpgrade", { max: maxSources }),
         }
       );
       return;
@@ -299,7 +323,7 @@ export function useSourceUpload({
       console.error("Text upload failed:", err);
       const handled = await handleLimitError(err);
       if (!handled.isLimitError) {
-        showError(err instanceof Error ? err.message : "Upload failed");
+        showError(err instanceof Error ? err.message : t("uploadErrors.uploadFailedFallback"));
       }
       throw err;
     } finally {
@@ -346,7 +370,9 @@ export function useSourceUpload({
 
     if (files.length === 0) {
       showInfo(
-        `No supported files found. Supported types: ${ACCEPTED_FILE_TYPES.map((t) => t.slice(1)).join(", ")}`
+        t("uploadErrors.noSupportedFiles", {
+          types: ACCEPTED_FILE_TYPES.map((type) => type.slice(1)).join(", "),
+        })
       );
       return;
     }

@@ -2,6 +2,7 @@ import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { useAction, useMutation } from "convex/react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export type ChatVoiceState = "idle" | "recording" | "transcribing";
 
@@ -60,6 +61,7 @@ export function useChatVoiceTranscription({
 }: UseChatVoiceTranscriptionOptions) {
   const [voiceState, setVoiceState] = useState<ChatVoiceState>("idle");
   const [elapsedMs, setElapsedMs] = useState(0);
+  const { t } = useTranslation("chat");
 
   const generateUploadUrl = useMutation(api.documents.index.generateUploadUrl);
   const transcribeChatAudio = useAction(api.chat.voiceTranscription.transcribeChatAudio);
@@ -146,13 +148,13 @@ export function useChatVoiceTranscription({
     chunksRef.current = [];
 
     if (blob.size === 0) {
-      onError("No audio captured. Try again.");
+      onError(t("input.voice.errors.noAudioCaptured"));
       goToIdle();
       return;
     }
 
     if (!notebookId) {
-      onError("No notebook selected");
+      onError(t("input.voice.errors.noNotebookSelected"));
       goToIdle();
       return;
     }
@@ -167,11 +169,11 @@ export function useChatVoiceTranscription({
             body: blob,
           });
           if (!uploadResponse.ok) {
-            throw new Error("Failed to upload audio");
+            throw new Error(t("input.voice.errors.uploadAudioFailed"));
           }
           const { storageId } = (await uploadResponse.json()) as { storageId: string };
           if (!storageId) {
-            throw new Error("Upload failed — unexpected response");
+            throw new Error(t("input.voice.errors.unexpectedUploadResponse"));
           }
           return transcribeChatAudio({
             storageId: storageId as Id<"_storage">,
@@ -179,17 +181,17 @@ export function useChatVoiceTranscription({
           });
         })(),
         TRANSCRIBE_CHAIN_TIMEOUT_MS,
-        "Transcription took too long"
+        t("input.voice.errors.transcriptionTimeout")
       );
       if (!mountedRef.current) return;
       if (text.trim()) {
         onTranscribed(text);
       } else {
-        onError("No speech detected in the recording. Try again.");
+        onError(t("input.voice.errors.noSpeechDetected"));
       }
     } catch (e) {
       if (!mountedRef.current) return;
-      const message = e instanceof Error ? e.message : "Transcription failed";
+      const message = e instanceof Error ? e.message : t("input.voice.errors.transcriptionFailed");
       onError(message);
     } finally {
       if (mountedRef.current) goToIdle();
@@ -204,6 +206,7 @@ export function useChatVoiceTranscription({
     stopStream,
     clearTimers,
     setBoth,
+    t,
   ]);
 
   const startRecording = useCallback(async () => {
@@ -213,7 +216,7 @@ export function useChatVoiceTranscription({
 
     const mimeType = pickRecorderMimeType();
     if (!mimeType) {
-      onError("No supported audio format in this browser");
+      onError(t("input.voice.errors.unsupportedAudioFormat"));
       return;
     }
 
@@ -223,9 +226,9 @@ export function useChatVoiceTranscription({
     } catch (e) {
       const name = e instanceof Error ? e.name : "";
       if (name === "NotAllowedError" || name === "PermissionDeniedError") {
-        onError("Microphone permission denied");
+        onError(t("input.voice.errors.microphonePermissionDenied"));
       } else {
-        onError("Could not access microphone");
+        onError(t("input.voice.errors.microphoneAccessFailed"));
       }
       return;
     }
@@ -263,10 +266,10 @@ export function useChatVoiceTranscription({
     } catch {
       clearTimers();
       stopStream();
-      onError("Could not start recording");
+      onError(t("input.voice.errors.recordingStartFailed"));
       goToIdle();
     }
-  }, [disabled, notebookId, onError, clearTimers, stopStream, goToIdle, setBoth, stopAndUpload]);
+  }, [disabled, notebookId, onError, clearTimers, stopStream, goToIdle, setBoth, stopAndUpload, t]);
 
   const toggleRecording = useCallback(async () => {
     if (disabled || !notebookId) {

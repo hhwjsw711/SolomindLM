@@ -30,6 +30,21 @@
     "sourceLimit": "Source limit",
     "loading": "Loading..."
   },
+  "uploadErrors": {
+    "loginFiles": "Please log in and select a notebook before uploading files.",
+    "loginUrls": "Please log in and select a notebook before uploading URLs.",
+    "loginSocial": "Please log in and select a notebook before uploading social media content.",
+    "loginText": "Please log in and select a notebook before uploading text.",
+    "sourceLimitReachedError": "Source limit reached ({{count}}/{{max}}). Remove a source to add more, or upgrade for other premium benefits.",
+    "sourceLimitReachedToast": "You've reached your source limit ({{count}}/{{max}}).",
+    "sourceLimitUpgrade": "This notebook allows up to {{max}} sources. Remove one to add another; upgrade for more notebooks and higher daily limits.",
+    "invalidUrl": "Please enter at least one valid URL (starting with http:// or https://).",
+    "uploadFailedFallback": "Upload failed",
+    "allUrlsFailed": "Failed to upload all URLs: {{errors}}",
+    "someUrlsFailed": "Some URLs failed: {{errors}}",
+    "noSupportedFiles": "No supported files found. Supported types: {{types}}",
+    "storageUploadFailed": "Failed to upload file to storage"
+  },
   "discover": {
     "title": "Discover sources",
     "addSources": "Add sources",

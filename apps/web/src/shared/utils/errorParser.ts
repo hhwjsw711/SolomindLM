@@ -4,6 +4,7 @@
  */
 
 import { ConvexError } from "convex/values";
+import i18next from "@/i18n";
 import type { DailyFeature } from "@/shared/types/index";
 
 /** Pro-tier daily caps (must match convex/_lib/rateLimits.ts getProLimit). */
@@ -68,13 +69,14 @@ export function isLimitError(error: unknown): error is ParsedLimitError {
   if (!error || typeof error !== "object") return false;
 
   // Check for structured error with data property (from Convex serialization)
-  const err = error as any;
+  const err = error as Record<string, unknown>;
   if (err.data && typeof err.data === "object") {
+    const data = err.data as Record<string, unknown>;
     return (
-      typeof err.data.code === "string" &&
-      typeof err.data.limit === "number" &&
-      typeof err.data.current === "number" &&
-      typeof err.data.limitType === "string"
+      typeof data.code === "string" &&
+      typeof data.limit === "number" &&
+      typeof data.current === "number" &&
+      typeof data.limitType === "string"
     );
   }
 
@@ -106,9 +108,9 @@ export function parseLimitError(error: unknown): ParsedLimitError | null {
     }
 
     // Check if error has structured data attached
-    const err = error as any;
+    const err = error as Error & { data?: unknown };
     if (err.data && isLimitError(err.data)) {
-      const raw = err.data as Record<string, unknown>;
+      const raw = err.data as unknown as Record<string, unknown>;
       return {
         isLimitError: true,
         code: String(raw.code),
@@ -136,9 +138,9 @@ export function parseLimitError(error: unknown): ParsedLimitError | null {
 
   // Handle plain objects with error data
   if (typeof error === "object" && error !== null) {
-    const err = error as any;
+    const err = error as Record<string, unknown>;
     if (err.data && isLimitError(err.data)) {
-      const raw = err.data as Record<string, unknown>;
+      const raw = err.data as unknown as Record<string, unknown>;
       return {
         isLimitError: true,
         code: String(raw.code),
@@ -353,6 +355,36 @@ export type ParsedServiceError =
   | ParsedStorageError
   | ParsedInputValidationError;
 
+const SERVICE_ERROR_FALLBACKS = {
+  externalServiceUnavailable: "{{service}} is temporarily unavailable{{suffix}}",
+  invalidInput: "Invalid input.",
+  somethingWentWrong: "Something went wrong.",
+  storageFailed: "Storage {{operation}} failed.",
+  tryAgainSuffix: ". Try again in a moment.",
+} as const;
+
+function interpolateFallback(template: string, options?: Record<string, unknown>): string {
+  return template.replace(/{{(\w+)}}/g, (_, key: string) => String(options?.[key] ?? ""));
+}
+
+function getCommonErrorText(
+  key: keyof typeof SERVICE_ERROR_FALLBACKS,
+  options?: Record<string, unknown>
+): string {
+  const fallback = interpolateFallback(SERVICE_ERROR_FALLBACKS[key], options);
+
+  try {
+    const translated = i18next.t(`errors.${key}`, {
+      ns: "common",
+      defaultValue: fallback,
+      ...options,
+    });
+    return typeof translated === "string" && translated ? translated : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 function convexErrorDataObject(error: unknown): Record<string, unknown> | null {
   if (error instanceof ConvexError) {
     const d = error.data;
@@ -414,14 +446,17 @@ export function getServiceErrorMessage(parsed: ParsedServiceError): string {
     case "external_service":
       return (
         parsed.detail ||
-        `${parsed.service} is temporarily unavailable${parsed.retryable ? ". Try again." : "."}`
+        getCommonErrorText("externalServiceUnavailable", {
+          service: parsed.service,
+          suffix: parsed.retryable ? getCommonErrorText("tryAgainSuffix") : ".",
+        })
       );
     case "storage":
-      return parsed.detail || `Storage ${parsed.operation} failed.`;
+      return parsed.detail || getCommonErrorText("storageFailed", { operation: parsed.operation });
     case "input_validation":
-      return parsed.detail || "Invalid input.";
+      return parsed.detail || getCommonErrorText("invalidInput");
     default:
-      return "Something went wrong.";
+      return getCommonErrorText("somethingWentWrong");
   }
 }
 

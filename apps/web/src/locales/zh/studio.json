@@ -435,7 +435,24 @@
     "hideCriteria": "隐藏筛选标准",
     "viewCriteria": "查看筛选标准",
     "cite": "引用",
-    "myReferences": "我的参考文献"
+    "myReferences": "我的参考文献",
+    "criteria": {
+      "researchQuestionFocus": "研究问题聚焦度",
+      "directRelevance": "直接相关性",
+      "substantiveEvidence": "实质性证据",
+      "sufficientDetail": "细节充分性",
+      "accessibleStudy": "研究可获取性",
+      "notDuplicate": "非重复文献",
+      "llmBenchmarkFocus": "LLM 基准聚焦度",
+      "realWorldTaskEvaluation": "真实任务评估",
+      "predictivePowerAnalysis": "预测力分析",
+      "benchmarkLimitationDiscussion": "基准局限讨论",
+      "empiricalEvidence": "实证证据",
+      "multipleLlmsTested": "测试多个 LLM"
+    }
+  },
+  "resizeHandle": {
+    "resizePanel": "调整面板宽度"
   },
   "literatureTablePaperCell": {
     "excludedFromReview": "已从审阅中排除",

@@ -236,7 +236,26 @@
     "ctaHeading": "准备好试试 Better Memory 了吗？",
     "ctaDescription": "创建免费账户，上传你的第一批资料，几分钟内即可生成学习或研究成果。",
     "ctaButton": "创建免费账户",
-    "backToHome": "返回首页"
+    "backToHome": "返回首页",
+    "metaTitle": "常见问题 | Better Memory",
+    "metaDescription": "了解 Better Memory 的学习工具、研究流程、价格、隐私，以及如何从笔记本和来源开始使用。",
+    "metaKeywords": "Better Memory 常见问题, 学习工具帮助, 研究助手问题, 价格额度, AI 学习"
+  },
+  "intentPage": {
+    "backToHome": "返回首页",
+    "breadcrumb": "面包屑导航",
+    "exampleWorkflow": "示例流程",
+    "source": "来源",
+    "output": "输出",
+    "relatedFeatures": "相关功能",
+    "relatedFeaturesStudent": "探索 Better Memory 中的其他学习流程。",
+    "relatedFeaturesResearch": "探索 Better Memory 中的其他研究流程。"
+  },
+  "seoContent": {
+    "quickAnswer": "快速回答",
+    "topic": "主题",
+    "relatedPages": "相关页面",
+    "relatedDescription": "继续了解 Better Memory 的学习和研究流程。"
   },
   "page": {
     "hero": {
@@ -253,7 +272,10 @@
       "reference": "引用 {{n}} • {{title}}",
       "sendDemo": "发送（演示）",
       "studioSubtitle": "从你的来源创建学习素材",
-      "composerMode": "写作模式"
+      "composerMode": "写作模式",
+      "referenceButton": "引用 {{n}}",
+      "select": "选择 {{name}}",
+      "deselect": "取消选择 {{name}}"
     }
   }
 }

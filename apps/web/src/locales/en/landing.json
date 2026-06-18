@@ -236,7 +236,26 @@
     "ctaHeading": "Ready to try Better Memory?",
     "ctaDescription": "Create a free account, upload your first sources, and generate study or research outputs in minutes.",
     "ctaButton": "Create free account",
-    "backToHome": "Back to home"
+    "backToHome": "Back to home",
+    "metaTitle": "FAQ | Better Memory",
+    "metaDescription": "Answers about Better Memory study tools, research workflows, pricing, privacy, and how to get started with notebooks and sources.",
+    "metaKeywords": "Better Memory FAQ, study tools help, research assistant questions, pricing limits, AI learning"
+  },
+  "intentPage": {
+    "backToHome": "Back to home",
+    "breadcrumb": "Breadcrumb",
+    "exampleWorkflow": "Example workflow",
+    "source": "Source",
+    "output": "Output",
+    "relatedFeatures": "Related features",
+    "relatedFeaturesStudent": "Explore other study workflows in Better Memory.",
+    "relatedFeaturesResearch": "Explore other research workflows in Better Memory."
+  },
+  "seoContent": {
+    "quickAnswer": "Quick answer",
+    "topic": "Topic",
+    "relatedPages": "Related pages",
+    "relatedDescription": "Continue with Better Memory study and research workflows."
   },
   "page": {
     "hero": {
@@ -253,7 +272,10 @@
       "reference": "Reference {{n}} • {{title}}",
       "sendDemo": "Send (demo)",
       "studioSubtitle": "Create study artifacts from your sources",
-      "composerMode": "Composer mode"
+      "composerMode": "Composer mode",
+      "referenceButton": "Reference {{n}}",
+      "select": "Select {{name}}",
+      "deselect": "Deselect {{name}}"
     }
   }
 }

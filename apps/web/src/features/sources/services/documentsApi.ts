@@ -3,6 +3,7 @@ import type { Id } from "@convex/_generated/dataModel";
 import { ConvexClient } from "convex/browser";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import type {
   Document,
   PaperRecordInput,
@@ -353,6 +354,7 @@ export async function pollDocumentStatus(
 export function useUploadDocument() {
   const generateUploadUrl = useMutation(api.documents.index.generateUploadUrl);
   const createDocument = useMutation(api.documents.index.upload);
+  const { t } = useTranslation("sources");
 
   return async (file: File, notebookId: string) => {
     // 1. Get upload URL from Convex (returns URL string)
@@ -366,7 +368,7 @@ export function useUploadDocument() {
     });
 
     if (!uploadResponse.ok) {
-      throw new Error("Failed to upload file to storage");
+      throw new Error(t("uploadErrors.storageUploadFailed"));
     }
 
     const { storageId } = await uploadResponse.json();

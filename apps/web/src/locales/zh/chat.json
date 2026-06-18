@@ -16,7 +16,20 @@
     "voice": {
       "dictate": "语音输入",
       "stopAndTranscribe": "停止并转录",
-      "transcribing": "转录中…"
+      "transcribing": "转录中…",
+      "errors": {
+        "noAudioCaptured": "没有录到音频，请重试。",
+        "noNotebookSelected": "未选择笔记本",
+        "uploadAudioFailed": "音频上传失败",
+        "unexpectedUploadResponse": "上传失败：响应异常",
+        "transcriptionTimeout": "转录耗时过长",
+        "noSpeechDetected": "录音中未检测到语音，请重试。",
+        "transcriptionFailed": "转录失败",
+        "unsupportedAudioFormat": "此浏览器不支持可用的音频格式",
+        "microphonePermissionDenied": "麦克风权限已被拒绝",
+        "microphoneAccessFailed": "无法访问麦克风",
+        "recordingStartFailed": "无法开始录音"
+      }
     },
     "disclaimer": "Better Memory 可能不准确；请务必核实其回复。"
   },

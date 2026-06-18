@@ -1,9 +1,11 @@
 import { ChevronDown, ChevronRight, ChevronUp } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { AuthModal } from "@/features/auth/components/AuthModal";
 import { useAuth } from "@/features/auth/useAuth";
 import { Button } from "@/shared/components/ui/button";
+import { useLanguage } from "@/shared/contexts/useLanguage";
 import { SEOMeta } from "@/shared/seo/SEOMeta";
 import { isNativeShell } from "@/utils/platformDetection";
 import { Footer } from "./components/Footer";
@@ -19,7 +21,8 @@ type SeoContentPageProps = {
 };
 
 export function SeoContentPage({ pagePath }: SeoContentPageProps) {
-  const page = getSeoContentPageByPath(pagePath);
+  const { language } = useLanguage();
+  const page = getSeoContentPageByPath(pagePath, language);
   const { isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -73,6 +76,7 @@ export function SeoContentPage({ pagePath }: SeoContentPageProps) {
 }
 
 function SeoContentHeader() {
+  const { t } = useTranslation("landing");
   return (
     <header className="border-b border-border/60 bg-card/40 backdrop-blur-sm sticky top-0 z-50">
       <div className="max-w-[1500px] mx-auto px-6 sm:px-8 lg:px-12 h-16 flex items-center justify-between">
@@ -90,7 +94,7 @@ function SeoContentHeader() {
           to="/"
           className="text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
-          Back to home
+          {t("intentPage.backToHome")}
         </Link>
       </div>
     </header>
@@ -98,6 +102,7 @@ function SeoContentHeader() {
 }
 
 function SeoContentHero({ page, onSignup }: { page: SeoContentPageConfig; onSignup: () => void }) {
+  const { t } = useTranslation("landing");
   const breadcrumbItems = getSeoContentBreadcrumbItems(page);
 
   return (
@@ -113,7 +118,7 @@ function SeoContentHero({ page, onSignup }: { page: SeoContentPageConfig; onSign
         {page.quickAnswer ? (
           <div className="rounded-xl border border-border bg-card p-6 md:p-8 space-y-4">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Quick answer
+              {t("seoContent.quickAnswer")}
             </p>
             {page.quickAnswer.chooseCompetitor ? (
               <p className="text-sm text-foreground leading-relaxed">
@@ -172,13 +177,14 @@ function SeoContentComparisonTable({
 }: {
   rows: NonNullable<SeoContentPageConfig["comparisonTable"]>;
 }) {
+  const { t } = useTranslation("landing");
   return (
     <div className="overflow-x-auto rounded-xl border border-border bg-card">
       <table className="w-full min-w-[640px] text-sm bg-card">
         <thead>
           <tr className="border-b border-border bg-muted">
             <th scope="col" className="px-4 py-3 text-left font-semibold text-foreground">
-              Topic
+              {t("seoContent.topic")}
             </th>
             <th scope="col" className="px-4 py-3 text-left font-semibold text-foreground">
               Better Memory
@@ -213,8 +219,9 @@ function SeoContentBreadcrumb({
 }: {
   items: ReturnType<typeof getSeoContentBreadcrumbItems>;
 }) {
+  const { t } = useTranslation("landing");
   return (
-    <nav aria-label="Breadcrumb" className="flex justify-center">
+    <nav aria-label={t("intentPage.breadcrumb")} className="flex justify-center">
       <ol className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
@@ -241,6 +248,7 @@ function SeoContentBreadcrumb({
 }
 
 function SeoContentRelatedSection({ page }: { page: SeoContentPageConfig }) {
+  const { t } = useTranslation("landing");
   if (page.relatedLinks.length === 0) return null;
 
   return (
@@ -248,11 +256,9 @@ function SeoContentRelatedSection({ page }: { page: SeoContentPageConfig }) {
       <div className="max-w-5xl mx-auto space-y-8">
         <div className="text-center max-w-2xl mx-auto">
           <h2 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-3">
-            Related pages
+            {t("seoContent.relatedPages")}
           </h2>
-          <p className="text-muted-foreground">
-            Continue with Better Memory study and research workflows.
-          </p>
+          <p className="text-muted-foreground">{t("seoContent.relatedDescription")}</p>
         </div>
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {page.relatedLinks.map((link) => (
@@ -268,7 +274,7 @@ function SeoContentRelatedSection({ page }: { page: SeoContentPageConfig }) {
                   {link.description}
                 </span>
                 <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary">
-                  Learn more
+                  {t("features.learnMore")}
                   <ChevronRight className="w-4 h-4" aria-hidden />
                 </span>
               </Link>

@@ -39,21 +39,21 @@ type ScreeningCriterion = {
 };
 
 const GENERIC_SCREENING_CRITERIA = [
-  "Research Question Focus",
-  "Direct Relevance",
-  "Substantive Evidence",
-  "Sufficient Detail",
-  "Accessible Study",
-  "Not a Duplicate",
+  "researchQuestionFocus",
+  "directRelevance",
+  "substantiveEvidence",
+  "sufficientDetail",
+  "accessibleStudy",
+  "notDuplicate",
 ] as const;
 
 const LLM_BENCHMARK_SCREENING_CRITERIA = [
-  "LLM Benchmark Focus",
-  "Real-world Task Evaluation",
-  "Predictive Power Analysis",
-  "Benchmark Limitation Discussion",
-  "Empirical Evidence",
-  "Multiple LLMs Tested",
+  "llmBenchmarkFocus",
+  "realWorldTaskEvaluation",
+  "predictivePowerAnalysis",
+  "benchmarkLimitationDiscussion",
+  "empiricalEvidence",
+  "multipleLlmsTested",
 ] as const;
 
 export const LiteratureScreeningPanel: React.FC<LiteratureScreeningPanelProps> = ({
@@ -62,6 +62,7 @@ export const LiteratureScreeningPanel: React.FC<LiteratureScreeningPanelProps> =
   isResizing: _isResizing,
   onClose,
 }) => {
+  const { t } = useTranslation("studio");
   const [expandedDecisionKeys, setExpandedDecisionKeys] = useState<Set<number>>(new Set());
 
   const session = useLiteratureReviewSession(sessionId);
@@ -107,7 +108,7 @@ export const LiteratureScreeningPanel: React.FC<LiteratureScreeningPanelProps> =
       <ResizeHandle width={width} position="left" />
 
       <ScreeningPanelHeader
-        title="Screening Decisions and Outcome Summary"
+        title={t("literatureScreeningPanel.title")}
         canExport={total > 0}
         onExport={handleExport}
         onClose={onClose}
@@ -240,9 +241,10 @@ function ScreeningDecisionRow({
   isExpanded: boolean;
   onToggleExpanded: () => void;
 }) {
+  const { t } = useTranslation("studio");
   const criteria = useMemo(
-    () => buildCriteria(criteriaLabels, decision),
-    [criteriaLabels, decision]
+    () => buildCriteria(criteriaLabels, decision, t),
+    [criteriaLabels, decision, t]
   );
 
   return (
@@ -395,7 +397,8 @@ function getScreeningCriteriaLabels(query?: string): readonly string[] {
 
 function buildCriteria(
   labels: readonly string[],
-  decision: LiteratureScreeningDecision
+  decision: LiteratureScreeningDecision,
+  t: (key: string) => string
 ): ScreeningCriterion[] {
   const reason = decision.reason.toLowerCase();
   const title = decision.title.toLowerCase();
@@ -405,7 +408,7 @@ function buildCriteria(
     const labelText = label.toLowerCase();
     const status = inferCriterionStatus({ labelText, reason, title, index, isIncluded });
     return {
-      label,
+      label: t(`literatureScreeningPanel.criteria.${label}`),
       status,
       explanation: criterionExplanation(status, decision.reason, isIncluded),
     };
@@ -431,7 +434,7 @@ function inferCriterionStatus({
       reason
     );
 
-  if (labelText.includes("real-world") || labelText.includes("direct relevance")) {
+  if (labelText.includes("realworld") || labelText.includes("directrelevance")) {
     if (
       /\bnew engineering tasks|not real[-\s]?world|different topic|indirect|tangential\b/.test(text)
     ) {

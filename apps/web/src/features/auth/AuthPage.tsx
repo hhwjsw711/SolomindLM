@@ -276,7 +276,7 @@ function AuthHeroMockup() {
                             <button
                               type="button"
                               aria-pressed={refKey === 1}
-                              title="Reference 1"
+                              title={i18next.t("auth:page.hero.referenceButton", { n: 1 })}
                               onClick={() => setRefKey((k) => (k === 1 ? null : 1))}
                               className={`${citeBtnBase} mx-1 ${refKey === 1 ? "ring-2 ring-primary/55 ring-offset-2 ring-offset-background" : ""}`}
                               style={{ verticalAlign: "middle" }}
@@ -288,7 +288,7 @@ function AuthHeroMockup() {
                             <button
                               type="button"
                               aria-pressed={refKey === 2}
-                              title="Reference 2"
+                              title={i18next.t("auth:page.hero.referenceButton", { n: 2 })}
                               onClick={() => setRefKey((k) => (k === 2 ? null : 2))}
                               className={`${citeBtnBase} mx-1 ${refKey === 2 ? "ring-2 ring-primary/55 ring-offset-2 ring-offset-background" : ""}`}
                               style={{ verticalAlign: "middle" }}

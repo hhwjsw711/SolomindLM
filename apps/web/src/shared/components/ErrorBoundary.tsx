@@ -1,5 +1,6 @@
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Component, ErrorInfo, ReactNode } from "react";
+import i18next from "@/i18n";
 
 interface Props {
   children: ReactNode;
@@ -50,20 +51,24 @@ export class ErrorBoundary extends Component<Props, State> {
         return this.props.fallback;
       }
 
+      const title = i18next.t("errors.somethingWentWrong");
+      const unexpectedError = i18next.t("errors.unexpectedError");
+      const tryAgain = i18next.t("errorMessage.tryAgain");
+
       return (
         <div className="flex flex-col items-center justify-center min-h-[400px] p-6">
           <div className="max-w-md w-full bg-destructive/10 border border-destructive/20 rounded-lg p-6 text-center">
             <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
-            <h2 className="text-lg font-semibold text-foreground mb-2">Something went wrong</h2>
+            <h2 className="text-lg font-semibold text-foreground mb-2">{title}</h2>
             <p className="text-sm text-muted-foreground mb-4">
-              {this.state.error?.message || "An unexpected error occurred"}
+              {this.state.error?.message || unexpectedError}
             </p>
             <button
               onClick={this.handleReset}
               className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
             >
               <RefreshCw className="w-4 h-4" />
-              Try Again
+              {tryAgain}
             </button>
           </div>
         </div>

@@ -450,7 +450,24 @@
     "hideCriteria": "Hide screening criteria",
     "viewCriteria": "View screening criteria",
     "cite": "Cite",
-    "myReferences": "My References"
+    "myReferences": "My References",
+    "criteria": {
+      "researchQuestionFocus": "Research question focus",
+      "directRelevance": "Direct relevance",
+      "substantiveEvidence": "Substantive evidence",
+      "sufficientDetail": "Sufficient detail",
+      "accessibleStudy": "Accessible study",
+      "notDuplicate": "Not a duplicate",
+      "llmBenchmarkFocus": "LLM benchmark focus",
+      "realWorldTaskEvaluation": "Real-world task evaluation",
+      "predictivePowerAnalysis": "Predictive power analysis",
+      "benchmarkLimitationDiscussion": "Benchmark limitation discussion",
+      "empiricalEvidence": "Empirical evidence",
+      "multipleLlmsTested": "Multiple LLMs tested"
+    }
+  },
+  "resizeHandle": {
+    "resizePanel": "Resize panel"
   },
   "literatureTablePaperCell": {
     "excludedFromReview": "Excluded from review",

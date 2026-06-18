@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 interface ResizeHandleProps {
   width: number;
@@ -10,6 +11,8 @@ interface ResizeHandleProps {
  * Uses custom events to communicate size changes to parent components.
  */
 export const ResizeHandle: React.FC<ResizeHandleProps> = ({ width, position }) => {
+  const { t } = useTranslation("studio");
+
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -56,7 +59,7 @@ export const ResizeHandle: React.FC<ResizeHandleProps> = ({ width, position }) =
     <div
       className="absolute top-0 left-0 w-1.5 h-full cursor-col-resize hover:bg-primary/50 z-50 transition-colors active:bg-primary/70 group hidden md:block"
       onMouseDown={handleMouseDown}
-      aria-label="Resize panel"
+      aria-label={t("resizeHandle.resizePanel")}
     />
   );
 };

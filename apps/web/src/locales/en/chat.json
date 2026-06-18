@@ -16,7 +16,20 @@
     "voice": {
       "dictate": "Dictate (microphone)",
       "stopAndTranscribe": "Stop and transcribe",
-      "transcribing": "Transcribing…"
+      "transcribing": "Transcribing…",
+      "errors": {
+        "noAudioCaptured": "No audio captured. Try again.",
+        "noNotebookSelected": "No notebook selected",
+        "uploadAudioFailed": "Failed to upload audio",
+        "unexpectedUploadResponse": "Upload failed — unexpected response",
+        "transcriptionTimeout": "Transcription took too long",
+        "noSpeechDetected": "No speech detected in the recording. Try again.",
+        "transcriptionFailed": "Transcription failed",
+        "unsupportedAudioFormat": "No supported audio format in this browser",
+        "microphonePermissionDenied": "Microphone permission denied",
+        "microphoneAccessFailed": "Could not access microphone",
+        "recordingStartFailed": "Could not start recording"
+      }
     },
     "disclaimer": "Better Memory can be inaccurate; please double check its responses."
   },

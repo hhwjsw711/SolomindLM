@@ -30,6 +30,21 @@
     "sourceLimit": "来源配额",
     "loading": "加载中…"
   },
+  "uploadErrors": {
+    "loginFiles": "请先登录并选择一个笔记本，然后再上传文件。",
+    "loginUrls": "请先登录并选择一个笔记本，然后再上传 URL。",
+    "loginSocial": "请先登录并选择一个笔记本，然后再上传社交媒体内容。",
+    "loginText": "请先登录并选择一个笔记本，然后再上传文本。",
+    "sourceLimitReachedError": "已达到来源上限（{{count}}/{{max}}）。请移除一个来源后再添加，或升级以获得更多高级权益。",
+    "sourceLimitReachedToast": "你已达到来源上限（{{count}}/{{max}}）。",
+    "sourceLimitUpgrade": "此笔记本最多可包含 {{max}} 个来源。请移除一个后再添加；升级后可获得更多笔记本和更高每日额度。",
+    "invalidUrl": "请至少输入一个有效 URL（以 http:// 或 https:// 开头）。",
+    "uploadFailedFallback": "上传失败",
+    "allUrlsFailed": "所有 URL 上传失败：{{errors}}",
+    "someUrlsFailed": "部分 URL 上传失败：{{errors}}",
+    "noSupportedFiles": "未找到支持的文件。支持的类型：{{types}}",
+    "storageUploadFailed": "文件上传到存储失败"
+  },
   "discover": {
     "title": "发现来源",
     "addSources": "添加来源",

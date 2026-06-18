@@ -1,9 +1,11 @@
 import { ChevronDown, ChevronRight, ChevronUp } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { AuthModal } from "@/features/auth/components/AuthModal";
 import { useAuth } from "@/features/auth/useAuth";
 import { Button } from "@/shared/components/ui/button";
+import { useLanguage } from "@/shared/contexts/useLanguage";
 import { SEOMeta } from "@/shared/seo/SEOMeta";
 import { isNativeShell } from "@/utils/platformDetection";
 import { Footer } from "./components/Footer";
@@ -20,7 +22,8 @@ type IntentLandingPageProps = {
 };
 
 export function IntentLandingPage({ pagePath }: IntentLandingPageProps) {
-  const page = getIntentLandingPageByPath(pagePath);
+  const { language } = useLanguage();
+  const page = getIntentLandingPageByPath(pagePath, language);
   const { isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -58,7 +61,7 @@ export function IntentLandingPage({ pagePath }: IntentLandingPageProps) {
           openFaqIndex={openFaqIndex}
           onToggleFaq={(index) => setOpenFaqIndex(openFaqIndex === index ? null : index)}
         />
-        <IntentRelatedFeaturesSection page={page} />
+        <IntentRelatedFeaturesSection page={page} language={language} />
         <IntentFinalCta page={page} onSignup={openSignup} />
         <Footer />
       </div>
@@ -72,6 +75,7 @@ export function IntentLandingPage({ pagePath }: IntentLandingPageProps) {
 }
 
 function IntentHeader() {
+  const { t } = useTranslation("landing");
   return (
     <header className="border-b border-border/60 bg-card/40 backdrop-blur-sm sticky top-0 z-50">
       <div className="max-w-[1500px] mx-auto px-6 sm:px-8 lg:px-12 h-16 flex items-center justify-between">
@@ -89,7 +93,7 @@ function IntentHeader() {
           to="/"
           className="text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
-          Back to home
+          {t("intentPage.backToHome")}
         </Link>
       </div>
     </header>
@@ -97,6 +101,7 @@ function IntentHeader() {
 }
 
 function IntentHero({ page, onSignup }: { page: IntentLandingPageConfig; onSignup: () => void }) {
+  const { t } = useTranslation("landing");
   const breadcrumbItems = getIntentBreadcrumbItems(page);
 
   return (
@@ -150,18 +155,18 @@ function IntentHero({ page, onSignup }: { page: IntentLandingPageConfig; onSignu
 
         <div className="rounded-xl border border-border bg-card p-6 md:p-8">
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">
-            Example workflow
+            {t("intentPage.exampleWorkflow")}
           </p>
           <div className="grid gap-4 md:grid-cols-[1fr_auto_1fr] md:items-center">
             <div className="rounded-lg bg-secondary/40 p-4">
-              <p className="text-xs text-muted-foreground mb-1">Source</p>
+              <p className="text-xs text-muted-foreground mb-1">{t("intentPage.source")}</p>
               <p className="text-sm font-medium text-foreground">{page.sourceToOutput.source}</p>
             </div>
             <p className="text-center text-muted-foreground hidden md:block" aria-hidden>
               →
             </p>
             <div className="rounded-lg bg-secondary/40 p-4">
-              <p className="text-xs text-muted-foreground mb-1">Output</p>
+              <p className="text-xs text-muted-foreground mb-1">{t("intentPage.output")}</p>
               <p className="text-sm font-medium text-foreground">{page.sourceToOutput.output}</p>
             </div>
           </div>
@@ -172,8 +177,9 @@ function IntentHero({ page, onSignup }: { page: IntentLandingPageConfig; onSignu
 }
 
 function IntentBreadcrumb({ items }: { items: ReturnType<typeof getIntentBreadcrumbItems> }) {
+  const { t } = useTranslation("landing");
   return (
-    <nav aria-label="Breadcrumb" className="flex justify-center">
+    <nav aria-label={t("intentPage.breadcrumb")} className="flex justify-center">
       <ol className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
@@ -199,8 +205,15 @@ function IntentBreadcrumb({ items }: { items: ReturnType<typeof getIntentBreadcr
   );
 }
 
-function IntentRelatedFeaturesSection({ page }: { page: IntentLandingPageConfig }) {
-  const relatedPages = getRelatedIntentPages(page);
+function IntentRelatedFeaturesSection({
+  page,
+  language,
+}: {
+  page: IntentLandingPageConfig;
+  language: "en" | "zh";
+}) {
+  const { t } = useTranslation("landing");
+  const relatedPages = getRelatedIntentPages(page, 3, language);
   if (relatedPages.length === 0) return null;
 
   return (
@@ -208,11 +221,14 @@ function IntentRelatedFeaturesSection({ page }: { page: IntentLandingPageConfig 
       <div className="max-w-5xl mx-auto space-y-8">
         <div className="text-center max-w-2xl mx-auto">
           <h2 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-3">
-            Related features
+            {t("intentPage.relatedFeatures")}
           </h2>
           <p className="text-muted-foreground">
-            Explore other {page.cluster === "students" ? "study" : "research"} workflows in Better
-            Memory.
+            {t(
+              page.cluster === "students"
+                ? "intentPage.relatedFeaturesStudent"
+                : "intentPage.relatedFeaturesResearch"
+            )}
           </p>
         </div>
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -229,7 +245,7 @@ function IntentRelatedFeaturesSection({ page }: { page: IntentLandingPageConfig 
                   {relatedPage.subheadline}
                 </span>
                 <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary">
-                  Learn more
+                  {t("features.learnMore")}
                   <ChevronRight className="w-4 h-4" aria-hidden />
                 </span>
               </Link>

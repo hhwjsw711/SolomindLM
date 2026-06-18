@@ -74,11 +74,178 @@
       "governingLawAndDisputes": "Governing law and disputes",
       "indemnity": "Indemnity",
       "general": "General"
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "introBeforeTerms": "Better Memory is operated from Canada. This Policy describes how we handle personal information when you use our websites and product. It works together with our",
+      "introAfterTerms": ". If you do not agree, please do not use the Service.",
+      "collect": {
+        "accountAndAuthentication": [
+          "Email address and, if you use Google sign-in, basic profile details provided by Google.",
+          "If you use email and password sign-in, we process your credentials through our auth system; verification and password-reset messages are sent via email.",
+          "Session and security data needed to keep you signed in and protect accounts."
+        ],
+        "contentYouProvide": [
+          "Files and URLs you add to notebooks, including text extracted or imported from those sources.",
+          "Optional Google Drive imports: when you use the Drive picker or token flow, Google may share file identifiers and content needed to fetch files you select (read-only access you authorize).",
+          "Chat messages, notes, and generated artifacts stored in your workspace, such as reports, flashcards, quizzes, mind maps, infographics, spreadsheets, audio overviews, written-question sets, literature tables, and literature review outputs.",
+          "Research and discovery activity, such as search queries, literature review screening decisions, and bibliographic metadata from academic databases when you use those features.",
+          "Notebook organization data, including folders, titles, and sharing or collaboration settings where available."
+        ],
+        "usageDeviceAndBilling": [
+          "Product usage signals needed to operate features, enforce limits, and improve reliability.",
+          "Technical data such as browser type, approximate location derived from IP, and timestamps, typical of hosted web apps.",
+          "Subscription status and payment metadata from our payment processor; we do not store full card numbers on our servers."
+        ]
+      },
+      "howWeUseInformation": [
+        "Provide, secure, and troubleshoot the Service.",
+        "Process and retrieve your sources for search, chat, and generation features.",
+        "Manage accounts, subscriptions, and support requests.",
+        "Comply with law and protect users, us, and the public.",
+        "Understand aggregate usage and improve the product, including analytics as described below."
+      ],
+      "subprocessors": {
+        "intro": "We use service providers that process data on our behalf. Their own policies also apply. Examples tied to the current product implementation include:",
+        "items": [
+          {
+            "name": "Convex",
+            "description": "backend database, auth tables, file storage, and server logic."
+          },
+          {
+            "name": "Together AI",
+            "description": "large language model inference for chat and generation flows; multilingual text embeddings for search and retrieval; text-to-speech for audio overviews; speech-to-text for uploaded audio; and image generation for infographics via hosted models on Together's platform."
+          },
+          {
+            "name": "ZeroEntropy",
+            "description": "reranking retrieved passages for relevance in search and chat."
+          },
+          {
+            "name": "Mistral",
+            "description": "optical character recognition (OCR) for PDFs, images, and some academic paper extraction paths."
+          },
+          {
+            "name": "Supadata",
+            "description": "fetching web pages and transcripts from certain third-party links and media, for example YouTube and other supported platforms."
+          },
+          {
+            "name": "Tavily",
+            "description": "web, news, and finance source discovery and search when those features run."
+          },
+          {
+            "name": "OpenAlex, Semantic Scholar, PubMed, and arXiv",
+            "description": "academic paper metadata and discovery when you use literature review, deep research, or academic discover features. Your search terms may be sent; returned data is generally public bibliographic information."
+          },
+          {
+            "name": "Stripe",
+            "description": "payments and subscription management."
+          },
+          {
+            "name": "Resend",
+            "description": "transactional email, including sign-in codes, password reset, and similar messages."
+          },
+          {
+            "name": "Google",
+            "description": "OAuth sign-in and Google APIs when you use Google login or Drive import."
+          },
+          {
+            "name": "Vercel",
+            "description": "site hosting; the web app may load Vercel Analytics to collect privacy-oriented usage metrics."
+          }
+        ],
+        "modelNotice": "Prompts, retrieved excerpts, and related text may be sent to model providers to generate responses. Do not submit secrets or data you are not allowed to share with subprocessors."
+      },
+      "sections": {
+        "security": [
+          "We use HTTPS in the browser, access controls tied to your account, and provider-side protections appropriate to a hosted SaaS product. No method of transmission or storage is perfectly secure; we cannot guarantee absolute security."
+        ],
+        "retentionAndYourChoices": [
+          "We keep information while your account is active and for a limited period afterward for backups, legal compliance, and dispute resolution. You can delete many items inside the app, including conversations, sources, notebooks, and generated content, subject to product controls. You may request account deletion or other privacy requests by emailing us; we will respond within a reasonable time.",
+          "Where the product offers export or download for a given artifact, such as certain generated materials, you may use those features to retrieve your content."
+        ],
+        "cookiesLocalStorageAndAnalytics": [
+          "We use cookies and similar technologies needed for authentication, preferences such as theme, and basic app state. When enabled, Vercel Analytics may use cookies or local storage to measure page views and performance in a privacy-oriented way. We do not use third-party advertising cookies as part of this Policy's scope."
+        ],
+        "children": [
+          "The Service is not directed to children under 13, and we do not knowingly collect their personal information. If you believe we have, contact us and we will take appropriate steps."
+        ],
+        "canadianPrivacyLaw": [
+          "If you are in Canada, our collection, use, and disclosure of your personal information is subject to applicable Canadian privacy legislation, including the federal Personal Information Protection and Electronic Documents Act (PIPEDA) where it applies, and substantially similar provincial laws where they apply instead of or alongside PIPEDA."
+        ],
+        "internationalTransfers": [
+          "We are based in Canada, but we use service providers, for example hosting, AI, and payments, that may process or store data in Canada, the United States, and other countries. By using the Service, you understand your information may be transferred across borders where local laws may differ. We take steps described in this Policy to protect your information when we use those providers."
+        ],
+        "changes": [
+          "We may update this Policy from time to time. We will post the new version on this page and adjust the \"Last updated\" date. For material changes, we may also notify you by email or in-product message where appropriate."
+        ]
+      },
+      "contactPrefix": "Privacy questions or requests:"
+    },
+    "terms": {
+      "title": "Terms of Service",
+      "introBeforePrivacy": "By creating an account or using Better Memory (\"the Service\"), you agree to these Terms and our",
+      "introAfterPrivacy": ". If you disagree, do not use the Service. We may update these Terms; continued use after changes means you accept the updated Terms.",
+      "sections": {
+        "theService": [
+          "Better Memory helps you organize research in notebooks, add sources such as files, links, and optional Google Drive imports where enabled, chat with retrieval over your materials, discover and review academic or web sources, and generate study-style outputs such as reports, flashcards, quizzes, mind maps, infographics, spreadsheets, audio overviews, written-question practice, and literature review tables. Features may change, and we may suspend or discontinue parts of the Service.",
+          "Where we offer collaboration or sharing, you are responsible for only sharing content you are allowed to share and for how recipients use shared access."
+        ],
+        "subscriptionsAndBilling": [
+          "We may offer free and paid plans. Paid subscriptions are billed through Stripe on the terms shown at checkout. Unless required by law, fees are generally non-refundable. You can cancel according to in-product controls; cancellation typically takes effect at the end of the current billing period. We may change prices with reasonable notice where required."
+        ],
+        "yourContent": [
+          "You keep ownership of content you submit. You give us permission to host, process, and display it as needed to run the Service, including sending portions to subprocessors described in our Privacy Policy. You represent you have the rights to submit that content."
+        ],
+        "aiGeneratedOutput": [
+          "Outputs may be wrong, incomplete, or outdated. They are informational aids, not professional advice. You are responsible for how you use them, including verifying important facts."
+        ],
+        "ourRights": [
+          "The Service, its software, and our branding are owned by us or our licensors. Do not copy or misuse them except as allowed by these Terms or law."
+        ],
+        "disclaimers": [
+          "THE SERVICE IS PROVIDED \"AS IS\" WITHOUT WARRANTIES OF ANY KIND, TO THE MAXIMUM EXTENT PERMITTED BY LAW. We do not guarantee uninterrupted or error-free operation. We do not endorse third-party sources you import."
+        ],
+        "limitationOfLiability": [
+          "To the maximum extent permitted by law, we are not liable for indirect, incidental, special, consequential, or punitive damages, or for loss of data, profits, or goodwill. Our total liability for a claim is limited to the greater of (a) amounts you paid for the Service in the twelve months before the claim or (b) one hundred Canadian dollars (CAD $100), except where law does not allow this cap."
+        ],
+        "termination": [
+          "You may stop using the Service at any time. We may suspend or terminate access for violations, risk, legal requirements, or prolonged inactivity, with or without notice where allowed. When access ends, we may delete data according to our Privacy Policy and retention practices."
+        ],
+        "governingLawAndDisputes": [
+          "Better Memory is operated from Canada. These Terms are governed by the laws of Canada and the laws of the province or territory in which we operate, without regard to conflict-of-law rules that would apply another jurisdiction's laws. Disputes should first be addressed by contacting us. Where formal resolution is needed, you and we submit to the non-exclusive jurisdiction of the courts of that province or territory, except that mandatory consumer protection rules in your own province, territory, or country may still apply to you where the law requires."
+        ],
+        "indemnity": [
+          "You will defend and indemnify us and our affiliates, officers, and agents against third-party claims arising from your use of the Service, your content, or your breach of these Terms, to the extent permitted by law."
+        ]
+      },
+      "accounts": [
+        "You must be at least 13 years old to use the Service.",
+        "You may sign in with Google or with email and password. Email-based flows may use one-time codes or links sent to your address.",
+        "Keep your credentials secure and notify us if you suspect unauthorized access.",
+        "You are responsible for activity under your account."
+      ],
+      "acceptableUseIntro": "You agree not to:",
+      "acceptableUse": [
+        "Violate law or others' rights, including intellectual property and privacy.",
+        "Upload malware, probe or break security, or bypass limits or access controls.",
+        "Use the Service to generate or facilitate illegal, abusive, or harmful content.",
+        "Scrape, overload, or automate the Service in a way that harms its operation or other users."
+      ],
+      "acceptableUseOutro": "We may suspend or terminate accounts that violate these rules.",
+      "general": [
+        "These Terms and the Privacy Policy are the entire agreement on this subject.",
+        "If a provision is unenforceable, the rest remains in effect.",
+        "We may assign the Service; you may not assign these Terms without our consent."
+      ],
+      "contactPrefix": "Questions about these Terms:"
     }
   },
   "errorMessage": {
     "tryAgain": "Try Again",
     "dismiss": "Dismiss"
+  },
+  "languageSwitcher": {
+    "switchTo": "Switch language to {{language}}"
   },
   "protectedRoute": {
     "loading": "Loading...",
@@ -109,10 +276,12 @@
     "upgradeFor": "Upgrade for {{limit}}.",
     "upgradeToPro": "Upgrade to Pro for higher limits.",
     "externalServiceUnavailable": "{{service}} is temporarily unavailable{{suffix}}",
+    "tryAgainSuffix": ". Try again.",
     "externalServiceRetry": ". Try again.",
     "externalServiceEnd": ".",
     "storageFailed": "Storage {{operation}} failed.",
     "invalidInput": "Invalid input.",
-    "somethingWentWrong": "Something went wrong."
+    "somethingWentWrong": "Something went wrong.",
+    "unexpectedError": "An unexpected error occurred."
   }
 }
