@@ -1,6 +1,6 @@
-import { render } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { renderWithProviders } from "@/test/helpers/renderWithProviders";
 import { Header } from "./Header";
 
 const mockUseQuery = vi.fn();
@@ -77,7 +77,10 @@ describe("Header onboarding action wiring", () => {
       checklistDismissed: true,
       tourStatus: "active",
     });
-    render(<Header title="Notebook" onRename={vi.fn()} isHome={true} onLogoClick={vi.fn()} />);
+    renderWithProviders(
+      <Header title="Notebook" onRename={vi.fn()} isHome={true} onLogoClick={vi.fn()} />,
+      { withTheme: false }
+    );
     expect(capturedAvatarProps?.showChecklistDismissed).toBe(true);
   });
 
@@ -87,7 +90,10 @@ describe("Header onboarding action wiring", () => {
       checklistDismissed: true,
       tourStatus: "completed",
     });
-    render(<Header title="Notebook" onRename={vi.fn()} isHome={true} onLogoClick={vi.fn()} />);
+    renderWithProviders(
+      <Header title="Notebook" onRename={vi.fn()} isHome={true} onLogoClick={vi.fn()} />,
+      { withTheme: false }
+    );
     expect(capturedAvatarProps?.showChecklistDismissed).toBe(false);
   });
 
@@ -97,7 +103,10 @@ describe("Header onboarding action wiring", () => {
       checklistDismissed: true,
       tourStatus: "active",
     });
-    render(<Header title="Notebook" onRename={vi.fn()} isHome={true} onLogoClick={vi.fn()} />);
+    renderWithProviders(
+      <Header title="Notebook" onRename={vi.fn()} isHome={true} onLogoClick={vi.fn()} />,
+      { withTheme: false }
+    );
 
     await capturedAvatarProps?.onShowChecklist?.();
 

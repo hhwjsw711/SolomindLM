@@ -287,15 +287,13 @@ describe("SaveAsPromptModal", () => {
     const titleInput = screen.getByPlaceholderText(/e.g., Focus on key concepts/);
     const max100 = "x".repeat(100);
 
-    await user.clear(titleInput);
-    await user.type(titleInput, max100);
+    fireEvent.change(titleInput, { target: { value: max100 } });
 
     expect(titleInput).toHaveValue(max100);
     expect(screen.getByText("100/100")).toBeInTheDocument();
 
-    // Try to type one more character - should be blocked by maxLength prop
     await user.type(titleInput, "x");
-    expect(titleInput).toHaveValue(max100); // Still 100 characters
+    expect(titleInput).toHaveValue(max100);
   });
 
   it("respects max length for description", () => {
