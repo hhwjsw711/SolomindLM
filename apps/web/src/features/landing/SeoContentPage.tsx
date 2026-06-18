@@ -55,7 +55,7 @@ export function SeoContentPage({ pagePath }: SeoContentPageProps) {
       />
       <div className="min-h-screen landing-grid-pattern">
         <SeoContentHeader />
-        <SeoContentHero page={page} onSignup={openSignup} />
+        <SeoContentHero page={page} onSignup={openSignup} language={language} />
         <SeoContentBody page={page} />
         <SeoContentFaqSection
           page={page}
@@ -101,9 +101,17 @@ function SeoContentHeader() {
   );
 }
 
-function SeoContentHero({ page, onSignup }: { page: SeoContentPageConfig; onSignup: () => void }) {
+function SeoContentHero({
+  page,
+  onSignup,
+  language,
+}: {
+  page: SeoContentPageConfig;
+  onSignup: () => void;
+  language: "en" | "zh";
+}) {
   const { t } = useTranslation("landing");
-  const breadcrumbItems = getSeoContentBreadcrumbItems(page);
+  const breadcrumbItems = getSeoContentBreadcrumbItems(page, language);
 
   return (
     <section className="px-6 md:px-8 pt-16 pb-12 md:pt-24 md:pb-16">
@@ -295,13 +303,14 @@ function SeoContentFaqSection({
   openFaqIndex: number | null;
   onToggleFaq: (index: number) => void;
 }) {
+  const { t } = useTranslation("landing");
   if (page.faqs.length === 0) return null;
 
   return (
     <section className="px-6 md:px-8 py-16 md:py-20 border-t border-border/60 bg-card/30">
       <div className="max-w-3xl mx-auto">
         <h2 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-8 text-center">
-          Frequently asked questions
+          {t("faq.heading")}
         </h2>
         <div className="space-y-3">
           {page.faqs.map((faq, index) => {

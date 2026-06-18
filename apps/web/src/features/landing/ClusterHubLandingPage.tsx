@@ -1,9 +1,11 @@
 import { ChevronDown, ChevronRight, ChevronUp } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { AuthModal } from "@/features/auth/components/AuthModal";
 import { useAuth } from "@/features/auth/useAuth";
 import { Button } from "@/shared/components/ui/button";
+import { useLanguage } from "@/shared/contexts/useLanguage";
 import { SEOMeta } from "@/shared/seo/SEOMeta";
 import { isNativeShell } from "@/utils/platformDetection";
 import {
@@ -19,7 +21,8 @@ type ClusterHubLandingPageProps = {
 };
 
 export function ClusterHubLandingPage({ pagePath }: ClusterHubLandingPageProps) {
-  const page = getClusterHubPageByPath(pagePath);
+  const { language } = useLanguage();
+  const page = getClusterHubPageByPath(pagePath, language);
   const { isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -41,7 +44,10 @@ export function ClusterHubLandingPage({ pagePath }: ClusterHubLandingPageProps) 
     setAuthModalOpen(true);
   };
 
-  const clusterLabel = page.cluster === "students" ? "For students" : "For researchers";
+  const { t } = useTranslation("landing");
+  const clusterLabel = t(
+    page.cluster === "students" ? "clusterHub.forStudents" : "clusterHub.forResearchers"
+  );
 
   return (
     <>
@@ -83,7 +89,7 @@ export function ClusterHubLandingPage({ pagePath }: ClusterHubLandingPageProps) 
           </div>
         </section>
 
-        <HubChildPagesSection page={page} />
+        <HubChildPagesSection page={page} language={language} />
         <HubGuideLinksSection page={page} />
         <HubFaqSection
           page={page}
@@ -103,6 +109,7 @@ export function ClusterHubLandingPage({ pagePath }: ClusterHubLandingPageProps) 
 }
 
 function HubHeader() {
+  const { t } = useTranslation("landing");
   return (
     <header className="border-b border-border/60 bg-card/40 backdrop-blur-sm sticky top-0 z-50">
       <div className="max-w-[1500px] mx-auto px-6 sm:px-8 lg:px-12 h-16 flex items-center justify-between">
@@ -120,29 +127,38 @@ function HubHeader() {
           to="/"
           className="text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
-          Back to home
+          {t("clusterHub.backToHome")}
         </Link>
       </div>
     </header>
   );
 }
 
-function HubChildPagesSection({ page }: { page: ClusterHubPageConfig }) {
+function HubChildPagesSection({
+  page,
+  language,
+}: {
+  page: ClusterHubPageConfig;
+  language: "en" | "zh";
+}) {
+  const { t } = useTranslation("landing");
   return (
     <section className="px-6 md:px-8 py-16 md:py-20 border-t border-border/60 bg-card/30">
       <div className="max-w-5xl mx-auto space-y-14">
         <div className="text-center max-w-2xl mx-auto">
           <h2 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-3">
-            Explore {page.cluster === "students" ? "study" : "research"} tools
+            {t("clusterHub.exploreTools", {
+              type:
+                page.cluster === "students"
+                  ? t("footer.forStudentsTitle")
+                  : t("footer.forResearchTitle"),
+            })}
           </h2>
-          <p className="text-muted-foreground">
-            Each page explains one workflow in plain language—what it does, what you need to get
-            started, and what to verify before you rely on the output.
-          </p>
+          <p className="text-muted-foreground">{t("clusterHub.exploreDescription")}</p>
         </div>
 
         {page.sections.map((section) => {
-          const childPages = resolveHubSectionPages(page, section);
+          const childPages = resolveHubSectionPages(page, section, language);
           if (childPages.length === 0) return null;
 
           return (
@@ -169,7 +185,7 @@ function HubChildPagesSection({ page }: { page: ClusterHubPageConfig }) {
                         {child.subheadline}
                       </span>
                       <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary">
-                        Learn more
+                        {t("features.learnMore")}
                         <ChevronRight className="w-4 h-4" aria-hidden />
                       </span>
                     </Link>
@@ -185,6 +201,7 @@ function HubChildPagesSection({ page }: { page: ClusterHubPageConfig }) {
 }
 
 function HubGuideLinksSection({ page }: { page: ClusterHubPageConfig }) {
+  const { t } = useTranslation("landing");
   if (page.guideLinks.length === 0) return null;
 
   return (
@@ -192,14 +209,14 @@ function HubGuideLinksSection({ page }: { page: ClusterHubPageConfig }) {
       <div className="max-w-5xl mx-auto space-y-8">
         <div className="text-center max-w-2xl mx-auto">
           <h2 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-3">
-            Guides and comparisons
+            {t("clusterHub.guidesAndComparisons")}
           </h2>
           <p className="text-muted-foreground">
-            Practical workflows and tool comparisons to help you choose the right approach for{" "}
-            {page.cluster === "students"
-              ? "studying from your materials"
-              : "managing your reading list"}
-            .
+            {t(
+              page.cluster === "students"
+                ? "clusterHub.guidesDescription_students"
+                : "clusterHub.guidesDescription_research"
+            )}
           </p>
         </div>
         <ul className="grid gap-4 sm:grid-cols-2 max-w-4xl mx-auto">
@@ -216,7 +233,7 @@ function HubGuideLinksSection({ page }: { page: ClusterHubPageConfig }) {
                   {link.description}
                 </span>
                 <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary">
-                  Learn more
+                  {t("features.learnMore")}
                   <ChevronRight className="w-4 h-4" aria-hidden />
                 </span>
               </Link>
@@ -237,13 +254,14 @@ function HubFaqSection({
   openFaqIndex: number | null;
   onToggleFaq: (index: number) => void;
 }) {
+  const { t } = useTranslation("landing");
   if (page.faqs.length === 0) return null;
 
   return (
     <section className="px-6 md:px-8 py-16 md:py-20 border-t border-border/60">
       <div className="max-w-3xl mx-auto">
         <h2 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-8 text-center">
-          Frequently asked questions
+          {t("clusterHub.frequentlyAskedQuestions")}
         </h2>
         <div className="space-y-3">
           {page.faqs.map((faq, index) => {

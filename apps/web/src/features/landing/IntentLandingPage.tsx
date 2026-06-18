@@ -55,7 +55,7 @@ export function IntentLandingPage({ pagePath }: IntentLandingPageProps) {
       />
       <div className="min-h-screen landing-grid-pattern">
         <IntentHeader />
-        <IntentHero page={page} onSignup={openSignup} />
+        <IntentHero page={page} onSignup={openSignup} language={language} />
         <IntentFaqSection
           page={page}
           openFaqIndex={openFaqIndex}
@@ -100,9 +100,17 @@ function IntentHeader() {
   );
 }
 
-function IntentHero({ page, onSignup }: { page: IntentLandingPageConfig; onSignup: () => void }) {
+function IntentHero({
+  page,
+  onSignup,
+  language,
+}: {
+  page: IntentLandingPageConfig;
+  onSignup: () => void;
+  language: "en" | "zh";
+}) {
   const { t } = useTranslation("landing");
-  const breadcrumbItems = getIntentBreadcrumbItems(page);
+  const breadcrumbItems = getIntentBreadcrumbItems(page, language);
 
   return (
     <section className="px-6 md:px-8 pt-16 pb-20 md:pt-24 md:pb-28">
@@ -127,7 +135,7 @@ function IntentHero({ page, onSignup }: { page: IntentLandingPageConfig; onSignu
                 to={page.heroCrossLink.path}
                 className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
               >
-                Written questions with feedback
+                {page.heroCrossLink.label}
                 <ChevronRight className="w-4 h-4" aria-hidden />
               </Link>
             </div>
@@ -266,13 +274,14 @@ function IntentFaqSection({
   openFaqIndex: number | null;
   onToggleFaq: (index: number) => void;
 }) {
+  const { t } = useTranslation("landing");
   if (page.faqs.length === 0) return null;
 
   return (
     <section className="px-6 md:px-8 py-16 md:py-20 border-t border-border/60 bg-card/30">
       <div className="max-w-3xl mx-auto">
         <h2 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-8 text-center">
-          Frequently asked questions
+          {t("faq.heading")}
         </h2>
         <div className="space-y-3">
           {page.faqs.map((faq, index) => {

@@ -20,7 +20,7 @@ export function LegalPageShell({ title, canonical, children }: LegalPageShellPro
 
   return (
     <>
-      <SEOMeta pagePath={canonical} />
+      <SEOMeta pagePath={canonical} title={title} />
       <div className="min-h-screen bg-background text-foreground">
         <header className="border-b border-border/80 bg-background/80 backdrop-blur-sm sticky top-0 z-10">
           <div className="mx-auto flex max-w-2xl items-center justify-between gap-4 px-5 py-4">

@@ -1,6 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
+import { useLanguage } from "@/shared/contexts/useLanguage";
 import { getIntentPagesByCluster } from "../intentLandingPages";
 import { getComparisonPages, getGuidePages } from "../seoContentPages";
 
@@ -32,30 +33,16 @@ function XIcon({ className }: { className?: string }) {
   );
 }
 
-function FooterLinkColumn({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
+function FooterLinkColumn({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <nav aria-label={title}>
-      <h3 className="text-[15px] font-display font-semibold text-foreground mb-5">
-        {title}
-      </h3>
+      <h3 className="text-[15px] font-display font-semibold text-foreground mb-5">{title}</h3>
       <ul className="space-y-3">{children}</ul>
     </nav>
   );
 }
 
-function FooterLink({
-  to,
-  children,
-}: {
-  to: string;
-  children: React.ReactNode;
-}) {
+function FooterLink({ to, children }: { to: string; children: React.ReactNode }) {
   return (
     <li>
       <Link
@@ -70,11 +57,12 @@ function FooterLink({
 
 export const Footer: React.FC = () => {
   const { t } = useTranslation("landing");
+  const { language } = useLanguage();
   const currentYear = new Date().getFullYear();
-  const studentPages = getIntentPagesByCluster("students");
-  const researchPages = getIntentPagesByCluster("research");
-  const comparisonPages = getComparisonPages();
-  const guidePages = getGuidePages();
+  const studentPages = getIntentPagesByCluster("students", language);
+  const researchPages = getIntentPagesByCluster("research", language);
+  const comparisonPages = getComparisonPages(language);
+  const guidePages = getGuidePages(language);
 
   const companyLinks = [
     { label: t("footer.features"), to: "/#features" },
@@ -136,9 +124,7 @@ export const Footer: React.FC = () => {
 
           <div className="lg:col-span-2">
             <FooterLinkColumn title={t("footer.forStudentsTitle")}>
-              <FooterLink to="/students">
-                {t("footer.allStudentTools")}
-              </FooterLink>
+              <FooterLink to="/students">{t("footer.allStudentTools")}</FooterLink>
               {studentPages.map((page) => (
                 <FooterLink key={page.path} to={page.path}>
                   {page.navLabel}
@@ -149,9 +135,7 @@ export const Footer: React.FC = () => {
 
           <div className="lg:col-span-3">
             <FooterLinkColumn title={t("footer.forResearchTitle")}>
-              <FooterLink to="/research">
-                {t("footer.allResearchTools")}
-              </FooterLink>
+              <FooterLink to="/research">{t("footer.allResearchTools")}</FooterLink>
               {researchPages.map((page) => (
                 <FooterLink key={page.path} to={page.path}>
                   {page.navLabel}

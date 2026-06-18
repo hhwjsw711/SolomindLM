@@ -11,6 +11,7 @@ import {
   Send,
 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { type AuthFormInitialMode, AuthFormPanel } from "@/features/auth/components/AuthFormPanel";
 import { useAuth } from "@/features/auth/useAuth";
@@ -25,6 +26,7 @@ import { ToolGrid } from "@/features/studio/components/ToolGrid";
 import i18next from "@/i18n";
 import { STUDIO_TOOLS } from "@/shared/constants";
 import { useToast } from "@/shared/contexts/useToast";
+import { SEOMeta } from "@/shared/seo/SEOMeta";
 import { isNativeShell } from "@/utils/platformDetection";
 
 type HeroMode = "chat" | "studio";
@@ -446,6 +448,7 @@ export function AuthPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, isLoading } = useAuth();
+  const { t } = useTranslation("common");
   const nativeShell = isNativeShell();
 
   const { returnTo, bannerMessage, initialMode } = useMemo(() => {
@@ -470,100 +473,107 @@ export function AuthPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#FDFBF7] text-stone-900 antialiased">
-      <div
-        className="pointer-events-none fixed inset-0 opacity-[0.4]"
-        aria-hidden
-        style={{
-          background:
-            "radial-gradient(ellipse 80% 50% at 50% -20%, rgba(166,141,118,0.12), transparent), radial-gradient(ellipse 60% 40% at 100% 50%, rgba(142, 180, 160, 0.08), transparent)",
-        }}
-      />
+    <>
+      <SEOMeta title={t("auth.signInTitle")} description={t("auth.signInDescription")} />
+      <div className="flex min-h-screen flex-col bg-[#FDFBF7] text-stone-900 antialiased">
+        <div
+          className="pointer-events-none fixed inset-0 opacity-[0.4]"
+          aria-hidden
+          style={{
+            background:
+              "radial-gradient(ellipse 80% 50% at 50% -20%, rgba(166,141,118,0.12), transparent), radial-gradient(ellipse 60% 40% at 100% 50%, rgba(142, 180, 160, 0.08), transparent)",
+          }}
+        />
 
-      <header className="relative z-1 flex shrink-0 items-center justify-between px-6 py-5 sm:px-10">
-        {nativeShell ? (
-          <div className="flex items-center gap-2.5 text-stone-900">
-            <img
-              src="/BETTER-MEMORY_logo.png"
-              alt={i18next.t("auth:page.logoAlt")}
-              className="h-8 w-8 object-contain"
-            />
-            <span className="font-serif text-lg font-semibold tracking-tight">BETTER-MEMORY</span>
-          </div>
-        ) : (
-          <>
-            <Link
-              to="/"
-              className="flex items-center gap-2.5 text-stone-900 transition hover:opacity-80"
-              aria-label={i18next.t("auth:page.logoTooltip")}
-            >
+        <header className="relative z-1 flex shrink-0 items-center justify-between px-6 py-5 sm:px-10">
+          {nativeShell ? (
+            <div className="flex items-center gap-2.5 text-stone-900">
               <img
                 src="/BETTER-MEMORY_logo.png"
                 alt={i18next.t("auth:page.logoAlt")}
                 className="h-8 w-8 object-contain"
               />
               <span className="font-serif text-lg font-semibold tracking-tight">BETTER-MEMORY</span>
-            </Link>
-            <Link
-              to="/"
-              className="rounded-xl border border-stone-300/80 bg-white/60 px-4 py-2 text-base font-sans font-medium text-stone-700 shadow-sm transition hover:bg-white"
-            >
-              {i18next.t("auth:page.backToHome")}
-            </Link>
-          </>
-        )}
-      </header>
+            </div>
+          ) : (
+            <>
+              <Link
+                to="/"
+                className="flex items-center gap-2.5 text-stone-900 transition hover:opacity-80"
+                aria-label={i18next.t("auth:page.logoTooltip")}
+              >
+                <img
+                  src="/BETTER-MEMORY_logo.png"
+                  alt={i18next.t("auth:page.logoAlt")}
+                  className="h-8 w-8 object-contain"
+                />
+                <span className="font-serif text-lg font-semibold tracking-tight">
+                  BETTER-MEMORY
+                </span>
+              </Link>
+              <Link
+                to="/"
+                className="rounded-xl border border-stone-300/80 bg-white/60 px-4 py-2 text-base font-sans font-medium text-stone-700 shadow-sm transition hover:bg-white"
+              >
+                {i18next.t("auth:page.backToHome")}
+              </Link>
+            </>
+          )}
+        </header>
 
-      <main
-        className="chat-panel-graph-grid relative z-1 flex min-h-0 flex-1 flex-col justify-center overflow-y-auto px-6 py-10 sm:px-10 sm:py-12"
-        style={{ backgroundColor: "#FDFBF7" }}
-      >
-        <div
-          className={
-            nativeShell
-              ? "mx-auto grid w-full max-w-lg grid-cols-1 gap-8 py-4"
-              : "mx-auto grid w-full max-w-7xl -translate-y-4 grid-cols-1 gap-12 sm:-translate-y-6 lg:grid-cols-[minmax(0,32rem)_minmax(0,1fr)] lg:items-stretch lg:gap-x-10 lg:gap-y-8 lg:-translate-y-10 xl:gap-x-14 2xl:max-w-360"
-          }
+        <main
+          className="chat-panel-graph-grid relative z-1 flex min-h-0 flex-1 flex-col justify-center overflow-y-auto px-6 py-10 sm:px-10 sm:py-12"
+          style={{ backgroundColor: "#FDFBF7" }}
         >
-          <div className="flex w-full justify-center lg:h-full lg:min-h-0 lg:justify-end">
-            <div className="flex w-full max-w-lg flex-col lg:h-full lg:min-h-0">
-              <div className="flex w-full flex-col items-center lg:h-full lg:min-h-0 lg:justify-center">
-                <div className="w-full">
-                  {!nativeShell && (
-                    <div className="relative z-10 px-2 text-center sm:px-0 lg:pointer-events-none">
-                      <h1 className="mx-auto max-w-[18ch] font-serif text-4xl font-normal leading-tight tracking-tight text-stone-900 sm:max-w-none sm:text-5xl lg:text-[2.75rem]">
-                        {i18next.t("auth:page.heading")}
-                      </h1>
-                      <p className="mx-auto mt-3 max-w-md font-sans text-base text-stone-600 sm:mt-4 sm:text-lg">
-                        {i18next.t("auth:page.subtitle")}
-                      </p>
+          <div
+            className={
+              nativeShell
+                ? "mx-auto grid w-full max-w-lg grid-cols-1 gap-8 py-4"
+                : "mx-auto grid w-full max-w-7xl -translate-y-4 grid-cols-1 gap-12 sm:-translate-y-6 lg:grid-cols-[minmax(0,32rem)_minmax(0,1fr)] lg:items-stretch lg:gap-x-10 lg:gap-y-8 lg:-translate-y-10 xl:gap-x-14 2xl:max-w-360"
+            }
+          >
+            <div className="flex w-full justify-center lg:h-full lg:min-h-0 lg:justify-end">
+              <div className="flex w-full max-w-lg flex-col lg:h-full lg:min-h-0">
+                <div className="flex w-full flex-col items-center lg:h-full lg:min-h-0 lg:justify-center">
+                  <div className="w-full">
+                    {!nativeShell && (
+                      <div className="relative z-10 px-2 text-center sm:px-0 lg:pointer-events-none">
+                        <h1 className="mx-auto max-w-[18ch] font-serif text-4xl font-normal leading-tight tracking-tight text-stone-900 sm:max-w-none sm:text-5xl lg:text-[2.75rem]">
+                          {i18next.t("auth:page.heading")}
+                        </h1>
+                        <p className="mx-auto mt-3 max-w-md font-sans text-base text-stone-600 sm:mt-4 sm:text-lg">
+                          {i18next.t("auth:page.subtitle")}
+                        </p>
+                      </div>
+                    )}
+                    <div
+                      className={nativeShell ? "relative z-0 mt-2" : "relative z-0 mt-10 lg:mt-8"}
+                    >
+                      <AuthFormPanel
+                        authError={bannerMessage}
+                        onAuthenticated={handleAuthenticated}
+                        initialMode={initialMode}
+                      />
                     </div>
-                  )}
-                  <div className={nativeShell ? "relative z-0 mt-2" : "relative z-0 mt-10 lg:mt-8"}>
-                    <AuthFormPanel
-                      authError={bannerMessage}
-                      onAuthenticated={handleAuthenticated}
-                      initialMode={initialMode}
-                    />
                   </div>
                 </div>
               </div>
             </div>
+
+            {!nativeShell && (
+              <div className="flex h-full w-full min-h-0 justify-center lg:min-h-[min(93svh,65rem)] lg:justify-start">
+                <AuthHeroMockup />
+              </div>
+            )}
           </div>
+        </main>
 
-          {!nativeShell && (
-            <div className="flex h-full w-full min-h-0 justify-center lg:min-h-[min(93svh,65rem)] lg:justify-start">
-              <AuthHeroMockup />
-            </div>
-          )}
-        </div>
-      </main>
-
-      {isLoading && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#FDFBF7]/85 backdrop-blur-sm">
-          <div className="h-9 w-9 animate-spin rounded-full border-2 border-stone-200 border-t-primary" />
-        </div>
-      )}
-    </div>
+        {isLoading && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#FDFBF7]/85 backdrop-blur-sm">
+            <div className="h-9 w-9 animate-spin rounded-full border-2 border-stone-200 border-t-primary" />
+          </div>
+        )}
+      </div>
+    </>
   );
 }
