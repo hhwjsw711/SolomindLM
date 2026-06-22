@@ -29,7 +29,12 @@ import {
   mergeChunkScores,
   selectChunksByTokenBudgetWithReservation,
 } from "./chunkContext.js";
-import { validateGrounding, validateSemanticGrounding } from "./grounding_validator.js";
+import {
+  type GroundingIssueCode,
+  type GroundingValidationResult,
+  validateGrounding,
+  validateSemanticGrounding,
+} from "./grounding_validator.js";
 import { ChatLLMWrapper, type ChatResponse } from "./llm_wrapper.js";
 import type { ChatAgentContext, ChatAgentOptions, GlobalRerankFn, StreamChunk } from "./types.js";
 import { VectorSearchHandler } from "./vector_search.js";
@@ -718,14 +723,11 @@ export class ChatAgent {
 
     let isGrounded = true;
     let semanticOnlyFailure = false;
-    let semanticValidation: {
-      isGrounded: boolean;
-      issues: string[];
-      missingCitations: boolean;
-    } = {
+    let semanticValidation: GroundingValidationResult = {
       isGrounded: true,
       issues: [],
       missingCitations: false,
+      issueCodes: [],
     };
 
     if (mode === "sync") {
@@ -740,9 +742,7 @@ export class ChatAgent {
             citationChunks,
             this.embeddingService
           )
-        : { isGrounded: false, issues: [], missingCitations: false };
-
-      isGrounded = syntacticValidation.isGrounded && semanticValidation.isGrounded;
+        : { isGrounded: false, issues: [], missingCitations: false, issueCodes: [] };
 
       if (!isGrounded) {
         if (syntacticValidation.isGrounded && !semanticValidation.isGrounded) {
@@ -770,7 +770,7 @@ export class ChatAgent {
                 citationChunks,
                 this.embeddingService
               )
-            : { isGrounded: false, issues: [], missingCitations: false };
+            : { isGrounded: false, issues: [], missingCitations: false, issueCodes: [] };
           isGrounded = retrySyntactic.isGrounded && retrySemantic.isGrounded;
           semanticValidation = retrySemantic;
           semanticOnlyFailure = retrySyntactic.isGrounded && !retrySemantic.isGrounded;
@@ -790,10 +790,20 @@ export class ChatAgent {
               citationChunks,
               this.embeddingService
             )
-          : { isGrounded: false, issues: [] as string[], missingCitations: false };
+          : {
+              isGrounded: false,
+              issues: [] as string[],
+              issueCodes: [] as GroundingIssueCode[],
+              missingCitations: false,
+            };
         const g = syn.isGrounded && sem.isGrounded;
         const semOnly = syn.isGrounded && !sem.isGrounded;
-        return { sem, isGrounded: g, semanticOnlyFailure: semOnly };
+        return {
+          sem,
+          isGrounded: g,
+          semanticOnlyFailure: semOnly,
+          synIssueCodes: syn.issueCodes ?? [],
+        };
       })();
 
       for (const para of finalText.split(/\n\n+/)) {
@@ -810,13 +820,18 @@ export class ChatAgent {
       semanticOnlyFailure = g.semanticOnlyFailure;
 
       if (!isGrounded) {
-        const syntacticIssues = validateGrounding(
+        const syntacticResult = validateGrounding(
           structuredResponse.answer_markdown,
           citationChunks
-        ).issues;
+        );
+        const syntacticIssues = syntacticResult.issues;
+        const syntacticIssueCodes = syntacticResult.issueCodes ?? [];
         const allIssues = semanticOnlyFailure
           ? [...g.sem.issues, ...syntacticIssues]
           : syntacticIssues;
+        const allIssueCodes = semanticOnlyFailure
+          ? [...(g.sem.issueCodes ?? []), ...syntacticIssueCodes, ...g.synIssueCodes]
+          : [...syntacticIssueCodes, ...g.synIssueCodes];
         logger.warn("Async grounding check failed", {
           semanticOnlyFailure,
           issueCount: allIssues.length,
@@ -826,9 +841,11 @@ export class ChatAgent {
           data: {
             passed: false,
             issues: allIssues,
+            issueCodes: allIssueCodes,
             message: semanticOnlyFailure
               ? "Note: Automated check suggests the answer may be only loosely aligned with cited passages"
               : "Note: This response may not be fully grounded in your documents",
+            messageCode: semanticOnlyFailure ? "loosely_aligned" : "not_fully_grounded",
           },
         };
       }
@@ -843,21 +860,28 @@ export class ChatAgent {
       }
 
       if (mode === "sync" && !isGrounded) {
-        const syntacticIssues = validateGrounding(
+        const syntacticResult = validateGrounding(
           structuredResponse.answer_markdown,
           citationChunks
-        ).issues;
+        );
+        const syntacticIssues = syntacticResult.issues;
+        const syntacticIssueCodes = syntacticResult.issueCodes ?? [];
         const allIssues = semanticOnlyFailure
           ? [...semanticValidation.issues, ...syntacticIssues]
           : syntacticIssues;
+        const allIssueCodes = semanticOnlyFailure
+          ? [...(semanticValidation.issueCodes ?? []), ...syntacticIssueCodes]
+          : syntacticIssueCodes;
         yield {
           type: "grounding_check",
           data: {
             passed: false,
             issues: allIssues,
+            issueCodes: allIssueCodes,
             message: semanticOnlyFailure
               ? "Note: Automated check suggests the answer may be only loosely aligned with cited passages"
               : "Note: This response may not be fully grounded in your documents",
+            messageCode: semanticOnlyFailure ? "loosely_aligned" : "not_fully_grounded",
           },
         };
       }
@@ -870,7 +894,10 @@ export class ChatAgent {
           passed: structuredResponse.confidence !== "low",
           issues:
             structuredResponse.confidence === "low" ? ["Low confidence in source coverage"] : [],
+          issueCodes: structuredResponse.confidence === "low" ? [{ code: "confidence_low" }] : [],
           message: `Response confidence: ${structuredResponse.confidence}`,
+          messageCode: "confidence",
+          messageParams: { level: structuredResponse.confidence },
         },
       };
     }

@@ -39,6 +39,9 @@ type TraceGrounding = {
   issues: string[];
   message: string;
   soft?: boolean;
+  messageCode?: string;
+  messageParams?: Record<string, string | number>;
+  issueCodes?: Array<{ code: string; params?: Record<string, string | number> }>;
 };
 
 export async function streamChatResponse(
@@ -270,6 +273,9 @@ export async function streamChatResponse(
             passed: g.passed,
             issues: Array.isArray(g.issues) ? g.issues : [],
             message: typeof g.message === "string" ? g.message : "",
+            messageCode: typeof g.messageCode === "string" ? g.messageCode : undefined,
+            messageParams: g.messageParams ?? undefined,
+            issueCodes: Array.isArray(g.issueCodes) ? g.issueCodes : undefined,
           });
         }
         await chunkAppender(`\n__GROUNDING:${JSON.stringify(chunk.data)}\n`);
@@ -281,6 +287,9 @@ export async function streamChatResponse(
             issues: Array.isArray(g.issues) ? g.issues : [],
             message: typeof g.message === "string" ? g.message : "",
             soft: true,
+            messageCode: typeof g.messageCode === "string" ? g.messageCode : undefined,
+            messageParams: g.messageParams ?? undefined,
+            issueCodes: Array.isArray(g.issueCodes) ? g.issueCodes : undefined,
           });
         }
         await chunkAppender(

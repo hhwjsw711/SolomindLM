@@ -16,6 +16,14 @@ import { matchAllInlineCitations, stripInlineCitationMarkers } from "../_shared/
 // ============================================================
 
 /**
+ * Structured grounding issue code for frontend i18n translation.
+ */
+export interface GroundingIssueCode {
+  code: string;
+  params?: Record<string, string | number>;
+}
+
+/**
  * Result of grounding validation.
  */
 export interface GroundingValidationResult {
@@ -23,8 +31,10 @@ export interface GroundingValidationResult {
   isGrounded: boolean;
   /** Whether the response is missing citations */
   missingCitations: boolean;
-  /** List of issues found during validation */
+  /** List of issues found during validation (legacy English strings) */
   issues: string[];
+  /** Structured issue codes for frontend i18n translation */
+  issueCodes?: GroundingIssueCode[];
 }
 
 // ============================================================
@@ -88,12 +98,14 @@ export function validateGrounding(
   sources: ReferenceChunk[]
 ): GroundingValidationResult {
   const issues: string[] = [];
+  const issueCodes: GroundingIssueCode[] = [];
 
   // Check for citations ([1] or mistaken LaTeX \[1\])
   const citations = matchAllInlineCitations(response);
 
   if (citations.length === 0) {
     issues.push("No citations found in response");
+    issueCodes.push({ code: "no_citations" });
   }
 
   // Verify cited IDs exist
@@ -104,6 +116,7 @@ export function validateGrounding(
     const id = parseInt(match[1]);
     if (id > maxId || id < 1) {
       issues.push(`Invalid citation [${id}] - only ${maxId} sources provided`);
+      issueCodes.push({ code: "invalid_citation", params: { id, max: maxId } });
     }
     seenIds.add(id);
   }
@@ -113,6 +126,7 @@ export function validateGrounding(
   for (const phrase of UNCERTAIN_PHRASES) {
     if (lowerResponse.includes(phrase)) {
       issues.push(`Response contains uncertain language: "${phrase}"`);
+      issueCodes.push({ code: "uncertain_language", params: { phrase } });
       break; // Only report first instance
     }
   }
@@ -129,6 +143,15 @@ export function validateGrounding(
     issues: lowCoverage
       ? [...issues, `Note: Only ${seenIds.size} of ${sources.length} sources cited`]
       : issues,
+    issueCodes: lowCoverage
+      ? [
+          ...issueCodes,
+          {
+            code: "low_coverage",
+            params: { cited: seenIds.size, total: sources.length },
+          },
+        ]
+      : issueCodes,
   };
 }
 
@@ -234,6 +257,7 @@ export async function validateSemanticGrounding(
   embeddingService: EmbeddingService
 ): Promise<GroundingValidationResult> {
   const issues: string[] = [];
+  const issueCodes: GroundingIssueCode[] = [];
 
   // Determine which sources are actually cited in the response
   const citedIds = matchAllInlineCitations(response)
@@ -244,7 +268,7 @@ export async function validateSemanticGrounding(
 
   // If there are no citations at all, semantic grounding can't be assessed
   if (uniqueCitedIds.length === 0) {
-    return { isGrounded: true, missingCitations: false, issues: [] };
+    return { isGrounded: true, missingCitations: false, issues: [], issueCodes: [] };
   }
 
   // Build combined source text from cited chunks only (up to 3000 chars per chunk)
@@ -254,7 +278,7 @@ export async function validateSemanticGrounding(
     .join("\n\n");
 
   if (!citedSourceText) {
-    return { isGrounded: true, missingCitations: false, issues: [] };
+    return { isGrounded: true, missingCitations: false, issues: [], issueCodes: [] };
   }
 
   // Strip citation markers from response for cleaner embedding
@@ -280,6 +304,10 @@ export async function validateSemanticGrounding(
       issues.push(
         `Response may not be grounded in cited sources (similarity: ${similarity.toFixed(2)}, threshold: ${GROUNDING_THRESHOLD})`
       );
+      issueCodes.push({
+        code: "low_similarity",
+        params: { similarity: Number(similarity.toFixed(2)), threshold: GROUNDING_THRESHOLD },
+      });
     }
   } catch (error) {
     console.error("[SemanticGrounding] Embedding computation failed:", error);
@@ -290,5 +318,6 @@ export async function validateSemanticGrounding(
     isGrounded: issues.length === 0,
     missingCitations: false,
     issues,
+    issueCodes,
   };
 }
