@@ -1,3 +1,4 @@
+import i18next from "@/i18n";
 import type { ChatActivityPhase } from "@/shared/types/index";
 
 export function researchProgressToStreamingActivity(progress: {
@@ -7,13 +8,13 @@ export function researchProgressToStreamingActivity(progress: {
 }): { phase: ChatActivityPhase; detail: string } {
   const n = progress.sourcesFound ?? 0;
   if (progress.phase === "writing") {
-    return { phase: "writing", detail: "Synthesizing research report…" };
+    return { phase: "writing", detail: i18next.t("chat:status.detail.synthesizing_report") };
   }
   if (progress.phase === "retrieving_notebook") {
     const found =
       n > 0
-        ? `Notebook search · ${n} chunk${n === 1 ? "" : "s"} found`
-        : "Searching your notebook…";
+        ? i18next.t("chat:status.detail.notebook_search_found", { count: n })
+        : i18next.t("chat:status.detail.searching_notebook");
     return { phase: "retrieving", detail: found };
   }
   return {

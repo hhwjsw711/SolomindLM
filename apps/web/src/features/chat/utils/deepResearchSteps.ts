@@ -1,3 +1,4 @@
+import i18next from "@/i18n";
 import {
   extractSearchQueriesFromDetails,
   parseResearchStepMetadata,
@@ -7,17 +8,21 @@ import {
 /** Steps shown in the deep research chat timeline. */
 export const VISIBLE_DEEP_RESEARCH_STEP_TYPES = new Set(["searching", "generating_report"]);
 
-export const deepResearchStepConfig: Record<string, { title: string; description: string }> = {
-  searching: {
-    title: "Gathering sources",
-    description:
-      "Searching your notebook, the web, and academic indexes for evidence across each sub-question.",
-  },
-  generating_report: {
-    title: "Synthesizing answer",
-    description: "Writing a cited research answer from the sources gathered for each sub-question.",
-  },
-};
+export function getDeepResearchStepConfig(): Record<
+  string,
+  { title: string; description: string }
+> {
+  return {
+    searching: {
+      title: i18next.t("chat:deepResearchStep.searching.title"),
+      description: i18next.t("chat:deepResearchStep.searching.description"),
+    },
+    generating_report: {
+      title: i18next.t("chat:deepResearchStep.generating_report.title"),
+      description: i18next.t("chat:deepResearchStep.generating_report.description"),
+    },
+  };
+}
 
 export interface SubQuestionForSteps {
   searchQueries: string[];
@@ -48,11 +53,13 @@ export function mapDeepResearchSteps(
           ? planningQueries
           : (searchQueries ?? detailsQueries);
 
+      const stepConfig = getDeepResearchStepConfig()[step.stepType];
+
       return {
         type: step.stepType,
         status: step.status as ResearchStep["status"],
-        title: deepResearchStepConfig[step.stepType]?.title ?? step.stepType,
-        description: deepResearchStepConfig[step.stepType]?.description ?? "",
+        title: stepConfig?.title ?? step.stepType,
+        description: stepConfig?.description ?? "",
         details: step.details?.trim() === "Report generation complete" ? undefined : step.details,
         searchQueries: resolvedQueries,
         papersFound,

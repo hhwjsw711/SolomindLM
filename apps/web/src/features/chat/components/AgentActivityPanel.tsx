@@ -8,7 +8,7 @@ import type {
   ReferenceChunk,
 } from "@/shared/types/index";
 import { aggregateRetrievalSources } from "../utils/aggregateRetrievalSources";
-import { getStatusMessage } from "../utils/messageStatus";
+import { getStatusDetailMessage, getStatusMessage } from "../utils/messageStatus";
 
 const STORAGE_KEY = "solomind-chat-activity-open";
 
@@ -66,6 +66,26 @@ export const AgentActivityPanel = React.memo<AgentActivityPanelProps>(
     const useClaudeLayout = hasSearchDocuments || (references != null && references.length > 0);
 
     const aggregatedSources = useMemo(() => aggregateRetrievalSources(references), [references]);
+
+    const translateGroundingIssue = useCallback(
+      (issue: string, issueCode?: { code: string; params?: Record<string, string | number> }) => {
+        if (issueCode?.code) {
+          return t(`grounding.issue.${issueCode.code}`, issueCode.params ?? {});
+        }
+        return issue;
+      },
+      [t]
+    );
+
+    const translateGroundingMessage = useCallback(
+      (check: AgentGroundingCheck) => {
+        if (check.messageCode) {
+          return t(`grounding.status.${check.messageCode}`, check.messageParams ?? {});
+        }
+        return check.message;
+      },
+      [t]
+    );
 
     const [expanded, setExpanded] = useState(() => {
       if (typeof sessionStorage !== "undefined") {
@@ -141,10 +161,16 @@ export const AgentActivityPanel = React.memo<AgentActivityPanelProps>(
       }
 
       if (activityDetail?.trim()) {
-        return { headerPrimary: activityDetail.trim(), headerMeta: null as string | null };
+        return {
+          headerPrimary: getStatusDetailMessage(activityDetail) ?? activityDetail,
+          headerMeta: null as string | null,
+        };
       }
       if (historicalDetail?.trim()) {
-        return { headerPrimary: historicalDetail.trim(), headerMeta: null as string | null };
+        return {
+          headerPrimary: getStatusDetailMessage(historicalDetail) ?? historicalDetail,
+          headerMeta: null as string | null,
+        };
       }
 
       const fallback = getStatusMessage(currentPhase);
@@ -308,12 +334,12 @@ export const AgentActivityPanel = React.memo<AgentActivityPanelProps>(
                     {hardGroundingChecks.map((g, gi) => (
                       <div key={gi}>
                         <p className="text-[11px] font-medium leading-snug text-amber-950 dark:text-amber-50">
-                          {g.message}
+                          {translateGroundingMessage(g)}
                         </p>
                         {g.issues.length > 0 && (
                           <ul className="mt-1 list-disc pl-3.5 text-[11px] leading-snug text-amber-900 dark:text-amber-100/95">
                             {g.issues.map((issue, ii) => (
-                              <li key={ii}>{issue}</li>
+                              <li key={ii}>{translateGroundingIssue(issue, g.issueCodes?.[ii])}</li>
                             ))}
                           </ul>
                         )}
@@ -328,8 +354,10 @@ export const AgentActivityPanel = React.memo<AgentActivityPanelProps>(
               <div className="mt-2 border-l border-border/30 py-1 pl-3 text-muted-foreground/85">
                 {softGroundingChecks.map((g, gi) => (
                   <p key={gi} className="text-[11px] leading-snug">
-                    {g.message}
-                    {g.issues.length > 0 ? ` (${g.issues.join("; ")})` : ""}
+                    {translateGroundingMessage(g)}
+                    {g.issues.length > 0
+                      ? ` (${g.issues.map((issue, ii) => translateGroundingIssue(issue, g.issueCodes?.[ii])).join("; ")})`
+                      : ""}
                   </p>
                 ))}
               </div>

@@ -76,6 +76,12 @@ export interface AgentGroundingCheck {
   message: string;
   /** Async grounding path (__GROUNDING_WARN) — render as a subtle footnote, not a blocking alert */
   soft?: boolean;
+  /** i18n message code for translation on the frontend */
+  messageCode?: string;
+  /** i18n message params for interpolation */
+  messageParams?: Record<string, string | number>;
+  /** Structured issue codes for frontend i18n translation */
+  issueCodes?: Array<{ code: string; params?: Record<string, string | number> }>;
 }
 
 /** Persisted on assistant messages (metadata.agentTrace) for history replay */

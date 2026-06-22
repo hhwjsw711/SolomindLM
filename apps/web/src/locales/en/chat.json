@@ -188,7 +188,19 @@
     "retrieving": "Retrieving passages",
     "embedding": "Embedding query",
     "ranking": "Ranking results",
-    "completed": "Response complete"
+    "completed": "Response complete",
+    "detail": {
+      "generating_response": "Generating response...",
+      "planning_searches": "Planning searches\u2026",
+      "searching_materials": "Searching your materials\u2026",
+      "formulating_answer": "Formulating answer...",
+      "searching_notebook": "Searching your notebook\u2026",
+      "synthesizing_report": "Synthesizing research report\u2026",
+      "notebook_search_found_one": "Notebook search \u00b7 {{count}} chunk found",
+      "notebook_search_found_other": "Notebook search \u00b7 {{count}} chunks found",
+      "running_research": "Running approved research\u2026",
+      "searching": "Searching..."
+    }
   },
   "export": {
     "userLabel": "You",
@@ -319,5 +331,30 @@
   "selectionTooltip": {
     "addToChat": "Add to chat",
     "removeQuote": "Remove quote"
+  },
+  "deepResearchStep": {
+    "searching": {
+      "title": "Gathering sources",
+      "description": "Searching your notebook, the web, and academic indexes for evidence across each sub-question."
+    },
+    "generating_report": {
+      "title": "Synthesizing answer",
+      "description": "Writing a cited research answer from the sources gathered for each sub-question."
+    }
+  },
+  "grounding": {
+    "status": {
+      "not_fully_grounded": "Note: This response may not be fully grounded in your documents",
+      "loosely_aligned": "Note: Automated check suggests the answer may be only loosely aligned with cited passages",
+      "confidence": "Response confidence: {{level}}"
+    },
+    "issue": {
+      "no_citations": "No citations found in response",
+      "invalid_citation": "Invalid citation [{{id}}] - only {{max}} sources provided",
+      "uncertain_language": "Response contains uncertain language: \"{{phrase}}\"",
+      "low_coverage": "Only {{cited}} of {{total}} sources cited",
+      "low_similarity": "Response may not be grounded in cited sources (similarity: {{similarity}}, threshold: {{threshold}})",
+      "confidence_low": "Low confidence in source coverage"
+    }
   }
 }

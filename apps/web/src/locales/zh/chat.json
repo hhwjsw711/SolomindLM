@@ -180,15 +180,27 @@
   },
   "status": {
     "searching": "搜索来源中",
-    "reading": "读取来源中",
+    "reading": "阅读来源中",
     "planning": "规划中",
     "thinking": "思考中",
     "generating": "生成回答中",
     "writing": "撰写回答中",
     "retrieving": "检索段落中",
-    "embedding": "向量化查询中",
+    "embedding": "嵌入查询中",
     "ranking": "排序结果中",
-    "completed": "回复完成"
+    "completed": "回答完成",
+    "detail": {
+      "generating_response": "正在生成回答...",
+      "planning_searches": "规划搜索中\u2026",
+      "searching_materials": "正在搜索您的资料\u2026",
+      "formulating_answer": "正在构思回答...",
+      "searching_notebook": "正在搜索您的笔记本\u2026",
+      "synthesizing_report": "正在综合研究报告\u2026",
+      "notebook_search_found_one": "笔记本搜索 \u00b7 找到 {{count}} 个片段",
+      "notebook_search_found_other": "笔记本搜索 \u00b7 找到 {{count}} 个片段",
+      "running_research": "正在执行批准的研究\u2026",
+      "searching": "搜索中..."
+    }
   },
   "export": {
     "userLabel": "用户",
@@ -319,5 +331,30 @@
   "selectionTooltip": {
     "addToChat": "添加到聊天",
     "removeQuote": "移除引用"
+  },
+  "deepResearchStep": {
+    "searching": {
+      "title": "收集来源",
+      "description": "在您的笔记本、网络和学术索引中搜索每个子问题的证据。"
+    },
+    "generating_report": {
+      "title": "综合回答",
+      "description": "根据收集到的来源为每个子问题撰写带引用的研究回答。"
+    }
+  },
+  "grounding": {
+    "status": {
+      "not_fully_grounded": "注意：此回答可能未完全基于您的文档",
+      "loosely_aligned": "注意：自动检查表明该回答可能与引用段落仅部分相关",
+      "confidence": "回答置信度：{{level}}"
+    },
+    "issue": {
+      "no_citations": "回答中未找到引用",
+      "invalid_citation": "无效引用 [{{id}}] - 仅提供了 {{max}} 个来源",
+      "uncertain_language": "回答包含不确定语言：\"{{phrase}}\"",
+      "low_coverage": "仅引用了 {{cited}}/{{total}} 个来源",
+      "low_similarity": "回答可能与引用来源不匹配（相似度：{{similarity}}，阈值：{{threshold}}）",
+      "confidence_low": "来源覆盖置信度较低"
+    }
   }
 }

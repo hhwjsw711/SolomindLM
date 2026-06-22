@@ -64,3 +64,18 @@ export function getStatusMessage(status?: string): string | null {
       return status ? status.replace(/_/g, " ") : null;
   }
 }
+
+const STATUS_DETAIL_KEY_MAP: Record<string, string> = {
+  "Generating response...": "chat:status.detail.generating_response",
+  "Planning searches\u2026": "chat:status.detail.planning_searches",
+  "Searching your materials\u2026": "chat:status.detail.searching_materials",
+  "Formulating answer...": "chat:status.detail.formulating_answer",
+  "Running approved research\u2026": "chat:status.detail.running_research",
+  "Searching...": "chat:status.detail.searching",
+};
+
+export function getStatusDetailMessage(detail?: string | null): string | null {
+  if (!detail?.trim()) return null;
+  const key = STATUS_DETAIL_KEY_MAP[detail];
+  return key ? i18next.t(key) : detail;
+}
