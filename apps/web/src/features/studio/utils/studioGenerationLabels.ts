@@ -1,3 +1,4 @@
+import i18next from "@/i18n";
 import type { Note, StudioGenerationMetadata } from "@/shared/types/index";
 
 /**
@@ -35,7 +36,7 @@ export interface StudioGeneratingListLines {
 export function getStudioGeneratingListLines(note: Note): StudioGeneratingListLines {
   const meta = "metadata" in note ? note.metadata : undefined;
   const gen = pickStudioGenerationFields(meta);
-  const primary = gen.currentStep?.trim() || "Starting…";
+  const primary = gen.currentStep?.trim() || i18next.t("studio:status.generating");
   const progressPercent =
     typeof gen.progress === "number" && gen.progress >= 0 && gen.progress <= 100
       ? Math.round(gen.progress)

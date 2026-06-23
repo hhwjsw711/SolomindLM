@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import React, { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import i18next from "@/i18n";
 import {
   useLiteratureReviewScreeningDecisions,
   useLiteratureReviewSession,
@@ -488,20 +489,27 @@ function criterionExplanation(
 ): string {
   if (status === "met") {
     return isIncluded
-      ? `Satisfied by the screening rationale: ${reason}`
-      : `This criterion is addressed, but other criteria led to exclusion.`;
+      ? i18next.t("studio:literatureScreeningPanel.criterionMetIncluded", { reason })
+      : i18next.t("studio:literatureScreeningPanel.criterionMetExcluded");
   }
   if (status === "partial") {
-    return `Partially addressed; the screening rationale does not provide enough detail to mark this as fully satisfied.`;
+    return i18next.t("studio:literatureScreeningPanel.criterionPartial");
   }
   return isIncluded
-    ? `Not explicitly supported in the recorded screening rationale.`
-    : `Does not satisfy this criterion based on the recorded screening rationale.`;
+    ? i18next.t("studio:literatureScreeningPanel.criterionMissedIncluded")
+    : i18next.t("studio:literatureScreeningPanel.criterionMissedExcluded");
 }
 
 function exportScreeningDecisions(decisions: LiteratureScreeningDecision[], title: string) {
   if (decisions.length === 0) return;
-  const headers = ["Rank", "Title", "Authors", "Year", "Decision", "Reason"];
+  const headers = [
+    i18next.t("studio:literatureScreeningPanel.csvRank"),
+    i18next.t("studio:literatureScreeningPanel.csvTitle"),
+    i18next.t("studio:literatureScreeningPanel.csvAuthors"),
+    i18next.t("studio:literatureScreeningPanel.csvYear"),
+    i18next.t("studio:literatureScreeningPanel.csvDecision"),
+    i18next.t("studio:literatureScreeningPanel.csvReason"),
+  ];
   const rows = decisions.map((decision) => [
     String(decision.rank ?? decision.paperIndex + 1),
     decision.title,

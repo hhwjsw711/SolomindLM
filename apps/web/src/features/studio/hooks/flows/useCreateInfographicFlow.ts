@@ -34,8 +34,8 @@ export function useCreateInfographicFlow(ctx: CreateFlowContext) {
       const placeholderId = Math.random().toString(36).slice(2, 11);
       const newNote: Note = {
         id: placeholderId,
-        title: "Infographic",
-        preview: "Infographic • Generating...",
+        title: t("flows.defaultTitles.infographic"),
+        preview: `${t("flows.defaultTitles.infographic")} • ${t("status.generating")}`,
         type: "infographic",
         imageUrl: "",
         status: "generating",
@@ -55,7 +55,7 @@ export function useCreateInfographicFlow(ctx: CreateFlowContext) {
         const { infographicId, infographic } = await createInfographic({
           notebookId: ctx.notebookId!,
           documentIds: selectedDocumentIds,
-          title: "Infographic",
+          title: t("flows.defaultTitles.infographic"),
           customPrompt: config.customPrompt,
           orientation: config.orientation,
           visualStyle: config.visualStyle,
@@ -66,7 +66,7 @@ export function useCreateInfographicFlow(ctx: CreateFlowContext) {
           ...infographic,
           id: infographicId,
           status: (infographic.status ?? "generating") as InfographicNote["status"],
-          preview: "Infographic • Generating...",
+          preview: `${t("flows.defaultTitles.infographic")} • ${t("status.generating")}`,
         };
 
         if (ctx.onUpdateNoteFull) {
@@ -76,7 +76,7 @@ export function useCreateInfographicFlow(ctx: CreateFlowContext) {
         await catchGenerationError(error, {
           placeholderId,
           onDeleteNote: ctx.onDeleteNote,
-          toastMessage: "Couldn't start the infographic. Please try again.",
+          toastMessage: t("flows.toast.infographicFailed"),
           devLabel: "Failed to create infographic",
         });
       }

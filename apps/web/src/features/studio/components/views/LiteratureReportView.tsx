@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import React, { lazy, Suspense, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import i18next from "@/i18n";
 import { DropdownMenu } from "@/shared/ui/DropdownMenu";
 import { cn, sanitizeMarkdown } from "@/shared/utils";
 import { CitationStyle, CitationStylePicker } from "../CitationStylePicker";
@@ -197,7 +198,7 @@ function formatReference(
     case "ieee":
       return `[${index + 1}] ${authors}, "${citation.title}," ${citation.url}, ${year}.`;
     case "vancouver":
-      return `${index + 1}. ${citation.authors[0] || "Unknown"} et al. ${citation.title}. ${year}. Available from: ${citation.url}`;
+      return `${index + 1}. ${citation.authors[0] || i18next.t("studio:literatureReportView.unknown")} et al. ${citation.title}. ${year}. Available from: ${citation.url}`;
     case "harvard":
       return `${authors} (${year}) '${citation.title}'. Available at: ${citation.url}.`;
     default:
@@ -421,7 +422,9 @@ export const LiteratureReportView: React.FC<LiteratureReportViewProps> = ({
               type="button"
               onClick={onBack}
               className={REPORT_TOOLBAR_BTN}
-              aria-label={`Close ${(toolbarLabel ?? t("literatureReport.toolbarLabel")).toLowerCase()}`}
+              aria-label={t("literatureReport.closeAria", {
+                label: (toolbarLabel ?? t("literatureReport.toolbarLabel")).toLowerCase(),
+              })}
               title={t("literatureReport.close")}
             >
               <X className="h-4 w-4 shrink-0" strokeWidth={2} />

@@ -1,4 +1,5 @@
 import { calculateNextReview, initializeProficiency } from "@convex/_lib/srsScheduling";
+import i18next from "@/i18n";
 import type { Flashcard } from "@/shared/types";
 
 const MS_MIN = 60_000;
@@ -12,31 +13,33 @@ export type SrsRating = "again" | "hard" | "good" | "easy";
  */
 export function formatIntervalUntilNextReview(deltaMs: number): string {
   if (!Number.isFinite(deltaMs) || deltaMs <= 0) {
-    return "Due soon";
+    return i18next.t("studio:srsReview.dueSoon");
   }
 
   const minutes = Math.ceil(deltaMs / MS_MIN);
   if (minutes < 90) {
-    return `in ${Math.max(1, minutes)} min`;
+    return i18next.t("studio:srsReview.inMin", { n: Math.max(1, minutes) });
   }
 
   const hours = Math.round(deltaMs / MS_HOUR);
   if (hours < 48) {
-    return `in ${hours} h`;
+    return i18next.t("studio:srsReview.inHour", { n: hours });
   }
 
   const days = Math.round(deltaMs / MS_DAY);
   if (days < 14) {
-    return `in ${days} day${days === 1 ? "" : "s"}`;
+    return i18next.t(days === 1 ? "studio:srsReview.inDay_one" : "studio:srsReview.inDay_other", {
+      n: days,
+    });
   }
 
   if (days < 56) {
     const weeks = Math.round(deltaMs / (7 * MS_DAY));
-    return `in ${weeks} wk`;
+    return i18next.t("studio:srsReview.inWeek", { n: weeks });
   }
 
   const months = Math.round(days / 30);
-  return `in ${Math.max(1, months)} mo`;
+  return i18next.t("studio:srsReview.inMonth", { n: Math.max(1, months) });
 }
 
 /**

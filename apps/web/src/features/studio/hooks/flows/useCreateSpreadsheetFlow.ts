@@ -36,8 +36,8 @@ export function useCreateSpreadsheetFlow(ctx: CreateFlowContext) {
       const placeholderId = Math.random().toString(36).slice(2, 11);
       const newNote: Note = {
         id: placeholderId,
-        title: "Spreadsheet",
-        preview: `Spreadsheet • ${typeLabel}`,
+        title: t("flows.defaultTitles.spreadsheet"),
+        preview: `${t("preview.spreadsheet")} • ${typeLabel}`,
         type: "spreadsheet",
         content: "",
         status: "generating",
@@ -54,7 +54,7 @@ export function useCreateSpreadsheetFlow(ctx: CreateFlowContext) {
         const { spreadsheetId, spreadsheet } = await createSpreadsheet({
           notebookId: ctx.notebookId!,
           documentIds: selectedDocumentIds,
-          title: "Spreadsheet",
+          title: t("flows.defaultTitles.spreadsheet"),
           spreadsheetType: config.spreadsheetType,
           customPrompt: config.customPrompt,
         });
@@ -72,7 +72,7 @@ export function useCreateSpreadsheetFlow(ctx: CreateFlowContext) {
         await catchGenerationError(error, {
           placeholderId,
           onDeleteNote: ctx.onDeleteNote,
-          toastMessage: "Couldn't start the spreadsheet. Please try again.",
+          toastMessage: t("flows.toast.spreadsheetFailed"),
           devLabel: "Failed to create spreadsheet",
         });
       }

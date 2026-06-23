@@ -2,6 +2,7 @@ import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { useEffect, useRef } from "react";
+import i18next from "@/i18n";
 import type { QuizNote, QuizQuestion } from "@/shared/types/index";
 
 export interface CreateQuizParams {
@@ -41,7 +42,7 @@ function getQuestionCountLabel(count: string | number): string {
 
 function capitalizeDifficulty(difficulty: string | undefined): string {
   const d = (difficulty || "medium").toLowerCase();
-  return d.charAt(0).toUpperCase() + d.slice(1);
+  return i18next.t(`studio:difficulty.${d}`);
 }
 
 /**
@@ -63,13 +64,16 @@ function getPreviewText(status: string, actualQuestionCount: number, metadata?: 
       ? actualQuestionCount
       : parseInt(String(getQuestionCountLabel(metadata?.questionCount || "standard")), 10) || 0;
 
+  const label =
+    n === 1 ? i18next.t("studio:preview.question_one") : i18next.t("studio:preview.question_other");
+
   if (isGenerating) {
-    return `${n} Question${n !== 1 ? "s" : ""} · ${difficulty}`;
+    return `${n} ${label} · ${difficulty}`;
   }
   if (status === "failed" || phase === "failed") {
-    return `${n} Questions · ${difficulty} · Failed`;
+    return `${n} ${label} · ${difficulty} · ${i18next.t("studio:status.failed")}`;
   }
-  return `${n} Question${n !== 1 ? "s" : ""} · ${difficulty}`;
+  return `${n} ${label} · ${difficulty}`;
 }
 
 /**

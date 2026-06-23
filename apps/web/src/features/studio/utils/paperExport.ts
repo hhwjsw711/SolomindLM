@@ -1,3 +1,4 @@
+import i18next from "@/i18n";
 import type { RankedPaper } from "../types/rankedPaper";
 
 function escapeBibtex(value: string): string {
@@ -36,15 +37,15 @@ export function exportPapersToBibtex(papers: RankedPaper[], filename: string) {
 
 export function exportPapersToCsv(papers: RankedPaper[], filename: string) {
   const headers = [
-    "Title",
-    "Authors",
-    "Year",
-    "Citations",
-    "DOI",
-    "URL",
-    "PDF URL",
-    "Source",
-    "Abstract",
+    i18next.t("studio:paperExport.csvTitle"),
+    i18next.t("studio:paperExport.csvAuthors"),
+    i18next.t("studio:paperExport.csvYear"),
+    i18next.t("studio:paperExport.csvCitations"),
+    i18next.t("studio:paperExport.csvDoi"),
+    i18next.t("studio:paperExport.csvUrl"),
+    i18next.t("studio:paperExport.csvPdfUrl"),
+    i18next.t("studio:paperExport.csvSource"),
+    i18next.t("studio:paperExport.csvAbstract"),
   ];
   const escapeCsvField = (v: string) => {
     if (v.includes(",") || v.includes('"') || v.includes("\n")) {

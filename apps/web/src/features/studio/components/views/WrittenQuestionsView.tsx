@@ -116,7 +116,7 @@ export const WrittenQuestionsView: React.FC<WrittenQuestionsViewProps> = ({
       }
     } catch (error) {
       console.error("Failed to submit answer:", error);
-      alert(error instanceof Error ? error.message : "Failed to submit answer");
+      alert(error instanceof Error ? error.message : t("writtenQuestionsView.submitFailed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -159,7 +159,7 @@ export const WrittenQuestionsView: React.FC<WrittenQuestionsViewProps> = ({
       }
     } catch (error) {
       console.error("Failed to reset answers:", error);
-      alert(error instanceof Error ? error.message : "Failed to reset answers");
+      alert(error instanceof Error ? error.message : t("writtenQuestionsView.resetFailed"));
     } finally {
       setIsResetting(false);
     }

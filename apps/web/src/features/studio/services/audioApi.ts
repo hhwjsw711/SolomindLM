@@ -1,6 +1,7 @@
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
+import i18next from "@/i18n";
 import type { AudioOverviewNote } from "@/shared/types/index";
 
 export interface CreateAudioOverviewParams {
@@ -42,11 +43,13 @@ function mapAudioOverviewToNote(dbAudio: any): AudioOverviewNote {
  * Get preview text based on status
  */
 function getPreviewText(status: string, metadata?: Record<string, unknown>): string {
+  const label = i18next.t("studio:flows.defaultTitles.audioOverview");
+  const failedLabel = i18next.t("studio:status.failed");
   if (status === "generating") {
-    return "Audio Overview";
+    return label;
   }
   if (status === "failed") {
-    return "Audio Overview · Failed";
+    return `${label} · ${failedLabel}`;
   }
   const durRaw = metadata?.durationSeconds;
   const dur = typeof durRaw === "number" && Number.isFinite(durRaw) ? durRaw : null;
@@ -55,9 +58,9 @@ function getPreviewText(status: string, metadata?: Record<string, unknown>): str
     const m = Math.floor(s / 60);
     const r = s % 60;
     const mmss = `${m}:${String(r).padStart(2, "0")}`;
-    return `Audio Overview · ${mmss}`;
+    return `${label} · ${mmss}`;
   }
-  return "Audio Overview";
+  return label;
 }
 
 /**
@@ -104,7 +107,7 @@ export function useCreateAudioOverview() {
       audioOverview: mapAudioOverviewToNote({
         _id: result,
         status: "pending",
-        title: params.title || "Audio Overview",
+        title: params.title || i18next.t("studio:flows.defaultTitles.audioOverview"),
       }),
     };
   };

@@ -1,3 +1,4 @@
+import i18next from "@/i18n";
 import type { TableColumn } from "../components/ColumnManager";
 import type { RankedPaper, RankedPaperSource } from "../types/rankedPaper";
 import { formatAuthorsLine, sourceLabel } from "../types/rankedPaper";
@@ -77,7 +78,7 @@ export function getPaperTitle(paper: TablePaperRow, columns: TableColumn[]): str
   if (paper.citation?.title) return paper.citation.title;
   const titleCol = columns.find((c) => c.type === "paper_title");
   if (titleCol && paper.rowData[titleCol.id]) return paper.rowData[titleCol.id];
-  return "Untitled Paper";
+  return i18next.t("studio:literatureTablePaper.untitledPaper");
 }
 
 const STUDY_TYPE_COLUMN_NAME =
@@ -147,21 +148,21 @@ export function inferStudyTypeLabel(paper: TablePaperRow): string | null {
   const text = `${title} ${abstract}`.toLowerCase();
 
   if (/\bsystematic review\b|\bmeta-analysis\b|\bmeta analysis\b/.test(text)) {
-    return "Systematic Review";
+    return i18next.t("studio:literatureTablePaper.systematicReview");
   }
   if (/\bliterature review\b|\bnarrative review\b|\bscoping review\b/.test(text)) {
-    return "Literature Review";
+    return i18next.t("studio:literatureTablePaper.literatureReview");
   }
   if (
     /\brandomized controlled\b|\brandomised controlled\b|\bcontrolled trial\b|\brct\b/.test(text)
   ) {
-    return "Randomized controlled trial";
+    return i18next.t("studio:literatureTablePaper.randomizedControlledTrial");
   }
   if (/\bobservational\b|\bcohort study\b|\bcase-control\b|\bcross-sectional\b/.test(text)) {
-    return "Observational study";
+    return i18next.t("studio:literatureTablePaper.observationalStudy");
   }
   if (/\bbenchmark\b|\bleaderboard\b|\baudit(ing)?\b|\bempirical evaluation\b/.test(text)) {
-    return "Empirical study";
+    return i18next.t("studio:literatureTablePaper.empiricalStudy");
   }
   return null;
 }
@@ -170,7 +171,9 @@ export function formatPaperMetaLine(citation: TablePaperCitation): string {
   const source = sourceLabel(citation.sourceApi);
   const parts = [
     source,
-    citation.citationCount != null ? `${citation.citationCount.toLocaleString()} Citations` : null,
+    citation.citationCount != null
+      ? `${citation.citationCount.toLocaleString()} ${i18next.t("studio:literatureTablePaper.citations")}`
+      : null,
     citation.year != null ? String(citation.year) : null,
   ].filter(Boolean);
   return parts.join(" · ");

@@ -46,7 +46,7 @@ export const InfographicView: React.FC<InfographicViewProps> = ({
     if (note.imageUrl) {
       const link = document.createElement("a");
       link.href = note.imageUrl;
-      link.download = `${note.title || "infographic"}.png`;
+      link.download = `${note.title || t("infographicView.downloadFilename")}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -129,7 +129,7 @@ export const InfographicView: React.FC<InfographicViewProps> = ({
           {note.imageUrl && !imageError ? (
             <img
               src={note.imageUrl}
-              alt={note.title || "Infographic"}
+              alt={note.title || t("infographicView.infographic")}
               className="w-full h-full object-contain"
               onError={() => setImageError(true)}
               draggable={false}

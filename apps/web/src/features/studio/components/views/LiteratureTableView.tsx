@@ -18,6 +18,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useBulkUpload, useGetExistingPapers } from "@/features/sources/services/documentsApi";
+import i18next from "@/i18n";
 import { useToast } from "@/shared/contexts/useToast";
 import { DropdownMenu } from "@/shared/ui/DropdownMenu";
 import { isNativeShell } from "@/utils/platformDetection";
@@ -90,7 +91,10 @@ const TABLE_DATA_BODY_CELL =
 
 function exportToCSV(table: LiteratureTable, filename: string) {
   const dataColumns = table.columns.filter(isDataColumn).sort((a, b) => a.order - b.order);
-  const headers = ["Paper", ...dataColumns.map((c) => c.name)];
+  const headers = [
+    i18next.t("studio:literatureTableView.paper"),
+    ...dataColumns.map((c) => c.name),
+  ];
 
   const rows = table.papers
     .filter((paper) => paper.isIncluded)
@@ -229,7 +233,7 @@ export const LiteratureTableView: React.FC<LiteratureTableViewProps> = ({
           toastSuccess(
             result.imported === 1
               ? t("literatureTable.paperAdded")
-              : `${result.imported} papers added to notebook`
+              : t("literatureTableView.papersAdded", { count: result.imported })
           );
         }
         if (result.skipped > 0 && result.imported === 0) {
@@ -512,7 +516,7 @@ export const LiteratureTableView: React.FC<LiteratureTableViewProps> = ({
                           aria-label={t("literatureTable.selectAll")}
                         />
                         <span className="text-sm font-medium text-muted-foreground">
-                          Papers ({paperCount})
+                          {t("literatureTableView.papers", { count: paperCount })}
                         </span>
                       </div>
                     </th>

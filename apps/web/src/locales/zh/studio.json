@@ -273,7 +273,8 @@
     "previous": "上一题",
     "next": "下一题",
     "finish": "完成",
-    "explanation": "解析"
+    "explanation": "解析",
+    "resetFailed": "重置答案失败"
   },
   "reportView": {
     "reportGenerationFailed": "报告生成失败",
@@ -295,7 +296,8 @@
     "generatingInfographic": "正在生成你的信息图…",
     "infographicUnavailable": "信息图不可用",
     "imageCouldNotBeLoaded": "无法加载图像",
-    "loadingInfographic": "正在加载信息图…"
+    "loadingInfographic": "正在加载信息图…",
+    "downloadFilename": "信息图"
   },
   "spreadsheetView": {
     "spreadsheetGenerationFailed": "电子表格生成失败",
@@ -331,7 +333,9 @@
     "next": "下一题",
     "finish": "完成",
     "grading": "评分中…",
-    "submit": "提交"
+    "submit": "提交",
+    "submitFailed": "提交答案失败",
+    "resetFailed": "重置答案失败"
   },
   "userNoteView": {
     "emptyNote": "空笔记",
@@ -449,7 +453,18 @@
       "benchmarkLimitationDiscussion": "基准局限讨论",
       "empiricalEvidence": "实证证据",
       "multipleLlmsTested": "测试多个 LLM"
-    }
+    },
+    "criterionMetIncluded": "筛选理由满足标准：{{reason}}",
+    "criterionMetExcluded": "此标准已涉及，但其他标准导致排除。",
+    "criterionPartial": "部分涉及；记录的筛选理由未提供足够细节以标记为完全满足。",
+    "criterionMissedIncluded": "在记录的筛选理由中未明确支持。",
+    "criterionMissedExcluded": "根据记录的筛选理由，不满足此标准。",
+    "csvRank": "排名",
+    "csvTitle": "标题",
+    "csvAuthors": "作者",
+    "csvYear": "年份",
+    "csvDecision": "决定",
+    "csvReason": "原因"
   },
   "resizeHandle": {
     "resizePanel": "调整面板宽度"
@@ -665,7 +680,8 @@
     "savingDoc": "保存文档中",
     "noContent": "暂无内容",
     "close": "关闭",
-    "toolbarLabel": "文献报告"
+    "toolbarLabel": "文献报告",
+    "closeAria": "关闭 {{label}}"
   },
   "prismaFlow": {
     "title": "PRISMA 流程图",
@@ -698,5 +714,176 @@
   "selectSourceForInfographic": "请至少选择一个来源来生成信息图",
   "selectSourceForReport": "请至少选择一个来源来生成报告",
   "selectSourceForWrittenQuestions": "请至少选择一个来源来生成问答题",
-  "selectSourceForSpreadsheet": "请至少选择一个来源来生成电子表格"
+  "selectSourceForSpreadsheet": "请至少选择一个来源来生成电子表格",
+  "guard": {
+    "signIn": "请登录以继续。",
+    "openNotebook": "请先打开一个笔记本再创建 Studio 内容。"
+  },
+  "flows": {
+    "defaultTitles": {
+      "mindMap": "思维导图",
+      "audioOverview": "音频概览",
+      "flashcards": "闪卡",
+      "infographic": "信息图",
+      "quiz": "测验",
+      "writtenQuestions": "问答题",
+      "report": "新报告",
+      "spreadsheet": "电子表格"
+    },
+    "reportTitles": {
+      "briefing": "简报文档",
+      "study_guide": "学习指南",
+      "blog_post": "博客文章",
+      "summary": "摘要",
+      "technical_report": "技术报告",
+      "concept_explainer": "概念解析",
+      "methodology_overview": "方法论概述",
+      "custom": "自定义报告"
+    },
+    "toast": {
+      "reportFailed": "无法启动报告生成。请重试。",
+      "mindMapFailed": "无法启动思维导图生成。请重试。",
+      "audioFailed": "无法启动音频概览生成。请重试。",
+      "flashcardsFailed": "无法启动闪卡生成。请重试。",
+      "infographicFailed": "无法启动信息图生成。请重试。",
+      "quizFailed": "无法启动测验生成。请重试。",
+      "writtenQuestionsFailed": "无法启动问答题生成。请重试。",
+      "spreadsheetFailed": "无法启动电子表格生成。请重试。"
+    },
+    "preview": {
+      "infographicGenerating": "信息图 · 生成中…"
+    }
+  },
+  "status": {
+    "generating": "生成中…",
+    "failed": "失败"
+  },
+  "noteActions": {
+    "you": "你",
+    "assistant": "助手",
+    "deleteNote": "删除笔记",
+    "deleteNoteConfirm": "确定要删除\"{{title}}\"吗？此操作不可撤销。",
+    "delete": "删除",
+    "cancel": "取消",
+    "exportFailed": "导出闪卡失败。请重试。"
+  },
+  "notesApi": {
+    "emptyNote": "空笔记",
+    "noteSavedChat": "笔记 · 已保存的对话"
+  },
+  "noteCRUD": {
+    "updateFailed": "更新笔记失败",
+    "deleteFailed": "删除笔记失败"
+  },
+  "srsReview": {
+    "dueSoon": "即将到期",
+    "inMin": "{{n}} 分钟后",
+    "inHour": "{{n}} 小时后",
+    "inDay_one": "{{n}} 天后",
+    "inDay_other": "{{n}} 天后",
+    "inWeek": "{{n}} 周后",
+    "inMonth": "{{n}} 月后"
+  },
+  "literatureTablePaper": {
+    "untitledPaper": "未命名论文",
+    "systematicReview": "系统综述",
+    "literatureReview": "文献综述",
+    "randomizedControlledTrial": "随机对照试验",
+    "observationalStudy": "观察性研究",
+    "empiricalStudy": "实证研究",
+    "citations": "引用"
+  },
+  "literatureReportLabels": {
+    "literatureReport": "文献报告",
+    "deepResearch": "深度研究"
+  },
+  "paperExport": {
+    "csvTitle": "标题",
+    "csvAuthors": "作者",
+    "csvYear": "年份",
+    "csvCitations": "引用",
+    "csvDoi": "DOI",
+    "csvUrl": "URL",
+    "csvPdfUrl": "PDF URL",
+    "csvSource": "来源",
+    "csvAbstract": "摘要"
+  },
+  "rankedPaper": {
+    "sourceArxiv": "arXiv (康奈尔大学)",
+    "sourceSemanticScholar": "Semantic Scholar",
+    "sourcePubmed": "PubMed",
+    "sourceJournalUnavailable": "期刊不可用",
+    "unknownAuthors": "作者未知",
+    "more": "更多"
+  },
+  "spreadsheet": {
+    "typeDataTable": "数据表",
+    "typeComparison": "对比表",
+    "typeTimeline": "时间线",
+    "typeFinancial": "财务表",
+    "typeCustom": "自定义",
+    "typeLiteratureReview": "文献综述",
+    "typeFallback": "电子表格",
+    "previewGenerating": "电子表格 · 生成中…",
+    "previewFailed": "电子表格 · 失败"
+  },
+  "literatureTableView": {
+    "paper": "论文",
+    "papers": "论文（{{count}}）",
+    "papersAdded": "{{count}} 篇论文已添加到笔记本"
+  },
+  "literatureReportView": {
+    "unknown": "未知"
+  },
+  "literatureTableColumnCatalog": {
+    "insights": { "name": "洞见", "instructions": "关键洞见和要点" },
+    "tldr": { "name": "摘要", "instructions": "一到两句话总结" },
+    "summary": { "name": "摘要", "instructions": "结构化摘要" },
+    "research_question": { "name": "研究问题", "instructions": "所解决的研究问题" },
+    "methodology": { "name": "方法论", "instructions": "研究方法与评估方法" },
+    "key_findings": { "name": "关键发现", "instructions": "主要发现" },
+    "primary_outcomes": { "name": "主要结果", "instructions": "测量的主要结果" },
+    "limitations": { "name": "局限性", "instructions": "已陈述的局限性" },
+    "interventions": { "name": "干预措施", "instructions": "研究的干预措施" },
+    "conclusion": { "name": "结论", "instructions": "作者结论" },
+    "research_gaps": { "name": "研究空白", "instructions": "已识别的研究空白" },
+    "funding_source": { "name": "资助来源", "instructions": "资助来源" },
+    "introduction_summary": { "name": "引言摘要", "instructions": "引言摘要" },
+    "discussion_summary": { "name": "讨论摘要", "instructions": "讨论摘要" },
+    "hypotheses_tested": { "name": "检验假设", "instructions": "已检验的假设" },
+    "future_research": { "name": "未来研究", "instructions": "未来研究方向" },
+    "dependent_variables": { "name": "因变量", "instructions": "因变量" },
+    "independent_variables": { "name": "自变量", "instructions": "自变量" },
+    "study_design_col": { "name": "研究设计", "instructions": "研究设计" },
+    "objectives": { "name": "研究目标", "instructions": "研究目标" },
+    "sample_size": { "name": "样本量", "instructions": "样本量" },
+    "notable_results": { "name": "显著结果与趋势", "instructions": "显著结果和趋势" },
+    "real_world_metric": { "name": "实际性能指标", "instructions": "实际应用指标" },
+    "domain": { "name": "应用领域", "instructions": "应用领域" }
+  },
+  "difficulty": {
+    "easy": "简单",
+    "medium": "中等",
+    "hard": "困难"
+  },
+  "preview": {
+    "flashcard_one": "闪卡",
+    "flashcard_other": "闪卡",
+    "question_one": "题目",
+    "question_other": "题目",
+    "spreadsheet": "电子表格"
+  },
+  "literaturePapers": {
+    "selectPaper": "选择 {{title}}"
+  },
+  "flashcardsExport": {
+    "front": "正面",
+    "back": "背面",
+    "noFlashcards": "没有可导出的闪卡",
+    "notFound": "未找到闪卡集"
+  },
+  "writtenQuestionsApi": {
+    "notFound": "未找到问答题",
+    "gradingTimeout": "评分超时"
+  }
 }

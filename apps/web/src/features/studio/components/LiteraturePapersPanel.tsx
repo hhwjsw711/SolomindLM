@@ -413,7 +413,7 @@ const RankedPaperCard: React.FC<RankedPaperCardProps> = ({
           checked={isSelected}
           onChange={onToggleSelect}
           className="mt-1 h-4 w-4 shrink-0 rounded border-border"
-          aria-label={`Select ${paper.title}`}
+          aria-label={t("literaturePapers.selectPaper", { title: paper.title })}
         />
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2 mb-1">

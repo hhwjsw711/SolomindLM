@@ -37,8 +37,8 @@ export function useCreateWrittenQuestionsFlow(ctx: CreateFlowContext) {
       const placeholderId = Math.random().toString(36).slice(2, 11);
       const newNote: Note = {
         id: placeholderId,
-        title: "Written Questions",
-        preview: `${questionCount} Questions • ${config.questionType}`,
+        title: t("flows.defaultTitles.writtenQuestions"),
+        preview: `${questionCount} ${t("preview.question_other")} • ${config.questionType}`,
         type: "writtenQuestions",
         questions: [],
         status: "generating",
@@ -67,8 +67,8 @@ export function useCreateWrittenQuestionsFlow(ctx: CreateFlowContext) {
         const apiNote = (resWQ as { note?: { _id: string; title: string; status: string } }).note;
         const initialNote: WrittenQuestionsNote = {
           id: writtenQuestionsId,
-          title: apiNote?.title ?? "Written Questions",
-          preview: `${questionCount} Questions • ${config.questionType}`,
+          title: apiNote?.title ?? t("flows.defaultTitles.writtenQuestions"),
+          preview: `${questionCount} ${t("preview.question_other")} • ${config.questionType}`,
           type: "writtenQuestions",
           questions: [],
           status: (apiNote?.status ?? resWQ.status) as WrittenQuestionsNote["status"],
@@ -87,7 +87,7 @@ export function useCreateWrittenQuestionsFlow(ctx: CreateFlowContext) {
         await catchGenerationError(error, {
           placeholderId,
           onDeleteNote: ctx.onDeleteNote,
-          toastMessage: "Couldn't start written questions. Please try again.",
+          toastMessage: t("flows.toast.writtenQuestionsFailed"),
           devLabel: "Failed to create written questions",
         });
       }

@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { useDeleteUserNote, useUpdateUserNote } from "@/features/chat/services/userNotesApi";
 import { Note } from "@/shared/types/index";
 import { useDeleteAudioOverview, useUpdateAudioOverview } from "../services/audioApi";
@@ -27,6 +28,7 @@ function alertError(error: unknown, fallback: string) {
 }
 
 export function useNoteCRUD({ activeNotebookId }: UseNoteCRUDProps) {
+  const { t } = useTranslation("studio");
   const notes = useNotes(activeNotebookId && activeNotebookId !== "new" ? activeNotebookId : null);
 
   const updateReport = useUpdateReport();
@@ -71,7 +73,7 @@ export function useNoteCRUD({ activeNotebookId }: UseNoteCRUDProps) {
       try {
         await rename(id, newTitle.trim());
       } catch (error) {
-        alertError(error, "Failed to update note");
+        alertError(error, t("noteCRUD.updateFailed"));
       }
     },
     [
@@ -111,7 +113,7 @@ export function useNoteCRUD({ activeNotebookId }: UseNoteCRUDProps) {
       try {
         await del(id);
       } catch (error) {
-        alertError(error, "Failed to delete note");
+        alertError(error, t("noteCRUD.deleteFailed"));
       }
     },
     [

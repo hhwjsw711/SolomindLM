@@ -37,8 +37,8 @@ export function useCreateAudioFlow(ctx: CreateFlowContext) {
         .replace(/\b\w/g, (l) => l.toUpperCase());
       const newNote: Note = {
         id: placeholderId,
-        title: "Audio Overview",
-        preview: `Audio Overview • ${formatTitle} • ${config.length}`,
+        title: t("flows.defaultTitles.audioOverview"),
+        preview: `${t("flows.defaultTitles.audioOverview")} • ${formatTitle} • ${config.length}`,
         type: "audioOverview",
         audioUrl: "",
         transcript: "",
@@ -56,7 +56,7 @@ export function useCreateAudioFlow(ctx: CreateFlowContext) {
         const { audioOverviewId } = await createAudioOverview({
           notebookId: ctx.notebookId!,
           documentIds: selectedDocumentIds,
-          title: `Audio Overview • ${formatTitle}`,
+          title: `${t("flows.defaultTitles.audioOverview")} • ${formatTitle}`,
           audioType: config.formatId,
           length: config.length,
           focus: config.focus,
@@ -75,7 +75,7 @@ export function useCreateAudioFlow(ctx: CreateFlowContext) {
         await catchGenerationError(error, {
           placeholderId,
           onDeleteNote: ctx.onDeleteNote,
-          toastMessage: "Couldn't start the audio overview. Please try again.",
+          toastMessage: t("flows.toast.audioFailed"),
           devLabel: "Failed to create audio overview",
         });
       }

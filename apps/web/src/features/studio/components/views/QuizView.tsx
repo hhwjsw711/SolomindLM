@@ -135,7 +135,7 @@ export const QuizView: React.FC<QuizViewProps> = ({ note, onNoteUpdate, onBack }
       }
     } catch (error) {
       console.error("Failed to reset answers:", error);
-      alert(error instanceof Error ? error.message : "Failed to reset answers");
+      alert(error instanceof Error ? error.message : t("quizView.resetFailed"));
     } finally {
       setIsResetting(false);
     }

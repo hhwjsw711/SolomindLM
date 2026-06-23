@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   isFlashcardNote,
   isReportNote,
@@ -62,6 +63,7 @@ export const useNoteActions = ({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [isExporting, setIsExporting] = useState(false);
+  const { t } = useTranslation("studio");
 
   // Check if current note can have report copied/downloaded
   const canCopyOrDownloadReport = useMemo(() => {
@@ -146,7 +148,10 @@ export const useNoteActions = ({
     if (note.content && note.content.trim()) return note.content;
     if (note.messages && note.messages.length > 0) {
       return note.messages
-        .map((m) => `${m.role === "user" ? "You" : "Assistant"}: ${m.content}`)
+        .map(
+          (m) =>
+            `${m.role === "user" ? t("noteActions.you") : t("noteActions.assistant")}: ${m.content}`
+        )
         .join("\n\n");
     }
     return "";
@@ -199,9 +204,13 @@ export const useNoteActions = ({
   const handleDeleteNote = useCallback(
     async (note: Note) => {
       const confirmed = await confirm(
-        "Delete Note",
-        `Are you sure you want to delete "${note.title}"? This action cannot be undone.`,
-        { confirmText: "Delete", cancelText: "Cancel", variant: "danger" }
+        t("noteActions.deleteNote"),
+        t("noteActions.deleteNoteConfirm", { title: note.title }),
+        {
+          confirmText: t("noteActions.delete"),
+          cancelText: t("noteActions.cancel"),
+          variant: "danger",
+        }
       );
       if (confirmed) {
         onDeleteNote(note.id);
@@ -219,7 +228,7 @@ export const useNoteActions = ({
       await exportFlashcardsCSV(activeNote.id, activeNote.title, activeNote.flashcards);
     } catch (error) {
       console.error("Failed to export flashcards:", error);
-      alert("Failed to export flashcards. Please try again.");
+      alert(t("noteActions.exportFailed"));
     } finally {
       setIsExporting(false);
     }

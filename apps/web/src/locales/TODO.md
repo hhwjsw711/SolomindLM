@@ -56,13 +56,18 @@
 
 ---
 
-## Studio 🔄
+## Studio ✅
 
 **namespace**: `studio`（`locales/{en,zh}/studio.json`）
 
 - [x] `StudioPanelHeader.tsx` — 全部按钮（mobile + desktop，17 条）
 - [x] `ToolGrid.tsx` — "Create" 标题
-- [ ] ~28 个视图/弹窗文件（`FlashcardView.tsx`, `QuizView.tsx`, `ReportView.tsx`, `CustomizeReportModal.tsx`, `SaveAsPromptModal.tsx`, ...）~250+ 条文案
+- [x] ~28 个视图/弹窗 + service/hook/util 文件（~180+ 条文案） — services, hooks, utils, views 全部使用 t()/i18next.t()
+- [x] Flow hooks (useCreate*Flow.ts) + studioGenerationGuard — default titles, toast messages
+- [x] 工具文件: notesApi, audioApi, mindMapApi, flashcardsApi, writtenQuestionsApi, spreadsheetsApi, srsReviewLabels, literatureTablePaper, literatureReportLabels, paperExport, rankedPaper
+- [x] hooks: useNoteActions, useNoteCRUD
+- [x] View files: WrittenQuestionsView, QuizView, InfographicView, LiteratureReportView, LiteratureTableView, LiteratureScreeningPanel
+- [ ] `literatureTableColumnCatalog.ts` — column name/instruction data (deferred, stored-as-data)
 
 ---
 

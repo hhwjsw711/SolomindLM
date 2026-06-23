@@ -288,7 +288,8 @@
     "previous": "Previous",
     "next": "Next",
     "finish": "Finish",
-    "explanation": "Explanation"
+    "explanation": "Explanation",
+    "resetFailed": "Failed to reset answers"
   },
   "reportView": {
     "reportGenerationFailed": "Report generation failed",
@@ -310,7 +311,8 @@
     "generatingInfographic": "Generating your infographic...",
     "infographicUnavailable": "Infographic Unavailable",
     "imageCouldNotBeLoaded": "The image could not be loaded",
-    "loadingInfographic": "Loading infographic..."
+    "loadingInfographic": "Loading infographic...",
+    "downloadFilename": "infographic"
   },
   "spreadsheetView": {
     "spreadsheetGenerationFailed": "Spreadsheet generation failed",
@@ -346,7 +348,9 @@
     "next": "Next",
     "finish": "Finish",
     "grading": "Grading...",
-    "submit": "Submit"
+    "submit": "Submit",
+    "submitFailed": "Failed to submit answer",
+    "resetFailed": "Failed to reset answers"
   },
   "userNoteView": {
     "emptyNote": "Empty note",
@@ -464,7 +468,18 @@
       "benchmarkLimitationDiscussion": "Benchmark limitation discussion",
       "empiricalEvidence": "Empirical evidence",
       "multipleLlmsTested": "Multiple LLMs tested"
-    }
+    },
+    "criterionMetIncluded": "Satisfied by the screening rationale: {{reason}}",
+    "criterionMetExcluded": "This criterion is addressed, but other criteria led to exclusion.",
+    "criterionPartial": "Partially addressed; the screening rationale does not provide enough detail to mark this as fully satisfied.",
+    "criterionMissedIncluded": "Not explicitly supported in the recorded screening rationale.",
+    "criterionMissedExcluded": "Does not satisfy this criterion based on the recorded screening rationale.",
+    "csvRank": "Rank",
+    "csvTitle": "Title",
+    "csvAuthors": "Authors",
+    "csvYear": "Year",
+    "csvDecision": "Decision",
+    "csvReason": "Reason"
   },
   "resizeHandle": {
     "resizePanel": "Resize panel"
@@ -680,7 +695,8 @@
     "savingDoc": "Saving document",
     "noContent": "No content available",
     "close": "Close",
-    "toolbarLabel": "Literature Report"
+    "toolbarLabel": "Literature Report",
+    "closeAria": "Close {{label}}"
   },
   "prismaFlow": {
     "title": "PRISMA flow",
@@ -713,5 +729,191 @@
   "selectSourceForInfographic": "Please select at least one source to generate an infographic",
   "selectSourceForReport": "Please select at least one source to generate a report",
   "selectSourceForWrittenQuestions": "Please select at least one source to generate written questions",
-  "selectSourceForSpreadsheet": "Please select at least one source to generate a spreadsheet"
+  "selectSourceForSpreadsheet": "Please select at least one source to generate a spreadsheet",
+  "guard": {
+    "signIn": "Please sign in to continue.",
+    "openNotebook": "Open a notebook before creating studio content."
+  },
+  "flows": {
+    "defaultTitles": {
+      "mindMap": "Mind Map",
+      "audioOverview": "Audio Overview",
+      "flashcards": "Flashcards",
+      "infographic": "Infographic",
+      "quiz": "Quiz",
+      "writtenQuestions": "Written Questions",
+      "report": "New Report",
+      "spreadsheet": "Spreadsheet"
+    },
+    "reportTitles": {
+      "briefing": "Briefing Document",
+      "study_guide": "Study Guide",
+      "blog_post": "Blog Post",
+      "summary": "Summary",
+      "technical_report": "Technical Report",
+      "concept_explainer": "Concept Explainer",
+      "methodology_overview": "Methodology Overview",
+      "custom": "Custom Report"
+    },
+    "toast": {
+      "reportFailed": "Couldn't start the report. Please try again.",
+      "mindMapFailed": "Couldn't start the mind map. Please try again.",
+      "audioFailed": "Couldn't start the audio overview. Please try again.",
+      "flashcardsFailed": "Couldn't start flashcards. Please try again.",
+      "infographicFailed": "Couldn't start the infographic. Please try again.",
+      "quizFailed": "Couldn't start the quiz. Please try again.",
+      "writtenQuestionsFailed": "Couldn't start written questions. Please try again.",
+      "spreadsheetFailed": "Couldn't start the spreadsheet. Please try again."
+    },
+    "preview": {
+      "infographicGenerating": "Infographic · Generating…"
+    }
+  },
+  "status": {
+    "generating": "Generating…",
+    "failed": "Failed"
+  },
+  "noteActions": {
+    "you": "You",
+    "assistant": "Assistant",
+    "deleteNote": "Delete Note",
+    "deleteNoteConfirm": "Are you sure you want to delete \"{{title}}\"? This action cannot be undone.",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "exportFailed": "Failed to export flashcards. Please try again."
+  },
+  "notesApi": {
+    "emptyNote": "Empty note",
+    "noteSavedChat": "Note · Saved Chat"
+  },
+  "noteCRUD": {
+    "updateFailed": "Failed to update note",
+    "deleteFailed": "Failed to delete note"
+  },
+  "srsReview": {
+    "dueSoon": "Due soon",
+    "inMin": "in {{n}} min",
+    "inHour": "in {{n}} h",
+    "inDay_one": "in {{n}} day",
+    "inDay_other": "in {{n}} days",
+    "inWeek": "in {{n}} wk",
+    "inMonth": "in {{n}} mo"
+  },
+  "literatureTablePaper": {
+    "untitledPaper": "Untitled Paper",
+    "systematicReview": "Systematic Review",
+    "literatureReview": "Literature Review",
+    "randomizedControlledTrial": "Randomized controlled trial",
+    "observationalStudy": "Observational study",
+    "empiricalStudy": "Empirical study",
+    "citations": "Citations"
+  },
+  "literatureReportLabels": {
+    "literatureReport": "Literature Report",
+    "deepResearch": "Deep Research"
+  },
+  "paperExport": {
+    "csvTitle": "Title",
+    "csvAuthors": "Authors",
+    "csvYear": "Year",
+    "csvCitations": "Citations",
+    "csvDoi": "DOI",
+    "csvUrl": "URL",
+    "csvPdfUrl": "PDF URL",
+    "csvSource": "Source",
+    "csvAbstract": "Abstract"
+  },
+  "rankedPaper": {
+    "sourceArxiv": "arXiv (Cornell University)",
+    "sourceSemanticScholar": "Semantic Scholar",
+    "sourcePubmed": "PubMed",
+    "sourceJournalUnavailable": "Journal Unavailable",
+    "unknownAuthors": "Unknown authors",
+    "more": "more"
+  },
+  "spreadsheet": {
+    "typeDataTable": "Data Table",
+    "typeComparison": "Comparison",
+    "typeTimeline": "Timeline",
+    "typeFinancial": "Financial",
+    "typeCustom": "Custom",
+    "typeLiteratureReview": "Literature Review",
+    "typeFallback": "Spreadsheet",
+    "previewGenerating": "Spreadsheet · Generating…",
+    "previewFailed": "Spreadsheet · Failed"
+  },
+  "literatureTableView": {
+    "paper": "Paper",
+    "papers": "Papers ({{count}})",
+    "papersAdded": "{{count}} papers added to notebook"
+  },
+  "literatureReportView": {
+    "unknown": "Unknown"
+  },
+  "literatureTableColumnCatalog": {
+    "insights": { "name": "Insights", "instructions": "Key insights and takeaways" },
+    "tldr": { "name": "TL;DR", "instructions": "One or two sentence summary" },
+    "summary": { "name": "Summary", "instructions": "Structured summary" },
+    "research_question": {
+      "name": "Research Question",
+      "instructions": "Research question addressed"
+    },
+    "methodology": { "name": "Methodology", "instructions": "Methods and evaluation approach" },
+    "key_findings": { "name": "Key Findings", "instructions": "Primary findings" },
+    "primary_outcomes": { "name": "Primary Outcomes", "instructions": "Primary outcomes measured" },
+    "limitations": { "name": "Limitations", "instructions": "Stated limitations" },
+    "interventions": { "name": "Interventions", "instructions": "Interventions studied" },
+    "conclusion": { "name": "Conclusion", "instructions": "Authors' conclusions" },
+    "research_gaps": { "name": "Research Gaps", "instructions": "Identified research gaps" },
+    "funding_source": { "name": "Funding Source", "instructions": "Funding sources" },
+    "introduction_summary": {
+      "name": "Introduction Summary",
+      "instructions": "Introduction summary"
+    },
+    "discussion_summary": { "name": "Discussion Summary", "instructions": "Discussion summary" },
+    "hypotheses_tested": { "name": "Hypotheses Tested", "instructions": "Hypotheses tested" },
+    "future_research": { "name": "Future Research", "instructions": "Future research directions" },
+    "dependent_variables": { "name": "Dependent Variables", "instructions": "Dependent variables" },
+    "independent_variables": {
+      "name": "Independent Variables",
+      "instructions": "Independent variables"
+    },
+    "study_design_col": { "name": "Study design", "instructions": "Study design" },
+    "objectives": { "name": "Objectives", "instructions": "Study objectives" },
+    "sample_size": { "name": "Sample Size", "instructions": "Sample size" },
+    "notable_results": {
+      "name": "Notable Results & Trends",
+      "instructions": "Notable results and trends"
+    },
+    "real_world_metric": {
+      "name": "Real-World Performance Metric",
+      "instructions": "Real-world metrics"
+    },
+    "domain": { "name": "Application Domain", "instructions": "Application domain" }
+  },
+  "difficulty": {
+    "easy": "Easy",
+    "medium": "Medium",
+    "hard": "Hard"
+  },
+  "preview": {
+    "flashcard_one": "Flashcard",
+    "flashcard_other": "Flashcards",
+    "question_one": "Question",
+    "question_other": "Questions",
+    "spreadsheet": "Spreadsheet"
+  },
+  "literaturePapers": {
+    "selectPaper": "Select {{title}}"
+  },
+  "flashcardsExport": {
+    "front": "Front",
+    "back": "Back",
+    "noFlashcards": "No flashcards to export",
+    "notFound": "Flashcard set not found"
+  },
+  "writtenQuestionsApi": {
+    "notFound": "Written questions not found",
+    "gradingTimeout": "Grading timed out"
+  }
 }

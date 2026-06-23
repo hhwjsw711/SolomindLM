@@ -32,8 +32,8 @@ export function useCreateMindMapFlow(ctx: CreateFlowContext) {
     const placeholderId = Math.random().toString(36).slice(2, 11);
     const newNote: Note = {
       id: placeholderId,
-      title: "Mind Map",
-      preview: "Mind Map",
+      title: t("flows.defaultTitles.mindMap"),
+      preview: t("flows.defaultTitles.mindMap"),
       type: "mindmap",
       content: "",
       mindMapData: { nodeData: { id: "root", topic: "", children: [] } },
@@ -47,13 +47,13 @@ export function useCreateMindMapFlow(ctx: CreateFlowContext) {
       const { mindMapId, mindmap } = await createMindMap({
         notebookId: ctx.notebookId!,
         documentIds: selectedDocumentIds,
-        title: "Mind Map",
+        title: t("flows.defaultTitles.mindMap"),
       });
 
       const initialNote: MindMapNote = {
         id: mindmap.id ?? mindMapId,
         title: mindmap.title,
-        preview: "Mind Map",
+        preview: t("flows.defaultTitles.mindMap"),
         type: "mindmap",
         content: typeof mindmap.content === "string" ? mindmap.content : "",
         status: (mindmap.status ?? "generating") as MindMapNote["status"],
@@ -68,7 +68,7 @@ export function useCreateMindMapFlow(ctx: CreateFlowContext) {
       await catchGenerationError(error, {
         placeholderId,
         onDeleteNote: ctx.onDeleteNote,
-        toastMessage: "Couldn't start the mind map. Please try again.",
+        toastMessage: t("flows.toast.mindMapFailed"),
         devLabel: "Failed to create mind map",
       });
     }

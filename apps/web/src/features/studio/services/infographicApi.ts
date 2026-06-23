@@ -1,6 +1,7 @@
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
+import i18next from "@/i18n";
 import type { InfographicNote } from "@/shared/types/index";
 
 export interface CreateInfographicParams {
@@ -37,12 +38,12 @@ function getPreviewText(status: string, metadata?: any): string {
     phase === "generating_image";
 
   if (isGenerating) {
-    return `Infographic · Generating…`;
+    return i18next.t("studio:flows.preview.infographicGenerating");
   }
   if (status === "failed" || phase === "failed") {
-    return `Infographic · Failed`;
+    return `${i18next.t("studio:flows.defaultTitles.infographic")} · ${i18next.t("studio:status.failed")}`;
   }
-  return `Infographic`;
+  return i18next.t("studio:flows.defaultTitles.infographic");
 }
 
 /**

@@ -1,6 +1,7 @@
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
+import i18next from "@/i18n";
 import type { MindMapNote } from "@/shared/types/index";
 
 export interface CreateMindMapParams {
@@ -20,7 +21,7 @@ function normalizeMindMapNodeData(rawData: any, fallbackTitle: string) {
   const normalized = maybeWrapped && typeof maybeWrapped === "object" ? { ...maybeWrapped } : {};
 
   if (typeof normalized.topic !== "string" || normalized.topic.trim().length === 0) {
-    normalized.topic = fallbackTitle || "Mind Map";
+    normalized.topic = fallbackTitle || i18next.t("studio:flows.defaultTitles.mindMap");
   }
   if (typeof normalized.id !== "string" || normalized.id.trim().length === 0) {
     normalized.id = "root";
@@ -34,6 +35,8 @@ function normalizeMindMapNodeData(rawData: any, fallbackTitle: string) {
  */
 function mapMindMapToNote(dbMindMap: any): MindMapNote {
   let preview: string;
+  const mindMapLabel = i18next.t("studio:flows.defaultTitles.mindMap");
+  const failedLabel = i18next.t("studio:status.failed");
 
   // Align with `notesApi.getMindMapPreview` (unified studio list).
   if (
@@ -42,13 +45,13 @@ function mapMindMapToNote(dbMindMap: any): MindMapNote {
     dbMindMap.status === "collapsing" ||
     dbMindMap.status === "reducing"
   ) {
-    preview = "Mind Map";
+    preview = mindMapLabel;
   } else if (dbMindMap.status === "completed") {
-    preview = "Mind Map";
+    preview = mindMapLabel;
   } else if (dbMindMap.status === "failed") {
-    preview = "Mind Map · Failed";
+    preview = `${mindMapLabel} · ${failedLabel}`;
   } else {
-    preview = "Mind Map";
+    preview = mindMapLabel;
   }
 
   // Parse data if it's a string
@@ -117,7 +120,7 @@ export function useCreateMindMap() {
       mindmap: mapMindMapToNote({
         _id: result,
         status: "pending",
-        title: params.title || "Mind Map",
+        title: params.title || i18next.t("studio:flows.defaultTitles.mindMap"),
       }),
     };
   };

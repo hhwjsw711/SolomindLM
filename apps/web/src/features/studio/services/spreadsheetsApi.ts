@@ -1,6 +1,7 @@
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { useAction, useMutation, useQuery } from "convex/react";
+import i18next from "@/i18n";
 import type { SpreadsheetNote } from "@/shared/types/index";
 
 export interface CreateSpreadsheetParams {
@@ -22,14 +23,14 @@ export interface CreateSpreadsheetResponse {
  */
 export function getSpreadsheetTypeLabel(spreadsheetType: string): string {
   const labels: Record<string, string> = {
-    data_extraction: "Data Table",
-    comparison_table: "Comparison",
-    timeline: "Timeline",
-    financial_summary: "Financial",
-    custom: "Custom",
-    literature_review: "Literature Review",
+    data_extraction: i18next.t("studio:spreadsheet.typeDataTable"),
+    comparison_table: i18next.t("studio:spreadsheet.typeComparison"),
+    timeline: i18next.t("studio:spreadsheet.typeTimeline"),
+    financial_summary: i18next.t("studio:spreadsheet.typeFinancial"),
+    custom: i18next.t("studio:spreadsheet.typeCustom"),
+    literature_review: i18next.t("studio:spreadsheet.typeLiteratureReview"),
   };
-  return labels[spreadsheetType] || "Spreadsheet";
+  return labels[spreadsheetType] || i18next.t("studio:spreadsheet.typeFallback");
 }
 
 /**
@@ -39,11 +40,11 @@ export function getSpreadsheetSubtitle(spreadsheetType: string, status?: string)
   const typeLabel = getSpreadsheetTypeLabel(spreadsheetType);
 
   if (status === "generating") {
-    return `Spreadsheet · Generating…`;
+    return i18next.t("studio:spreadsheet.previewGenerating");
   } else if (status === "failed") {
-    return `Spreadsheet · Failed`;
+    return i18next.t("studio:spreadsheet.previewFailed");
   }
-  return `Spreadsheet · ${typeLabel}`;
+  return `${i18next.t("studio:spreadsheet.typeFallback")} · ${typeLabel}`;
 }
 
 /**

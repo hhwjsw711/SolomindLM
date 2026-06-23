@@ -1,6 +1,7 @@
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { useAction, useMutation, useQuery } from "convex/react";
+import i18next from "@/i18n";
 import type { ReportNote } from "@/shared/types/index";
 import { getReportSubtitle, normalizeReportTypeId } from "@/shared/types/reportTypes";
 
@@ -33,11 +34,11 @@ function mapDatabaseReportToNote(dbReport: any): ReportNote {
     dbReport.status === "collapsing" ||
     dbReport.status === "reducing"
   ) {
-    preview = getReportSubtitle(reportType) + " · Generating…";
+    preview = getReportSubtitle(reportType) + ` · ${i18next.t("studio:status.generating")}`;
   } else if (dbReport.status === "completed") {
     preview = getReportSubtitle(reportType);
   } else if (dbReport.status === "failed") {
-    preview = `${getReportSubtitle(reportType)} · Failed`;
+    preview = `${getReportSubtitle(reportType)} · ${i18next.t("studio:status.failed")}`;
   } else {
     preview = getReportSubtitle(reportType);
   }

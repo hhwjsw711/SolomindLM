@@ -32,20 +32,20 @@ export function useCreateReportFlow(ctx: CreateFlowContext) {
       }
 
       const titles: Record<string, string> = {
-        briefing: "Briefing Document",
-        study_guide: "Study Guide",
-        blog_post: "Blog Post",
-        summary: "Summary",
-        technical_report: "Technical Report",
-        concept_explainer: "Concept Explainer",
-        methodology_overview: "Methodology Overview",
-        custom: "Custom Report",
+        briefing: t("flows.reportTitles.briefing"),
+        study_guide: t("flows.reportTitles.study_guide"),
+        blog_post: t("flows.reportTitles.blog_post"),
+        summary: t("flows.reportTitles.summary"),
+        technical_report: t("flows.reportTitles.technical_report"),
+        concept_explainer: t("flows.reportTitles.concept_explainer"),
+        methodology_overview: t("flows.reportTitles.methodology_overview"),
+        custom: t("flows.reportTitles.custom"),
       };
 
       const placeholderId = Math.random().toString(36).slice(2, 11);
       const newNote: Note = {
         id: placeholderId,
-        title: titles[formatId] || "New Report",
+        title: titles[formatId] || t("flows.defaultTitles.report"),
         preview: getReportSubtitle(formatId),
         type: "report",
         content: "",
@@ -70,7 +70,7 @@ export function useCreateReportFlow(ctx: CreateFlowContext) {
         await catchGenerationError(error, {
           placeholderId,
           onDeleteNote: ctx.onDeleteNote,
-          toastMessage: "Couldn't start the report. Please try again.",
+          toastMessage: t("flows.toast.reportFailed"),
           devLabel: "Failed to create report",
         });
       }

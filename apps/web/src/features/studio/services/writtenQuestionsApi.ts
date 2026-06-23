@@ -2,6 +2,7 @@ import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { useEffect, useRef } from "react";
+import i18next from "@/i18n";
 import type { WrittenQuestion, WrittenQuestionsNote } from "@/shared/types/index";
 
 export interface CreateWrittenQuestionsParams {
@@ -41,7 +42,7 @@ function questionCountToNumber(count: "fewer" | "standard" | "more"): number {
 
 function capitalizeDifficulty(difficulty: string | undefined): string {
   const d = (difficulty || "medium").toLowerCase();
-  return d.charAt(0).toUpperCase() + d.slice(1);
+  return i18next.t(`studio:difficulty.${d}`);
 }
 
 /**
@@ -49,14 +50,18 @@ function capitalizeDifficulty(difficulty: string | undefined): string {
  */
 function getPreviewText(status: string, questionCount: number, metadata?: any): string {
   const difficulty = capitalizeDifficulty(metadata?.difficulty);
+  const label =
+    questionCount === 1
+      ? i18next.t("studio:preview.question_one")
+      : i18next.t("studio:preview.question_other");
 
   if (status === "generating") {
-    return `${questionCount} Question${questionCount !== 1 ? "s" : ""} · ${difficulty}`;
+    return `${questionCount} ${label} · ${difficulty}`;
   }
   if (status === "failed") {
-    return `${questionCount} Questions · ${difficulty} · Failed`;
+    return `${questionCount} ${label} · ${difficulty} · ${i18next.t("studio:status.failed")}`;
   }
-  return `${questionCount} Question${questionCount !== 1 ? "s" : ""} · ${difficulty}`;
+  return `${questionCount} ${label} · ${difficulty}`;
 }
 
 /**
@@ -315,7 +320,7 @@ export async function pollGradedResult(
     const note = getWQ();
 
     if (!note) {
-      throw new Error("Written questions not found");
+      throw new Error(i18next.t("studio:writtenQuestionsApi.notFound"));
     }
 
     const answer = note.userAnswers?.[questionId];
@@ -335,5 +340,5 @@ export async function pollGradedResult(
     await new Promise((resolve) => setTimeout(resolve, interval));
   }
 
-  throw new Error("Grading timed out");
+  throw new Error(i18next.t("studio:writtenQuestionsApi.gradingTimeout"));
 }

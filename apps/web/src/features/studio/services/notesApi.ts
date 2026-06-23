@@ -1,6 +1,7 @@
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { useQuery } from "convex/react";
+import i18next from "@/i18n";
 import type { Note } from "@/shared/types/index";
 import { getReportSubtitle, normalizeReportTypeId } from "@/shared/types/reportTypes";
 import { pickStudioGenerationFields } from "../utils/studioGenerationLabels";
@@ -17,7 +18,7 @@ function normalizeMindMapNodeData(rawData: any, fallbackTitle: string) {
   const normalized = maybeWrapped && typeof maybeWrapped === "object" ? { ...maybeWrapped } : {};
 
   if (typeof normalized.topic !== "string" || normalized.topic.trim().length === 0) {
-    normalized.topic = fallbackTitle || "Mind Map";
+    normalized.topic = fallbackTitle || i18next.t("studio:flows.defaultTitles.mindMap");
   }
   if (typeof normalized.id !== "string" || normalized.id.trim().length === 0) {
     normalized.id = "root";
@@ -204,7 +205,7 @@ export function mapDatabaseNoteToNote(dbNote: any): Note {
  */
 function capitalizeDifficulty(difficulty: string | undefined): string {
   const d = (difficulty || "medium").toLowerCase();
-  return d.charAt(0).toUpperCase() + d.slice(1);
+  return i18next.t(`studio:difficulty.${d}`);
 }
 
 function getReportPreview(dbNote: any): string {
@@ -213,32 +214,42 @@ function getReportPreview(dbNote: any): string {
   );
   const subtitle = getReportSubtitle(reportType);
   if (dbNote.status === "generating") return subtitle;
-  if (dbNote.status === "failed") return `${subtitle} · Failed`;
+  if (dbNote.status === "failed") return `${subtitle} · ${i18next.t("studio:status.failed")}`;
   return subtitle;
 }
 
 function getFlashcardPreview(dbNote: any): string {
   const count = arrayCount(dbNote.cardsData, dbNote._cardsCount);
   const difficulty = capitalizeDifficulty(dbNote.metadata?.difficulty);
-  if (dbNote.status === "generating")
-    return `${count} Flashcard${count !== 1 ? "s" : ""} · ${difficulty}`;
-  if (dbNote.status === "failed") return `${count} Flashcards · ${difficulty} · Failed`;
-  return `${count} Flashcard${count !== 1 ? "s" : ""} · ${difficulty}`;
+  const label =
+    count === 1
+      ? i18next.t("studio:preview.flashcard_one")
+      : i18next.t("studio:preview.flashcard_other");
+  const failedLabel = ` · ${i18next.t("studio:status.failed")}`;
+  if (dbNote.status === "generating") return `${count} ${label} · ${difficulty}`;
+  if (dbNote.status === "failed") return `${count} ${label} · ${difficulty}${failedLabel}`;
+  return `${count} ${label} · ${difficulty}`;
 }
 
 function getQuizPreview(dbNote: any): string {
   const count = arrayCount(dbNote.questionsData, dbNote._questionsCount);
   const difficulty = capitalizeDifficulty(dbNote.metadata?.difficulty);
-  if (dbNote.status === "generating")
-    return `${count} Question${count !== 1 ? "s" : ""} · ${difficulty}`;
-  if (dbNote.status === "failed") return `${count} Questions · ${difficulty} · Failed`;
-  return `${count} Question${count !== 1 ? "s" : ""} · ${difficulty}`;
+  const label =
+    count === 1
+      ? i18next.t("studio:preview.question_one")
+      : i18next.t("studio:preview.question_other");
+  const failedLabel = ` · ${i18next.t("studio:status.failed")}`;
+  if (dbNote.status === "generating") return `${count} ${label} · ${difficulty}`;
+  if (dbNote.status === "failed") return `${count} ${label} · ${difficulty}${failedLabel}`;
+  return `${count} ${label} · ${difficulty}`;
 }
 
 function getMindMapPreview(dbNote: any): string {
-  if (dbNote.status === "generating") return "Mind Map";
-  if (dbNote.status === "failed") return "Mind Map · Failed";
-  return "Mind Map";
+  const label = i18next.t("studio:flows.defaultTitles.mindMap");
+  const failedLabel = i18next.t("studio:status.failed");
+  if (dbNote.status === "generating") return label;
+  if (dbNote.status === "failed") return `${label} · ${failedLabel}`;
+  return label;
 }
 
 /** Subtitle segment for studio saved list (m:ss). */
@@ -251,45 +262,54 @@ function formatAudioDurationForListSubtitle(seconds: number): string {
 }
 
 function getAudioOverviewPreview(dbNote: any): string {
-  if (dbNote.status === "generating") return "Audio Overview";
-  if (dbNote.status === "failed") return "Audio Overview · Failed";
+  const label = i18next.t("studio:flows.defaultTitles.audioOverview");
+  const failedLabel = i18next.t("studio:status.failed");
+  if (dbNote.status === "generating") return label;
+  if (dbNote.status === "failed") return `${label} · ${failedLabel}`;
 
   const durRaw = dbNote.metadata?.durationSeconds;
   const dur = typeof durRaw === "number" && Number.isFinite(durRaw) ? durRaw : null;
   const durationPart =
     dur != null && dur >= 0 ? ` · ${formatAudioDurationForListSubtitle(dur)}` : "";
 
-  return `Audio Overview${durationPart}`;
+  return `${label}${durationPart}`;
 }
 
 function getInfographicPreview(dbNote: any): string {
-  if (dbNote.status === "generating") return "Infographic · Generating…";
-  if (dbNote.status === "failed") return "Infographic · Failed";
-  return "Infographic";
+  if (dbNote.status === "generating")
+    return i18next.t("studio:flows.preview.infographicGenerating");
+  if (dbNote.status === "failed")
+    return `${i18next.t("studio:flows.defaultTitles.infographic")} · ${i18next.t("studio:status.failed")}`;
+  return i18next.t("studio:flows.defaultTitles.infographic");
 }
 
 function getSpreadsheetPreview(dbNote: any): string {
   const spreadsheetType = dbNote.metadata?.spreadsheetType || "custom";
   const typeLabel = getSpreadsheetTypeLabel(spreadsheetType);
-  if (dbNote.status === "generating") return `Spreadsheet · ${typeLabel}`;
-  if (dbNote.status === "failed") return `Spreadsheet · ${typeLabel} · Failed`;
-  return `Spreadsheet · ${typeLabel}`;
+  const label = i18next.t("studio:preview.spreadsheet");
+  if (dbNote.status === "generating") return `${label} · ${typeLabel}`;
+  if (dbNote.status === "failed")
+    return `${label} · ${typeLabel} · ${i18next.t("studio:status.failed")}`;
+  return `${label} · ${typeLabel}`;
 }
 
 function getWrittenQuestionsPreview(dbNote: any): string {
   const count = arrayCount(dbNote.questionsData, dbNote._questionsCount);
   const difficulty = capitalizeDifficulty(dbNote.metadata?.difficulty);
-  if (dbNote.status === "generating")
-    return `${count} Question${count !== 1 ? "s" : ""} · ${difficulty}`;
-  if (dbNote.status === "failed") return `${count} Questions · ${difficulty} · Failed`;
-  return `${count} Question${count !== 1 ? "s" : ""} · ${difficulty}`;
+  const label =
+    count === 1
+      ? i18next.t("studio:preview.question_one")
+      : i18next.t("studio:preview.question_other");
+  const failedLabel = ` · ${i18next.t("studio:status.failed")}`;
+  if (dbNote.status === "generating") return `${count} ${label} · ${difficulty}`;
+  if (dbNote.status === "failed") return `${count} ${label} · ${difficulty}${failedLabel}`;
+  return `${count} ${label} · ${difficulty}`;
 }
 
 function getNotePreview(dbNote: any): string {
   const isChat = dbNote.type === "chat";
-  if (isChat) return "Note · Saved Chat";
-  // Manual note
-  return dbNote.content?.substring(0, 100) || "Empty note";
+  if (isChat) return i18next.t("studio:notesApi.noteSavedChat");
+  return dbNote.content?.substring(0, 100) || i18next.t("studio:notesApi.emptyNote");
 }
 
 /**

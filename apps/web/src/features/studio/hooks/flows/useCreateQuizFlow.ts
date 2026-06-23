@@ -37,8 +37,8 @@ export function useCreateQuizFlow(ctx: CreateFlowContext) {
       const placeholderId = Math.random().toString(36).slice(2, 11);
       const newNote: Note = {
         id: placeholderId,
-        title: "Quiz",
-        preview: `${questionCount} Questions • ${config.difficulty}`,
+        title: t("flows.defaultTitles.quiz"),
+        preview: `${questionCount} ${t("preview.question_other")} • ${config.difficulty}`,
         type: "quiz",
         questions: [],
         status: "generating",
@@ -60,8 +60,8 @@ export function useCreateQuizFlow(ctx: CreateFlowContext) {
         const apiNote = (resQuiz as { note?: { _id: string; title: string; status: string } }).note;
         const initialNote: QuizNote = {
           id: quizId,
-          title: apiNote?.title ?? "Quiz",
-          preview: `${questionCount} Questions • ${config.difficulty}`,
+          title: apiNote?.title ?? t("flows.defaultTitles.quiz"),
+          preview: `${questionCount} ${t("preview.question_other")} • ${config.difficulty}`,
           type: "quiz",
           questions: [],
           status: (apiNote?.status ?? resQuiz.status) as QuizNote["status"],
@@ -75,7 +75,7 @@ export function useCreateQuizFlow(ctx: CreateFlowContext) {
         await catchGenerationError(error, {
           placeholderId,
           onDeleteNote: ctx.onDeleteNote,
-          toastMessage: "Couldn't start the quiz. Please try again.",
+          toastMessage: t("flows.toast.quizFailed"),
           devLabel: "Failed to create quiz",
         });
       }

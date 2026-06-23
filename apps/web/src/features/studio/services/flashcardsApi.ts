@@ -2,6 +2,7 @@ import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { useEffect, useRef, useState } from "react";
+import i18next from "@/i18n";
 import type { Flashcard, FlashcardNote } from "@/shared/types/index";
 import { pickStudioGenerationFields } from "../utils/studioGenerationLabels";
 
@@ -21,7 +22,7 @@ export interface CreateFlashcardsResponse {
 
 function capitalizeDifficulty(difficulty: string | undefined): string {
   const d = (difficulty || "medium").toLowerCase();
-  return d.charAt(0).toUpperCase() + d.slice(1);
+  return i18next.t(`studio:difficulty.${d}`);
 }
 
 /**
@@ -29,6 +30,10 @@ function capitalizeDifficulty(difficulty: string | undefined): string {
  */
 function getPreviewText(status: string, cardCount: number, metadata?: any): string {
   const difficulty = capitalizeDifficulty(metadata?.difficulty);
+  const label =
+    cardCount === 1
+      ? i18next.t("studio:preview.flashcard_one")
+      : i18next.t("studio:preview.flashcard_other");
 
   if (
     status === "generating" ||
@@ -36,12 +41,12 @@ function getPreviewText(status: string, cardCount: number, metadata?: any): stri
     status === "collapsing" ||
     status === "reducing"
   ) {
-    return `${cardCount} Flashcard${cardCount !== 1 ? "s" : ""} · ${difficulty}`;
+    return `${cardCount} ${label} · ${difficulty}`;
   }
   if (status === "failed") {
-    return `${cardCount} Flashcards · ${difficulty} · Failed`;
+    return `${cardCount} ${label} · ${difficulty} · ${i18next.t("studio:status.failed")}`;
   }
-  return `${cardCount} Flashcard${cardCount !== 1 ? "s" : ""} · ${difficulty}`;
+  return `${cardCount} ${label} · ${difficulty}`;
 }
 
 /**
@@ -228,11 +233,14 @@ export async function exportFlashcardsCSV(
   flashcards: Flashcard[]
 ): Promise<void> {
   if (flashcards.length === 0) {
-    throw new Error("No flashcards to export");
+    throw new Error(i18next.t("studio:flashcardsExport.noFlashcards"));
   }
 
   // Generate CSV content
-  const headers = ["Front", "Back"];
+  const headers = [
+    i18next.t("studio:flashcardsExport.front"),
+    i18next.t("studio:flashcardsExport.back"),
+  ];
   const rows = flashcards.map((f) => [f.front, f.back]);
   const csvContent = [
     headers.join(","),
@@ -286,7 +294,7 @@ export async function getFlashcard(flashcardId: string): Promise<FlashcardNote> 
     id: flashcardId as Id<"flashcards">,
   });
   if (!dbFlashcard) {
-    throw new Error("Flashcard set not found");
+    throw new Error(i18next.t("studio:flashcardsExport.notFound"));
   }
   return mapFlashcardToNote(dbFlashcard);
 }

@@ -37,8 +37,8 @@ export function useCreateFlashcardsFlow(ctx: CreateFlowContext) {
       const placeholderId = Math.random().toString(36).slice(2, 11);
       const newNote: Note = {
         id: placeholderId,
-        title: "Flashcards",
-        preview: `${cardCount} Cards • ${config.difficulty}`,
+        title: t("flows.defaultTitles.flashcards"),
+        preview: `${cardCount} ${t("preview.flashcard_other")} • ${config.difficulty}`,
         type: "flashcard",
         flashcards: [],
         status: "generating",
@@ -60,8 +60,8 @@ export function useCreateFlashcardsFlow(ctx: CreateFlowContext) {
         const apiNote = (res as { note?: { _id: string; title: string; status: string } }).note;
         const initialNote: FlashcardNote = {
           id: flashcardId,
-          title: apiNote?.title ?? "Flashcards",
-          preview: `${cardCount} Cards • ${config.difficulty}`,
+          title: apiNote?.title ?? t("flows.defaultTitles.flashcards"),
+          preview: `${cardCount} ${t("preview.flashcard_other")} • ${config.difficulty}`,
           type: "flashcard",
           flashcards: [],
           status: (apiNote?.status ?? res.status) as FlashcardNote["status"],
@@ -75,7 +75,7 @@ export function useCreateFlashcardsFlow(ctx: CreateFlowContext) {
         await catchGenerationError(error, {
           placeholderId,
           onDeleteNote: ctx.onDeleteNote,
-          toastMessage: "Couldn't start flashcards. Please try again.",
+          toastMessage: t("flows.toast.flashcardsFailed"),
           devLabel: "Failed to create flashcards",
         });
       }
