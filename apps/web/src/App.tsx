@@ -173,16 +173,6 @@ const AppContent: React.FC = () => {
     location.pathname === "/billing" ||
     location.pathname.startsWith("/folder/");
 
-  if (isLoading && !isPublicPage) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-        </div>
-      </div>
-    );
-  }
-
   const notebookList = useMemo(() => notebooks ?? [], [notebooks]);
   const folderList = useMemo(() => folders ?? [], [folders]);
   const featuredNotebooks = useMemo(
@@ -364,6 +354,16 @@ const AppContent: React.FC = () => {
     }),
     [chatStream, noteCRUD]
   );
+
+  if (isLoading && !isPublicPage) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <OnboardingProvider key={user?.id ?? "anon"} isAuthenticated={isAuthenticated}>
