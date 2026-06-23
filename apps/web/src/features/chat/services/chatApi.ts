@@ -190,6 +190,7 @@ export function useSendMessage() {
 
         await consumePersistentTextStream(response, callbacks, abortController.signal);
       } catch (error) {
+        console.error("[ChatApi] sendMessage failed:", error);
         if (!streamJobMayHaveStarted) {
           await releaseGenerationIfSafe();
         }

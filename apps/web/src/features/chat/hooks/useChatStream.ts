@@ -197,10 +197,12 @@ export function useChatStream({
     streamStartedAtRef.current = null;
   }, []);
 
-  // Reset streaming state when switching to a different conversation
+  // Reset streaming state when switching to a different conversation,
+  // but NOT when a conversation is auto-created by the first message send
+  // (sendMessageOptimistic creates the conversation, which triggers auto-select,
+  // which would abort the still-in-flight HTTP stream fetch).
   useEffect(() => {
-    // Abort any in-flight research stream for the previous conversation
-    // so its callbacks do not leak into the new chat's UI state.
+    if (isChatStreaming) return;
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
@@ -209,7 +211,7 @@ export function useChatStream({
     streamOwnerConversationIdRef.current = null;
     resetStreamingState();
     setExternalSources([]);
-  }, [activeConversationId, resetStreamingState, stopSendMessage]);
+  }, [activeConversationId, isChatStreaming, resetStreamingState, stopSendMessage]);
 
   // Auto-release stale chat generations (when generation is stuck for >5 minutes)
   // This prevents the "Generating in another tab" message from showing forever
