@@ -226,25 +226,11 @@ export const sendMessageOptimistic = mutation({
       chatGenerationStartedAt: now,
     });
 
-    // Auto-generate title on first message if untitled
-    if (!conversation.title) {
-      const existingMessages = await ctx.db
-        .query("messages")
-        .withIndex("by_conversation", (q) => q.eq("conversationId", conversation!._id))
-        .collect();
-      if (existingMessages.length <= 1) {
-        await ctx.scheduler.runAfter(0, internal.chat.actions.generateAndSetTitle, {
-          conversationId: conversation._id,
-          content: args.message,
-        });
-      }
-    }
-
     // Return the message ID for reference
     return {
       messageId,
       conversationId: conversation._id,
-      tempMessageId: messageId, // For compatibility with frontend expectations
+      tempMessageId: messageId,
     };
   },
 });

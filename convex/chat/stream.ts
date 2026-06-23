@@ -154,6 +154,20 @@ export const runWithStreamId = internalAction({
       } catch (limitErr) {
         console.error("[ChatStream] consumeDailyLimit failed (non-fatal):", limitErr);
       }
+
+      try {
+        const conversation = await ctx.runQuery(internal.chat.index.getConversationTitle, {
+          conversationId,
+        });
+        if (!conversation?.title) {
+          await ctx.runAction(internal.chat.actions.generateAndSetTitle, {
+            conversationId,
+            content: args.message,
+          });
+        }
+      } catch (titleErr) {
+        console.error("[ChatStream] Title generation failed (non-fatal):", titleErr);
+      }
     }
 
     try {

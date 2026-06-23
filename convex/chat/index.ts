@@ -47,6 +47,14 @@ export const ensureConversation = internalMutation({
   },
 });
 
+export const getConversationTitle = internalQuery({
+  args: { conversationId: v.id("conversations") },
+  handler: async (ctx, args) => {
+    const conversation = await ctx.db.get(args.conversationId);
+    return conversation ? { title: conversation.title } : null;
+  },
+});
+
 /**
  * Decrement chat generation refcount when a stream job finishes (success, error, or throw).
  * Idempotent-safe when the field was already cleared.
