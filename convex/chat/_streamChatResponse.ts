@@ -341,15 +341,11 @@ export async function streamChatResponse(
   );
   const generationStillActive = await isGenerationActive();
   if (!generationStillActive) {
-    chatStreamLog.info("assistant_persist_skipped", {
+    chatStreamLog.warn("assistant_persist_despite_refcount_zero", {
       streamId,
-      detail: "generation_cancelled",
+      detail:
+        "chatGenerationInFlight was 0 but persisting message anyway to prevent silent data loss",
     });
-    return {
-      fullResponse,
-      references,
-      hasError: false,
-    };
   }
 
   const clarificationBody =
