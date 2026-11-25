@@ -6,6 +6,7 @@
 
 import { env } from "../../_lib/env";
 import { ExternalServiceError } from "../../_lib/errors";
+import { createServiceLogger } from "../../_lib/logging/serviceLogger";
 import { mergeModelKwargs } from "./llm_factory.js";
 import { MissingStructuredJsonError } from "./llmErrors.js";
 import { chatViaGateway, gatewayServiceToken, mapGatewayModelId } from "./llmGateway.js";
@@ -266,14 +267,13 @@ function togetherChatRequestBody(options: LLMOptions): Record<string, unknown> {
 
 /**
  * POST chat/completions with retries on transient HTTP and fetch failures.
- * Direct to Together, or through the Convex AI Gateway when CHAT_VIA_GATEWAY is set
- * (gateway-only: the apiKey is unused on that route and failures propagate).
+ * Direct to Together, or through the Convex AI Gateway (CHAT_VIA_GATEWAY set).
  */
 async function executeTogetherLlmRequest(
   options: LLMOptions,
-  apiKey: string
+  apiKey: string,
+  viaGateway: boolean
 ): Promise<LLMResponse> {
-  const viaGateway = chatViaGateway();
   const service = viaGateway ? "ai-gateway" : "Together";
   const url = viaGateway
     ? "https://ai-gateway.convex.dev/v1/chat/completions"
@@ -424,10 +424,22 @@ async function executeTogetherLlmRequest(
  */
 export async function uncachedLlmCall(options: LLMOptions): Promise<LLMResponse> {
   const apiKey = env.TOGETHER_AI_API_KEY;
-  // Gateway-only deployments run with no stored Together key.
-  if (!apiKey && !chatViaGateway()) {
+  if (chatViaGateway()) {
+    try {
+      return await executeTogetherLlmRequest(options, apiKey, true);
+    } catch (error) {
+      // Together key present → the direct call is the backstop for a gateway outage.
+      if (!apiKey) throw error;
+      createServiceLogger("ai-gateway", "uncachedLlmCall").warn(
+        "Gateway LLM call failed; falling back to the direct Together API",
+        { model: options.model, error: error instanceof Error ? error.message : String(error) }
+      );
+      return executeTogetherLlmRequest(options, apiKey, false);
+    }
+  }
+  if (!apiKey) {
     throw new Error("TOGETHER_AI_API_KEY is not configured");
   }
 
-  return executeTogetherLlmRequest(options, apiKey);
+  return executeTogetherLlmRequest(options, apiKey, false);
 }

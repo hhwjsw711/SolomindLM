@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { uncachedLlmCall } from "./cachedLlm";
-import { chatViaGateway, mapGatewayModelId } from "./llmGateway";
+import {
+  chatViaGateway,
+  createGatewayChatFetch,
+  mapGatewayModelId,
+  streamGatewayChatCompletions,
+} from "./llmGateway";
 
 // Keep the real convex/server exports; only getServiceToken is stubbed — the real one
 // would throw "outside of a Convex backend" in tests.
@@ -116,5 +121,145 @@ describe("uncachedLlmCall gateway routing (CHAT_VIA_GATEWAY)", () => {
 
     expect(fetchMock.mock.calls[0][0]).toBe("https://api.together.xyz/v1/chat/completions");
     expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe("Bearer direct-test-key");
+  });
+
+  it("falls back to the direct Together call when the gateway fails and a key is set", async () => {
+    vi.stubEnv("CHAT_VIA_GATEWAY", "1");
+    // A non-transient 401 fails the gateway path immediately (no retry backoff);
+    // uncachedLlmCall then retries the same request direct against Together.
+    fetchMock
+      .mockResolvedValueOnce({ ok: false, status: 401, text: async () => "invalid token" })
+      .mockResolvedValueOnce(okChat("recovered"));
+
+    const res = await uncachedLlmCall({
+      model: "Qwen/Qwen3.5-9B",
+      messages: [{ role: "user", content: "hi" }],
+      reasoningEnabled: false,
+      toolChoice: "none",
+    });
+
+    expect(res.content).toBe("recovered");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const lastCall = fetchMock.mock.calls.at(-1);
+    expect(String(lastCall[0])).toBe("https://api.together.xyz/v1/chat/completions");
+    expect(lastCall[1].headers.Authorization).toBe("Bearer direct-test-key");
+    expect(JSON.parse(lastCall[1].body).model).toBe("Qwen/Qwen3.5-9B");
+  });
+});
+
+describe("createGatewayChatFetch (LangChain fetch-layer fallback)", () => {
+  const fetchMock = vi.fn();
+
+  beforeEach(() => {
+    fetchMock.mockReset();
+    vi.stubGlobal("fetch", fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const ok = { ok: true, status: 200 };
+  const bad = { ok: false, status: 502 };
+  const bodyWith = (model: string) => JSON.stringify({ model, messages: [] });
+  const headersWith = (key: string) => ({
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${key}`,
+  });
+
+  it("rewrites the model to the gateway namespace and mints a token on the happy path", async () => {
+    fetchMock.mockResolvedValue(ok);
+    const gatewayFetch = createGatewayChatFetch("Qwen/Qwen3.5-9B", () => "together-key");
+
+    const resp = await gatewayFetch("https://ai-gateway.convex.dev/v1/chat/completions", {
+      method: "POST",
+      headers: headersWith("placeholder"),
+      body: bodyWith("Qwen/Qwen3.5-9B"),
+    });
+
+    expect(resp.ok).toBe(true);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("https://ai-gateway.convex.dev/v1/chat/completions");
+    expect(init.headers.get("Authorization")).toBe("Bearer gateway-test-token");
+    expect(JSON.parse(init.body).model).toBe("qwen/qwen3.5-9b");
+  });
+
+  it("retries a failed gateway call directly against Together with the original model id", async () => {
+    fetchMock.mockResolvedValueOnce(bad).mockResolvedValueOnce(ok);
+    const gatewayFetch = createGatewayChatFetch("Qwen/Qwen3.5-9B", () => "together-key");
+
+    const resp = await gatewayFetch("https://ai-gateway.convex.dev/v1/chat/completions", {
+      method: "POST",
+      headers: headersWith("placeholder"),
+      body: bodyWith("Qwen/Qwen3.5-9B"),
+    });
+
+    expect(resp.ok).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const [fallbackUrl, fallbackInit] = fetchMock.mock.calls[1];
+    expect(String(fallbackUrl)).toBe("https://api.together.xyz/v1/chat/completions");
+    expect(fallbackInit.headers.get("Authorization")).toBe("Bearer together-key");
+    expect(JSON.parse(fallbackInit.body).model).toBe("Qwen/Qwen3.5-9B");
+  });
+
+  it("propagates the gateway failure when no Together key is available", async () => {
+    fetchMock.mockResolvedValueOnce(bad);
+    const gatewayFetch = createGatewayChatFetch("Qwen/Qwen3.5-9B", () => "");
+
+    const resp = await gatewayFetch("https://ai-gateway.convex.dev/v1/chat/completions", {
+      method: "POST",
+      headers: headersWith("placeholder"),
+      body: bodyWith("Qwen/Qwen3.5-9B"),
+    });
+
+    expect(resp.ok).toBe(false);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("streamGatewayChatCompletions", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("yields parsed SSE chunks with delta content and the final usage", async () => {
+    const sse = [
+      'data: {"choices":[{"delta":{"content":"Hel"}}]}',
+      "",
+      'data: {"choices":[{"delta":{"content":"lo"}}],"usage":{"prompt_tokens":2,"completion_tokens":2,"total_tokens":4}}',
+      "data: [DONE]",
+      "",
+    ].join("\n");
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode(sse));
+        controller.close();
+      },
+    });
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, status: 200, body: stream }));
+
+    const chunks = [];
+    for await (const chunk of streamGatewayChatCompletions({ model: "qwen/qwen3.5-9b" })) {
+      chunks.push(chunk);
+    }
+
+    expect(chunks).toHaveLength(2);
+    expect(chunks[0].choices?.[0]?.delta?.content).toBe("Hel");
+    expect(chunks[1].usage).toEqual({ prompt_tokens: 2, completion_tokens: 2, total_tokens: 4 });
+  });
+
+  it("throws with the status and body snippet on a non-2xx response", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 429,
+        text: async () => '{"error":"rate limited"}',
+        body: null,
+      })
+    );
+
+    // An async generator only throws when iterated; the first next() reaches the
+    // non-2xx response and rejects.
+    const iterator = streamGatewayChatCompletions({});
+    await expect(iterator.next()).rejects.toThrow(/429/);
   });
 });
