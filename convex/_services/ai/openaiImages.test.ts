@@ -3,6 +3,7 @@ import { ExternalServiceError } from "../../_lib/errors";
 import {
   callOpenAIImageGeneration,
   describeImageGenerationError,
+  GatewayImageError,
   OpenAIImageError,
 } from "./openaiImages";
 
@@ -288,6 +289,21 @@ describe("describeImageGenerationError", () => {
 
   it("reports rate limits as busy", () => {
     expect(describeImageGenerationError(new OpenAIImageError(429, RATE_LIMIT_BODY))).toMatch(
+      /busy/i
+    );
+  });
+
+  it("classifies gateway errors the same as direct-OpenAI errors (regression)", () => {
+    // Gateway-only generation (no OPENAI_API_KEY) rejects with GatewayImageError;
+    // describeImageGenerationError must keep reading its providerCode.
+    expect(describeImageGenerationError(new GatewayImageError(429, QUOTA_BODY))).toMatch(
+      /unavailable/i
+    );
+    expect(describeImageGenerationError(new GatewayImageError(400, MODERATION_BODY))).toMatch(
+      /safety/i
+    );
+    // A 429 that is not quota exhaustion keeps the temporary-retry message.
+    expect(describeImageGenerationError(new GatewayImageError(429, RATE_LIMIT_BODY))).toMatch(
       /busy/i
     );
   });

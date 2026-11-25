@@ -221,7 +221,10 @@ export function describeImageGenerationError(error: unknown): string {
   }
 
   const status = error.statusCode;
-  const code = error instanceof OpenAIImageError ? error.providerCode : undefined;
+  const code =
+    error instanceof OpenAIImageError || error instanceof GatewayImageError
+      ? error.providerCode
+      : undefined;
 
   if (code === "moderation_blocked" || code === "content_policy_violation") {
     return "The image request was blocked by the provider's safety filter. Try different sources or adjust your custom prompt.";
