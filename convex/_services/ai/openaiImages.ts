@@ -1,10 +1,26 @@
 "use node";
 
+import { getServiceToken } from "convex/server";
 import { invokeWithHttpRetry } from "../../_agents/_shared/retry";
 import { ExternalServiceError } from "../../_lib/errors";
+import { createServiceLogger } from "../../_lib/logging/serviceLogger";
 
 const IMAGE_GENERATION_ENDPOINT = "/v1/images/generations";
 const IMAGE_GENERATION_TIMEOUT_MS = 180_000;
+
+/** Convex AI Gateway images endpoint (OpenAI-compatible request/response shape, alpha). */
+const GATEWAY_IMAGES_URL = "https://ai-gateway.convex.dev/v1/images/generations";
+
+/**
+ * Whether infographic image generation routes through the Convex AI Gateway
+ * (`INFOGRAPHICS_VIA_GATEWAY=1`). Auth is a short-lived deployment service token
+ * (`getServiceToken("ai-gateway")`, convex 1.45+) instead of a stored OPENAI_API_KEY.
+ * The gateway endpoint is in alpha: the request/response shape may change. When the
+ * flag is unset (self-hosted default), generation goes to OpenAI directly.
+ */
+function infographicsViaGateway(): boolean {
+  return /^(1|true|yes)$/i.test(process.env.INFOGRAPHICS_VIA_GATEWAY ?? "");
+}
 
 /** Pull `error.code` (or `error.type` when code is null) out of an OpenAI error body. */
 function parseProviderCode(body: string): string | undefined {
@@ -40,6 +56,23 @@ export class OpenAIImageError extends ExternalServiceError {
   }
 }
 
+/** Same failure classification for gateway responses (JSON error bodies). */
+export class GatewayImageError extends ExternalServiceError {
+  providerCode?: string;
+
+  constructor(status: number, body: string) {
+    const providerCode = parseProviderCode(body);
+    const message = `ai-gateway HTTP ${status}${providerCode ? ` (${providerCode})` : ""}: ${body.slice(0, 200)}`;
+    super("ai-gateway", message, {
+      statusCode: status,
+      endpoint: IMAGE_GENERATION_ENDPOINT,
+      retryable: providerCode === "insufficient_quota" ? false : undefined,
+    });
+    this.name = "GatewayImageError";
+    this.providerCode = providerCode;
+  }
+}
+
 export interface OpenAIImageGenerationParams {
   apiKey: string;
   model: string;
@@ -51,14 +84,72 @@ export interface OpenAIImageGenerationParams {
 }
 
 /**
+ * Generate one image via the Convex AI Gateway, minted token per attempt.
+ * Mirrors callOpenAIImageGeneration's request/response handling for the gateway's
+ * OpenAI-compatible images route.
+ */
+async function callGatewayImageGeneration(
+  params: Omit<OpenAIImageGenerationParams, "apiKey">
+): Promise<Uint8Array> {
+  return await invokeWithHttpRetry(
+    async () => {
+      try {
+        const token = await getServiceToken("ai-gateway");
+        const response = await fetch(GATEWAY_IMAGES_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(params),
+          signal: AbortSignal.timeout(IMAGE_GENERATION_TIMEOUT_MS),
+        });
+
+        if (!response.ok) {
+          throw new GatewayImageError(response.status, await response.text());
+        }
+
+        const data = (await response.json()) as { data?: Array<{ b64_json?: string }> };
+        const b64 = data.data?.[0]?.b64_json;
+        if (!b64) {
+          throw new Error("ai-gateway returned no image data");
+        }
+        return Uint8Array.from(Buffer.from(b64, "base64"));
+      } catch (error) {
+        throw toRequestFailure(error);
+      }
+    },
+    "ai_gateway_image_generation",
+    { maxAttempts: 2, baseDelayMs: 2000 }
+  );
+}
+
+/**
  * Call OpenAI's image generation endpoint and return the decoded PNG bytes.
  * GPT image models always respond with base64 (no URL format), so there is
  * no second fetch. 4xx responses are non-retryable and surface immediately.
+ *
+ * With `INFOGRAPHICS_VIA_GATEWAY` set, routes through the Convex AI Gateway
+ * first and falls back to the direct OpenAI call while an API key is
+ * available, so generation survives a gateway outage. Without a key the
+ * gateway error propagates.
  */
 export async function callOpenAIImageGeneration(
   params: OpenAIImageGenerationParams
 ): Promise<Uint8Array> {
   const { apiKey, model, prompt, size, quality } = params;
+
+  if (infographicsViaGateway()) {
+    try {
+      return await callGatewayImageGeneration({ model, prompt, size, quality });
+    } catch (error) {
+      if (!apiKey) throw error;
+      createServiceLogger("ai-gateway", "callOpenAIImageGeneration").warn(
+        "Gateway image generation failed; falling back to the direct OpenAI API key",
+        { model, error: error instanceof Error ? error.message : String(error) }
+      );
+    }
+  }
 
   return await invokeWithHttpRetry(
     async () => {
@@ -130,7 +221,10 @@ export function describeImageGenerationError(error: unknown): string {
   }
 
   const status = error.statusCode;
-  const code = error instanceof OpenAIImageError ? error.providerCode : undefined;
+  const code =
+    error instanceof OpenAIImageError || error instanceof GatewayImageError
+      ? error.providerCode
+      : undefined;
 
   if (code === "moderation_blocked" || code === "content_policy_violation") {
     return "The image request was blocked by the provider's safety filter. Try different sources or adjust your custom prompt.";

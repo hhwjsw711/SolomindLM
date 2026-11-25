@@ -169,8 +169,11 @@ export const generateInfographicImage = internalAction({
     const jobTimer = logger.createTimer();
 
     try {
-      // Fail before the multi-minute design phase if image generation can't run.
-      if (!env.OPENAI_API_KEY) {
+      // Fail before the multi-minute design phase if image generation can't run. With
+      // INFOGRAPHICS_VIA_GATEWAY=1 generation needs no stored key (service-token auth);
+      // otherwise OPENAI_API_KEY is required (it is also the gateway fallback).
+      const viaGateway = /^(1|true|yes)$/i.test(env.INFOGRAPHICS_VIA_GATEWAY ?? "");
+      if (!env.OPENAI_API_KEY && !viaGateway) {
         throw new ExternalServiceError("openai", "OPENAI_API_KEY is not set", {
           statusCode: 401,
           retryable: false,

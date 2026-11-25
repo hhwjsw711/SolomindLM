@@ -11,6 +11,8 @@ export const env = {
 
   // OpenAI (embeddings, infographic images)
   OPENAI_API_KEY: process.env.OPENAI_API_KEY || "",
+  /** Route infographic image generation through the Convex AI Gateway (service-token auth, no stored key). */
+  INFOGRAPHICS_VIA_GATEWAY: process.env.INFOGRAPHICS_VIA_GATEWAY || "",
   /** OpenAI GPT image model for infographics; sizes in studio/infographic assume a gpt-image model. */
   INFOGRAPHIC_IMAGE_MODEL: process.env.INFOGRAPHIC_IMAGE_MODEL || "gpt-image-2.5-flare",
   /** low | medium | high | xhigh | max | auto. Cost per image rises steeply with quality. */
