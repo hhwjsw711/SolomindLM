@@ -6,6 +6,13 @@ import {
   OpenAIImageError,
 } from "./openaiImages";
 
+// Keep the real convex/server exports; only getServiceToken is stubbed — the real one
+// would throw "outside of a Convex backend" in tests.
+vi.mock("convex/server", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("convex/server")>();
+  return { ...actual, getServiceToken: vi.fn(async () => "gateway-test-token") };
+});
+
 const PNG_BYTES = [0x89, 0x50, 0x4e, 0x47];
 
 // Real OpenAI error bodies put a long `message` before `type`/`code`, so the
@@ -63,6 +70,7 @@ describe("callOpenAIImageGeneration", () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
   });
 
   it("posts model, prompt, and size to OpenAI and decodes the base64 image", async () => {
@@ -167,6 +175,75 @@ describe("callOpenAIImageGeneration", () => {
     fetchMock.mockResolvedValue(okResponse(undefined));
 
     await expect(callOpenAIImageGeneration(IMAGE_PARAMS)).rejects.toThrow(/no image data/i);
+  });
+});
+
+describe("callOpenAIImageGeneration via the Convex AI Gateway (INFOGRAPHICS_VIA_GATEWAY)", () => {
+  const fetchMock = vi.fn();
+
+  beforeEach(() => {
+    fetchMock.mockReset();
+    vi.stubGlobal("fetch", fetchMock);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
+
+  it("routes through the gateway with a minted service token when the flag is on", async () => {
+    vi.stubEnv("INFOGRAPHICS_VIA_GATEWAY", "1");
+    fetchMock.mockResolvedValue(okResponse(Buffer.from(PNG_BYTES).toString("base64")));
+
+    const bytes = await callOpenAIImageGeneration(IMAGE_PARAMS);
+
+    expect(Array.from(bytes)).toEqual(PNG_BYTES);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("https://ai-gateway.convex.dev/v1/images/generations");
+    expect(init.headers.Authorization).toBe("Bearer gateway-test-token");
+    const body = JSON.parse(init.body);
+    expect(body.model).toBe("gpt-image-2.5-flare");
+    expect(body.prompt).toBe("x");
+  });
+
+  it("keeps the direct OpenAI path when the flag is off", async () => {
+    vi.stubEnv("INFOGRAPHICS_VIA_GATEWAY", "");
+    fetchMock.mockResolvedValue(okResponse(Buffer.from(PNG_BYTES).toString("base64")));
+
+    await callOpenAIImageGeneration(IMAGE_PARAMS);
+
+    expect(fetchMock.mock.calls[0][0]).toBe("https://api.openai.com/v1/images/generations");
+    expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe("Bearer test-key");
+  });
+
+  it("falls back to the OpenAI API key when the gateway call fails", async () => {
+    vi.stubEnv("INFOGRAPHICS_VIA_GATEWAY", "1");
+    fetchMock
+      .mockResolvedValueOnce(
+        errorResponse(401, JSON.stringify({ error: { message: "gateway auth failed" } }))
+      )
+      .mockResolvedValueOnce(okResponse(Buffer.from(PNG_BYTES).toString("base64")));
+
+    const bytes = await callOpenAIImageGeneration(IMAGE_PARAMS);
+
+    expect(Array.from(bytes)).toEqual(PNG_BYTES);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[1][0]).toBe("https://api.openai.com/v1/images/generations");
+  });
+
+  it("propagates the gateway error when no API key is available for fallback", async () => {
+    vi.stubEnv("INFOGRAPHICS_VIA_GATEWAY", "1");
+    fetchMock.mockResolvedValue(errorResponse(503, "upstream unavailable"));
+
+    await expect(callOpenAIImageGeneration({ ...IMAGE_PARAMS, apiKey: "" })).rejects.toThrow();
+    // No fallback call: every attempt stayed on the gateway (the second is the
+    // retryable-503 retry inside invokeWithHttpRetry, not an OpenAI-direct call).
+    const calledUrls = fetchMock.mock.calls.map(([url]) => url);
+    expect(
+      calledUrls.every((url) => url === "https://ai-gateway.convex.dev/v1/images/generations")
+    ).toBe(true);
   });
 });
 
