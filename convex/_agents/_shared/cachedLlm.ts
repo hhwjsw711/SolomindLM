@@ -6,8 +6,10 @@
 
 import { env } from "../../_lib/env";
 import { ExternalServiceError } from "../../_lib/errors";
+import { createServiceLogger } from "../../_lib/logging/serviceLogger";
 import { mergeModelKwargs } from "./llm_factory.js";
 import { MissingStructuredJsonError } from "./llmErrors.js";
+import { chatViaGateway, gatewayServiceToken, mapGatewayModelId } from "./llmGateway.js";
 import { readCachedPromptTokens } from "./usageAggregate.js";
 
 // ============================================================
@@ -264,28 +266,42 @@ function togetherChatRequestBody(options: LLMOptions): Record<string, unknown> {
 }
 
 /**
- * POST chat/completions to Together with retries on transient HTTP and fetch failures.
+ * POST chat/completions with retries on transient HTTP and fetch failures.
+ * Direct to Together, or through the Convex AI Gateway (CHAT_VIA_GATEWAY set).
+ * `deadline` carries the caller's whole-call budget across gateway and direct attempts
+ * so a fallback consumes only the remaining time, never a fresh full timeout.
  */
 async function executeTogetherLlmRequest(
   options: LLMOptions,
-  apiKey: string
+  apiKey: string,
+  viaGateway: boolean,
+  deadline: number | undefined
 ): Promise<LLMResponse> {
-  const url = "https://api.together.xyz/v1/chat/completions";
+  const service = viaGateway ? "ai-gateway" : "Together";
+  const url = viaGateway
+    ? "https://ai-gateway.convex.dev/v1/chat/completions"
+    : "https://api.together.xyz/v1/chat/completions";
+  const requestBody = togetherChatRequestBody(options) as Record<string, unknown>;
+  if (viaGateway) {
+    requestBody.model = mapGatewayModelId(String(requestBody.model));
+  }
   const init: RequestInit = {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: viaGateway ? `Bearer ${await gatewayServiceToken()}` : `Bearer ${apiKey}`,
     },
-    body: JSON.stringify(togetherChatRequestBody(options)),
+    body: JSON.stringify(requestBody),
   };
 
   let lastFailure: Error | undefined;
 
   const { timeoutMs } = options;
-  const deadline = timeoutMs === undefined ? undefined : Date.now() + timeoutMs;
+  if (deadline === undefined && timeoutMs !== undefined) {
+    deadline = Date.now() + timeoutMs;
+  }
   const deadlineError = () =>
-    new ExternalServiceError("Together", `LLM request timed out after ${timeoutMs}ms`, {
+    new ExternalServiceError(service, `LLM request timed out after ${timeoutMs}ms`, {
       retryable: true,
       endpoint: url,
     });
@@ -413,9 +429,26 @@ async function executeTogetherLlmRequest(
  */
 export async function uncachedLlmCall(options: LLMOptions): Promise<LLMResponse> {
   const apiKey = env.TOGETHER_AI_API_KEY;
+  // One deadline for the whole call: gateway attempt, retries, and fallback share it.
+  const deadline = options.timeoutMs === undefined ? undefined : Date.now() + options.timeoutMs;
+  if (chatViaGateway()) {
+    try {
+      return await executeTogetherLlmRequest(options, apiKey, true, deadline);
+    } catch (error) {
+      // Together key present → the direct call is the backstop for a gateway outage.
+      // No time left → surface the timeout instead of starting a fresh direct attempt.
+      if (!apiKey) throw error;
+      if (deadline !== undefined && Date.now() >= deadline) throw error;
+      createServiceLogger("ai-gateway", "uncachedLlmCall").warn(
+        "Gateway LLM call failed; falling back to the direct Together API",
+        { model: options.model, error: error instanceof Error ? error.message : String(error) }
+      );
+      return executeTogetherLlmRequest(options, apiKey, false, deadline);
+    }
+  }
   if (!apiKey) {
     throw new Error("TOGETHER_AI_API_KEY is not configured");
   }
 
-  return executeTogetherLlmRequest(options, apiKey);
+  return executeTogetherLlmRequest(options, apiKey, false, deadline);
 }

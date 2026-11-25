@@ -8,6 +8,12 @@ import { DEFAULT_FAST_MODEL_ID, DEFAULT_SMART_MODEL_ID } from "./defaultSmartMod
 export const env = {
   // Together AI
   TOGETHER_AI_API_KEY: process.env.TOGETHER_AI_API_KEY || "",
+  /** Route chat completions through the Convex AI Gateway (read dynamically in llmGateway.ts). */
+  CHAT_VIA_GATEWAY: process.env.CHAT_VIA_GATEWAY || "",
+  /** Route TTS speech through the Convex AI Gateway (read dynamically in audioGateway.ts). */
+  TTS_VIA_GATEWAY: process.env.TTS_VIA_GATEWAY || "",
+  /** Route audio transcription through the Convex AI Gateway (read dynamically in audioGateway.ts). */
+  TRANSCRIPTION_VIA_GATEWAY: process.env.TRANSCRIPTION_VIA_GATEWAY || "",
 
   // OpenAI (embeddings, infographic images)
   OPENAI_API_KEY: process.env.OPENAI_API_KEY || "",

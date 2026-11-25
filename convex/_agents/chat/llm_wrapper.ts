@@ -6,13 +6,15 @@
  * Optimized for token efficiency and reliable structured output.
  */
 
-import { ChatTogetherAI } from "@langchain/community/chat_models/togetherai";
-
 import Together from "together-ai";
 import { type LLMResponse, uncachedLlmCall } from "../_shared/cachedLlm.js";
 import { extractUniqueSortedCitationIndices } from "../_shared/citationExtract.js";
 import { withLanguageInstruction } from "../_shared/languageInstruction.js";
-import { mergeModelKwargs } from "../_shared/llm_factory.js";
+import {
+  chatViaGateway,
+  mapGatewayModelId,
+  streamGatewayChatCompletions,
+} from "../_shared/llmGateway.js";
 import { invokeStructuredOutput } from "../_shared/structuredLlm.js";
 import { createTurnTelemetry, type TurnTelemetry } from "../_shared/tokenUsageAccumulator.js";
 import {
@@ -83,15 +85,15 @@ export function usesFewShotExamples(
  * Handles LLM response generation with structured output and citations.
  */
 export class ChatLLMWrapper {
-  private llm: ChatTogetherAI;
-  private fastLlm: ChatTogetherAI;
   /** Together model id for uncached follow-up calls (reasoning disabled). */
   private readonly fastLlmModelId: string;
   /** Primary generation model — used as fallback when fast model returns repeated 503s, etc. */
   private readonly smartLlmModelId: string;
   private tokenBudget: number = 7000; // Reserve tokens for generation
-  /** Together AI SDK client for streaming with structured output */
-  private togetherClient: Together;
+  /** Together SDK client for the streaming main-chat path; in gateway mode only the fallback. */
+  private togetherClient?: Together;
+  /** Direct-Together API key for the streaming fallback (gateway mode). */
+  private readonly togetherApiKey?: string;
   private readonly outputLanguage?: string;
   /** Per-turn usage and call counters; the owning ChatAgent reads them on the `done` chunk. */
   private readonly telemetry: TurnTelemetry;
@@ -99,27 +101,14 @@ export class ChatLLMWrapper {
 
   constructor(config: LLMWrapperConfig) {
     this.telemetry = config.telemetry ?? createTurnTelemetry();
-    // Smart vs fast: `mergeModelKwargs` — GPT-OSS uses reasoning_effort; Qwen-style uses chat_template thinking.
-    this.llm = new ChatTogetherAI({
-      apiKey: config.apiKey,
-      model: config.model,
-      temperature: config.temperature ?? 0.1,
-      modelKwargs: mergeModelKwargs(config.model, "smart"),
-    });
-    this.fastLlm = config.fastModel
-      ? new ChatTogetherAI({
-          apiKey: config.fastApiKey ?? config.apiKey,
-          model: config.fastModel,
-          temperature: 0.1,
-          modelKwargs: mergeModelKwargs(config.fastModel, "fast"),
-        })
-      : this.llm;
     this.fastLlmModelId = config.fastModel ?? config.model;
     this.smartLlmModelId = config.model;
-    // Initialize Together AI SDK client for streaming with structured output
-    this.togetherClient = new Together({
-      apiKey: config.apiKey,
-    });
+    // Streaming main-chat path: gateway-first (CHAT_VIA_GATEWAY) with a lazy direct-Together
+    // client as the fallback while an apiKey is set; direct Together otherwise.
+    this.togetherApiKey = config.apiKey || undefined;
+    if (!chatViaGateway()) {
+      this.togetherClient = new Together({ apiKey: config.apiKey });
+    }
     this.outputLanguage = config.outputLanguage;
     this.fewShotPolicy = config.fewShotPolicy ?? "history-or-complex";
   }
@@ -512,15 +501,17 @@ Reply with ONLY valid JSON: {"subqueries": string[], "rerankQuery"?: string, "ab
         { role: "user" as const, content: groundedPrompt },
       ];
 
-      console.log("[ChatLLMWrapper] Starting streaming request to Together AI...");
+      console.log("[ChatLLMWrapper] Starting streaming request...");
 
-      // Create streaming request
+      // Create the streaming source: gateway-first (CHAT_VIA_GATEWAY), falling back
+      // to the direct Together SDK while an apiKey is set; direct Together otherwise.
+      // Both yield the same OpenAI streaming chunk shape (delta content + final usage).
       const generateStartedAt = Date.now();
-      const stream = await this.togetherClient.chat.completions.create({
+      const streamRequestBody = {
         model: this.smartLlmModelId,
         messages,
         response_format: {
-          type: "json_schema",
+          type: "json_schema" as const,
           json_schema: {
             name: "chat_response",
             schema: jsonSchema,
@@ -529,28 +520,83 @@ Reply with ONLY valid JSON: {"subqueries": string[], "rerankQuery"?: string, "ab
         temperature: 0.1,
         stream: true,
         max_tokens: 8192,
-        // Together's SDK types omit OpenAI-compatible stream_options; usage is
-        // returned on a final chunk when include_usage is set.
-        ...({ stream_options: { include_usage: true } } as object),
-      });
+        stream_options: { include_usage: true },
+      };
+      const consumeStream = async (
+        source: AsyncIterable<{
+          choices?: Array<{ delta?: { content?: string | null } }>;
+          usage?: unknown;
+        }>
+      ) => {
+        // Usage arrives on a final chunk when stream_options.include_usage is set.
+        const chunks: string[] = [];
+        let providerUsage: ReturnType<typeof fromTogetherUsage>;
+        let usageRecorded = false;
+        let yielded = false;
+        for await (const chunk of source) {
+          const mapped = fromTogetherUsage(chunk.usage as TogetherUsage | null | undefined);
+          if (mapped) {
+            providerUsage = mapped;
+            // Record when the usage chunk arrives (mid-stream), so a stream that dies
+            // afterwards still counts its tokens for the failed attempt; the final
+            // record below is skipped to avoid double counting.
+            this.telemetry.recordLlmCall("generate", generateStartedAt, providerUsage);
+            usageRecorded = true;
+          }
+          const token = chunk.choices?.[0]?.delta?.content ?? "";
+          if (token) {
+            chunks.push(token);
+            yielded = true;
+          }
+        }
+        return { fullResponse: chunks.join(""), providerUsage, yielded, usageRecorded };
+      };
 
-      // Accumulate streaming chunks. Together sends usage on a final chunk when
-      // stream_options.include_usage is set (OpenAI-compatible).
-      const chunks: string[] = [];
-      let providerUsage: ReturnType<typeof fromTogetherUsage>;
-      for await (const chunk of stream) {
-        const mapped = fromTogetherUsage((chunk as { usage?: TogetherUsage | null }).usage);
-        if (mapped) {
-          providerUsage = mapped;
+      let streamResult:
+        | {
+            fullResponse: string;
+            providerUsage?: ReturnType<typeof fromTogetherUsage>;
+            yielded: boolean;
+            usageRecorded?: boolean;
+          }
+        | undefined;
+      if (chatViaGateway()) {
+        try {
+          const gatewayStream = streamGatewayChatCompletions({
+            ...streamRequestBody,
+            model: mapGatewayModelId(this.smartLlmModelId),
+          });
+          streamResult = await consumeStream(gatewayStream);
+        } catch (error) {
+          // Fallback only when the gateway failed before yielding any content: a stream
+          // already yielding cannot be replayed, so its error propagates.
+          const apiKey = this.togetherApiKey;
+          if (!apiKey) throw error;
+          if (streamResult?.yielded) throw error;
+          console.warn(
+            "[ChatLLMWrapper] Gateway stream failed before yielding, falling back to direct Together:",
+            error instanceof Error ? error.message : error
+          );
+          const client = (this.togetherClient ??= new Together({ apiKey }));
+          const directStream = await client.chat.completions.create({
+            ...streamRequestBody,
+            stream: true as const,
+          });
+          streamResult = await consumeStream(directStream);
         }
-        const token = chunk.choices[0]?.delta?.content || "";
-        if (token) {
-          chunks.push(token);
-        }
+      } else {
+        const directStream = await this.togetherClient!.chat.completions.create({
+          ...streamRequestBody,
+          stream: true as const,
+        });
+        streamResult = await consumeStream(directStream);
       }
-
-      const fullResponse = chunks.join("");
-      this.telemetry.recordLlmCall("generate", generateStartedAt, providerUsage);
+      const { fullResponse, providerUsage, usageRecorded } = streamResult;
+      // The usage chunk is normally recorded mid-stream; record here only when the
+      // stream ended without one (e.g. a provider that omits the final usage chunk).
+      if (!usageRecorded) {
+        this.telemetry.recordLlmCall("generate", generateStartedAt, providerUsage);
+      }
       console.log("[ChatLLMWrapper] Streaming complete, parsing JSON...");
 
       // Parse the accumulated JSON

@@ -19,6 +19,7 @@ import type * as _agents__shared_currentDate from "../_agents/_shared/currentDat
 import type * as _agents__shared_index from "../_agents/_shared/index.js";
 import type * as _agents__shared_languageInstruction from "../_agents/_shared/languageInstruction.js";
 import type * as _agents__shared_llmErrors from "../_agents/_shared/llmErrors.js";
+import type * as _agents__shared_llmGateway from "../_agents/_shared/llmGateway.js";
 import type * as _agents__shared_llm_factory from "../_agents/_shared/llm_factory.js";
 import type * as _agents__shared_logging from "../_agents/_shared/logging.js";
 import type * as _agents__shared_markdownMathPrompt from "../_agents/_shared/markdownMathPrompt.js";
@@ -159,6 +160,7 @@ import type * as _model_spreadsheets from "../_model/spreadsheets.js";
 import type * as _model_studioItems from "../_model/studioItems.js";
 import type * as _model_studioProgress from "../_model/studioProgress.js";
 import type * as _model_writtenQuestions from "../_model/writtenQuestions.js";
+import type * as _services_ai_audioGateway from "../_services/ai/audioGateway.js";
 import type * as _services_ai_embeddingClient from "../_services/ai/embeddingClient.js";
 import type * as _services_ai_mp3 from "../_services/ai/mp3.js";
 import type * as _services_ai_openaiImages from "../_services/ai/openaiImages.js";
@@ -383,6 +385,7 @@ declare const fullApi: ApiFromModules<{
   "_agents/_shared/index": typeof _agents__shared_index;
   "_agents/_shared/languageInstruction": typeof _agents__shared_languageInstruction;
   "_agents/_shared/llmErrors": typeof _agents__shared_llmErrors;
+  "_agents/_shared/llmGateway": typeof _agents__shared_llmGateway;
   "_agents/_shared/llm_factory": typeof _agents__shared_llm_factory;
   "_agents/_shared/logging": typeof _agents__shared_logging;
   "_agents/_shared/markdownMathPrompt": typeof _agents__shared_markdownMathPrompt;
@@ -523,6 +526,7 @@ declare const fullApi: ApiFromModules<{
   "_model/studioItems": typeof _model_studioItems;
   "_model/studioProgress": typeof _model_studioProgress;
   "_model/writtenQuestions": typeof _model_writtenQuestions;
+  "_services/ai/audioGateway": typeof _services_ai_audioGateway;
   "_services/ai/embeddingClient": typeof _services_ai_embeddingClient;
   "_services/ai/mp3": typeof _services_ai_mp3;
   "_services/ai/openaiImages": typeof _services_ai_openaiImages;
