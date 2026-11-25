@@ -160,6 +160,7 @@ import type * as _model_spreadsheets from "../_model/spreadsheets.js";
 import type * as _model_studioItems from "../_model/studioItems.js";
 import type * as _model_studioProgress from "../_model/studioProgress.js";
 import type * as _model_writtenQuestions from "../_model/writtenQuestions.js";
+import type * as _services_ai_audioGateway from "../_services/ai/audioGateway.js";
 import type * as _services_ai_embeddingClient from "../_services/ai/embeddingClient.js";
 import type * as _services_ai_mp3 from "../_services/ai/mp3.js";
 import type * as _services_ai_openaiImages from "../_services/ai/openaiImages.js";
@@ -525,6 +526,7 @@ declare const fullApi: ApiFromModules<{
   "_model/studioItems": typeof _model_studioItems;
   "_model/studioProgress": typeof _model_studioProgress;
   "_model/writtenQuestions": typeof _model_writtenQuestions;
+  "_services/ai/audioGateway": typeof _services_ai_audioGateway;
   "_services/ai/embeddingClient": typeof _services_ai_embeddingClient;
   "_services/ai/mp3": typeof _services_ai_mp3;
   "_services/ai/openaiImages": typeof _services_ai_openaiImages;
