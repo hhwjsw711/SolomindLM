@@ -531,23 +531,35 @@ Reply with ONLY valid JSON: {"subqueries": string[], "rerankQuery"?: string, "ab
         // Usage arrives on a final chunk when stream_options.include_usage is set.
         const chunks: string[] = [];
         let providerUsage: ReturnType<typeof fromTogetherUsage>;
+        let usageRecorded = false;
+        let yielded = false;
         for await (const chunk of source) {
           const mapped = fromTogetherUsage(chunk.usage as TogetherUsage | null | undefined);
           if (mapped) {
             providerUsage = mapped;
+            // Record when the usage chunk arrives (mid-stream), so a stream that dies
+            // afterwards still counts its tokens for the failed attempt; the final
+            // record below is skipped to avoid double counting.
+            this.telemetry.recordLlmCall("generate", generateStartedAt, providerUsage);
+            usageRecorded = true;
           }
           const token = chunk.choices?.[0]?.delta?.content ?? "";
           if (token) {
             chunks.push(token);
+            yielded = true;
           }
         }
-        return { fullResponse: chunks.join(""), providerUsage };
+        return { fullResponse: chunks.join(""), providerUsage, yielded, usageRecorded };
       };
 
-      let streamResult: {
-        fullResponse: string;
-        providerUsage?: ReturnType<typeof fromTogetherUsage>;
-      };
+      let streamResult:
+        | {
+            fullResponse: string;
+            providerUsage?: ReturnType<typeof fromTogetherUsage>;
+            yielded: boolean;
+            usageRecorded?: boolean;
+          }
+        | undefined;
       if (chatViaGateway()) {
         try {
           const gatewayStream = streamGatewayChatCompletions({
@@ -556,12 +568,13 @@ Reply with ONLY valid JSON: {"subqueries": string[], "rerankQuery"?: string, "ab
           });
           streamResult = await consumeStream(gatewayStream);
         } catch (error) {
-          // Fallback only before any token was consumed; a stream that already
-          // yielded content cannot be replayed, so its error propagates above.
+          // Fallback only when the gateway failed before yielding any content: a stream
+          // already yielding cannot be replayed, so its error propagates.
           const apiKey = this.togetherApiKey;
           if (!apiKey) throw error;
+          if (streamResult?.yielded) throw error;
           console.warn(
-            "[ChatLLMWrapper] Gateway stream failed, falling back to direct Together:",
+            "[ChatLLMWrapper] Gateway stream failed before yielding, falling back to direct Together:",
             error instanceof Error ? error.message : error
           );
           const client = (this.togetherClient ??= new Together({ apiKey }));
@@ -578,8 +591,12 @@ Reply with ONLY valid JSON: {"subqueries": string[], "rerankQuery"?: string, "ab
         });
         streamResult = await consumeStream(directStream);
       }
-      const { fullResponse, providerUsage } = streamResult;
-      this.telemetry.recordLlmCall("generate", generateStartedAt, providerUsage);
+      const { fullResponse, providerUsage, usageRecorded } = streamResult;
+      // The usage chunk is normally recorded mid-stream; record here only when the
+      // stream ended without one (e.g. a provider that omits the final usage chunk).
+      if (!usageRecorded) {
+        this.telemetry.recordLlmCall("generate", generateStartedAt, providerUsage);
+      }
       console.log("[ChatLLMWrapper] Streaming complete, parsing JSON...");
 
       // Parse the accumulated JSON

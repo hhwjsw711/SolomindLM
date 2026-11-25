@@ -268,11 +268,14 @@ function togetherChatRequestBody(options: LLMOptions): Record<string, unknown> {
 /**
  * POST chat/completions with retries on transient HTTP and fetch failures.
  * Direct to Together, or through the Convex AI Gateway (CHAT_VIA_GATEWAY set).
+ * `deadline` carries the caller's whole-call budget across gateway and direct attempts
+ * so a fallback consumes only the remaining time, never a fresh full timeout.
  */
 async function executeTogetherLlmRequest(
   options: LLMOptions,
   apiKey: string,
-  viaGateway: boolean
+  viaGateway: boolean,
+  deadline: number | undefined
 ): Promise<LLMResponse> {
   const service = viaGateway ? "ai-gateway" : "Together";
   const url = viaGateway
@@ -294,7 +297,9 @@ async function executeTogetherLlmRequest(
   let lastFailure: Error | undefined;
 
   const { timeoutMs } = options;
-  const deadline = timeoutMs === undefined ? undefined : Date.now() + timeoutMs;
+  if (deadline === undefined && timeoutMs !== undefined) {
+    deadline = Date.now() + timeoutMs;
+  }
   const deadlineError = () =>
     new ExternalServiceError(service, `LLM request timed out after ${timeoutMs}ms`, {
       retryable: true,
@@ -424,22 +429,26 @@ async function executeTogetherLlmRequest(
  */
 export async function uncachedLlmCall(options: LLMOptions): Promise<LLMResponse> {
   const apiKey = env.TOGETHER_AI_API_KEY;
+  // One deadline for the whole call: gateway attempt, retries, and fallback share it.
+  const deadline = options.timeoutMs === undefined ? undefined : Date.now() + options.timeoutMs;
   if (chatViaGateway()) {
     try {
-      return await executeTogetherLlmRequest(options, apiKey, true);
+      return await executeTogetherLlmRequest(options, apiKey, true, deadline);
     } catch (error) {
       // Together key present → the direct call is the backstop for a gateway outage.
+      // No time left → surface the timeout instead of starting a fresh direct attempt.
       if (!apiKey) throw error;
+      if (deadline !== undefined && Date.now() >= deadline) throw error;
       createServiceLogger("ai-gateway", "uncachedLlmCall").warn(
         "Gateway LLM call failed; falling back to the direct Together API",
         { model: options.model, error: error instanceof Error ? error.message : String(error) }
       );
-      return executeTogetherLlmRequest(options, apiKey, false);
+      return executeTogetherLlmRequest(options, apiKey, false, deadline);
     }
   }
   if (!apiKey) {
     throw new Error("TOGETHER_AI_API_KEY is not configured");
   }
 
-  return executeTogetherLlmRequest(options, apiKey, false);
+  return executeTogetherLlmRequest(options, apiKey, false, deadline);
 }

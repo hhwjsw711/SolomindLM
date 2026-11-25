@@ -22,17 +22,37 @@ import {
  * the direct Together route when a key exists.
  */
 
-/** Derive a lowercase extension (without the dot) from a storage URL's file name. */
-function audioFormatFromUrl(fileUrl: string): string {
+/**
+ * Derive a lowercase extension (without the dot) from a storage URL's file name,
+ * falling back to byte sniffing (magic numbers) — never a blind WAV default, so the
+ * gateway's `input_audio.format` reflects the actual encoding.
+ */
+function audioFormatFromUrl(fileUrl: string, audioBytes?: Uint8Array): string {
+  let ext = "";
   try {
     const pathname = new URL(fileUrl).pathname;
     const name = pathname.split("/").pop() ?? "";
     const dot = name.lastIndexOf(".");
-    const ext = dot === -1 ? "" : name.slice(dot + 1).toLowerCase();
-    return ext || "wav";
+    if (dot !== -1) ext = name.slice(dot + 1).toLowerCase();
   } catch {
-    return "wav";
+    // Fall through to byte sniffing.
   }
+  if (ext) return ext;
+  if (audioBytes) {
+    const b = audioBytes;
+    if (b[0] === 0x66 && b[1] === 0x4c && b[2] === 0x61 && b[3] === 0x43) return "flac";
+    if (b[0] === 0x4f && b[1] === 0x67 && b[2] === 0x67 && b[3] === 0x53) return "ogg";
+    if (b[0] === 0xff && b[1] === 0xfb) return "mp3";
+    if (b[0] === 0x49 && b[1] === 0x44 && b[2] === 0x33) return "mp3";
+    if (b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46) return "wav";
+    if (b.length > 7 && b[4] === 0x66 && b[5] === 0x74 && b[6] === 0x79 && b[7] === 0x70) {
+      // ISO container (m4a/aac/mp4 family).
+      return "m4a";
+    }
+  }
+  // Undetermined: keep the historical behavior (Together's multipart route also
+  // received extensionless files); Whisper treats wav as the raw-container default.
+  return "wav";
 }
 
 export class AudioTranscriptionService {
@@ -48,17 +68,15 @@ export class AudioTranscriptionService {
     const logger = createServiceLogger("together", "audioTranscribe");
     logger.operationStart({ model: this.model });
 
-    const viaGateway = transcriptionViaGateway() && this.apiKey !== "";
-    // Download once; the gateway route needs the bytes, the direct route reuses them
-    // as a Blob (multipart) instead of the URL string Together also accepts.
-    let audioBytes: Uint8Array | null = null;
-    if (viaGateway) {
+    // The flag alone selects the gateway route — a Together key is only required for
+    // the direct fallback, so gateway-only deployments (no stored key) still transcribe.
+    if (transcriptionViaGateway()) {
       try {
         const download = await fetch(fileUrl, { signal: AbortSignal.timeout(60_000) });
         if (!download.ok) {
           throw new Error(`audio download failed: HTTP ${download.status}`);
         }
-        audioBytes = new Uint8Array(await download.arrayBuffer());
+        const audioBytes = new Uint8Array(await download.arrayBuffer());
         if (audioBytes.byteLength > GATEWAY_TRANSCRIPTION_MAX_BYTES) {
           // Too large for the gateway's JSON body: fall through to direct Together.
           console.warn(
@@ -70,7 +88,7 @@ export class AudioTranscriptionService {
           const text = await transcribeGatewayAudio({
             model: this.model,
             audio: audioBytes,
-            format: audioFormatFromUrl(fileUrl),
+            format: audioFormatFromUrl(fileUrl, audioBytes),
             timeoutMs: 120_000,
           });
           logger.operationComplete({ textChars: text.length, route: "gateway" });
@@ -84,6 +102,11 @@ export class AudioTranscriptionService {
       }
     }
 
+    if (!this.apiKey) {
+      throw new Error(
+        "TOGETHER_AI_API_KEY is not set (or set TRANSCRIPTION_VIA_GATEWAY=1 to transcribe through the Convex AI Gateway)"
+      );
+    }
     const text = await this.transcribeDirect(fileUrl);
     logger.operationComplete({ textChars: text.length, route: "direct" });
     return text;

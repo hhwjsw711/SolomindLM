@@ -135,8 +135,12 @@ export async function synthesizeGatewaySpeech(params: GatewaySpeechParams): Prom
   }
 }
 
-/** The gateway's JSON body limit; audio larger than this cannot be transcribed via it. */
-export const GATEWAY_TRANSCRIPTION_MAX_BYTES = 12 * 1024 * 1024; // 16 MiB JSON ≈ 12 MiB base64-safe
+/**
+ * The gateway's 16 MiB JSON body limit as an audio-byte ceiling: base64 inflates bytes
+ * by 4/3 (12 MiB → 16 MiB exactly) and the JSON fields (model, input_audio) add more,
+ * so 11 MiB of audio stays inside the limit with overhead budget to spare.
+ */
+export const GATEWAY_TRANSCRIPTION_MAX_BYTES = 11 * 1024 * 1024;
 
 export interface GatewayTranscriptionParams {
   model: string;
