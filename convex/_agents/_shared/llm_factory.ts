@@ -10,6 +10,13 @@
  */
 
 import { ChatTogetherAI } from "@langchain/community/chat_models/togetherai";
+import { ChatOpenAI } from "@langchain/openai";
+import {
+  chatViaGateway,
+  GATEWAY_API_BASE,
+  gatewayAuthFetch,
+  mapGatewayModelId,
+} from "./llmGateway.js";
 
 // Convex action runtime may lack performance; LangChain SDK expects performance.now().
 if (typeof globalThis.performance === "undefined") {
@@ -117,8 +124,22 @@ export function createLLM(
     /** Default `fast` when omitted. */
     phase?: TogetherModelPhase;
   }
-): ChatTogetherAI {
+): ChatTogetherAI | ChatOpenAI {
   const modelKwargs = mergeModelKwargs(config.mapModel, config.phase ?? "fast");
+
+  if (chatViaGateway()) {
+    // Gateway route: per-request service-token auth injected via gatewayAuthFetch (the
+    // apiKey placeholder is replaced on every call, so tokens never go stale). Model ids
+    // map to the gateway namespace; the Together-specific modelKwargs forward as-is.
+    return new ChatOpenAI({
+      apiKey: "ai-gateway",
+      model: mapGatewayModelId(config.mapModel),
+      temperature: config.temperatures ?? 0.3,
+      maxTokens: config.maxTokens,
+      modelKwargs,
+      configuration: { baseURL: GATEWAY_API_BASE, fetch: gatewayAuthFetch },
+    });
+  }
 
   return new ChatTogetherAI({
     apiKey: config.apiKey,

@@ -19,6 +19,7 @@ import type * as _agents__shared_currentDate from "../_agents/_shared/currentDat
 import type * as _agents__shared_index from "../_agents/_shared/index.js";
 import type * as _agents__shared_languageInstruction from "../_agents/_shared/languageInstruction.js";
 import type * as _agents__shared_llmErrors from "../_agents/_shared/llmErrors.js";
+import type * as _agents__shared_llmGateway from "../_agents/_shared/llmGateway.js";
 import type * as _agents__shared_llm_factory from "../_agents/_shared/llm_factory.js";
 import type * as _agents__shared_logging from "../_agents/_shared/logging.js";
 import type * as _agents__shared_markdownMathPrompt from "../_agents/_shared/markdownMathPrompt.js";
@@ -383,6 +384,7 @@ declare const fullApi: ApiFromModules<{
   "_agents/_shared/index": typeof _agents__shared_index;
   "_agents/_shared/languageInstruction": typeof _agents__shared_languageInstruction;
   "_agents/_shared/llmErrors": typeof _agents__shared_llmErrors;
+  "_agents/_shared/llmGateway": typeof _agents__shared_llmGateway;
   "_agents/_shared/llm_factory": typeof _agents__shared_llm_factory;
   "_agents/_shared/logging": typeof _agents__shared_logging;
   "_agents/_shared/markdownMathPrompt": typeof _agents__shared_markdownMathPrompt;

@@ -1,6 +1,7 @@
 "use node";
 import { v } from "convex/values";
 import { uncachedLlmCall } from "../../_agents/_shared/cachedLlm";
+import { chatViaGateway } from "../../_agents/_shared/llmGateway";
 import { internalAction } from "../../_generated/server";
 import { env } from "../../_lib/env";
 
@@ -22,7 +23,8 @@ export const generateTitle = internalAction({
  */
 export async function generateTitleFromChunk(chunk: string): Promise<string> {
   const apiKey = process.env.TOGETHER_AI_API_KEY;
-  if (!apiKey) {
+  // Gateway-only deployments run with no stored Together key.
+  if (!apiKey && !chatViaGateway()) {
     throw new Error("TOGETHER_AI_API_KEY environment variable is not set");
   }
 
