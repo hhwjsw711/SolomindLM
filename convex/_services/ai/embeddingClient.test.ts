@@ -1,6 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { callOpenAIEmbeddings, EmbeddingService } from "./embeddingClient";
 
+// Keep the real convex/server exports (action/internalAction feed _generated/server); only
+// getServiceToken is stubbed — in a test environment the real one would throw "outside of a
+// Convex backend".
+vi.mock("convex/server", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("convex/server")>();
+  return { ...actual, getServiceToken: vi.fn(async () => "gateway-test-token") };
+});
+
 function mockOpenAIResponse(vectors: number[][]) {
   return {
     ok: true,
@@ -91,6 +99,74 @@ describe("callOpenAIEmbeddings", () => {
     fetchMock.mockResolvedValue(mockOpenAIResponse([[0.1, 0.1]]));
 
     await expect(callOpenAIEmbeddings(["a", "b"], "test-key")).rejects.toThrow(/expected 2/);
+  });
+});
+
+describe("Convex AI Gateway routing (EMBEDDINGS_VIA_GATEWAY)", () => {
+  const fetchMock = vi.fn();
+
+  beforeEach(() => {
+    fetchMock.mockReset();
+    vi.stubGlobal("fetch", fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
+
+  it("routes through the gateway with a minted service token when the flag is on", async () => {
+    vi.stubEnv("EMBEDDINGS_VIA_GATEWAY", "1");
+    fetchMock.mockResolvedValue(mockOpenAIResponse([[0.1], [0.2]]));
+
+    const result = await callOpenAIEmbeddings(["first", "second"], "");
+
+    expect(result).toEqual([[0.1], [0.2]]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("https://ai-gateway.convex.dev/v1/embeddings");
+    expect(init.headers.Authorization).toBe("Bearer gateway-test-token");
+    const body = JSON.parse(init.body);
+    expect(body.model).toBe("openai/text-embedding-3-small");
+    expect(body.input).toEqual(["first", "second"]);
+    expect(body.dimensions).toBe(1536);
+  });
+
+  it("keeps the direct OpenAI path when the flag is off", async () => {
+    vi.stubEnv("EMBEDDINGS_VIA_GATEWAY", "");
+    fetchMock.mockResolvedValue(mockOpenAIResponse([[0.3]]));
+
+    await callOpenAIEmbeddings(["x"], "direct-key");
+
+    expect(fetchMock.mock.calls[0][0]).toBe("https://api.openai.com/v1/embeddings");
+    expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe("Bearer direct-key");
+  });
+
+  it("falls back to the OpenAI API key when the gateway call fails", async () => {
+    vi.stubEnv("EMBEDDINGS_VIA_GATEWAY", "1");
+    fetchMock
+      .mockResolvedValueOnce({ ok: false, status: 401, text: async () => "gateway auth failed" })
+      .mockResolvedValueOnce(mockOpenAIResponse([[0.5]]));
+
+    const result = await callOpenAIEmbeddings(["x"], "fallback-key");
+
+    expect(result).toEqual([[0.5]]);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[1][0]).toBe("https://api.openai.com/v1/embeddings");
+    expect(fetchMock.mock.calls[1][1].headers.Authorization).toBe("Bearer fallback-key");
+  });
+
+  it("propagates the gateway error when no API key is available for fallback", async () => {
+    vi.stubEnv("EMBEDDINGS_VIA_GATEWAY", "1");
+    fetchMock.mockResolvedValue({
+      ok: false,
+      status: 401,
+      text: async () => "gateway auth failed",
+    });
+
+    await expect(callOpenAIEmbeddings(["x"], "")).rejects.toThrow();
+    // Only the gateway was attempted — no silent second provider.
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
 
