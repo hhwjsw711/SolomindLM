@@ -29,6 +29,19 @@ describe("markdownFromFirecrawlPages", () => {
     ]);
     expect(md).toBe("**Page 1**\n\none\n\n---\n\n**Page 2**\n\ntwo");
   });
+
+  it("labels the API's pageNumber, falling back to position when absent", () => {
+    expect(markdownFromFirecrawlPages([{ markdown: "one" }, { markdown: "two" }])).toBe(
+      "**Page 1**\n\none\n\n---\n\n**Page 2**\n\ntwo"
+    );
+    // Sparse pageNumbers keep their physical numbers instead of being renumbered by position.
+    expect(
+      markdownFromFirecrawlPages([
+        { pageNumber: 3, markdown: "c" },
+        { pageNumber: 5, markdown: "e" },
+      ])
+    ).toBe("**Page 3**\n\nc\n\n---\n\n**Page 5**\n\ne");
+  });
 });
 
 describe("FirecrawlParseService.readDocument", () => {
@@ -99,9 +112,26 @@ describe("FirecrawlParseService.readDocument", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     const result = await new FirecrawlParseService("fc-key").readDocument("https://x/a.pdf");
-    // No pages array: pagesRead is 0, markdown keeps the whole-document text with markers stripped.
-    expect(result.pagesRead).toBe(0);
+    // No pages array (office and other non-PDF parses): markdown keeps the whole-document text
+    // with markers stripped, and the quota is charged one page — the credit the parse billed.
+    expect(result.pagesRead).toBe(1);
     expect(result.markdown).toBe("whole body");
+  });
+
+  it("charges the reported credits for an unpaged parse", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(file())
+      .mockResolvedValueOnce(
+        ok({
+          success: true,
+          data: { markdown: "deck text", metadata: { creditsUsed: 3 } },
+        })
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await new FirecrawlParseService("fc-key").readDocument("https://x/a.pptx");
+    expect(result.pagesRead).toBe(3);
   });
 
   it("maps HTTP 402 to the credits error", async () => {

@@ -15,6 +15,10 @@
  *   we stitch with the same `**Page N**` labels the chunker parses. `pageMarkers` inserts
  *   `<!-- page N -->` comments we strip, keeping our own labels.
  * - No figure annotations: `options.annotations` is not consulted.
+ * - Office and other non-PDF parses are unpaginated (the API's `pages` option is PDF-only):
+ *   `data.pages` stays empty, the whole `data.markdown` is used, and the bill is one credit
+ *   per document (live-verified: a 10-slide deck reported `metadata.creditsUsed: 1`) — charged
+ *   to the user's page quota as one page, not zero.
  */
 
 import { invokeWithHttpRetry } from "../../_agents/_shared/retry";
@@ -44,6 +48,8 @@ type FirecrawlParseResponse = {
     markdown?: string;
     /** Present when `pages: true`: one entry per page, 1-based `pageNumber`. */
     pages?: Array<{ pageNumber?: number; markdown?: string }>;
+    /** The parse's actual credit cost: per page for PDFs, per document for office formats. */
+    metadata?: { creditsUsed?: number; [key: string]: unknown };
     warning?: string;
   };
   error?: string;
@@ -76,7 +82,9 @@ export function markdownFromFirecrawlPages(
   return sorted
     .map((page, i) => {
       const body = (page.markdown ?? "").replace(PAGE_MARKER_COMMENT, "").trim();
-      const label = `**Page ${i + 1}**`;
+      // The API's pageNumber is the physical page (1-based, per the live capture); position
+      // only backs it up when an entry arrives without one.
+      const label = `**Page ${page.pageNumber ?? i + 1}**`;
       return i === 0 ? `${label}\n\n${body}` : `---\n\n${label}\n\n${body}`;
     })
     .join("\n\n");
@@ -236,12 +244,16 @@ export class FirecrawlParseService {
     }
 
     const pages = data.pages ?? [];
-    const pagesRead = pages.length;
     const markdown =
       pages.length > 0
         ? markdownFromFirecrawlPages(pages)
         : (data.markdown ?? "").replace(PAGE_MARKER_COMMENT, "").trim();
-    if (!hasOcrContent(markdown)) throw new OcrNothingReadableError(pagesRead);
+    if (!hasOcrContent(markdown)) throw new OcrNothingReadableError(pages.length);
+    // Office and other non-PDF parses are unpaginated (the API's pages option is PDF-only)
+    // but still bill a credit per document, so an empty pages array must not read as a
+    // zero-page, zero-cost parse: charge what the API says it charged, at least one page.
+    const pagesRead =
+      pages.length > 0 ? pages.length : Math.max(1, data.metadata?.creditsUsed ?? 1);
     return { markdown, pagesRead };
   }
 }
