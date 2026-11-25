@@ -23,6 +23,20 @@ describe("mapGatewayModelId", () => {
     );
   });
 
+  it("maps every chat-picker model id to its gateway catalog id", () => {
+    // Mirrors apps/web/src/shared/constants/models.ts AVAILABLE_SMART_MODELS +
+    // DEFAULT_SMART_MODEL_ID. Together namespaces differ from gateway ones for
+    // MiniMaxAI→minimax and zai-org→z-ai; the rest match after lowercasing.
+    expect(mapGatewayModelId("deepseek-ai/DeepSeek-V4.1-Flash")).toBe(
+      "deepseek/deepseek-v4.1-flash"
+    );
+    expect(mapGatewayModelId("openai/gpt-oss-120b")).toBe("openai/gpt-oss-120b");
+    expect(mapGatewayModelId("MiniMaxAI/MiniMax-M3")).toBe("minimax/minimax-m3");
+    expect(mapGatewayModelId("google/gemma-4-31B-it")).toBe("google/gemma-4-31b-it");
+    expect(mapGatewayModelId("Qwen/Qwen3.8-Flash")).toBe("qwen/qwen3.8-flash");
+    expect(mapGatewayModelId("zai-org/GLM-5.3-Flash")).toBe("z-ai/glm-5.3-flash");
+  });
+
   it("passes unknown prefixes lowercased and bare names through", () => {
     expect(mapGatewayModelId("SomeVendor/model-x")).toBe("somevendor/model-x");
     expect(mapGatewayModelId("bare-name")).toBe("bare-name");

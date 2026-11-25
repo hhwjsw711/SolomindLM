@@ -20,7 +20,11 @@ export function chatViaGateway(): boolean {
   return /^(1|true|yes)$/i.test(process.env.CHAT_VIA_GATEWAY ?? "");
 }
 
-/** Together model-id prefixes → gateway provider prefixes; unmapped prefixes lowercase. */
+/**
+ * Together model-id prefixes → gateway provider prefixes; unmapped prefixes lowercase.
+ * Covers every id selectable in the chat model picker
+ * (apps/web/src/shared/constants/models.ts) plus the studio LLM env defaults.
+ */
 const MODEL_PREFIX_MAP: Record<string, string> = {
   Qwen: "qwen",
   "deepseek-ai": "deepseek",
@@ -28,6 +32,9 @@ const MODEL_PREFIX_MAP: Record<string, string> = {
   "meta-llama": "meta-llama",
   mistralai: "mistralai",
   togethercomputer: "togethercomputer",
+  // Together namespace ≠ gateway namespace for these providers.
+  MiniMaxAI: "minimax",
+  "zai-org": "z-ai",
 };
 
 export function mapGatewayModelId(model: string): string {
