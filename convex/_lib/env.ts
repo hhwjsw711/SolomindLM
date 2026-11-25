@@ -43,6 +43,10 @@ export const env = {
   // Mistral (OCR)
   MISTRAL_API_KEY: process.env.MISTRAL_API_KEY || "",
 
+  // Firecrawl Parse (OCR alternative; set to route file OCR through Firecrawl instead of
+  // Mistral — see convex/_services/extraction/FirecrawlParseService.ts)
+  FIRECRAWL_API_KEY: process.env.FIRECRAWL_API_KEY || "",
+
   // Supadata
   SUPADATA_API_KEY: process.env.SUPADATA_API_KEY || "",
 

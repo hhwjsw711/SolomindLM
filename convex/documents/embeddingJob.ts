@@ -14,9 +14,9 @@ import { OcrQuotaExceededError, ocrPageCapNotice } from "../_lib/ocrPageLimits";
 import { sourceFailureMessage } from "../_lib/sourceFailure";
 import { PASTED_TEXT_TITLE, textTitleSource, userTitleForText } from "../_lib/textTitle";
 import { AudioTranscriptionService } from "../_services/extraction/AudioTranscriptionService";
+import { createOcrService } from "../_services/extraction/FirecrawlParseService";
 import {
   IMAGE_FILE_EXTENSIONS,
-  MistralOCRService,
   MistralOcrTimeoutError,
   type OcrInputKind,
   OcrNothingReadableError,
@@ -159,7 +159,8 @@ export const docEmbedding = internalAction({
       // Plain OCR, without figure descriptions, after a billed timeout (a retry) and for files large
       // enough that the annotated request is likely to run past its timeout: a failed upload has no
       // retry, so a re-upload would otherwise be billed for the same timeout again (#591).
-      const mistralOCR = new MistralOCRService(process.env.MISTRAL_API_KEY || "", {
+      // Firecrawl replaces Mistral when FIRECRAWL_API_KEY is set; see FirecrawlParseService.ts.
+      const ocrService = createOcrService({
         annotations:
           !docDetails.ocrTimedOut && (docDetails.fileSize ?? 0) <= ANNOTATED_OCR_MAX_FILE_BYTES,
       });
@@ -178,14 +179,14 @@ export const docEmbedding = internalAction({
         options: { kind?: OcrInputKind } = {}
       ): Promise<string> => {
         ocrNotice = undefined;
-        if (ocrUncapped) return mistralOCR.processDocument(url, options);
+        if (ocrUncapped) return ocrService.processDocument(url, options);
         const quota = await ctx.runMutation(internal.documents.ocrQuota.reserveOcrPages, {
           userId: userId as Id<"users">,
         });
         if (quota.granted === 0) throw new OcrQuotaExceededError(quota.limits, quota.isPro);
         let pagesRead = 0;
         try {
-          const result = await mistralOCR.readDocument(url, {
+          const result = await ocrService.readDocument(url, {
             ...options,
             maxPages: quota.granted,
           });

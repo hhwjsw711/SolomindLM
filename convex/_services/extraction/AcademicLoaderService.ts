@@ -2,7 +2,7 @@
 
 import { env } from "../../_lib/env";
 import { createServiceLogger } from "../../_lib/logging/serviceLogger";
-import { MistralOCRService } from "./MistralOCRService";
+import { createOcrService, type OcrService } from "./FirecrawlParseService";
 import { WebLoaderService } from "./WebLoaderService";
 
 export interface AcademicPaper {
@@ -18,11 +18,12 @@ export interface AcademicPaper {
 }
 
 export class AcademicLoaderService {
-  private mistralOCR: MistralOCRService;
+  private ocrService: OcrService;
   private loadWebPage: (url: string) => Promise<{ title: string; content: string }>;
 
   constructor(loadWebPage?: (url: string) => Promise<{ title: string; content: string }>) {
-    this.mistralOCR = new MistralOCRService(env.MISTRAL_API_KEY);
+    // Firecrawl replaces Mistral when FIRECRAWL_API_KEY is set; see FirecrawlParseService.ts.
+    this.ocrService = createOcrService();
     this.loadWebPage =
       loadWebPage ??
       (async (url: string) => {
@@ -37,11 +38,11 @@ export class AcademicLoaderService {
     const logger = createServiceLogger("academic_loader", "loadPaper");
     logger.operationStart({ title: paper.title, source: paper.source });
 
-    // 1. If pdfUrl exists, download PDF and pass to MistralOCRService.processDocument
+    // 1. If pdfUrl exists, download PDF and OCR it (Firecrawl when configured, Mistral otherwise)
     if (paper.pdfUrl) {
       try {
         logger.info("Attempting PDF OCR", { pdfUrl: paper.pdfUrl });
-        const content = await this.mistralOCR.processDocument(paper.pdfUrl);
+        const content = await this.ocrService.processDocument(paper.pdfUrl);
         logger.operationComplete({
           method: "pdf_ocr",
           contentLength: content.length,

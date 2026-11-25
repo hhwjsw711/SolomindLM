@@ -172,6 +172,7 @@ import type * as _services_extraction_AcademicLoaderService from "../_services/e
 import type * as _services_extraction_AudioTranscriptionService from "../_services/extraction/AudioTranscriptionService.js";
 import type * as _services_extraction_BibliographyParserService from "../_services/extraction/BibliographyParserService.js";
 import type * as _services_extraction_DoiResolverService from "../_services/extraction/DoiResolverService.js";
+import type * as _services_extraction_FirecrawlParseService from "../_services/extraction/FirecrawlParseService.js";
 import type * as _services_extraction_MistralOCRService from "../_services/extraction/MistralOCRService.js";
 import type * as _services_extraction_WebLoaderService from "../_services/extraction/WebLoaderService.js";
 import type * as _services_extraction_openAccess_OpenAccessResolver from "../_services/extraction/openAccess/OpenAccessResolver.js";
@@ -535,6 +536,7 @@ declare const fullApi: ApiFromModules<{
   "_services/extraction/AudioTranscriptionService": typeof _services_extraction_AudioTranscriptionService;
   "_services/extraction/BibliographyParserService": typeof _services_extraction_BibliographyParserService;
   "_services/extraction/DoiResolverService": typeof _services_extraction_DoiResolverService;
+  "_services/extraction/FirecrawlParseService": typeof _services_extraction_FirecrawlParseService;
   "_services/extraction/MistralOCRService": typeof _services_extraction_MistralOCRService;
   "_services/extraction/WebLoaderService": typeof _services_extraction_WebLoaderService;
   "_services/extraction/openAccess/OpenAccessResolver": typeof _services_extraction_openAccess_OpenAccessResolver;
