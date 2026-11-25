@@ -70,8 +70,7 @@ describe("FirecrawlParseService.readDocument", () => {
 
     const options = JSON.parse((init.body as FormData).get("options") as string);
     expect(options.formats).toEqual([{ type: "markdown" }]);
-    expect(options.parsers).toEqual([{ type: "pdf" }]);
-    expect(options.pages).toBe(true);
+    expect(options.parsers).toEqual([{ type: "pdf", pages: true }]);
     expect((init.body as FormData).get("file")).toBeInstanceOf(Blob);
   });
 
@@ -87,7 +86,7 @@ describe("FirecrawlParseService.readDocument", () => {
     const options = JSON.parse(
       (fetchMock.mock.calls[1][1].body as FormData).get("options") as string
     );
-    expect(options.parsers).toEqual([{ type: "pdf", maxPages: 30 }]);
+    expect(options.parsers).toEqual([{ type: "pdf", maxPages: 30, pages: true }]);
   });
 
   it("falls back to data.markdown when pages is absent", async () => {
@@ -174,5 +173,64 @@ describe("createOcrService", () => {
     vi.stubEnv("FIRECRAWL_API_KEY", "");
     vi.stubEnv("MISTRAL_API_KEY", "mistral");
     expect(createOcrService({ annotations: false })).toBeInstanceOf(MistralOCRService);
+  });
+});
+
+// Real Firecrawl Parse responses captured 2026-11-25 against /v2/parse (a 2-page fpdf test
+// document, uploaded as multipart with parsers[0] = { type: "pdf", pages: true }). Guards the
+// request shape (pages is a PARSER-level option — v2 rejects it top-level) and the response
+// shape (data.pages[].pageNumber is 1-based; data.metadata.creditsUsed bills per page).
+describe("real Firecrawl Parse capture (2026-11-25)", () => {
+  const CAPTURED = {
+    success: true,
+    data: {
+      markdown:
+        "Product: XG-3000 Optical Terminal\n\nRelease date: 2026-11-25\n\n## AI生成\n\n生成时间: 2026-11-25\n\n第 1 页\n\n---\n\nPage 2 - Table\n\nModel  |  Port  |  Power\n\nXG-3000  |  16  |  12W\n\nXG-5000  |  24  |  18W\n\n## AI生成\n\n生成时间: 2026-11-25\n\n第 2 页",
+      pages: [
+        {
+          pageNumber: 1,
+          markdown:
+            "Product: XG-3000 Optical Terminal\n\nRelease date: 2026-11-25\n\n## AI生成\n\n生成时间: 2026-11-25\n\n第 1 页",
+        },
+        {
+          pageNumber: 2,
+          markdown:
+            "Page 2 - Table\n\nModel  |  Port  |  Power\n\nXG-3000  |  16  |  12W\n\nXG-5000  |  24  |  18W\n\n## AI生成\n\n生成时间: 2026-11-25\n\n第 2 页",
+        },
+      ],
+      metadata: { numPages: 2, totalPages: 2, creditsUsed: 2, contentType: "application/pdf" },
+    },
+  };
+
+  it("stitches the captured per-page markdown with labels and keeps the table rows", () => {
+    const md = markdownFromFirecrawlPages(CAPTURED.data.pages!);
+    expect(md).toContain("**Page 1**");
+    expect(md).toContain("**Page 2**");
+    expect(md).toContain("Product: XG-3000 Optical Terminal");
+    expect(md).toContain("Model  |  Port  |  Power");
+    expect(md).toContain("XG-3000  |  16  |  12W");
+    expect(md).toContain("---");
+  });
+
+  it("requests pages as a parser-level option, never top-level", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(new Uint8Array([1, 2, 3])))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(CAPTURED), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await new FirecrawlParseService("fc-key").readDocument("https://x/a.pdf");
+    const options = JSON.parse(
+      (fetchMock.mock.calls[1][1].body as FormData).get("options") as string
+    );
+    // v2 rejects a top-level "pages" key with 400 unrecognized_keys.
+    expect(Object.keys(options)).not.toContain("pages");
+    expect(options.parsers[0].pages).toBe(true);
+    expect(result.pagesRead).toBe(2);
   });
 });

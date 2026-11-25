@@ -157,6 +157,9 @@ export class FirecrawlParseService {
 
           const parser: Record<string, unknown> = { type: "pdf" };
           if (options.maxPages !== undefined) parser.maxPages = options.maxPages;
+          // Per-page markdown so our labels match the chunker's format. A parser-level
+          // option (`options.parsers[0].pages`), NOT top-level: v2 rejects unknown keys.
+          parser.pages = true;
           const form = new FormData();
           form.append(
             "options",
@@ -164,8 +167,6 @@ export class FirecrawlParseService {
               formats: [{ type: "markdown" }],
               // Text first, OCR only where needed: the same page budget either way.
               parsers: [parser],
-              // Per-page markdown so our labels match the chunker's format.
-              pages: true,
             })
           );
           form.append("file", new Blob([bytes]), uploadFileName(kind));
