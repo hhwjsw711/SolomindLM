@@ -390,10 +390,15 @@ export async function runProcessWrittenQuestionsMapChunkPhase(
     }
     const language = userPrefs?.outputLanguage;
 
-    // Process with LLM using structured output (Together json_schema — same as report map)
+    // Process with LLM using structured output (Together json_schema — same as report map).
+    // WRITTEN_QUESTIONS_LLM (smart tier, not FAST_LLM): the map chunk generates every
+    // question AND its reference answer in one call, and a 9B fast model's long-form
+    // Chinese output overran the 90s per-chunk budget (finishReason "length" at the
+    // 16k-token cap → truncated JSON → chunk retries exhaust → job failure when 1 of
+    // 2 chunks died). The smart model finishes the same prompt in ~4s (live-probed).
     let tokenUsage: TokenUsage | undefined;
     const structuredLLM = createStructuredLLM(WrittenQuestionsArraySchema, {
-      model: env.FAST_LLM,
+      model: env.WRITTEN_QUESTIONS_LLM,
       temperature: 0.4,
       maxTokens: 16_000,
       onUsage: (usage) => {
@@ -450,7 +455,12 @@ export async function runProcessWrittenQuestionsMapChunkPhase(
             new SystemMessage(withLanguageInstruction(MAP_SYSTEM_PROMPT, language)),
             new HumanMessage(prompt),
           ]),
-        timeoutMs: CONFIG.PER_CHUNK_TIMEOUT_MS,
+        // Chunk generates every question + reference answer in one long-form call;
+        // 90s cut smart models off mid-JSON on slow routes (a gateway timeout then
+        // retried on direct Together, doubling elapsed time past the budget). 150s
+        // stays well under the Convex action limit while leaving room for a slow
+        // first attempt plus one in-budget fallback.
+        timeoutMs: Math.max(CONFIG.PER_CHUNK_TIMEOUT_MS, 150_000),
         phaseLabel: "WrittenQuestionsMap",
         onRetry: (attempt, error) => {
           console.log(
