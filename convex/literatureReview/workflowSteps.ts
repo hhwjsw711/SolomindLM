@@ -224,7 +224,10 @@ export async function planReviewHandler(
       apiKey: env.TOGETHER_AI_API_KEY,
       mapModel: mapModelForLiteratureReview(args.smartModel),
       temperatures: 0.3,
-      maxTokens: 2000,
+      // 8000: the plan JSON (reviewTitle + searchQueries + suggestedColumns) is the
+      // same long-form structured shape that truncated deep research's planner at
+      // 2000 and failed structured parsing mid-JSON (e3a3e5f7).
+      maxTokens: 8000,
       phase: "smart",
     });
 
@@ -1153,7 +1156,9 @@ export async function generateReportHandler(
       apiKey: env.TOGETHER_AI_API_KEY,
       mapModel: mapModelForLiteratureReview(args.smartModel),
       temperatures: 0.3,
-      maxTokens: 2000,
+      // 8000: report sections are long-form Chinese prose; 2000 truncated the
+      // same class of structured output in deep research (e3a3e5f7).
+      maxTokens: 8000,
       phase: "smart",
     });
 
