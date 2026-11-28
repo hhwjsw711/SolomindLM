@@ -211,7 +211,11 @@ export async function plannerNode(
     mapModel: deps.smartModel,
     phase: "smart",
     temperatures: 0.3,
-    maxTokens: 2000,
+    // 8000 matches the execute node below: the plan JSON (2-3 sub-questions, each with a
+    // Chinese question, search queries, and channels) overran 2000 mid-JSON, and the
+    // truncated response failed structured parsing ("Could not parse response content as
+    // the length limit was reached"), leaving deep research stuck at "Planning...".
+    maxTokens: 8000,
   });
 
   const structured = llm.withStructuredOutput(PlannerOutputSchema);
